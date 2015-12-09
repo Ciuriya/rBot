@@ -1,6 +1,7 @@
 package me.Smc.sb.commands;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -10,7 +11,7 @@ import me.itsghost.jdiscord.events.UserChatEvent;
 
 public class Halt{
 
-	public static boolean stopAllCommands = false;
+	public static HashMap<String, Boolean> stopCommands = new HashMap<String, Boolean>();
 	
 	@SuppressWarnings("deprecation")
 	public static void execute(UserChatEvent e){
@@ -23,10 +24,10 @@ public class Halt{
 			Command.threads.get(e.getServer().getId()).clear();
 		}
 		Timer t = new Timer();
-		stopAllCommands = true;
+		stopCommands.put(e.getServer().getId(), true);
 		t.schedule(new TimerTask(){
 			public void run(){
-				stopAllCommands = false;
+				stopCommands.put(e.getServer().getId(), false);
 			}
 		}, 2000);
 		Utils.info(e.getGroup(), e.getUser().getUser(), " has halted all running commands on this server!");

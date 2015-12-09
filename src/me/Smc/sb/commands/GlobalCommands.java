@@ -1,12 +1,16 @@
 package me.Smc.sb.commands;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.UUID;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import me.Smc.sb.listeners.Listener;
 import me.Smc.sb.main.Main;
@@ -264,10 +268,10 @@ public class GlobalCommands{
 	private static void google(UserChatEvent e, String msg, boolean dm){
 		e.getMsg().deleteMessage();
 		if(!Listener.checkArguments(msg, 2, e)) return;
-		boolean images = false;
+		//boolean images = false;
 		int resultNum = 1;
 		if(msg.contains("{images}")){
-			images = true;
+			//images = true;
 			msg = msg.replaceFirst("{images}", "");
 		}
 		if(msg.contains("{result=")){
@@ -279,46 +283,44 @@ public class GlobalCommands{
 		for(int i = 1; i < split.length; i++)
 			searchQuery += " " + split[i];
 		searchQuery = searchQuery.substring(1).replace(" ", "+");
-		/*e.getGroup().sendMessage("1");
-		for(String line : Utils.getHTMLCode("https://www.google.com/#q=" + searchQuery)){
-			e.getGroup().sendMessage("2=" + line);
-			if(line.contains("<a href=\"/url")){
-				e.getGroup().sendMessage("3");
-				String[] aSplit = line.split("<a ");
-				for(String str : aSplit){
-					e.getGroup().sendMessage("4");
-					if(!str.contains("href=\"/url")) continue;
-					String link = str.split("href=")[1].split("\">")[0];
-					e.getGroup().sendMessage(link);
-					return;
-				}
-			}
-		}*/
-		/*try{
-			Document doc = Jsoup.parse(new URL("https://www.google.com/#q=" + searchQuery), 2000);
-			System.out.println("doc: " + doc.html());
-			Elements resultLinks = doc.select(".r > a");
-			for (Element link : resultLinks) {
-			    String href = link.attr("href");
-			    System.out.println("title: " + link.text());
-			    System.out.println("href: " + href);
-			}    
-		}catch(Exception ex){
-			e.getGroup().sendMessage(ex.getMessage());
-		}*/
-		/*try{
-			Document doc = Jsoup.connect("https://www.google.com/#q=" + searchQuery).maxBodySize(0).timeout(0).userAgent("Mozilla/5.0").get();
-			e.getGroup().sendMessage("HTML: " + doc.html());
-	        Elements results = doc.select(".r > a");
-	        for(Element result : results){
-	            String linkHref = result.attr("href");
-	            String linkText = result.text();
-	            e.getGroup().sendMessage("Text::" + linkText + ", URL::" + linkHref.substring(6, linkHref.indexOf("&")));
-	        }
-	        e.getGroup().sendMessage("shit");
-		}catch(Exception ex){
-			e.getGroup().sendMessage(ex.getMessage());
-		}*/
+		e.getGroup().sendMessage("right before");
+		JsonArray results = null;
+        try{
+            StringBuilder searchURLString = new StringBuilder();
+            searchURLString.append("https://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=");
+            searchURLString.append(searchQuery);
+
+            e.getGroup().sendMessage("check 1");
+            
+            URL searchURL = new URL(searchURLString.toString());
+            URLConnection conn = searchURL.openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:39.0) Gecko/20100101 " + UUID.randomUUID().toString().substring(0, 10));
+            
+            e.getGroup().sendMessage("check 2");
+            
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder json = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                json.append(line).append("\n");
+            }
+            in.close();
+            
+            e.getGroup().sendMessage("check 3");
+            
+            JsonElement element = new JsonParser().parse(json.toString());
+            results = element.getAsJsonObject().getAsJsonObject("responseData").getAsJsonArray("results");
+        
+            e.getGroup().sendMessage("check 4");
+        }catch(IOException ex){
+            e.getGroup().sendMessage(ex.getMessage() + "\n" + ex.getCause().getMessage());
+        }
+        e.getGroup().sendMessage("check 5");
+        int i = 0;
+        for(JsonElement js : results){
+        	e.getGroup().sendMessage("Result " + i + ":" + js.getAsString());
+        	i++;
+        }
 	}
 	
 }
