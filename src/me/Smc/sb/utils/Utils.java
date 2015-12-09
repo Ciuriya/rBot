@@ -7,6 +7,9 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import me.Smc.sb.main.Main;
 import me.itsghost.jdiscord.message.MessageBuilder;
@@ -19,6 +22,8 @@ public class Utils{
 		group.sendMessage(new MessageBuilder()
 				.addUserTag(user, group)
 				.addString(message).build());
+		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(group) + " to " + user.getUsername() + " } " + message);
+		Main.messagesSentThisSession++;
 	}
 	
 	public static void info(Group group, User user, String message){
@@ -38,14 +43,32 @@ public class Utils{
 	}
 	
 	public static void infoBypass(Group group, String message){
-		group.sendMessage(message); 
+		group.sendMessage(message);
+		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
+		Main.messagesSentThisSession++;
 	}
 	
 	public static void info(Group group, String message){
 		if(group.getServer() != null){
-			if(!Main.serverConfigs.get(group.getServer().getId()).getBoolean("silent"))
+			if(!Main.serverConfigs.get(group.getServer().getId()).getBoolean("silent")){
 				group.sendMessage(message);
-		}else group.sendMessage(message); 
+				Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
+			}else Log.logger.log(Level.INFO, "{SILENT Message sent in " + getGroupLogString(group) + "} " + message);
+		}else{
+			group.sendMessage(message); 
+			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
+		}
+		Main.messagesSentThisSession++;
+	}
+	
+	public static String getGroupLogString(Group group){
+		String serverName = isPM(group) ? "" : (group.getServer().getName() + "|||");
+		return serverName + group.getName();
+	}
+	
+	public static boolean isPM(Group group){
+		if(group.getServer() == null) return true;
+		return false;
 	}
 	
 	public static String removeStartSpaces(String str){
@@ -146,6 +169,11 @@ public class Utils{
         millis -= TimeUnit.MINUTES.toMillis(minutes);
         long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
         return days + "d" + hours + "h" + minutes + "m" + seconds + "s";
+	}
+	
+	public static String fixString(String str){
+		String s = StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeHtml4(str.replaceAll("\\s+", " ").replaceAll("\\<.*?>", "").replaceAll("\"", "")));
+		return s;
 	}
 	
 }

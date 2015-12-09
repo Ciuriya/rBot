@@ -36,12 +36,17 @@
   </build>
   <repositories>
     <repository>
-      <id>xyz.gghost</id>
-      <url>http://gghost.xyz/maven/</url>
-    </repository>
-    <repository>
       <id>projectlombok.org</id>
       <url>http://projectlombok.org/mavenrepo</url>
+    </repository>
+    <repository>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+    <repository>
+      <id>xyz.gghost</id>
+      <url>http://gghost.xyz/maven/</url>
     </repository>
   </repositories>
   <dependencies>

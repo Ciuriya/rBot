@@ -15,7 +15,8 @@ public class CommandList{
 		String server = "";
 		if(!dm) server = e.getServer().getId();
 		msg.addString("```Global Commands\n\n")
-		   .addString(Main.getCommandPrefix(server) + "joinserver {invite}\n");
+		   .addString(Main.getCommandPrefix(server) + "joinserver {invite}\n")
+		   .addString(Main.getCommandPrefix(server) + "search {search service} {search query} ({result={result number}} GOOGLE ONLY)");
 		Group userGroup = e.getGroup();
 		if(!dm){
 			for(String cmdName : Command.globalCommands.keySet()){
@@ -23,6 +24,7 @@ public class CommandList{
 				else if(cmdName.equalsIgnoreCase("joinserver")) continue;
 				switch(cmdName){
 					case "joinserver": continue;
+					case "search": continue;
 					case "addcom": continue;
 					default: break;
 				}

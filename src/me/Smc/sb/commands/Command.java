@@ -81,6 +81,7 @@ public class Command{
 					Utils.error(e.getGroup(), e.getUser().getUser(), " Invalid arguments!");
 					return;
 				}
+				Main.commandsUsedThisSession++;
 				String[] split = tempInstruction.split("\\{");
 				for(String str : split){
 					if(str.contains("}")){
@@ -94,7 +95,7 @@ public class Command{
 				Message m = msg.build();
 				if(m.toString().startsWith(" "))
 					m.setMessage(Utils.removeStartSpaces(m.getMessage()));
-				e.getGroup().sendMessage(m);
+				Utils.infoBypass(e.getGroup(), m.getMessage());
 				ArrayList<Thread> sThreads = new ArrayList<Thread>();
 				if(threads.containsKey(e.getServer().getId())) sThreads = threads.get(e.getServer().getId());
 				sThreads.remove(Thread.currentThread());
@@ -140,7 +141,7 @@ public class Command{
 		}
 		if(tag.startsWith("delay=")){
 			int length = Utils.stringToInt(tag.replace("delay=", ""));
-			e.getGroup().sendMessage(msg.build());
+			Utils.infoBypass(e.getGroup(), msg.build().getMessage());
 			try{Thread.sleep(length);
 			}catch(Exception e1){
 				e1.printStackTrace();

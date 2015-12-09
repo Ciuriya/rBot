@@ -12,6 +12,7 @@ import java.util.TimerTask;
 
 import me.Smc.sb.listeners.Listener;
 import me.Smc.sb.utils.Configuration;
+import me.Smc.sb.utils.Log;
 import me.itsghost.jdiscord.DiscordAPI;
 import me.itsghost.jdiscord.DiscordBuilder;
 import me.itsghost.jdiscord.exception.BadUsernamePasswordException;
@@ -35,13 +36,14 @@ public class Main{
 	public static HashMap<String, Configuration> serverConfigs;
 	public static Configuration globalCommandsConfig;
 	public static final double version = 0.01;
-	public static int messagesThisSession = 0;
+	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
 	
 	public static void main(String[] args){
 		bootTime = System.currentTimeMillis();
 		writeCodes(0);
 		keepAlive();
+		Log.init(new File(".").getAbsolutePath());
 		globalCommandsConfig = new Configuration(new File("global-commands.txt"));
 		serverConfigs = new HashMap<String, Configuration>();
 		try{
@@ -72,6 +74,7 @@ public class Main{
 	}
 	
 	public static String getCommandPrefix(String server){
+		if(!Main.serverConfigs.containsKey(server)) return "~/";
 		String prefix = Main.serverConfigs.get(server).getValue("command-prefix");
 		if(prefix == "") return "~/";
 		else return prefix;

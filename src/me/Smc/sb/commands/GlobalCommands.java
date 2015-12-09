@@ -1,16 +1,6 @@
 package me.Smc.sb.commands;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.UUID;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 
 import me.Smc.sb.listeners.Listener;
 import me.Smc.sb.main.Main;
@@ -29,6 +19,7 @@ import me.itsghost.jdiscord.talkable.GroupUser;
 public class GlobalCommands{
 
 	public static void handleCommand(UserChatEvent e, String cmdName, boolean dm){
+		Main.commandsUsedThisSession++;
 		String msg = e.getMsg().getMessage();
 		switch(cmdName.toLowerCase()){
 			case "commands": CommandList.execute(e, dm); return;
@@ -52,7 +43,7 @@ public class GlobalCommands{
 			case "listperms": listPerms(e, msg, dm); return;
 			case "stats": stats(e, msg, dm); return;
 			case "userinfo": userInfo(e, msg, dm); return;
-			case "google": google(e, msg, dm); return;
+			case "search": search(e, msg, dm); return;
 			default: return;
 		}
 	}
@@ -216,7 +207,7 @@ public class GlobalCommands{
 		for(Permissions perm : Permissions.values())
 			builder.addString(perm.name() + " (" + Permissions.hasPerm(e.getServer().getGroupUserByUsername(user), perm) + ")\n");
 		builder.addString("```");
-		e.getGroup().sendMessage(builder.build());
+		Utils.infoBypass(e.getGroup(), builder.build().getMessage());
 	}
 	
 	private static void stats(UserChatEvent e, String msg, boolean dm){
@@ -235,10 +226,12 @@ public class GlobalCommands{
 		MessageBuilder builder = new MessageBuilder();
 		long uptime = System.currentTimeMillis() - Main.bootTime;
 		builder.addString("```Connected to " + servers + " servers!\n") 
-			   .addString(users + " total users (" + connected + " connected)\n")
+			   .addString("There are " + users + " total users (" + connected + " connected) in those servers!\n")
 			   .addString("Uptime: " + Utils.toDuration(uptime) + "\n")
-			   .addString("Messages received since startup: " + Main.messagesThisSession + "```");
-		e.getGroup().sendMessage(builder.build());
+			   .addString("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
+			   .addString("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
+			   .addString("Commands used since startup: " + Main.commandsUsedThisSession + "```");
+		Utils.infoBypass(e.getGroup(), builder.build().getMessage());
 	}
 	
 	private static void userInfo(UserChatEvent e, String msg, boolean dm){
@@ -262,65 +255,13 @@ public class GlobalCommands{
 		       .addString("Discriminator: " + gUser.getDiscriminator() + "\n")
 		       .addString("Roles: " + roles + "\n")
 		       .addString("Avatar: " + gUser.getUser().getAvatar() + "```");
-		e.getGroup().sendMessage(builder.build());
+		Utils.infoBypass(e.getGroup(), builder.build().getMessage());
 	}
 	
-	private static void google(UserChatEvent e, String msg, boolean dm){
+	private static void search(UserChatEvent e, String msg, boolean dm){
 		e.getMsg().deleteMessage();
 		if(!Listener.checkArguments(msg, 2, e)) return;
-		//boolean images = false;
-		int resultNum = 1;
-		if(msg.contains("{images}")){
-			//images = true;
-			msg = msg.replaceFirst("{images}", "");
-		}
-		if(msg.contains("{result=")){
-			resultNum = Utils.stringToInt(msg.split("\\{result=")[1].split("}")[0]);
-			msg = msg.replaceFirst("{result=" + resultNum + "}", "");
-		}
-		String searchQuery = "";
-		String[] split = msg.split(" ");
-		for(int i = 1; i < split.length; i++)
-			searchQuery += " " + split[i];
-		searchQuery = searchQuery.substring(1).replace(" ", "+");
-		e.getGroup().sendMessage("right before");
-		JsonArray results = null;
-        try{
-            StringBuilder searchURLString = new StringBuilder();
-            searchURLString.append("https://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=");
-            searchURLString.append(searchQuery);
-
-            e.getGroup().sendMessage("check 1");
-            
-            URL searchURL = new URL(searchURLString.toString());
-            URLConnection conn = searchURL.openConnection();
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:39.0) Gecko/20100101 " + UUID.randomUUID().toString().substring(0, 10));
-            
-            e.getGroup().sendMessage("check 2");
-            
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder json = new StringBuilder();
-            String line;
-            while ((line = in.readLine()) != null) {
-                json.append(line).append("\n");
-            }
-            in.close();
-            
-            e.getGroup().sendMessage("check 3");
-            
-            JsonElement element = new JsonParser().parse(json.toString());
-            results = element.getAsJsonObject().getAsJsonObject("responseData").getAsJsonArray("results");
-        
-            e.getGroup().sendMessage("check 4");
-        }catch(IOException ex){
-            e.getGroup().sendMessage(ex.getMessage() + "\n" + ex.getCause().getMessage());
-        }
-        e.getGroup().sendMessage("check 5");
-        int i = 0;
-        for(JsonElement js : results){
-        	e.getGroup().sendMessage("Result " + i + ":" + js.getAsString());
-        	i++;
-        }
+		Search.execute(e, msg.split(" ")[1], msg.replace(msg.split(" ")[0] + " ", "").replace(msg.split(" ")[1] + " ", ""), dm);
 	}
 	
 }
