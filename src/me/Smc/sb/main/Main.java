@@ -30,6 +30,7 @@ public class Main{
 	//refactor commands
 	//cooldown on commands instead of pure lockdown
 	//add recent plays to osu shit?
+	//better help
 	
 	private static final String email = "smcmaxime@gmail.com", password = "IaMaBoTwHoIsUsEfUl22";
 	public static DiscordAPI api;

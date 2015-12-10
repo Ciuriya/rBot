@@ -43,7 +43,7 @@ public class Listener implements EventListener{
     			Utils.infoBypass(e.getGroup(), "\u252C\u2500\u252C\u30CE\u0028\u0020\u25D5\u25E1\u25D5\u0020\u30CE\u0029");
     		return;
     	}
-    	Log.logger.log(Level.INFO, "{Command in " + e.getServer().getName() + "|||" + e.getGroup().getName() 
+    	Log.logger.log(Level.INFO, "{Command in " + Utils.getGroupLogString(e.getGroup())
     			                   + " sent by " + e.getUser().getUser() + " <" + e.getUser().getUser().getId() + ">}\n" + msg);
     	msg = msg.replaceFirst(cmdPrefix, "");
 		String name = msg.split(" ")[0];

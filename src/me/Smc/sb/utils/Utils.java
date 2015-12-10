@@ -2,6 +2,7 @@ package me.Smc.sb.utils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import me.Smc.sb.main.Main;
+import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.message.MessageBuilder;
 import me.itsghost.jdiscord.talkable.Group;
 import me.itsghost.jdiscord.talkable.User;
@@ -43,6 +45,12 @@ public class Utils{
 	}
 	
 	public static void infoBypass(Group group, String message){
+		group.sendMessage(message);
+		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
+		Main.messagesSentThisSession++;
+	}
+	
+	public static void infoBypass(Group group, Message message){
 		group.sendMessage(message);
 		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
 		Main.messagesSentThisSession++;
@@ -102,6 +110,31 @@ public class Utils{
 		else return "" + num;
 	}
 	
+
+	public static String sendPost(String urlString, String urlParameters){
+		String answer = "";
+		try{
+			URL url = new URL(urlString + urlParameters);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setConnectTimeout(5000);
+			connection.setReadTimeout(5000);
+			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			connection.setRequestProperty("charset", "utf-8");
+			connection.setRequestProperty("Content-Length", "" + Integer.toString(urlParameters.getBytes().length));
+			BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+			while((inputLine = inputStream.readLine()) != null) response.append(inputLine);
+			inputStream.close();
+			response.deleteCharAt(0);
+			response.deleteCharAt(response.length() - 1);
+			answer = response.toString();
+		}catch(Exception e){e.printStackTrace();}
+		return answer;
+	}
+	
 	public static String[] getHTMLCode(String link){
 		BufferedReader in = null;
 		String[] toReturn = new String[]{};
@@ -120,7 +153,7 @@ public class Utils{
 		}catch(Exception e){
 			e.printStackTrace();
 		}finally{
-			try{in.close();
+			try{if(in != null) in.close();
 			}catch(Exception e){e.printStackTrace();}
 		}
 		return toReturn;

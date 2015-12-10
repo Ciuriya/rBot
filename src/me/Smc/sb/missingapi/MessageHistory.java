@@ -27,6 +27,13 @@ public class MessageHistory{
 		if(messages.size() > maxAmount) messages.removeLast();
 	}
 	
+	public Message getLastMessageByUser(String id){
+		for(Message message : messages)
+			if(message.getSender().getId().equalsIgnoreCase(id))
+				return message;
+		return null;
+	}
+	
 	public int deleteLastMessages(int amount, boolean force){
 		int i = 0;
 		ArrayList<Message> canDelete = new ArrayList<Message>();

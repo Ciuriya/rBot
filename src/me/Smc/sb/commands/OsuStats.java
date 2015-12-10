@@ -1,10 +1,5 @@
 package me.Smc.sb.commands;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import org.json.JSONObject;
 
 import me.Smc.sb.utils.Utils;
@@ -27,7 +22,7 @@ public class OsuStats{
 			user += " " + split[i];
 		user = user.substring(1);
 		MessageBuilder builder = new MessageBuilder();
-		String post = sendPost("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + user + "&m=" + mode + "&type=string&event_days=1");
+		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + user + "&m=" + mode + "&type=string&event_days=1");
 		if(post == "" || !post.contains("{")) return;
 		JSONObject jsonResponse = new JSONObject(post);
 		int userId = jsonResponse.getInt("user_id");
@@ -54,30 +49,6 @@ public class OsuStats{
 			return Integer.parseInt(Utils.getNextLineCodeFromLink(pageProfile, 2, "<img class='flag' title='' src=").get(0).replace("#", "").replace(",", ""));
 		}catch(Exception e){}
 		return -1;
-	}
-
-	private static String sendPost(String urlString, String urlParameters){
-		String answer = "";
-		try{
-			URL url = new URL(urlString + urlParameters);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
-			connection.setConnectTimeout(5000);
-			connection.setReadTimeout(5000);
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-			connection.setRequestProperty("charset", "utf-8");
-			connection.setRequestProperty("Content-Length", "" + Integer.toString(urlParameters.getBytes().length));
-			BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-			while((inputLine = inputStream.readLine()) != null) response.append(inputLine);
-			inputStream.close();
-			response.deleteCharAt(0);
-			response.deleteCharAt(response.length() - 1);
-			answer = response.toString();
-		}catch(Exception e){e.printStackTrace();}
-		return answer;
 	}
 	
 }
