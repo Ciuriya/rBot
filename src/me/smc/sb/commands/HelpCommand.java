@@ -41,14 +41,14 @@ public class HelpCommand extends GlobalCommand{
     				msg.addString(Main.getCommandPrefix(serverId) + args[0].toLowerCase() + " - " + cmd.getDesc()); //add extended support here later
     			}
     	}else{
-        	msg.addString("```Use '" + Main.getCommandPrefix(serverId) + "help {command}' for specific help per command\nGlobal Commands\n\n");
+        	msg.addString("```Use '" + Main.getCommandPrefix(serverId) + "help {command}' for specific help per command\n\nGlobal Commands\n\n");
         	
     		for(GlobalCommand gc : GlobalCommand.commands)
     			if(e.isDm() && !gc.allowsDm()) continue;
     			else if(gc.canUse(e.getUser())) msg.addString(Main.getCommandPrefix(serverId) + gc.getNamesDisplay() + gc.getDescription() + "\n");
     		
     		if(!e.isDm()){ 
-    			msg.addString("User Commands\n\n");
+    			msg.addString("\n\nUser Commands\n\n");
     			for(String name : Command.commands.get(serverId).keySet()){
     				String desc = Command.commands.get(serverId).get(name).getDesc();
     				msg.addString(Main.getCommandPrefix(serverId) + name + (desc != "" ? (" - " + desc) : "") + "\n");

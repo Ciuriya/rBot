@@ -64,8 +64,8 @@ public abstract class GlobalCommand{
 			if(gc.isName(split[0])){
 				if(!gc.allowsDm() && e.isDm()) return true;
 				Main.commandsUsedThisSession++;
-				String[] args = new String[]{""};
-				if(msg.replace(split[0] + " ", "").split(" ").length > 0) args = msg.replace(split[0] + " ", "").split(" ");
+				String[] args = msg.replace(split[0] + " ", "").split(" ");
+				if(!msg.contains(" ")) args = new String[]{};
 				gc.onCommand(e, args);
 				return true;
 			}

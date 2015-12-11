@@ -23,8 +23,8 @@ public class StopCommand extends GlobalCommand{
 		e.getMsg().deleteMessage();
 		int retCode = 1;
 		if(args.length > 0) retCode = Utils.stringToInt(args[0]);
-		else if(e.getMsg().getMessage().endsWith("restart")) retCode = 2;
-		else if(e.getMsg().getMessage().endsWith("update")) retCode = 3;
+		else if(e.getMsg().getMessage().contains("restart")) retCode = 2;
+		else if(e.getMsg().getMessage().contains("update")) retCode = 3;
 		Utils.info(e.getGroup(), "You have" + getMessageBasedOnCode(retCode));
 		Main.stop(retCode);
 	}
