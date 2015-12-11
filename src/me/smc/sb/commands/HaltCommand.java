@@ -1,22 +1,32 @@
-package me.Smc.sb.commands;
+package me.smc.sb.commands;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import me.Smc.sb.perm.Permissions;
-import me.Smc.sb.utils.Utils;
 import me.itsghost.jdiscord.events.UserChatEvent;
+import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.Utils;
 
-public class Halt{
+public class HaltCommand extends GlobalCommand{
 
 	public static HashMap<String, Boolean> stopCommands = new HashMap<String, Boolean>();
 	
+	public HaltCommand() {
+		super(Permissions.MANAGE_MESSAGES, 
+			  " - Halts all running commands on the current server", 
+			  "{prefix}halt\nHalts every running command on the current server.\n\n" +
+			  "----------\nUsage\n----------\n{prefix}halt - Stops all running commands\n\n" + 
+			  "----------\nAliases\n----------\nThere are no aliases.", 
+			  false, 
+			  "halt");
+	}
+
 	@SuppressWarnings("deprecation")
-	public static void execute(UserChatEvent e){
+	@Override
+	public void onCommand(UserChatEvent e, String[] args){
 		e.getMsg().deleteMessage();
-		if(!Permissions.hasPerm(e.getUser(), Permissions.MANAGE_MESSAGES)) return;
 		ArrayList<Thread> threads = Command.threads.get(e.getServer().getId());
 		if(threads != null && !threads.isEmpty()){
 			for(Thread t : threads)
@@ -30,7 +40,7 @@ public class Halt{
 				stopCommands.put(e.getServer().getId(), false);
 			}
 		}, 2000);
-		Utils.info(e.getGroup(), e.getUser().getUser(), " has halted all running commands on this server!");
+		Utils.info(e.getGroup(), "All running commands on this server were halted!");
 	}
 	
 }

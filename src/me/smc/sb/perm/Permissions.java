@@ -1,4 +1,4 @@
-package me.Smc.sb.perm;
+package me.smc.sb.perm;
 
 import me.itsghost.jdiscord.Role;
 import me.itsghost.jdiscord.talkable.GroupUser;
@@ -38,6 +38,7 @@ public enum Permissions{
 	}
 	
 	public static boolean hasPerm(GroupUser user, Permissions perm){
+		if(perm == null) return true;
 		if(GlobalAdmins.isAdmin(user)) return true;
 		for(Role r : user.getRoles()){
 			int allow = r.getRole().get("allow");

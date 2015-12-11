@@ -1,4 +1,4 @@
-package me.Smc.sb.utils;
+package me.smc.sb.utils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,42 +12,31 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
-import me.Smc.sb.main.Main;
+import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.message.MessageBuilder;
 import me.itsghost.jdiscord.talkable.Group;
 import me.itsghost.jdiscord.talkable.User;
+import me.smc.sb.main.Main;
 
 public class Utils{
 
+    public static boolean checkArguments(UserChatEvent e, String[] args, int length){
+		if(args.length < length){
+			Utils.error(e.getGroup(), e.getUser().getUser(), " Invalid arguments!");
+			return false;
+		}
+		return true;
+    }
+	
 	public static void error(Group group, User user, String message){
-		group.sendMessage(new MessageBuilder()
-				.addUserTag(user, group)
-				.addString(message).build());
+		group.sendMessage(new MessageBuilder().addString(message).build());
 		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(group) + " to " + user.getUsername() + " } " + message);
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void info(Group group, User user, String message){
-		info(group, new MessageBuilder()
-				.addUserTag(user, group)
-				.addString(message)
-				.build()
-				.getMessage());
-	}
-	
-	public static void infoBypass(Group group, User user, String message){
-		infoBypass(group, new MessageBuilder()
-				.addUserTag(user, group)
-				.addString(message)
-				.build()
-				.getMessage());
-	}
-	
 	public static void infoBypass(Group group, String message){
-		group.sendMessage(message);
-		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
-		Main.messagesSentThisSession++;
+		infoBypass(group, toMessage(message));
 	}
 	
 	public static void infoBypass(Group group, Message message){
@@ -57,6 +46,10 @@ public class Utils{
 	}
 	
 	public static void info(Group group, String message){
+		info(group, toMessage(message));
+	}
+	
+	public static void info(Group group, Message message){
 		if(group.getServer() != null){
 			if(!Main.serverConfigs.get(group.getServer().getId()).getBoolean("silent")){
 				group.sendMessage(message);
@@ -67,6 +60,10 @@ public class Utils{
 			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
 		}
 		Main.messagesSentThisSession++;
+	}
+	
+	public static Message toMessage(String str){
+		return new MessageBuilder().addString(str).build();
 	}
 	
 	public static String getGroupLogString(Group group){

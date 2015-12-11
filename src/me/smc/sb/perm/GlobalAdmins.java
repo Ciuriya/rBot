@@ -1,4 +1,4 @@
-package me.Smc.sb.perm;
+package me.smc.sb.perm;
 
 import me.itsghost.jdiscord.talkable.GroupUser;
 

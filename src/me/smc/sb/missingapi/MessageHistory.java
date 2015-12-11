@@ -1,12 +1,12 @@
-package me.Smc.sb.missingapi;
+package me.smc.sb.missingapi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import me.Smc.sb.main.Main;
 import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.talkable.Group;
+import me.smc.sb.main.Main;
 
 public class MessageHistory{
 

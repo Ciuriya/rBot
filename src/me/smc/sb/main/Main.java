@@ -1,4 +1,4 @@
-package me.Smc.sb.main;
+package me.smc.sb.main;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,18 +9,18 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
-import me.Smc.sb.listeners.Listener;
-import me.Smc.sb.utils.Configuration;
-import me.Smc.sb.utils.Log;
 import me.itsghost.jdiscord.DiscordAPI;
 import me.itsghost.jdiscord.DiscordBuilder;
 import me.itsghost.jdiscord.exception.BadUsernamePasswordException;
 import me.itsghost.jdiscord.exception.DiscordFailedToConnectException;
 import me.itsghost.jdiscord.exception.NoLoginDetailsException;
+import me.smc.sb.listeners.Listener;
+import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Log;
 
 public class Main{
-	//logging all commands
 	//set perm for commands
 	//read suggestions
 	//edit com?
@@ -28,42 +28,35 @@ public class Main{
 	//clean specific user
 	//yt stats
 	//refactor commands
-	//cooldown on commands instead of pure lockdown
+	//cooldown on commands instead of pure lockdown IMPORTANT
 	//add recent plays to osu shit?
 	//better help
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
-	//clean up for the love of god kill those static methods please
 	
 	private static String email, password;
 	public static DiscordAPI api;
 	public static HashMap<String, Configuration> serverConfigs;
-	public static Configuration globalCommandsConfig;
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
 	
 	public static void main(String[] args){
 		bootTime = System.currentTimeMillis();
-		writeCodes(0);
-		keepAlive();
 		Log.init(new File(".").getAbsolutePath());
-		globalCommandsConfig = new Configuration(new File("global-commands.txt"));
+		
+		writeCodes(0); //bot is running
+		Timer t = new Timer();
+		t.scheduleAtFixedRate(new TimerTask(){
+			public void run(){
+				keepAlive(); //for the bash script
+			}
+		}, 0, 5000);
+	
 		serverConfigs = new HashMap<String, Configuration>();
+		
 		Configuration login = new Configuration(new File("login.txt"));
 		email = login.getValue("user");
 		password = login.getValue("pass");
+		
 		try{
 			api = new DiscordBuilder(email, password).build().login();
 		}catch(Exception e){
@@ -71,12 +64,7 @@ public class Main{
 			return;
 		}
 		login();
-		Timer t = new Timer();
-		t.scheduleAtFixedRate(new TimerTask(){
-			public void run(){
-				keepAlive();
-			}
-		}, 0, 5000);
+		
 		checkForDisconnections();
 	}
 	
@@ -93,9 +81,7 @@ public class Main{
 	
 	public static String getCommandPrefix(String server){
 		if(!Main.serverConfigs.containsKey(server)) return "~/";
-		String prefix = Main.serverConfigs.get(server).getValue("command-prefix");
-		if(prefix == "") return "~/";
-		else return prefix;
+		else return Main.serverConfigs.get(server).getValue("command-prefix");
 	}
 	
 	public static void keepAlive(){
@@ -120,7 +106,7 @@ public class Main{
 		write(retCode + "", f);
 	}
 	
-	public static void checkForDisconnections(){ //change the messages to logging some day
+	public static void checkForDisconnections(){
 		while(true){
 	        try{
 	            Field requestManager = api.getClass().getDeclaredField("requestManager");
@@ -141,26 +127,26 @@ public class Main{
 	            if(threadObj instanceof Thread){
 	            	Thread t = (Thread) threadObj;
 	            	t.join();
-	            	System.out.println("jDiscord lost connection! Logging back in...");
+	            	Log.logger.log(Level.INFO, "jDiscord lost connection! Logging back in...");
 	                while(true){
 	                    try{
 	                        api = new DiscordBuilder("username", "password").build().login();
 	                        login();
 	                        break;
-	                    }catch (NoLoginDetailsException e){
-	                        System.out.println("No login details provided! Please give an email and password in the config file.");
+	                    }catch(NoLoginDetailsException e){
+	                        Log.logger.log(Level.INFO, "No login details provided! Please give an email and password in the config file.");
 	                        System.exit(0);
-	                    }catch (BadUsernamePasswordException e){
-	                        System.out.println("It seems that our password has changed since last login.");
+	                    }catch(BadUsernamePasswordException e){
+	                    	Log.logger.log(Level.INFO, "It seems that our password has changed since last login.");
 	                        System.exit(0);
-	                    }catch (DiscordFailedToConnectException e){
-	                        System.out.println("We failed to connect to the Discord API. Do you have internet connection?"); 
+	                    }catch(DiscordFailedToConnectException e){
+	                    	Log.logger.log(Level.INFO, "We failed to connect to the Discord API. Do you have internet connection?"); 
 	                        Thread.sleep(10000);
 	                    }
 	                }
 	            }
 	        }catch(Exception ex){
-	            System.out.println("If you see this message, please report it to the developer. Reflection failure on disconnection checks!");
+	        	Log.logger.log(Level.INFO, "If you see this message, please report it to the developer. Reflection failure on disconnection checks!");
 	            ex.printStackTrace();
 	        }	
 		}

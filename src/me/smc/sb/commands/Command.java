@@ -1,14 +1,14 @@
-package me.Smc.sb.commands;
+package me.smc.sb.commands;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import me.Smc.sb.main.Main;
-import me.Smc.sb.utils.Configuration;
-import me.Smc.sb.utils.Utils;
 import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.message.MessageBuilder;
+import me.smc.sb.main.Main;
+import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Utils;
 
 public class Command{
 
@@ -18,32 +18,17 @@ public class Command{
 	private int delimiters;
 	private String server;
 	private String desc;
-	private boolean global;
-	private boolean adminOnly;
 	public static HashMap<String, ArrayList<Thread>> threads = new HashMap<String, ArrayList<Thread>>();
-	public static HashMap<String, Command> globalCommands = new HashMap<String, Command>();
 	
-	public Command(String server, String name, String instruction, int delimiters, String desc, boolean global, boolean adminOnly){
+	public Command(String server, String name, String instruction, int delimiters, String desc){
 		this.desc = desc;
 		this.name = name;
-		this.global = global;
-		this.adminOnly = adminOnly;
-		if(!global){
-			this.instruction = instruction;
-			this.delimiters = delimiters;
-			HashMap<String, Command> serverComms = commands.get(server);
-			serverComms.put(name, this);
-			commands.put(server, serverComms);
-			this.server = server;
-		}else globalCommands.put(name, this);
-	}
-	
-	public boolean isGlobal(){
-		return global;
-	}
-	
-	public boolean isAdminOnly(){
-		return adminOnly;
+		this.instruction = instruction;
+		this.delimiters = delimiters;
+		HashMap<String, Command> serverComms = commands.get(server);
+		serverComms.put(name, this);
+		commands.put(server, serverComms);
+		this.server = server;
 	}
 	
 	public static Command findCommand(String server, String name){
@@ -149,10 +134,6 @@ public class Command{
 		}
 	}
 	
-	public void toGlobal(UserChatEvent e){
-		//are you sure?
-	}
-	
 	public void save(){
 		Configuration cfg = Main.serverConfigs.get(server);
 		ArrayList<String> list = cfg.getStringList("commands");
@@ -181,16 +162,6 @@ public class Command{
 		commands.get(server).remove(name);
 	}
 	
-	public static void loadGlobalCommands(){
-		Configuration cfg = Main.globalCommandsConfig;
-		ArrayList<String> list = cfg.getStringList("commands");
-		if(!list.isEmpty())
-			for(String str : list){
-				String desc = cfg.getValue(str + "-desc");
-				new Command("", str, "", 0, desc, true, cfg.getStringList("bot-admin-only-commands").contains(str));
-			}
-	}
-	
 	public static void loadCommands(String server){
 		Configuration cfg = Main.serverConfigs.get(server);
 		commands.put(server, new HashMap<String, Command>());
@@ -200,8 +171,8 @@ public class Command{
 				String desc = cfg.getValue("cmd-" + str + "-desc");
 				if(cfg.getInt("cmd-" + str + "-del") > 0){
 					int amount = cfg.getInt("cmd-" + str + "-del");
-					new Command(server, str, "", amount, desc, false, false);
-				}else new Command(server, str, cfg.getValue("cmd-" + str), 0, desc, false, false);
+					new Command(server, str, "", amount, desc);
+				}else new Command(server, str, cfg.getValue("cmd-" + str), 0, desc);
 			}
 	}
 	

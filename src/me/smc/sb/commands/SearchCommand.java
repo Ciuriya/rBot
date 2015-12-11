@@ -1,4 +1,4 @@
-package me.Smc.sb.commands;
+package me.smc.sb.commands;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,24 +14,43 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import me.Smc.sb.utils.Utils;
 import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.message.MessageBuilder;
+import me.smc.sb.utils.Utils;
 
-public class Search{
+public class SearchCommand extends GlobalCommand{
 
-	public static void execute(UserChatEvent e, String searchService, String query, boolean dm){
-		String fQuery = query.replaceFirst(searchService, "");
+	public SearchCommand(){
+		super(null, 
+			  " - Lets you search many different sites (including nsfw sites)", 
+			  "{prefix}search\nThis command lets you search the internet.\n\n" +
+			  "----------\nUsage\n----------\n{prefix}search google {search} - Sends the first google search result\n" + 
+			  "{prefix}search google {search} ({result={result number under 64}) - Sends the nth google search result\n" +
+			  "{prefix}search konachan (search tags) - Finds a random konachan picture\n" +
+			  "{prefix}search hentai (search tags) - Finds a random e-hentai gallery\n" +
+			  "{prefix}search hentai (search tags) ({type={e-hentai type w/o spaces}}) - Finds a random e-hentai gallery using types\n" + 
+			  "{prefix}search e621 {search} - Finds a random e621 post\n\n" +
+			  "----------\nAliases\n----------\n{prefix}lookup",  
+			  true, 
+			  "search", "lookup");
+	}
+
+	@Override
+	public void onCommand(UserChatEvent e, String[] args){
+		if(!Utils.checkArguments(e, args, 1)) return;
 		Thread t = new Thread(new Runnable(){
 			@SuppressWarnings("deprecation")
 			public void run(){
 				Message msg = null;
-				switch(searchService.toLowerCase()){
-					case "google": msg = google(e, fQuery, dm).build(); break;
-					case "konachan": msg = konachan(e, fQuery).build(); break;
-					case "hentai": msg = hentai(e, fQuery).build(); break;
-					case "e621": msg = e621(e, fQuery).build(); break;
+				String query = "";
+				for(String arg : args) query += " " + arg;
+				query = query.substring(1);
+				switch(args[0].toLowerCase()){
+					case "google": msg = google(e, query).build(); break;
+					case "konachan": msg = konachan(e, query).build(); break;
+					case "hentai": msg = hentai(e, query).build(); break;
+					case "e621": msg = e621(e, query).build(); break;
 					default: break;
 				}
 				if(msg != null) Utils.infoBypass(e.getGroup(), msg.getMessage());
@@ -41,7 +60,7 @@ public class Search{
 		t.start();
 	}
 	
-	private static MessageBuilder google(UserChatEvent e, String query, boolean dm){
+	private MessageBuilder google(UserChatEvent e, String query){
 		int resultNum = 1;
 		if(query.contains("{result=")){
 			resultNum = Utils.stringToInt(query.split("\\{result=")[1].split("}")[0]);
@@ -49,8 +68,7 @@ public class Search{
 		}
 		
 		if(resultNum > 64){
-			if(!dm) Utils.error(e.getGroup(), e.getUser().getUser(), " Result #" + resultNum + " is out of range!");
-			else Utils.infoBypass(e.getGroup(), "Result #" + resultNum + " is out of range!");
+			Utils.infoBypass(e.getGroup(), " Result #" + resultNum + " is out of range!");
 			return null;
 		}
 		
@@ -94,7 +112,7 @@ public class Search{
         return builder;
 	}
 	
-	private static MessageBuilder konachan(UserChatEvent e, String query){
+	private MessageBuilder konachan(UserChatEvent e, String query){
 		String domain = "com";
 		if(query.contains("{domain=")){
 			domain = query.split("\\{domain=")[1].split("}")[0];
@@ -106,7 +124,7 @@ public class Search{
 		return checkRandomPost(e, maxId, domain, query, 0);
 	}
 	
-	private static MessageBuilder checkRandomPost(UserChatEvent e, int maxId, String domain, String query, int hops){
+	private MessageBuilder checkRandomPost(UserChatEvent e, int maxId, String domain, String query, int hops){ //fix the post errors
 		if(hops >= 50) return new MessageBuilder().addString("Could not find matching image in 50 tries!"); 
 		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
 		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/");
@@ -124,7 +142,7 @@ public class Search{
 		}else return checkRandomPost(e, maxId, domain, query, hops + 1);
 	}
 	
-	private static boolean hasTags(String[] html, String query){
+	private boolean hasTags(String[] html, String query){
 		if(query.replaceAll(" ", "").length() == 0) return true;
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "property=\"og:description\" />");
 		if(line.size() == 0) return false;
@@ -134,7 +152,7 @@ public class Search{
 		return true;
 	}
 	
-	private static MessageBuilder hentai(UserChatEvent e, String query){
+	private MessageBuilder hentai(UserChatEvent e, String query){
 		String url = "http://g.e-hentai.org/";
 		String params = "";
 		String[] types = null;
@@ -154,7 +172,7 @@ public class Search{
 		return new MessageBuilder().addString("Searched by " + e.getUser().getUser().getUsername() + "\n" + gallery);
 	}
 	
-	private static String findHentai(String url, String params){
+	private String findHentai(String url, String params){
 		String[] html = Utils.getHTMLCode(url + "?page=0" + params);
 		int pages = (int) Math.floor(Utils.stringToInt(Utils.getNextLineCodeFromLink(html, 0, "Showing 1-25 of ").get(0).split("<p class=\"ip\" style=\"margin-top\\:5px\">Showing 1-25 of ")[1].split("</p>")[0].replace(",", "")) / 25);
 		int page = (int) (new Random().nextDouble() * pages);
@@ -172,11 +190,11 @@ public class Search{
 		else return gallery;
 	}
 	
-	private static String[] getHentaiTypes(){
+	private String[] getHentaiTypes(){
 		return new String[]{"doujinshi", "manga", "artistcg", "gamecg", "western", "non-h", "imageset", "cosplay", "asianporn", "misc"};
 	}
 	
-	private static MessageBuilder e621(UserChatEvent e, String query){
+	private MessageBuilder e621(UserChatEvent e, String query){ //to improve?
 		int page = 1;
 		String url = "https://e621.net/post/index/";
 		String params = "";

@@ -1,4 +1,4 @@
-package me.Smc.sb.utils;
+package me.smc.sb.utils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
