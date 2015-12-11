@@ -31,8 +31,22 @@ public class Main{
 	//cooldown on commands instead of pure lockdown
 	//add recent plays to osu shit?
 	//better help
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
+	//clean up for the love of god kill those static methods please
 	
-	private static final String email = "smcmaxime@gmail.com", password = "IaMaBoTwHoIsUsEfUl22";
+	private static String email, password;
 	public static DiscordAPI api;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static Configuration globalCommandsConfig;
@@ -47,6 +61,9 @@ public class Main{
 		Log.init(new File(".").getAbsolutePath());
 		globalCommandsConfig = new Configuration(new File("global-commands.txt"));
 		serverConfigs = new HashMap<String, Configuration>();
+		Configuration login = new Configuration(new File("login.txt"));
+		email = login.getValue("user");
+		password = login.getValue("pass");
 		try{
 			api = new DiscordBuilder(email, password).build().login();
 		}catch(Exception e){
@@ -83,10 +100,14 @@ public class Main{
 	
 	public static void keepAlive(){
 		File f = new File("keepalive.txt");
+		write("" + System.currentTimeMillis(), f);
+	}
+	
+	public static void write(String str, File f){
 		BufferedWriter bw = null;
 		try{
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
-			bw.write("" + System.currentTimeMillis());
+			bw.write(str);
 		}catch(Exception e){}
 		finally{
 			try{if(bw != null) bw.close(); 
@@ -96,15 +117,7 @@ public class Main{
 	
 	public static void writeCodes(int retCode){
 		File f = new File("codes.txt");
-		BufferedWriter bw = null;
-		try{
-			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
-			bw.write(retCode + "");
-		}catch(Exception e){}
-		finally{
-			try{if(bw != null) bw.close(); 
-			}catch(IOException e){e.printStackTrace();}
-		}
+		write(retCode + "", f);
 	}
 	
 	public static void checkForDisconnections(){ //change the messages to logging some day

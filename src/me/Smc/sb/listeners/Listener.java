@@ -3,9 +3,6 @@ package me.Smc.sb.listeners;
 import java.io.File;
 import java.util.logging.Level;
 
-import me.Smc.sb.commands.Command;
-import me.Smc.sb.commands.GlobalCommands;
-import me.Smc.sb.commands.Halt;
 import me.Smc.sb.main.Main;
 import me.Smc.sb.missingapi.MessageHistory;
 import me.Smc.sb.utils.Configuration;
@@ -16,6 +13,9 @@ import me.itsghost.jdiscord.Server;
 import me.itsghost.jdiscord.event.EventListener;
 import me.itsghost.jdiscord.events.APILoadedEvent;
 import me.itsghost.jdiscord.events.UserChatEvent;
+import me.Smc.sb.commands.Command;
+import me.Smc.sb.commands.GlobalCommands;
+import me.Smc.sb.commands.Halt;
 
 public class Listener implements EventListener{
 
