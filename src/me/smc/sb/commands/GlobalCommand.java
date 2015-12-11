@@ -61,7 +61,7 @@ public abstract class GlobalCommand{
 	public static boolean handleCommand(UserChatEvent e, String msg){
 		String[] split = msg.split(" ");
 		for(GlobalCommand gc : commands)
-			if(gc.isName(split[0])){
+			if(gc.isName(split[0]) && gc.canUse(e.getUser())){
 				if(!gc.allowsDm() && e.isDm()) return true;
 				Main.commandsUsedThisSession++;
 				String[] args = msg.replace(split[0] + " ", "").split(" ");

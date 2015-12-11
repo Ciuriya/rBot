@@ -40,6 +40,7 @@ public enum Permissions{
 	public static boolean hasPerm(GroupUser user, Permissions perm){
 		if(perm == null) return true;
 		if(GlobalAdmins.isAdmin(user)) return true;
+		if(perm.equals(BOT_ADMIN)) return false;
 		for(Role r : user.getRoles()){
 			int allow = r.getRole().get("allow");
 			int offset = perm.getOffset();

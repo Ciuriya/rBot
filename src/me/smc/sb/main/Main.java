@@ -80,8 +80,10 @@ public class Main{
 	}
 	
 	public static String getCommandPrefix(String server){
-		if(!Main.serverConfigs.containsKey(server)) return "~/";
-		else return Main.serverConfigs.get(server).getValue("command-prefix");
+ 		if(!Main.serverConfigs.containsKey(server)) return "~/";
+ 		String prefix = Main.serverConfigs.get(server).getValue("command-prefix");
+		if(prefix == "") return "~/";
+		else return prefix;
 	}
 	
 	public static void keepAlive(){
