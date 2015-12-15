@@ -39,12 +39,9 @@ public class Listener implements EventListener{
     	
     	String cmdPrefix = Main.getCommandPrefix(serverId);
     	String msg = e.getMsg().getMessage();
-    	if(!msg.startsWith(cmdPrefix) || !msg.contains(cmdPrefix)){ //how do regular messages even get past?
-    		if(msg.contains("\u0028\u256F\u00B0\u25A1\u00B0\uFF09\u256F\uFE35\u0020\u253B\u2501\u253B")) //tableflip
-    			Utils.info(e.getGroup(), "\u252C\u2500\u252C\u30CE\u0028\u0020\u25D5\u25E1\u25D5\u0020\u30CE\u0029"); //response
-    	}else{
+    	if(msg.startsWith(cmdPrefix) && msg.contains(cmdPrefix)){
         	Log.logger.log(Level.INFO, "{Command in " + Utils.getGroupLogString(e.getGroup())
-            						 + " sent by " + e.getUser().getUser() + " <" + e.getUser().getUser().getId() + ">}\n" + msg);
+			 + " sent by " + e.getUser().getUser() + " <" + e.getUser().getUser().getId() + ">}\n" + msg);
         	Command cmd = null;
         	cmd = Command.findCommand(serverId, msg.split(" ")[0].replace(cmdPrefix, ""));
         	if(GlobalCommand.handleCommand(e, msg.replace(cmdPrefix, ""))) return;

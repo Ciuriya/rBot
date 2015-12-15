@@ -144,6 +144,7 @@ public class Utils{
 			connection.setRequestProperty("Accept-Language", "en-US");
 			connection.setConnectTimeout(30000);
 			connection.setReadTimeout(30000);
+			if(connection.getInputStream() == null) return new String[]{};
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 			while((str = in.readLine()) != null) page.append(str + "\n");
 			toReturn = page.toString().split("\n");
