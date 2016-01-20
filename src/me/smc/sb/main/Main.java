@@ -19,8 +19,10 @@ import me.itsghost.jdiscord.exception.NoLoginDetailsException;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
+import me.smc.sb.utils.Server;
 
 public class Main{
+	
 	//set perm for commands
 	//read suggestions
 	//edit com?
@@ -38,6 +40,7 @@ public class Main{
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
+	private static Server server;
 	
 	public static void main(String[] args){
 		bootTime = System.currentTimeMillis();
@@ -63,7 +66,10 @@ public class Main{
 			e.printStackTrace();
 			return;
 		}
+		
 		login();
+		
+		server = new Server("104.131.103.44", 1234, 1235);
 		
 		checkForDisconnections();
 	}
@@ -74,6 +80,7 @@ public class Main{
 	}
 	
 	public static void stop(int code){
+		server.stop();
 		writeCodes(code);
 		api.stop();
 		System.exit(0);
@@ -132,7 +139,7 @@ public class Main{
 	            	Log.logger.log(Level.INFO, "jDiscord lost connection! Logging back in...");
 	                while(true){
 	                    try{
-	                        api = new DiscordBuilder("username", "password").build().login();
+	                        api = new DiscordBuilder(email, password).build().login();
 	                        login();
 	                        break;
 	                    }catch(NoLoginDetailsException e){

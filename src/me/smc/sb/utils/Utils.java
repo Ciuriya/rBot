@@ -5,8 +5,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -30,7 +33,7 @@ public class Utils{
     }
 	
 	public static void error(Group group, User user, String message){
-		group.sendMessage(new MessageBuilder().addString(message).build());
+		group.sendMessage(new MessageBuilder().addString(message).build(Main.api));
 		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(group) + " to " + user.getUsername() + " } " + message);
 		Main.messagesSentThisSession++;
 	}
@@ -63,7 +66,7 @@ public class Utils{
 	}
 	
 	public static Message toMessage(String str){
-		return new MessageBuilder().addString(str).build();
+		return new MessageBuilder().addString(str).build(Main.api);
 	}
 	
 	public static String getGroupLogString(Group group){
@@ -88,6 +91,14 @@ public class Utils{
 			return Integer.parseInt(str);
 		}catch(Exception e){
 			return -1;
+		}
+	}
+	
+	public static double stringToDouble(String str){
+		try{
+			return Double.parseDouble(str);
+		}catch(Exception e){
+			return -1.0;
 		}
 	}
 	
@@ -144,12 +155,10 @@ public class Utils{
 			connection.setRequestProperty("Accept-Language", "en-US");
 			connection.setConnectTimeout(30000);
 			connection.setReadTimeout(30000);
-			if(connection.getInputStream() == null) return new String[]{};
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 			while((str = in.readLine()) != null) page.append(str + "\n");
 			toReturn = page.toString().split("\n");
 		}catch(Exception e){
-			e.printStackTrace();
 		}finally{
 			try{if(in != null) in.close();
 			}catch(Exception e){e.printStackTrace();}
@@ -205,6 +214,16 @@ public class Utils{
 	public static String fixString(String str){
 		String s = StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeHtml4(str.replaceAll("\\s+", " ").replaceAll("\\<.*?>", "").replaceAll("\"", "")));
 		return s;
+	}
+	
+	public static double df(double num){
+		DecimalFormat df = new DecimalFormat("#.##", new DecimalFormatSymbols(Locale.US));
+		return stringToDouble(df.format(num));
+	}
+	
+	public static String toTwoDigits(int num){
+		if(num < 10) return "0" + num;
+		return String.valueOf(num);
 	}
 	
 }

@@ -15,7 +15,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.Message;
 import me.smc.sb.utils.Utils;
 
 public class SearchCommand extends GlobalCommand{
@@ -66,7 +65,7 @@ public class SearchCommand extends GlobalCommand{
 		}
 		
 		if(resultNum > 64){
-			e.getGroup().sendMessage("Result #" + resultNum + " is out of range!");
+			Utils.infoBypass(e.getGroup(), "Result #" + resultNum + " is out of range!");
 			return;
 		}
 		
@@ -102,7 +101,7 @@ public class SearchCommand extends GlobalCommand{
         }
         
         JsonObject result = results.get(0).getAsJsonObject();
-        e.getGroup().sendMessage("Showing result #**" + resultNum + "** out of **" + 
+        Utils.infoBypass(e.getGroup(), "Showing result #**" + resultNum + "** out of **" + 
                                  Utils.fixString(responseData.getAsJsonObject("cursor").get("estimatedResultCount").toString()) + "** results in "
         		                 + "**" + Utils.fixString(responseData.getAsJsonObject("cursor").get("searchResultTime").toString()) + "** seconds.\n\n" +
         	                     "**" + Utils.fixString(result.get("titleNoFormatting").toString()) + "** \n" + Utils.fixString(result.get("url").toString()) + "\n\n" +
@@ -111,65 +110,54 @@ public class SearchCommand extends GlobalCommand{
 	}
 	
 	private void konachan(UserChatEvent e, String query){
-		Message msg = Utils.toMessage("Initiating konachan search...");
-		msg = e.getGroup().sendMessage(msg);
-		
 		String domain = "com";
 		if(query.contains("{domain=")){
 			domain = query.split("\\{domain=")[1].split("}")[0];
 			query = query.replaceFirst("\\{domain=" + domain + "}", "");
 		}
 		if(!domain.equalsIgnoreCase("com") && !domain.equalsIgnoreCase("net")){
-			msg.editMessage("Invalid domain! Use com or net!");
+			Utils.info(e.getGroup(), "Invalid domain! Use com or net!");
 			return;
 		}
 		String[] page = Utils.getHTMLCode("https://konachan." + domain +  "/post");
 		int maxId = Integer.parseInt(Utils.getNextLineCodeFromLink(page, 1, "Post.register_tags").get(0).split("register\\(\\{\"id\"")[1].split(",\"tags\"")[0].substring(1));
-		checkRandomPost(e, msg, maxId, domain, query, 0);
+		checkRandomPost(e, maxId, domain, query, 0);
 	}
 	
-	private void checkRandomPost(UserChatEvent e, Message msg, int maxId, String domain, String query, int hops){ //fix the post errors
+	private void checkRandomPost(UserChatEvent e, int maxId, String domain, String query, int hops){ //fix the post errors
 		if(hops >= 50){
-			msg.editMessage("Could not find matching image in 50 tries!");
+			Utils.infoBypass(e.getGroup(), "Could not find matching image in 50 tries!");
 			return;
 		}
+
 		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
-		msg.editMessage("Checking post #" + id + "... (Hop #" + (hops + 1) + "/50)");
 		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/");
 		query = Utils.removeStartSpaces(query);
 		if(hasTags(imagePage, query)){
-			msg.editMessage("Post #" + id + " is valid, fetching image...");
 			ArrayList<String> highres = Utils.getNextLineCodeFromLink(imagePage, 0, "Click on the <a class=\"highres-show\" href=\"");
-			if(highres.size() > 0){
-				e.getGroup().sendMessage(highres.get(0).split("href=\"")[1].split("\">View larger version")[0]);
-				msg.deleteMessage();
-			}else{
-				msg.editMessage("No highres version found, trying to find regular...");
+			if(highres.size() > 0)
+				Utils.infoBypass(e.getGroup(), highres.get(0).split("href=\"")[1].split("\">View larger version")[0]);
+			else{
 				ArrayList<String> line = Utils.getNextLineCodeFromLink(imagePage, 0, "property=\"og\\:image\"");
-				if(line.size() > 0){
-					e.getGroup().sendMessage(line.get(0).split("meta content=\"")[1].split("\" property=\"")[0]);
-					msg.deleteMessage();
-				}else{
-					msg.editMessage("No regular version found, trying highres uncensored...");
+				if(line.size() > 0)
+					Utils.infoBypass(e.getGroup(), line.get(0).split("meta content=\"")[1].split("\" property=\"")[0]);
+				else{
 					ArrayList<String> highresUncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged highres\" href=\"");
-					if(highresUncensored.size() > 0){
-						msg.deleteMessage();
-						e.getGroup().sendMessage(highresUncensored.get(0).split("href=\"")[1].split("\" id=")[0]);
-					}else{
-						msg.editMessage("No highres uncensored found, trying regular uncensored...");
+					if(highresUncensored.size() > 0)
+						Utils.infoBypass(e.getGroup(), highresUncensored.get(0).split("href=\"")[1].split("\" id=")[0]);
+					else{
 						ArrayList<String> uncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged\" href=\"");
 						if(uncensored.size() == 0){
-							checkRandomPost(e, msg, maxId, domain, query, hops + 1);
+							checkRandomPost(e, maxId, domain, query, hops + 1);
 							return;
 						}
 						String image = uncensored.get(0).split("href=\"")[1].split("\" id=")[0];
-						msg.deleteMessage();
-						e.getGroup().sendMessage(image);
+						Utils.infoBypass(e.getGroup(), image);
 					}
 				}
 			}
 			return;
-		}else checkRandomPost(e, msg, maxId, domain, query, hops + 1);
+		}else checkRandomPost(e, maxId, domain, query, hops + 1);
 	}
 	
 	private boolean hasTags(String[] html, String query){
@@ -182,10 +170,7 @@ public class SearchCommand extends GlobalCommand{
 		return true;
 	}
 	
-	private void hentai(UserChatEvent e, String query){
-		Message msg = Utils.toMessage("Initiating e-hentai search...");
-		msg = e.getGroup().sendMessage(msg);
-		
+	private void hentai(UserChatEvent e, String query){	
 		String url = "http://g.e-hentai.org/";
 		String params = "";
 		String[] types = null;
@@ -203,14 +188,11 @@ public class SearchCommand extends GlobalCommand{
 		
 		params += "&f_search=" + query.replaceAll(" ", "+") + "&f_apply=Apply+Filter";
 		
-		String gallery = findHentai(url, params, msg);
-		msg.deleteMessage();
-		e.getGroup().sendMessage(gallery);
+		String gallery = findHentai(url, params);
+		Utils.infoBypass(e.getGroup(), gallery);
 	}
 	
-	private String findHentai(String url, String params, Message msg){
-		msg.editMessage("Fetching random gallery...");
-		
+	private String findHentai(String url, String params){
 		String[] html = Utils.getHTMLCode(url + "?page=0" + params);
 		int pages = (int) Math.floor(Utils.stringToInt(Utils.getNextLineCodeFromLink(html, 0, "Showing 1-25 of ").get(0).split("<p class=\"ip\" style=\"margin-top\\:5px\">Showing 1-25 of ")[1].split("</p>")[0].replace(",", "")) / 25);
 		int page = (int) (new Random().nextDouble() * pages);
@@ -224,7 +206,7 @@ public class SearchCommand extends GlobalCommand{
 				gallery = split[i].split("\" onmouseover")[0];
 				break;
 			}
-		if(gallery.equalsIgnoreCase("Error!")) return findHentai(url, params, msg);
+		if(gallery.equalsIgnoreCase("Error!")) return findHentai(url, params);
 		else return gallery;
 	}
 	
@@ -233,9 +215,6 @@ public class SearchCommand extends GlobalCommand{
 	}
 	
 	private void e621(UserChatEvent e, String query){ //to improve?
-		Message msg = Utils.toMessage("Initiating e621 search...");
-		msg = e.getGroup().sendMessage(msg);
-		
 		int page = 1;
 		String url = "https://e621.net/post/index/";
 		String params = "";
@@ -247,9 +226,8 @@ public class SearchCommand extends GlobalCommand{
 		int num = (int) (new Random().nextDouble() * 74);
 	    int numToLookFor = Utils.stringToInt(Utils.getNextLineCodeFromLink(pageHtml, 0, "<span class=\"thumb\" id=\"p").get(0).split("\"thumb\" id=\"p")[1].split("\"><a")[0]) - num;
 	    String line = Utils.getNextLineCodeFromLink(pageHtml, 0, "<span class=\"thumb\" id=\"p" + numToLookFor + "\">").get(0);
-	    
-	    msg.deleteMessage();
-	    e.getGroup().sendMessage("http://e621.net" + line.split("href=\"")[1].split("\" onclick=")[0]);
+
+	    Utils.infoBypass(e.getGroup(), "http://e621.net" + line.split("href=\"")[1].split("\" onclick=")[0]);
 	}
 	
 }

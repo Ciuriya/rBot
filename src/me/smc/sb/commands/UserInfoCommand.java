@@ -4,6 +4,7 @@ import me.itsghost.jdiscord.Role;
 import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.MessageBuilder;
 import me.itsghost.jdiscord.talkable.GroupUser;
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 
 public class UserInfoCommand extends GlobalCommand{
@@ -40,7 +41,7 @@ public class UserInfoCommand extends GlobalCommand{
 		       .addString("Discriminator: " + gUser.getDiscriminator() + "\n")
 		       .addString("Roles: " + roles + "\n")
 		       .addString("Avatar: " + gUser.getUser().getAvatar() + "```");
-		Utils.infoBypass(e.getGroup(), builder.build().getMessage());
+		Utils.infoBypass(e.getGroup(), builder.build(Main.api).getMessage());
 	}
 
 }

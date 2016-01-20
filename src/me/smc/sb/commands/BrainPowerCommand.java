@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.message.MessageBuilder;
+import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
@@ -40,7 +41,7 @@ public class BrainPowerCommand extends GlobalCommand{
 								msg.addString(str.split("}")[1]);
 						}else msg.addString(str);	
 					}
-					Message m = msg.build();
+					Message m = msg.build(Main.api);
 					if(m.toString().startsWith(" "))
 						m.setMessage(Utils.removeStartSpaces(m.getMessage()));
 					Utils.infoBypass(e.getGroup(), m);

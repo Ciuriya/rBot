@@ -1,6 +1,7 @@
 package me.smc.sb.commands;
 
 import me.itsghost.jdiscord.events.UserChatEvent;
+import me.smc.sb.listeners.Listener;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 
@@ -22,6 +23,7 @@ public class JoinServerCommand extends GlobalCommand{
 		if(args[0].startsWith("https://discord.gg/"))
 			args[0] = args[0].replace("https://discord.gg/", "");
 		Main.api.joinInviteId(args[0]);
+		Listener.loadServers(Main.api);
 	}
 
 }

@@ -4,11 +4,12 @@ import org.json.JSONObject;
 
 import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.MessageBuilder;
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 
 public class OsuStatsCommand extends GlobalCommand{
 
-	private static String apiKey = "07aa8c33fcfaef704aa81f66a5803bfc6f4ba6da";
+	public static String apiKey = "07aa8c33fcfaef704aa81f66a5803bfc6f4ba6da";
 	
 	public OsuStatsCommand(){
 		super(null, 
@@ -59,7 +60,7 @@ public class OsuStatsCommand extends GlobalCommand{
 		       .addString("\n" + totalAcc + "% total accuracy")
 		       .addString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + jsonResponse.getInt("count_rank_s") + " S) (" + jsonResponse.getInt("count_rank_a") + " A)");
 		builder.addString("```");
-		Utils.infoBypass(e.getGroup(), builder.build());
+		Utils.infoBypass(e.getGroup(), builder.build(Main.api));
 	}
 	
 }

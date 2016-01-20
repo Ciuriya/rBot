@@ -2,6 +2,7 @@ package me.smc.sb.commands;
 
 import me.itsghost.jdiscord.events.UserChatEvent;
 import me.itsghost.jdiscord.message.MessageBuilder;
+import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
@@ -30,7 +31,7 @@ public class ListPermsCommand extends GlobalCommand{
 		for(Permissions perm : Permissions.values())
 			builder.addString(perm.name() + " (" + Permissions.hasPerm(e.getServer().getGroupUserByUsername(user), perm) + ")\n");
 		builder.addString("```");
-		Utils.infoBypass(e.getGroup(), builder.build().getMessage());
+		Utils.infoBypass(e.getGroup(), builder.build(Main.api).getMessage());
 	}
 
 }

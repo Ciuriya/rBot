@@ -32,10 +32,10 @@ public class Listener implements EventListener{
     	if(e.getUser().getUser().getId().equalsIgnoreCase("120923487467470848")) return; //if user is bot, no msg
     	Main.messagesReceivedThisSession++;
     	
-    	if(!e.isDm() && HaltCommand.stopCommands.containsKey(e.getServer().getId()) && HaltCommand.stopCommands.get(e.getServer().getId())) return;
+    	if(e.getServer() != null && HaltCommand.stopCommands.containsKey(e.getServer().getId()) && HaltCommand.stopCommands.get(e.getServer().getId())) return;
     	
     	String serverId = "-1";
-    	if(!e.isDm()) serverId = e.getServer().getId();
+    	if(e.getServer() != null) serverId = e.getServer().getId();
     	
     	String cmdPrefix = Main.getCommandPrefix(serverId);
     	String msg = e.getMsg().getMessage();
@@ -51,12 +51,18 @@ public class Listener implements EventListener{
     }
     
     public void apiLoad(APILoadedEvent e){
+    	loadServers(api);
+    	Utils.infoBypass(Main.api.getUserById("91302128328392704").getGroup(), "I have logged in! :D"); //Sends the developer a message on login
+    }
+    
+    public static void loadServers(DiscordAPI api){
+    	Main.serverConfigs.clear();
+    	Command.commands.clear();
     	for(Server s : api.getAvailableServers()){
     		Main.serverConfigs.put(s.getId(), new Configuration(new File(s.getId() + ".txt")));
     		Command.loadCommands(s.getId());	
     	}
     	GlobalCommand.registerCommands();
-    	Utils.infoBypass(Main.api.getUserById("91302128328392704").getGroup(), "I have logged in! :D"); //Sends the developer a message on login
     }
 	
 }

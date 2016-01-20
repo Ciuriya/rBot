@@ -23,7 +23,7 @@ public class HelpCommand extends GlobalCommand{
 		MessageBuilder msg = new MessageBuilder();
 		
     	String serverId = "-1";
-    	if(!e.isDm()) serverId = e.getServer().getId();
+    	if(e.getServer() != null) serverId = e.getServer().getId();
     	
     	if(args.length > 0){
     		msg.addString("```");
@@ -44,10 +44,10 @@ public class HelpCommand extends GlobalCommand{
         	msg.addString("```Use '" + Main.getCommandPrefix(serverId) + "help {command}' for specific help per command\n\nGlobal Commands\n\n");
         	
     		for(GlobalCommand gc : GlobalCommand.commands)
-    			if(e.isDm() && !gc.allowsDm()) continue;
+    			if(serverId.equalsIgnoreCase("-1") && !gc.allowsDm()) continue;
     			else if(gc.canUse(e.getUser())) msg.addString(Main.getCommandPrefix(serverId) + gc.getNamesDisplay() + gc.getDescription() + "\n");
     		
-    		if(!e.isDm()){ 
+    		if(!serverId.equalsIgnoreCase("-1")){ 
     			msg.addString("\n\nUser Commands\n\n");
     			for(String name : Command.commands.get(serverId).keySet()){
     				String desc = Command.commands.get(serverId).get(name).getDesc();
@@ -55,7 +55,7 @@ public class HelpCommand extends GlobalCommand{
     			}
     		}
     	}
-		Utils.info(e.getUser().getUser().getGroup(), msg.addString("```").build().getMessage());
+		Utils.info(e.getUser().getUser().getGroup(), msg.addString("```").build(Main.api).getMessage());
 	}
 	
 }

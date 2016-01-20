@@ -77,7 +77,7 @@ public class Command{
 							msg.addString(str.split("}")[1]);
 					}else msg.addString(str);	
 				}
-				Message m = msg.build();
+				Message m = msg.build(Main.api);
 				if(m.toString().startsWith(" "))
 					m.setMessage(Utils.removeStartSpaces(m.getMessage()));
 				Utils.infoBypass(e.getGroup(), m.getMessage());
@@ -126,7 +126,7 @@ public class Command{
 		}
 		if(tag.startsWith("delay=")){
 			int length = Utils.stringToInt(tag.replace("delay=", ""));
-			Utils.infoBypass(e.getGroup(), msg.build().getMessage());
+			Utils.infoBypass(e.getGroup(), msg.build(Main.api).getMessage());
 			try{Thread.sleep(length);
 			}catch(Exception e1){
 				e1.printStackTrace();

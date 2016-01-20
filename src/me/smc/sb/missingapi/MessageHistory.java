@@ -34,6 +34,10 @@ public class MessageHistory{
 		return null;
 	}
 	
+	public Message getLastMessage(){
+		return messages.size() == 0 ? null : messages.getFirst();
+	}
+	
 	public int deleteLastMessages(int amount, boolean force){
 		int i = 0;
 		ArrayList<Message> canDelete = new ArrayList<Message>();

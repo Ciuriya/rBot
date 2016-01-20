@@ -42,7 +42,7 @@ public class StatsCommand extends GlobalCommand{
 			   .addString("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
 			   .addString("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
 			   .addString("Commands used since startup: " + Main.commandsUsedThisSession + "```");
-		Utils.infoBypass(e.getGroup(), builder.build().getMessage());
+		Utils.infoBypass(e.getGroup(), builder.build(Main.api).getMessage());
 	}
 
 }

@@ -62,7 +62,7 @@ public abstract class GlobalCommand{
 		String[] split = msg.split(" ");
 		for(GlobalCommand gc : commands)
 			if(gc.isName(split[0]) && gc.canUse(e.getUser())){
-				if(!gc.allowsDm() && e.isDm()) return true;
+				if(!gc.allowsDm() && e.getServer() == null) return true;
 				Main.commandsUsedThisSession++;
 				String[] args = msg.replace(split[0] + " ", "").split(" ");
 				if(!msg.contains(" ")) args = new String[]{};
@@ -83,6 +83,7 @@ public abstract class GlobalCommand{
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
 		commands.add(new OsuStatsCommand());
+		commands.add(new OsuTrackCommand());
 		commands.add(new SearchCommand());
 		commands.add(new SetPrefixCommand());
 		commands.add(new SilentCommand());
