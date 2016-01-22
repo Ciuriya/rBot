@@ -20,6 +20,7 @@ import me.itsghost.jdiscord.message.Message;
 import me.itsghost.jdiscord.message.MessageBuilder;
 import me.itsghost.jdiscord.talkable.Group;
 import me.itsghost.jdiscord.talkable.User;
+import me.smc.sb.utils.Log;
 import me.smc.sb.main.Main;
 
 public class Utils{

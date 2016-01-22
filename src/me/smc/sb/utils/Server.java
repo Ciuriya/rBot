@@ -14,6 +14,7 @@ import java.util.logging.Level;
 
 import me.itsghost.jdiscord.OnlineStatus;
 import me.itsghost.jdiscord.talkable.GroupUser;
+import me.smc.sb.utils.Log;
 import me.smc.sb.main.Main;
 
 public class Server{
@@ -141,7 +142,6 @@ public class Server{
 	        bw.write(message);
 	        bw.flush();
 		}catch(Exception e){
-			//Utils.infoBypass(Main.api.getUserById("77631618088435712").getGroup(), e.getMessage());
 			Log.logger.log(Level.SEVERE, "Could not send message: " + message + "\n" + e.getMessage(), e);
 		}finally{
 	        try{

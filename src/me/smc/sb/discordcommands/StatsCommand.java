@@ -1,4 +1,4 @@
-package me.smc.sb.commands;
+package me.smc.sb.discordcommands;
 
 import me.itsghost.jdiscord.OnlineStatus;
 import me.itsghost.jdiscord.Server;

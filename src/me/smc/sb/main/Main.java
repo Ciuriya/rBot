@@ -11,11 +11,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
+import org.pircbotx.PircBotX;
+
 import me.itsghost.jdiscord.DiscordAPI;
 import me.itsghost.jdiscord.DiscordBuilder;
 import me.itsghost.jdiscord.exception.BadUsernamePasswordException;
 import me.itsghost.jdiscord.exception.DiscordFailedToConnectException;
 import me.itsghost.jdiscord.exception.NoLoginDetailsException;
+import me.smc.sb.irccommands.IRCCommand;
+import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
@@ -34,8 +38,9 @@ public class Main{
 	//add recent plays to osu shit?
 	//better help
 	
-	private static String email, password;
+	private static String discordEmail, discordPassword, osuUser, osuPassword;
 	public static DiscordAPI api;
+	public static PircBotX ircBot;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
@@ -57,26 +62,53 @@ public class Main{
 		serverConfigs = new HashMap<String, Configuration>();
 		
 		Configuration login = new Configuration(new File("login.txt"));
-		email = login.getValue("user");
-		password = login.getValue("pass");
+		discordEmail = login.getValue("discorduser");
+		discordPassword = login.getValue("discordpass");
+		osuUser = login.getValue("osuuser");
+		osuPassword = login.getValue("osupass");
 		
 		try{
-			api = new DiscordBuilder(email, password).build().login();
+			api = new DiscordBuilder(discordEmail, discordPassword).build().login();
 		}catch(Exception e){
 			e.printStackTrace();
 			return;
 		}
 		
-		login();
-		
 		server = new Server("104.131.103.44", 1234, 1235);
 		
-		checkForDisconnections();
+		login();
+		
+		Thread thread = new Thread(new Runnable(){
+			public void run(){
+				checkForDisconnections();
+			}
+		});
+		thread.start();
+		
+		loadIRC();
 	}
 	
 	public static void login(){
 		api.getEventManager().registerListener(new Listener(api));
 		api.setAllowLogMessages(false);
+	}
+	
+	public static void loadIRC(){
+		IRCCommand.registerCommands();
+		
+		ircBot = new PircBotX(new org.pircbotx.Configuration.Builder<PircBotX>()
+				  .setName(osuUser)
+				  .setServer("cho.ppy.sh", 6667)
+				  .setServerPassword(osuPassword)
+				  .addListener(new IRCChatListener())
+				  .setAutoReconnect(true)
+				  .buildConfiguration());
+		
+		try{
+			ircBot.startBot();
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, "Could not start irc bot!");
+		}
 	}
 	
 	public static void stop(int code){
@@ -139,7 +171,7 @@ public class Main{
 	            	Log.logger.log(Level.INFO, "jDiscord lost connection! Logging back in...");
 	                while(true){
 	                    try{
-	                        api = new DiscordBuilder(email, password).build().login();
+	                        api = new DiscordBuilder(discordEmail, discordPassword).build().login();
 	                        login();
 	                        break;
 	                    }catch(NoLoginDetailsException e){

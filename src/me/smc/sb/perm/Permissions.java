@@ -24,7 +24,8 @@ public enum Permissions{
 	VOICE_DEAFEN_MEMBERS(23),
 	VOICE_MOVE_MEMBERS(24),
 	VOICE_USE_VAD(25),
-	BOT_ADMIN(30);
+	BOT_ADMIN(30),
+	IRC_BOT_ADMIN(31);
 	
 	int offset;
 	
@@ -39,6 +40,7 @@ public enum Permissions{
 	public static boolean hasPerm(GroupUser user, Permissions perm){
 		if(perm == null) return true;
 		if(GlobalAdmins.isAdmin(user)) return true;
+		if(perm.equals(IRC_BOT_ADMIN) && GlobalAdmins.isIRCAdmin(user)) return true;
 		if(perm.equals(BOT_ADMIN)) return false;
 		return user.hasPerm(me.itsghost.jdiscord.talkable.GroupUser.Permissions.valueOf(perm.name()));
 	}

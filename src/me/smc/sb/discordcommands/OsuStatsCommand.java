@@ -1,4 +1,4 @@
-package me.smc.sb.commands;
+package me.smc.sb.discordcommands;
 
 import org.json.JSONObject;
 

@@ -1,4 +1,4 @@
-package me.smc.sb.commands;
+package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,8 +82,10 @@ public abstract class GlobalCommand{
 		commands.add(new HelpCommand());
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
+		commands.add(new MessageIRCCommand());
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
+		commands.add(new PollIRCCommand());
 		commands.add(new SearchCommand());
 		commands.add(new SetPrefixCommand());
 		commands.add(new SilentCommand());
