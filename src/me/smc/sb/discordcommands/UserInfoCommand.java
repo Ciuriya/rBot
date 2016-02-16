@@ -1,11 +1,10 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.Role;
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.MessageBuilder;
-import me.itsghost.jdiscord.talkable.GroupUser;
-import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.entities.Role;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class UserInfoCommand extends GlobalCommand{
 
@@ -20,28 +19,36 @@ public class UserInfoCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		
 		String user = "";
 		for(String arg : args)
 			user += " " + arg;
 		user = user.substring(1);
 		
-		GroupUser gUser = e.getServer().getGroupUserByUsername(user);
-		if(gUser == null) return;
+		User gUser = null;
+		for(User u : e.getGuild().getUsers())
+			if(u.getUsername().equalsIgnoreCase(user)){
+				gUser = u;
+				break;
+			}
+		
+		if(gUser == null) Utils.error(e.getChannel(), e.getAuthor(), " Invalid user!");
 		
 		String roles = "";
-		for(Role r : gUser.getRoles()) roles += " - " + r.getName();
+		for(Role r : e.getGuild().getRolesForUser(gUser)) roles += " - " + r.getName();
 		roles = roles.substring(3);
+		
 		MessageBuilder builder = new MessageBuilder();
-		builder.addString("```User info for " + user + "\n")
-			   .addString("User status: " + gUser.getUser().getOnlineStatus().name().toLowerCase() + "\n")
-			   .addString("Playing (" + gUser.getUser().getGame() + ")\n")
-		       .addString("User id: " + gUser.getUser().getId() + "\n")
-		       .addString("Discriminator: " + gUser.getDiscriminator() + "\n")
-		       .addString("Roles: " + roles + "\n")
-		       .addString("Avatar: " + gUser.getUser().getAvatar() + "```");
-		Utils.infoBypass(e.getGroup(), builder.build(Main.api).getMessage());
+		builder.appendString("```User info for " + user + "\n")
+			   .appendString("User status: " + gUser.getOnlineStatus().name().toLowerCase() + "\n")
+			   .appendString("Playing (" + gUser.getCurrentGame() + ")\n")
+		       .appendString("User id: " + gUser.getId() + "\n")
+		       .appendString("Discriminator: " + gUser.getDiscriminator() + "\n")
+		       .appendString("Roles: " + roles + "\n")
+		       .appendString("Avatar: " + gUser.getAvatarUrl() + "```");
+		Utils.infoBypass(e.getChannel(), builder.build().getContent());
 	}
 
 }

@@ -1,9 +1,9 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class SetPrefixCommand extends GlobalCommand{
 
@@ -18,12 +18,13 @@ public class SetPrefixCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args) {
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args) {
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1));
-		String server = e.getServer().getId();
+		
+		String server = e.getGuild().getId();
 		Main.serverConfigs.get(server).writeValue("command-prefix", args[0]);
-		Utils.info(e.getGroup(), "The server's prefix has been set to " + args[0]);
+		Utils.info(e.getChannel(), "The server's prefix has been set to " + args[0]);
 	}
 
 }

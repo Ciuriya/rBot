@@ -3,10 +3,12 @@ package me.smc.sb.discordcommands;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.talkable.GroupUser;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import net.dv8tion.jda.entities.MessageChannel;
+import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public abstract class GlobalCommand{
 
@@ -24,8 +26,10 @@ public abstract class GlobalCommand{
 		this.names = names;
 	}
 	
-	public boolean canUse(GroupUser user){
-		return Permissions.hasPerm(user, perm);
+	public boolean canUse(User user, MessageChannel channel){
+		if(channel instanceof TextChannel)
+			return Permissions.hasPerm(user, (TextChannel) channel, perm);
+		else return Permissions.check(user, perm);
 	}
 	
 	public String getDescription(){
@@ -58,11 +62,11 @@ public abstract class GlobalCommand{
 		return false;
 	}
 	
-	public static boolean handleCommand(UserChatEvent e, String msg){
+	public static boolean handleCommand(MessageReceivedEvent e, String msg){
 		String[] split = msg.split(" ");
 		for(GlobalCommand gc : commands)
-			if(gc.isName(split[0]) && gc.canUse(e.getUser())){
-				if(!gc.allowsDm() && e.getServer() == null) return true;
+			if(gc.isName(split[0]) && gc.canUse(e.getAuthor(), e.getChannel())){
+				if(!gc.allowsDm() && e.isPrivate()) return true;
 				Main.commandsUsedThisSession++;
 				String[] args = msg.replace(split[0] + " ", "").split(" ");
 				if(!msg.contains(" ")) args = new String[]{};
@@ -82,7 +86,7 @@ public abstract class GlobalCommand{
 		commands.add(new HelpCommand());
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
-		commands.add(new MessageIRCCommand());
+		commands.add(new ExecIRCCommand());
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
 		commands.add(new PollIRCCommand());
@@ -95,6 +99,6 @@ public abstract class GlobalCommand{
 		commands.add(new UserInfoCommand());
 	}
 	
-	public abstract void onCommand(UserChatEvent e, String[] args);
+	public abstract void onCommand(MessageReceivedEvent e, String[] args);
 	
 }

@@ -1,6 +1,8 @@
 package me.smc.sb.perm;
 
-import me.itsghost.jdiscord.talkable.GroupUser;
+import net.dv8tion.jda.Permission;
+import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.entities.User;
 
 public enum Permissions{
 
@@ -37,12 +39,27 @@ public enum Permissions{
 		return offset;
 	}
 	
-	public static boolean hasPerm(GroupUser user, Permissions perm){
+	public static boolean check(User user, Permissions perm){
+		if(perm == null) return true;
+		if(GlobalAdmins.isAdmin(user)) return true;
+		if(perm.equals(IRC_BOT_ADMIN) && GlobalAdmins.isIRCAdmin(user)) return true;
+		if(perm.equals(BOT_ADMIN)) return true;
+		return false;
+	}
+	
+	public static boolean hasPerm(User user, TextChannel channel, Permissions perm){
+		if(!check(user, perm))
+			return channel.checkPermission(user, Permission.getFromOffset(perm.getOffset()));
+		else return true;
+	}
+	
+	public static boolean hasPerm(String user, Permissions perm){
+		if(user == null) return true;
 		if(perm == null) return true;
 		if(GlobalAdmins.isAdmin(user)) return true;
 		if(perm.equals(IRC_BOT_ADMIN) && GlobalAdmins.isIRCAdmin(user)) return true;
 		if(perm.equals(BOT_ADMIN)) return false;
-		return user.hasPerm(me.itsghost.jdiscord.talkable.GroupUser.Permissions.valueOf(perm.name()));
+		return true;
 	}
 	
 }

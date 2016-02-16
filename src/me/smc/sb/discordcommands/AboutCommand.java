@@ -1,7 +1,7 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class AboutCommand extends GlobalCommand{
 	
@@ -14,9 +14,9 @@ public class AboutCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
-		Utils.info(e.getGroup(), "Hello!\nI am a bot made by Smc.\nI am used to create commands for now, but there are future features planned.");
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		Utils.info(e.getChannel(), "Hello!\nI am a bot made by Smc.\nI am used to create commands for now, but there are future features planned.");
 	}
 	
 }

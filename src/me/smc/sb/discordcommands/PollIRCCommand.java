@@ -2,10 +2,10 @@ package me.smc.sb.discordcommands;
 
 import org.pircbotx.Channel;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class PollIRCCommand extends GlobalCommand{
 
@@ -20,9 +20,9 @@ public class PollIRCCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
-		if(Main.ircBot == null) Utils.info(e.getGroup(), "The IRC bot object is null! Make sure to tell Smc!");
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		if(Main.ircBot == null) Utils.info(e.getChannel(), "The IRC bot object is null! Make sure to tell Smc!");
 		else{
 			String msg = "Status: " + (Main.ircBot.isConnected() ? "Connected" : "Disconnected");
 			
@@ -34,7 +34,7 @@ public class PollIRCCommand extends GlobalCommand{
 					msg = msg.substring(0, msg.length() - 2);
 				}	
 			
-			Utils.info(e.getGroup(), msg);	
+			Utils.info(e.getChannel(), msg);	
 		}
 	}
 	

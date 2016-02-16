@@ -1,9 +1,9 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class EditCmdCommand extends GlobalCommand{
 
@@ -21,8 +21,8 @@ public class EditCmdCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 2)) return;
 		switch(args[0].toLowerCase()){
 			case "add": addCommand(e, args); break;
@@ -32,31 +32,35 @@ public class EditCmdCommand extends GlobalCommand{
 		}
 	}
 
-	private void addCommand(UserChatEvent e, String[] args){
-		if(Command.findCommand(e.getServer().getId(), args[1]) != null){
-			Utils.error(e.getGroup(), e.getUser().getUser(), " This command already exists!");
+	private void addCommand(MessageReceivedEvent e, String[] args){
+		if(Command.findCommand(e.getGuild().getId(), args[1]) != null){
+			Utils.error(e.getChannel(), e.getAuthor(), " This command already exists!");
 			return;
 		}
+		
 		int delimiters = 0;
 		String instructions = "", desc = "";
+		
 		for(int i = 2; i < args.length; i++)
 			if(args[i].startsWith("{delimiters="))
 				delimiters = Utils.stringToInt(args[i].split("\\{delimiters=")[1].split("}")[0]);
 			else if(args[i].contains("{desc="))
 				desc = instructions.split("\\{desc=")[1].split("}")[0];
 			else instructions += " " + args[i];
+		
 		instructions = instructions.substring(1);
-		Command cmd = new Command(e.getServer().getId(), args[1], instructions, delimiters, desc);
+		Command cmd = new Command(e.getGuild().getId(), args[1], instructions, delimiters, desc);
 		cmd.save();
-		Utils.info(e.getGroup(), Main.getCommandPrefix(e.getServer().getId()) + args[1] + " was added!");
+		Utils.info(e.getChannel(), Main.getCommandPrefix(e.getGuild().getId()) + args[1] + " was added!");
 	}
 	
-	private void setDelimiters(UserChatEvent e, String[] args){
-		Command cmd = Command.findCommand(e.getServer().getId(), args[1]);
+	private void setDelimiters(MessageReceivedEvent e, String[] args){
+		Command cmd = Command.findCommand(e.getGuild().getId(), args[1]);
 		if(cmd == null){
-			Utils.error(e.getGroup(), e.getUser().getUser(), " This command does not exist!");
+			Utils.error(e.getChannel(), e.getAuthor(), " This command does not exist!");
 			return;
 		}
+		
 		String dels = "";
 		for(int i = 2; i < cmd.getDelimiterCount() + 2; i++)
 			dels += " " + args[i];
@@ -64,19 +68,22 @@ public class EditCmdCommand extends GlobalCommand{
 		String instructions = "";
 		for(int i = cmd.getDelimiterCount() + 2; i < args.length; i++)
 			instructions += " " + args[i];
+		
 		cmd.setDelimiter(dels.substring(1).split(" "), instructions.substring(1));
 		cmd.save();
-		Utils.info(e.getGroup(), "The delimiter combination for " + Main.getCommandPrefix(e.getServer().getId()) + args[1] + " was set!");
+		
+		Utils.info(e.getChannel(), "The delimiter combination for " + Main.getCommandPrefix(e.getGuild().getId()) + args[1] + " was set!");
 	}
 	
-	private void deleteCommand(UserChatEvent e, String[] args){
-		Command cmd = Command.findCommand(e.getServer().getId(), args[1]);
+	private void deleteCommand(MessageReceivedEvent e, String[] args){
+		Command cmd = Command.findCommand(e.getGuild().getId(), args[1]);
 		if(cmd == null){
-			Utils.error(e.getGroup(), e.getUser().getUser(), " That command does not exist!");
+			Utils.error(e.getChannel(), e.getAuthor(), " That command does not exist!");
 			return;
 		}
+		
 		cmd.delete();
-		Utils.info(e.getGroup(), Main.getCommandPrefix(e.getServer().getId()) + args[1] + " was deleted!");
+		Utils.info(e.getChannel(), Main.getCommandPrefix(e.getGuild().getId()) + args[1] + " was deleted!");
 	}
 	
 }

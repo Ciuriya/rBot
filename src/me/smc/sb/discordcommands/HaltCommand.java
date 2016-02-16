@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class HaltCommand extends GlobalCommand{
 
@@ -25,22 +25,25 @@ public class HaltCommand extends GlobalCommand{
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
-		ArrayList<Thread> threads = Command.threads.get(e.getServer().getId());
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		
+		ArrayList<Thread> threads = Command.threads.get(e.getGuild().getId());
 		if(threads != null && !threads.isEmpty()){
 			for(Thread t : threads)
 				t.stop();
-			Command.threads.get(e.getServer().getId()).clear();
+			Command.threads.get(e.getGuild().getId()).clear();
 		}
+		
 		Timer t = new Timer();
-		stopCommands.put(e.getServer().getId(), true);
+		stopCommands.put(e.getGuild().getId(), true);
 		t.schedule(new TimerTask(){
 			public void run(){
-				stopCommands.put(e.getServer().getId(), false);
+				stopCommands.put(e.getGuild().getId(), false);
 			}
 		}, 2000);
-		Utils.info(e.getGroup(), "All running commands on this server were halted!");
+		
+		Utils.info(e.getChannel(), "All running commands on this server were halted!");
 	}
 	
 }

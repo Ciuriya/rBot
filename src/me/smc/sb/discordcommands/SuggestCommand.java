@@ -2,9 +2,9 @@ package me.smc.sb.discordcommands;
 
 import java.io.File;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class SuggestCommand extends GlobalCommand{
 
@@ -19,17 +19,18 @@ public class SuggestCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
+		
 		Configuration cfg = new Configuration(new File("suggestions.txt"));
 		
 		String suggestion = "";
 		for(String arg : args)
 			suggestion += " " + arg;
 		
-		cfg.appendToStringList("suggestions", Utils.getDate() + " Suggestion by " + e.getUser().getUser().getUsername() + " - " + suggestion.substring(1));
-		Utils.info(e.getGroup(), "Your suggestion has been sent!");
+		cfg.appendToStringList("suggestions", Utils.getDate() + " Suggestion by " + e.getAuthor().getUsername() + " - " + suggestion.substring(1), true);
+		Utils.info(e.getChannel(), "Your suggestion has been sent!");
 	}
 
 }

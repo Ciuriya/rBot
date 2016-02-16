@@ -1,9 +1,9 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class StopCommand extends GlobalCommand{
 
@@ -19,13 +19,16 @@ public class StopCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		
 		int retCode = 1;
+		
 		if(args.length > 0) retCode = Utils.stringToInt(args[0]);
-		else if(e.getMsg().getMessage().contains("restart")) retCode = 2;
-		else if(e.getMsg().getMessage().contains("update")) retCode = 3;
-		Utils.info(e.getGroup(), "You have" + getMessageBasedOnCode(retCode));
+		else if(e.getMessage().getContent().contains("restart")) retCode = 2;
+		else if(e.getMessage().getContent().contains("update")) retCode = 3;
+		
+		Utils.info(e.getChannel(), "You have" + getMessageBasedOnCode(retCode));
 		Main.stop(retCode);
 	}
 	

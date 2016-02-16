@@ -7,77 +7,102 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.pircbotx.PircBotX;
+import org.pircbotx.hooks.events.MessageEvent;
+import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.Message;
-import me.itsghost.jdiscord.message.MessageBuilder;
-import me.itsghost.jdiscord.talkable.Group;
-import me.itsghost.jdiscord.talkable.User;
-import me.smc.sb.utils.Log;
 import me.smc.sb.main.Main;
+import me.smc.sb.multi.Tournament;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.entities.Message;
+import net.dv8tion.jda.entities.MessageChannel;
+import net.dv8tion.jda.entities.PrivateChannel;
+import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class Utils{
 
-    public static boolean checkArguments(UserChatEvent e, String[] args, int length){
+    public static boolean checkArguments(MessageReceivedEvent e, String[] args, int length){
 		if(args.length < length){
-			Utils.error(e.getGroup(), e.getUser().getUser(), " Invalid arguments!");
+			Utils.error(e.getChannel(), e.getAuthor(), " Invalid arguments!");
+			return false;
+		}
+		return true;
+    }
+    
+    public static boolean checkArguments(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args, int length){
+		if(args.length < length){
+			Utils.info(e, pe, discord, "Invalid arguments, use !help for more info!");
 			return false;
 		}
 		return true;
     }
 	
-	public static void error(Group group, User user, String message){
-		group.sendMessage(new MessageBuilder().addString(message).build(Main.api));
-		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(group) + " to " + user.getUsername() + " } " + message);
+	public static void error(MessageChannel channel, User user, String message){
+		channel.sendMessage(new MessageBuilder().appendString(message).build());
+		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(channel) + " to " + user.getUsername() + " } " + message);
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void infoBypass(Group group, String message){
-		infoBypass(group, toMessage(message));
-	}
-	
-	public static void infoBypass(Group group, Message message){
-		group.sendMessage(message);
-		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
+	public static void infoBypass(MessageChannel channel, String message){
+		channel.sendMessage(message);
+		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void info(Group group, String message){
-		info(group, toMessage(message));
-	}
-	
-	public static void info(Group group, Message message){
-		if(group.getServer() != null){
-			if(!Main.serverConfigs.get(group.getServer().getId()).getBoolean("silent")){
-				group.sendMessage(message);
-				Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
-			}else Log.logger.log(Level.INFO, "{SILENT Message sent in " + getGroupLogString(group) + "} " + message);
+	public static void info(MessageChannel channel, String message){
+		if(channel instanceof TextChannel){
+			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
+				channel.sendMessage(message);
+				Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
+			}else Log.logger.log(Level.INFO, "{Silent message sent in " + getGroupLogString(channel) + "} " + message);
 		}else{
-			group.sendMessage(message); 
-			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(group) + "} " + message);
+			channel.sendMessage(message); 
+			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		}
 		Main.messagesSentThisSession++;
 	}
 	
+	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
+		if(e != null){
+			e.respond(message);
+			Log.logger.log(Level.INFO, "{IRC message sent in channel " + e.getChannel().getName() + "} " + message);
+		}else if(pe != null){
+			Main.ircBot.sendIRC().message(toUser(e, pe), message);
+			Log.logger.log(Level.INFO, "{IRC PM sent to user " + toUser(e, pe) + "} " + message);
+		}else
+			if(Main.api.getPrivateChannelById(discord) != null)
+				infoBypass(Main.api.getPrivateChannelById(discord), message);
+			else infoBypass(Main.api.getTextChannelById(discord), message);
+	}
+	
+	public static String toUser(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe){
+		if(pe != null) return pe.getUser().getNick();
+		else if(e != null) return e.getUser().getNick();
+		else return null;
+	}
+	
 	public static Message toMessage(String str){
-		return new MessageBuilder().addString(str).build(Main.api);
+		return new MessageBuilder().appendString(str).build();
 	}
 	
-	public static String getGroupLogString(Group group){
-		String serverName = isPM(group) ? "" : (group.getServer().getName() + "|||");
-		return serverName + group.getName();
-	}
-	
-	public static boolean isPM(Group group){
-		if(group.getServer() == null) return true;
-		return false;
+	public static String getGroupLogString(MessageChannel channel){
+		if(channel instanceof PrivateChannel)
+			return "Private/" + ((PrivateChannel) channel).getUser().getUsername();
+		
+		String serverName = ((TextChannel) channel).getGuild().getName() + "|||";
+		return serverName + ((TextChannel) channel).getName();
 	}
 	
 	public static String removeStartSpaces(String str){
@@ -126,8 +151,8 @@ public class Utils{
 			URL url = new URL(urlString + urlParameters);
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("POST");
-			connection.setConnectTimeout(5000);
-			connection.setReadTimeout(5000);
+			connection.setConnectTimeout(30000);
+			connection.setReadTimeout(30000);
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("charset", "utf-8");
@@ -212,6 +237,23 @@ public class Utils{
         return days + "d" + hours + "h" + minutes + "m" + seconds + "s";
 	}
 	
+	public static long toTime(String date){
+		long time = -1;
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy MM dd HH");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		try{
+			time = sdf.parse(date).getTime();
+		}catch(ParseException e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+		return time;
+	}
+	
+	public static long getCurrentTimeUTC(){
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		return c.getTime().getTime();
+	}
+	
 	public static String fixString(String str){
 		String s = StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeHtml4(str.replaceAll("\\s+", " ").replaceAll("\\<.*?>", "").replaceAll("\"", "")));
 		return s;
@@ -225,6 +267,49 @@ public class Utils{
 	public static String toTwoDigits(int num){
 		if(num < 10) return "0" + num;
 		return String.valueOf(num);
+	}
+	
+	public static String validateTournamentAndTeam(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		boolean valid = false;
+		for(String arg : args) 
+			if(arg.contains("{"))
+				valid = true;
+		
+		if(!valid){Utils.info(e, pe, discord, "Invalid team name!"); return "";}
+		
+		String tournamentName = "";
+		int o = 0;
+		
+		for(int i = 0; i < args.length; i++) 
+			if(args[i].contains("{")){o = i; break;} 
+			else tournamentName += args[i] + " ";
+		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
+		
+		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return "";}
+		
+		String teamName = "";
+		
+		for(int i = o; i < args.length; i++) 
+			if(args[i].contains("}")){
+				teamName += args[i].replace("}", "").replace("}", "") + " ";
+				break;
+			}else teamName += args[i].replace("{", "") + " ";
+		
+		if(teamName.length() == 0){Utils.info(e, pe, discord, "Invalid team name!"); return "";}
+		
+		return teamName.substring(0, teamName.length() - 1) + "|" + tournamentName.substring(0, tournamentName.length() - 1);
+	}
+	
+	public static void sleep(int ms){
+		try{
+			Thread.sleep(ms);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+	
+	public static void deleteMessage(MessageChannel channel, Message m){
+		if(channel instanceof TextChannel) m.deleteMessage();
 	}
 	
 }

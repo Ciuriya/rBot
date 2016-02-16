@@ -1,9 +1,13 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.utils.InviteUtil;
 
 public class JoinServerCommand extends GlobalCommand{
 
@@ -18,12 +22,20 @@ public class JoinServerCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
+	public void onCommand(MessageReceivedEvent e, String[] args){
 		if(!Utils.checkArguments(e, args, 1)) return;
+		
 		if(args[0].startsWith("https://discord.gg/"))
 			args[0] = args[0].replace("https://discord.gg/", "");
-		Main.api.joinInviteId(args[0]);
-		Listener.loadServers(Main.api);
+		
+		InviteUtil.join(args[0], Main.api);
+		Timer t = new Timer();
+		
+		t.schedule(new TimerTask(){
+			public void run(){
+				Listener.loadGuilds(Main.api);
+			}
+		}, 2500);
 	}
 
 }

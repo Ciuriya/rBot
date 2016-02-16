@@ -36,27 +36,18 @@
   </build>
   <repositories>
     <repository>
-      <id>projectlombok.org</id>
-      <url>http://projectlombok.org/mavenrepo</url>
-    </repository>
-    <repository>
       <id>central</id>
       <name>Central Repository</name>
       <url>https://repo.maven.apache.org/maven2</url>
     </repository>
     <repository>
-      <id>me.itsghost</id>
-      <url>http://itsghost.me/maven/</url>
+      <id>letece</id>
+      <url>http://lutece.paris.fr/nexus/content/repositories/lutece_third_party</url>
+    </repository>
+    <repository>
+      <id>DV8FromTheWorld</id>
+      <url>https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo</url>
     </repository>
   </repositories>
-  <dependencies>
-    <dependency>
-      <groupId>xyz.gghost-cc</groupId>
-      <artifactId>jdiscord-cc</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/commons-codec-1.10.jar</systemPath>
-    </dependency>
-  </dependencies>
 </project>
 

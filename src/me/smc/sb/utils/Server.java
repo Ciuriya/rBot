@@ -12,10 +12,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
-import me.itsghost.jdiscord.OnlineStatus;
-import me.itsghost.jdiscord.talkable.GroupUser;
-import me.smc.sb.utils.Log;
+import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
+import net.dv8tion.jda.OnlineStatus;
+import net.dv8tion.jda.entities.Guild;
+import net.dv8tion.jda.entities.User;
 
 public class Server{
 
@@ -71,35 +72,55 @@ public class Server{
 					}
 				}
 				
-				me.itsghost.jdiscord.Server stomtServer = Main.api.getServerById("118553122904735745");
+				Guild stomtServer = Main.api.getGuildById("118553122904735745");
 				
 				if(message.equalsIgnoreCase("REQUEST_ONLINE_USERS")){
 					String names = "REQUESTED_USERS:";
 					
-					for(GroupUser user : stomtServer.getConnectedClients())
+					for(User user : stomtServer.getUsers())
 						if(user != null && 
-							user.getUser() != null && 
-							user.getUser().getOnlineStatus() != null &&
-							!user.getUser().getOnlineStatus().equals(OnlineStatus.OFFLINE) &&
-							!user.getUser().getOnlineStatus().equals(OnlineStatus.UNKNOWN))
-							names += user.getUser().getUsername() + "`" + user.getUser().getId() + ":";
+							user.getOnlineStatus() != null &&
+							!user.getOnlineStatus().equals(OnlineStatus.OFFLINE) &&
+							!user.getOnlineStatus().equals(OnlineStatus.UNKNOWN))
+							names += user.getUsername() + "`" + user.getId() + ":";
 					
 					sendMessage(names.substring(0, names.length() - 1));
 				}else if(message.startsWith("REQUEST_ID:")){
 					String name = message.replace("REQUEST_ID:", "");
 					
-					if(stomtServer.getGroupUserByUsername(name) != null)
-						sendMessage("REQUESTED_ID:" + stomtServer.getGroupUserByUsername(name).getUser().getId());
+					User user = null;
+					for(User u : stomtServer.getUsers())
+						if(u.getUsername().equalsIgnoreCase(name)){
+							user = u;
+							break;
+						}
+					
+					if(user != null) sendMessage("REQUESTED_ID:" + user.getId());
 				}else if(message.startsWith("REQUEST_NAME:")){
 					String id = message.replace("REQUEST_NAME:", "");
 					
-					if(stomtServer.getGroupUserById(id) != null)
-						sendMessage("REQUESTED_NAME:" + stomtServer.getGroupUserById(id).getUser().getUsername());
+					User user = null;
+					for(User u : stomtServer.getUsers())
+						if(u.getId().equalsIgnoreCase(id)){
+							user = u;
+							break;
+						}
+					
+					if(user != null)
+						sendMessage("REQUESTED_NAME:" + user.getUsername());
+				}else if(message.startsWith("EXECIRC")){
+					String msg = "";
+					String[] args = message.split(" ");
+					for(int i = 1; i < args.length; i++)
+						msg += " " + args[i];
+					msg = msg.substring(1);
+					
+					IRCCommand.handleCommand(null, null, null, msg);
 				}else if(message.contains(":")){
 					String[] split = message.split(":");
 					
 					if(Main.api.getUserById(split[0]) != null){
-						Utils.infoBypass(Main.api.getUserById(split[0]).getGroup(), "Your verification code is " + split[1]); 	
+						Utils.infoBypass(Main.api.getUserById(split[0]).getPrivateChannel(), "Your verification code is " + split[1]); 	
 					}
 				}
 				

@@ -1,10 +1,10 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.MessageBuilder;
-import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class ListPermsCommand extends GlobalCommand{
 
@@ -19,19 +19,38 @@ public class ListPermsCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
+		
 		String user = "";
 		for(String arg : args)
 			user += " " + arg;
 		user = user.substring(1);
+		
 		MessageBuilder builder = new MessageBuilder();
-		builder.addString("```Permissions for " + user + "\n");
-		for(Permissions perm : Permissions.values())
-			builder.addString(perm.name() + " (" + Permissions.hasPerm(e.getServer().getGroupUserByUsername(user), perm) + ")\n");
-		builder.addString("```");
-		Utils.infoBypass(e.getGroup(), builder.build(Main.api).getMessage());
+		
+		builder.appendString("```Permissions for " + user + "\n");
+		
+		User u = null;
+		for(User gUser : e.getGuild().getUsers())
+			if(gUser.getUsername().equalsIgnoreCase(user)){
+				u = gUser;
+				break;
+			}
+		
+		if(u == null){
+			Utils.error(e.getChannel(), e.getAuthor(), " Invalid user!");
+			return;
+		}
+		
+		for(Permissions perm : Permissions.values()){
+			boolean allowed = e.isPrivate() ? Permissions.check(u, perm) : Permissions.hasPerm(u, e.getTextChannel(), perm);
+			builder.appendString(perm.name() + " (" + allowed + ")\n");
+		}
+		
+		builder.appendString("```");
+		Utils.infoBypass(e.getChannel(), builder.build().getContent());
 	}
 
 }

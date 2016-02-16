@@ -38,25 +38,19 @@
   </build>
   <dependencies>
   	<dependency>
-  		<groupId>xyz.gghost</groupId>
-  		<artifactId>jdiscord</artifactId>
- 	 	<version>2.1.1</version>
-  		<scope>compile</scope>
-	</dependency>
+   		<groupId>net.dv8tion</groupId>
+    	<artifactId>JDA</artifactId>
+    	<version>1.2.2_139</version>
+    </dependency>
   	<dependency>
   		<groupId>org.apache.commons</groupId>
   		<artifactId>commons-lang3</artifactId>
   		<version>3.4</version>
   	</dependency>
-  	<dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>0.9.2</version>
-    </dependency>
     <dependency>
 		<groupId>org.json</groupId>
 		<artifactId>json</artifactId>
-		<version>20151123</version>
+		<version>20150729</version>
 	</dependency>
 	<dependency>
     	<groupId>org.java-websocket</groupId>
@@ -66,14 +60,7 @@
 	<dependency>
     	<groupId>com.neovisionaries</groupId>
     	<artifactId>nv-websocket-client</artifactId>
-    	<version>1.19</version>
-	</dependency>
-	<dependency>
-    	<groupId>xyz.gghost-cc</groupId>
-    	<artifactId>jdiscord-cc</artifactId>
-    	<version>1.0</version>
-    	<scope>system</scope>
-    	<systemPath>${project.basedir}/commons-codec-1.10.jar</systemPath>
+    	<version>1.16</version>
 	</dependency>
 	<dependency>
 		<groupId>com.google.code.gson</groupId>
@@ -90,21 +77,20 @@
 		<artifactId>slf4j-nop</artifactId>
 		<version>1.7.13</version>
 	</dependency>
-
   </dependencies>
   <repositories>
-    <repository>
-        <id>projectlombok.org</id>
-        <url>http://projectlombok.org/mavenrepo</url>
-    </repository>
     <repository>
         <id>central</id>
         <name>Central Repository</name>
         <url>https://repo.maven.apache.org/maven2</url>
     </repository>
-	<repository>
-  		<id>me.itsghost</id>
-  		<url>http://itsghost.me/maven/</url>
-	</repository>
+    <repository>
+        <id>letece</id>
+        <url>http://lutece.paris.fr/nexus/content/repositories/lutece_third_party</url>
+    </repository>
+    <repository>
+        <id>DV8FromTheWorld</id>
+        <url>https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo</url>
+    </repository>
   </repositories>
 </project>

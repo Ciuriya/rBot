@@ -1,31 +1,61 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.smc.sb.missingapi.MessageHistory;
+import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageHistory;
+import net.dv8tion.jda.entities.Message;
+import net.dv8tion.jda.entities.PrivateChannel;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class CleanCommand extends GlobalCommand{
 
 	public CleanCommand(){
 		super(Permissions.MANAGE_MESSAGES, 
-			  " - Cleans the last messages sent by the bot, or everyone", 
+			  " - Cleans the last messages sent by everyone or a specific user", 
 			  "{prefix}clean\nThis command cleans n amount of messages in the channel\n\n" +
-			  "----------\nUsage\n----------\n{prefix}clean {amount} (all) - Removes n amount of messages sent by the bot (or everyone if all)\n\n" + 
+			  "----------\nUsage\n----------\n{prefix}clean {amount} (@user) - Removes n amount of messages sent by everyone (or by user on mention)\n\n" + 
 		      "----------\nAliases\n----------\nThere are no aliases.",  
 			  false, 
 			  "clean");
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
+		
 		int amount = Integer.valueOf(args[0]);
-		boolean force = false;
-		if(args.length >= 2 && args[1].equalsIgnoreCase("all")) force = true;
-		int cleared = MessageHistory.getHistory(e.getGroup().getId()).deleteLastMessages(amount, force);
-		Utils.info(e.getGroup(), "Cleared " + cleared + " messages!");
+		User cleanUser = null;
+		
+		if(args.length >= 2 && args[1].contains("@") && e.getTextChannel() != null)
+			for(User u : e.getTextChannel().getUsers())
+				if(u.getUsername().equalsIgnoreCase(args[1].substring(1))){
+					cleanUser = u;
+				}
+		
+		if(amount > 100) amount = 100;
+		else if(amount < 1) amount = 1;
+		
+		MessageHistory history = null;
+				
+		if(e.getChannel() instanceof PrivateChannel)
+			history = new MessageHistory(Main.api, e.getPrivateChannel());
+		else history = new MessageHistory(Main.api, e.getTextChannel());
+		
+		int cleared = 0;
+		
+		for(Message message : history.retrieve(amount))
+			if(cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getId())){
+				message.deleteMessage();
+				cleared++;
+			}else if(cleanUser == null){
+				message.deleteMessage();
+				cleared++;
+			}
+		
+		Utils.info(e.getChannel(), "Cleared " + cleared + " messages!");
 	}
 
 }

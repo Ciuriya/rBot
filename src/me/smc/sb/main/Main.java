@@ -13,34 +13,28 @@ import java.util.logging.Level;
 
 import org.pircbotx.PircBotX;
 
-import me.itsghost.jdiscord.DiscordAPI;
-import me.itsghost.jdiscord.DiscordBuilder;
-import me.itsghost.jdiscord.exception.BadUsernamePasswordException;
-import me.itsghost.jdiscord.exception.DiscordFailedToConnectException;
-import me.itsghost.jdiscord.exception.NoLoginDetailsException;
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
+import me.smc.sb.multi.Tournament;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Server;
+import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.JDA;
+import net.dv8tion.jda.JDABuilder;
 
 public class Main{
 	
-	//set perm for commands
 	//read suggestions
-	//edit com?
 	//!createlist {list name} !addlist {list name} {text} !listprint {list name}
 	//clean specific user
 	//yt stats
-	//refactor commands
 	//cooldown on commands instead of pure lockdown IMPORTANT
-	//add recent plays to osu shit?
-	//better help
 	
 	private static String discordEmail, discordPassword, osuUser, osuPassword;
-	public static DiscordAPI api;
-	public static PircBotX ircBot;
+	public static JDA api;
+	public static PircBotX ircBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
@@ -48,6 +42,10 @@ public class Main{
 	private static Server server;
 	
 	public static void main(String[] args){
+		new Main();
+	}
+	
+	public Main(){
 		bootTime = System.currentTimeMillis();
 		Log.init(new File(".").getAbsolutePath());
 		
@@ -67,16 +65,11 @@ public class Main{
 		osuUser = login.getValue("osuuser");
 		osuPassword = login.getValue("osupass");
 		
-		try{
-			api = new DiscordBuilder(discordEmail, discordPassword).build().login();
-		}catch(Exception e){
-			e.printStackTrace();
-			return;
-		}
-		
-		server = new Server("104.131.103.44", 1234, 1235);
-		
 		login();
+		
+		server = new Server(login.getValue("STwebIP"), 
+				            login.getInt("STwebPortIn"),
+				            login.getInt("STwebPortOut"));
 		
 		Thread thread = new Thread(new Runnable(){
 			public void run(){
@@ -85,16 +78,32 @@ public class Main{
 		});
 		thread.start();
 		
+		Tournament.loadTournaments();
+		
+		IRCCommand.registerCommands();
 		loadIRC();
 	}
 	
-	public static void login(){
-		api.getEventManager().registerListener(new Listener(api));
-		api.setAllowLogMessages(false);
+	private void login(){
+		try{
+			Listener l = new Listener();
+			api = new JDABuilder(discordEmail, discordPassword).addListener(l).buildBlocking();
+			l.setAPI(api);
+			Listener.loadGuilds(api);
+		}catch(Exception e){
+			e.printStackTrace();
+			return;
+		}
 	}
 	
-	public static void loadIRC(){
-		IRCCommand.registerCommands();
+	private void loadIRC(){
+		if(ircBot != null){
+			ircBot.stopBotReconnect();
+			while(ircBot.isConnected())
+				try{Thread.sleep(100);
+				}catch(InterruptedException e){}
+			ircBot = null;
+		}
 		
 		ircBot = new PircBotX(new org.pircbotx.Configuration.Builder<PircBotX>()
 				  .setName(osuUser)
@@ -106,6 +115,7 @@ public class Main{
 		
 		try{
 			ircBot.startBot();
+			loadIRC();
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not start irc bot!");
 		}
@@ -114,7 +124,7 @@ public class Main{
 	public static void stop(int code){
 		server.stop();
 		writeCodes(code);
-		api.stop();
+		api.shutdown();
 		System.exit(0);
 	}
 	
@@ -125,12 +135,12 @@ public class Main{
 		else return prefix;
 	}
 	
-	public static void keepAlive(){
+	private void keepAlive(){
 		File f = new File("keepalive.txt");
 		write("" + System.currentTimeMillis(), f);
 	}
 	
-	public static void write(String str, File f){
+	private static void write(String str, File f){
 		BufferedWriter bw = null;
 		try{
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
@@ -142,56 +152,45 @@ public class Main{
 		}
 	}
 	
-	public static void writeCodes(int retCode){
+	private static void writeCodes(int retCode){
 		File f = new File("codes.txt");
 		write(retCode + "", f);
 	}
 	
-	public static void checkForDisconnections(){
+	private void checkForDisconnections(){
 		while(true){
 	        try{
-	            Field requestManager = api.getClass().getDeclaredField("requestManager");
-	            requestManager.setAccessible(true);
-	            Object requestManagerObj = requestManager.get(api);
+	            Field wsc = api.getClass().getDeclaredField("client");
+	            wsc.setAccessible(true);
+	            Object wscObj = wsc.get(api);
 
-	            Field socketClient = requestManagerObj.getClass().getDeclaredField("socketClient");
-	            socketClient.setAccessible(true);
-	            Object socketClientObj = socketClient.get(requestManagerObj);
-
-	            Field readyPoll = socketClientObj.getClass().getDeclaredField("readyPoll");
-	            readyPoll.setAccessible(true);
-	            Object readyPollObj = readyPoll.get(socketClientObj);
-
-	            Field thread = readyPollObj.getClass().getDeclaredField("thread");
+	            Field thread = wscObj.getClass().getDeclaredField("keepAliveThread");
 	            thread.setAccessible(true);
-	            Object threadObj = thread.get(readyPollObj);
+	            Object threadObj = thread.get(wscObj);
+
 	            if(threadObj instanceof Thread){
-	            	Thread t = (Thread) threadObj;
-	            	t.join();
-	            	Log.logger.log(Level.INFO, "jDiscord lost connection! Logging back in...");
-	                while(true){
-	                    try{
-	                        api = new DiscordBuilder(discordEmail, discordPassword).build().login();
-	                        login();
-	                        break;
-	                    }catch(NoLoginDetailsException e){
-	                        Log.logger.log(Level.INFO, "No login details provided! Please give an email and password in the config file.");
-	                        System.exit(0);
-	                    }catch(BadUsernamePasswordException e){
-	                    	Log.logger.log(Level.INFO, "It seems that our password has changed since last login.");
-	                        System.exit(0);
-	                    }catch(DiscordFailedToConnectException e){
-	                    	Log.logger.log(Level.INFO, "We failed to connect to the Discord API. Do you have internet connection?"); 
-	                        Thread.sleep(10000);
-	                    }
-	                }
+	            	((Thread) threadObj).join();
+	            	reconnect();
 	            }
-	        }catch(Exception ex){
-	        	Log.logger.log(Level.INFO, "If you see this message, please report it to the developer. Reflection failure on disconnection checks!");
-	            ex.printStackTrace();
+	        }catch(Exception e){
+	        	Log.logger.log(Level.INFO, "Reflection failure on disconnection checks, please report this to the developer!");
+	            Log.logger.log(Level.SEVERE, e.getMessage(), e);
 	        }	
 		}
 	}
 	
+	private void reconnect(){
+    	Log.logger.log(Level.INFO, "JDA lost connection!");
+        while(true){
+            try{
+            	Log.logger.log(Level.INFO, "Attempting to reconnect to JDA...");
+                login();
+                break;
+            }catch(Exception e){
+                Log.logger.log(Level.INFO, "Unable to reconnect! Trying again in 30 seconds...");
+                Utils.sleep(30000);
+            }
+        }
+	}
 	
 }

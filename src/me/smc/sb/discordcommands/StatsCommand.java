@@ -1,13 +1,13 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.OnlineStatus;
-import me.itsghost.jdiscord.Server;
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.MessageBuilder;
-import me.itsghost.jdiscord.talkable.GroupUser;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.OnlineStatus;
+import net.dv8tion.jda.entities.Guild;
+import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class StatsCommand extends GlobalCommand{
 
@@ -22,27 +22,33 @@ public class StatsCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
-		int servers = Main.api.getAvailableServers().size();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		
+		int servers = Main.api.getGuilds().size();
 		int users = 0, connected = 0;
-		for(Server s : Main.api.getAvailableServers()){
-			users += s.getConnectedClients().size();
-			for(GroupUser user : s.getConnectedClients()){
-				OnlineStatus status = user.getUser().getOnlineStatus();
+		
+		for(Guild guild : Main.api.getGuilds()){
+			users += guild.getUsers().size();
+			
+			for(User user : guild.getUsers()){
+				OnlineStatus status = user.getOnlineStatus();
 				if(status == OnlineStatus.ONLINE || status == OnlineStatus.AWAY)
-					connected += 1;
+					connected++;
 			}
 		}
+		
 		MessageBuilder builder = new MessageBuilder();
+		
 		long uptime = System.currentTimeMillis() - Main.bootTime;
-		builder.addString("```Connected to " + servers + " servers!\n") 
-			   .addString("There are " + users + " total users (" + connected + " connected) in those servers!\n")
-			   .addString("Uptime: " + Utils.toDuration(uptime) + "\n")
-			   .addString("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
-			   .addString("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
-			   .addString("Commands used since startup: " + Main.commandsUsedThisSession + "```");
-		Utils.infoBypass(e.getGroup(), builder.build(Main.api).getMessage());
+		builder.appendString("```Connected to " + servers + " servers!\n") 
+			   .appendString("There are " + users + " total users (" + connected + " connected) in those servers!\n")
+			   .appendString("Uptime: " + Utils.toDuration(uptime) + "\n")
+			   .appendString("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
+			   .appendString("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
+			   .appendString("Commands used since startup: " + Main.commandsUsedThisSession + "```");
+		
+		Utils.infoBypass(e.getChannel(), builder.build().getContent());
 	}
 
 }

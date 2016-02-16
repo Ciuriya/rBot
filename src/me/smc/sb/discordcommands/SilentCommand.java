@@ -1,10 +1,10 @@
 package me.smc.sb.discordcommands;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class SilentCommand extends GlobalCommand{
 
@@ -19,11 +19,12 @@ public class SilentCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args) {
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args) {
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
+		
 		if(!args[0].equalsIgnoreCase("true") && !args[0].equalsIgnoreCase("false")) return;
-		Configuration cfg = Main.serverConfigs.get(e.getServer().getId());
+		Configuration cfg = Main.serverConfigs.get(e.getGuild().getId());
 		cfg.writeValue("silent", args[0].toLowerCase());
 	}
 	

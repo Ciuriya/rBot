@@ -100,10 +100,10 @@ public class Configuration{
 		return list;
 	}
 	
-	public void removeFromStringList(String key, String val){
+	public void removeFromStringList(String key, String val, boolean sort){
 		ArrayList<String> list = getStringList(key), refilled = new ArrayList<String>();
 		for(String str : list) if(!str.equalsIgnoreCase(val)) refilled.add(str);
-		writeStringList(key, refilled);
+		writeStringList(key, refilled, sort);
 	}
 	
 	
@@ -115,9 +115,9 @@ public class Configuration{
 		return "";
 	}
 	
-	public void writeStringList(String key, ArrayList<String> list){
+	public void writeStringList(String key, ArrayList<String> list, boolean sort){
 		PrintWriter pw = null;
-		Collections.sort(list);
+		if(sort) Collections.sort(list);
 		try{
 			pw = new PrintWriter(new BufferedWriter(new FileWriter(configFile, false)));
 			boolean started = false;
@@ -143,10 +143,10 @@ public class Configuration{
 		}
 	}
 	
-	public void appendToStringList(String key, String val){
+	public void appendToStringList(String key, String val, boolean sort){
 		ArrayList<String> list = getStringList(key);
 		list.add(val);
-		writeStringList(key, list);
+		writeStringList(key, list, sort);
 	}
 	
 	public void writeValue(String key, Object object){

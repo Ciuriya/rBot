@@ -3,12 +3,12 @@ package me.smc.sb.discordcommands;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.Message;
-import me.itsghost.jdiscord.message.MessageBuilder;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.entities.Message;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class Command{
 
@@ -44,54 +44,67 @@ public class Command{
 		return desc;
 	}
 	
-	public void execute(UserChatEvent e){
+	public void execute(MessageReceivedEvent e){
 		Thread t = new Thread(new Runnable(){
 			@SuppressWarnings("deprecation")
 			public void run(){
 				MessageBuilder msg = new MessageBuilder();
 				String tempInstruction = instruction;
+				
 				if(delimiters > 0){
-					String message = e.getMsg().getMessage();
+					String message = e.getMessage().getContent();
 					String[] dels = message.split(" ");
 					String path = "cmd-" + name;
 					if(dels.length < delimiters + 1){
-						Utils.error(e.getGroup(), e.getUser().getUser(), " Invalid arguments!");
+						Utils.error(e.getChannel(), e.getAuthor(), " Invalid arguments!");
 						return;
 					}
 					for(int i = 1; i < delimiters + 1; i++) path += "|||" + dels[i];
 					Configuration cfg = Main.serverConfigs.get(server);
 					tempInstruction = cfg.getValue(path);
 				}
+				
 				if(tempInstruction == ""){
-					Utils.error(e.getGroup(), e.getUser().getUser(), " Invalid arguments!");
+					Utils.error(e.getChannel(), e.getAuthor(), " Invalid arguments!");
 					return;
 				}
+				
 				Main.commandsUsedThisSession++;
 				String[] split = tempInstruction.split("\\{");
+				
 				for(String str : split){
 					if(str.contains("}")){
 						String tag = str.split("}")[0];
 						convertTag(e, str.split("}")[0], msg, name, server);
+						
 						if(tag.startsWith("delay=")) msg = new MessageBuilder();
+						
 						if(str.split("}").length > 1)
-							msg.addString(str.split("}")[1]);
-					}else msg.addString(str);	
+							msg.appendString(str.split("}")[1]);
+						
+					}else msg.appendString(str);	
 				}
-				Message m = msg.build(Main.api);
-				if(m.toString().startsWith(" "))
-					m.setMessage(Utils.removeStartSpaces(m.getMessage()));
-				Utils.infoBypass(e.getGroup(), m.getMessage());
+				
+				Message m = msg.build();
+				if(m.getContent().startsWith(" "))
+					m = new MessageBuilder().appendString(Utils.removeStartSpaces(m.getContent())).build();
+				
+				Utils.infoBypass(e.getChannel(), m.getContent());
+				
 				ArrayList<Thread> sThreads = new ArrayList<Thread>();
-				if(threads.containsKey(e.getServer().getId())) sThreads = threads.get(e.getServer().getId());
+				if(threads.containsKey(e.getGuild().getId())) sThreads = threads.get(e.getGuild().getId());
 				sThreads.remove(Thread.currentThread());
-				threads.put(e.getServer().getId(), sThreads);
+				threads.put(e.getGuild().getId(), sThreads);
+				
 				Thread.currentThread().stop();
 			}
 		});
+		
 		ArrayList<Thread> sThreads = new ArrayList<Thread>();
-		if(threads.containsKey(e.getServer().getId())) sThreads = threads.get(e.getServer().getId());
+		if(threads.containsKey(e.getGuild().getId())) sThreads = threads.get(e.getGuild().getId());
 		sThreads.add(t);
-		threads.put(e.getServer().getId(), sThreads);
+		threads.put(e.getGuild().getId(), sThreads);
+		
 		t.start();
 	}
 	
@@ -112,21 +125,23 @@ public class Command{
 		return server;
 	}
 	
-	public static void convertTag(UserChatEvent e, String tag, MessageBuilder msg, String name, String server){
+	public static void convertTag(MessageReceivedEvent e, String tag, MessageBuilder msg, String name, String server){
 		switch(tag){
-			case "user": msg.addUserTag(e.getUser(), e.getGroup()); return;
+			case "user": msg.appendMention(e.getAuthor()); return;
 			case "increment": 
 				Configuration cfg = Main.serverConfigs.get(server);
 				int incNum = cfg.getInt("cmd-" + name + "-increment") + 1;
-				msg.addString(incNum + "");
+				msg.appendString(incNum + "");
 				cfg.writeValue("cmd-" + name + "-increment", incNum);
 				return;
 			case "nextdel": return;
 			default: break;
 		}
+		
 		if(tag.startsWith("delay=")){
 			int length = Utils.stringToInt(tag.replace("delay=", ""));
-			Utils.infoBypass(e.getGroup(), msg.build(Main.api).getMessage());
+			Utils.infoBypass(e.getChannel(), msg.build().getContent());
+			
 			try{Thread.sleep(length);
 			}catch(Exception e1){
 				e1.printStackTrace();
@@ -139,7 +154,7 @@ public class Command{
 		ArrayList<String> list = cfg.getStringList("commands");
 		if(!list.contains(name)){
 			list.add(name);
-			cfg.writeStringList("commands", list);
+			cfg.writeStringList("commands", list, true);
 		}
 		if(desc != null && desc != "") cfg.writeValue("cmd-" + name + "-desc", desc);
 		if(delimiters > 0) cfg.writeValue("cmd-" + name + "-del", delimiters);
@@ -151,7 +166,7 @@ public class Command{
 		ArrayList<String> list = cfg.getStringList("commands");
 		if(list.contains(name)){
 			list.remove(name);
-			cfg.writeStringList("commands", list);
+			cfg.writeStringList("commands", list, true);
 		}
 		if(delimiters > 0){
 			for(String line : new ArrayList<String>(cfg.getLines()))

@@ -12,15 +12,16 @@ import java.util.TimerTask;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import me.itsghost.jdiscord.Server;
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.Message;
-import me.itsghost.jdiscord.message.MessageBuilder;
-import me.itsghost.jdiscord.talkable.Group;
 import me.smc.sb.main.Main;
-import me.smc.sb.missingapi.MessageHistory;
+import me.smc.sb.multi.Map;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.MessageHistory;
+import net.dv8tion.jda.entities.Guild;
+import net.dv8tion.jda.entities.Message;
+import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
 
@@ -47,8 +48,8 @@ public class OsuTrackCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args){
-		e.getMsg().deleteMessage();
+	public void onCommand(MessageReceivedEvent e, String[] args){
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		String user = "", mUser = "";
@@ -60,23 +61,23 @@ public class OsuTrackCommand extends GlobalCommand{
 		user = user.substring(1);
 		mUser = user + "&m=" + mode;
 		
-		if(isTracked(e.getServer().getId(), mUser)){
-			stopTracking(e.getServer().getId(), mUser);
-			Main.serverConfigs.get(e.getServer().getId()).writeValue("track-update-group", e.getGroup().getId());
-			Utils.info(e.getGroup(), "Stopped tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
+		if(isTracked(e.getGuild().getId(), mUser)){
+			stopTracking(e.getGuild().getId(), mUser);
+			Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-update-group", e.getTextChannel().getId());
+			Utils.info(e.getChannel(), "Stopped tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
 			return;
 		}
 		
-		startTracking(e.getServer().getId(), mUser);
-		Main.serverConfigs.get(e.getServer().getId()).writeValue("track-update-group", e.getGroup().getId());
-		Utils.info(e.getGroup(), "Started tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
+		startTracking(e.getGuild().getId(), mUser);
+		Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-update-group", e.getTextChannel().getId());
+		Utils.info(e.getChannel(), "Started tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
 	}
 	
 	private void loadTrackedPlayers(){
-    	for(Server s : Main.api.getAvailableServers()){
-    		Configuration sCfg = new Configuration(new File(s.getId() + ".txt"));
+    	for(Guild guild : Main.api.getGuilds()){
+    		Configuration sCfg = new Configuration(new File(guild.getId() + ".txt"));
     		ArrayList<String> list = sCfg.getStringList("tracked-players");
-    		trackedPlayers.put(s.getId(), list);
+    		trackedPlayers.put(guild.getId(), list);
     	}
 	}
 	
@@ -112,7 +113,7 @@ public class OsuTrackCommand extends GlobalCommand{
 								for(String player : new ArrayList<String>(players)){
 									boolean skip = false;
 									
-									Group group = Main.api.getServerById(server).getGroupById(Main.serverConfigs.get(server).getValue("track-update-group"));
+									TextChannel channel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue("track-update-group"));
 									
 									if(!updatedUsers.contains(player)){
 										updateUser(player);
@@ -125,12 +126,12 @@ public class OsuTrackCommand extends GlobalCommand{
 									
 									if(msg != ""){
 										String spacing = "\n\n\n\n\n";
-										MessageHistory history = MessageHistory.getHistory(group.getId());
-										Message last = history == null ? null : history.getLastMessage();
+										MessageHistory history = new MessageHistory(Main.api, channel);
+										Message last = history == null ? null : history.retrieve(1).get(0);
 										
-										if(last == null || !last.getSender().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
+										if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
 										
-										Utils.info(group, spacing + msg);
+										Utils.info(channel, spacing + msg);
 									}
 									
 									players.remove(player);
@@ -169,7 +170,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		MessageBuilder builder = new MessageBuilder();
 		
-		builder.addString("—————————————————\nMost recent plays for " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
+		builder.appendString("â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”\nMost recent plays for " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
 		
 		post = "[" + post + "]";
 		
@@ -183,7 +184,7 @@ public class OsuTrackCommand extends GlobalCommand{
 				String play = "";
 				if(!dateGreaterThanDate(lastUpdate, obj.getString("date"))){
 					if(obj.getString("rank").equalsIgnoreCase("F")) continue;
-					JSONObject map = getMapInfo(obj.getInt("beatmap_id"));
+					JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"));
 					play += "\n\n" + obj.getString("date") + "\n";
 					play += map.getString("artist") + " - " + map.getString("title") + " [" +
 					        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
@@ -194,14 +195,14 @@ public class OsuTrackCommand extends GlobalCommand{
 					        "\nMap: http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + " | Status: " + 
 					        analyzeMapStatus(map.getInt("approved")) + "\nPlayer: http://osu.ppy.sh/u/" + obj.getInt("user_id");
 					completeMessage = true;
-					builder.addString(play);
+					builder.appendString(play);
 				}
 			}
 		}
 		
-		builder.addString("\n");
+		builder.appendString("\n");
 		
-		if(completeMessage) lastUpdateMessageSent.put(player, builder.build(Main.api).getMessage());
+		if(completeMessage) lastUpdateMessageSent.put(player, builder.build().getContent());
 	}
 	
 	private String analyzeMapStatus(int code){
@@ -311,7 +312,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		ArrayList<String> list = trackedPlayers.get(server);
 		if(!list.contains(player)) list.add(player);
 		trackedPlayers.put(server, list);
-		Main.serverConfigs.get(server).writeStringList("tracked-players", list);
+		Main.serverConfigs.get(server).writeStringList("tracked-players", list, true);
 		calculateRefreshRate();
 	}
 	
@@ -320,14 +321,8 @@ public class OsuTrackCommand extends GlobalCommand{
 		ArrayList<String> list = trackedPlayers.get(server);
 		if(list.contains(player)) list.remove(player);
 		trackedPlayers.put(server, list);
-		Main.serverConfigs.get(server).writeStringList("tracked-players", list);
+		Main.serverConfigs.get(server).writeStringList("tracked-players", list, true);
 		calculateRefreshRate();
-	}
-
-	private JSONObject getMapInfo(int id){
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
-		if(post == "" || !post.contains("{")) return null;
-		return new JSONArray("[" + post + "]").getJSONObject(0);
 	}
 	
 	enum Mods{

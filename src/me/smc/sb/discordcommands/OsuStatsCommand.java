@@ -1,15 +1,17 @@
 package me.smc.sb.discordcommands;
 
+import java.io.File;
+
 import org.json.JSONObject;
 
-import me.itsghost.jdiscord.events.UserChatEvent;
-import me.itsghost.jdiscord.message.MessageBuilder;
-import me.smc.sb.main.Main;
+import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class OsuStatsCommand extends GlobalCommand{
 
-	public static String apiKey = "07aa8c33fcfaef704aa81f66a5803bfc6f4ba6da";
+	public static String apiKey = "";
 	
 	public OsuStatsCommand(){
 		super(null, 
@@ -20,6 +22,7 @@ public class OsuStatsCommand extends GlobalCommand{
 			  "----------\nAliases\n----------\nThere are no aliases.",
 			  true, 
 			  "osustats");
+		apiKey = new Configuration(new File("login.txt")).getValue("apiKey");
 	}
 	
 	private static int getCountryRank(int userId, String mode){
@@ -31,7 +34,9 @@ public class OsuStatsCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(UserChatEvent e, String[] args) {
+	public void onCommand(MessageReceivedEvent e, String[] args) {
+		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		
 		String user = "";
 		String mode = "0";
 		for(int i = 0; i < args.length; i++)
@@ -50,17 +55,17 @@ public class OsuStatsCommand extends GlobalCommand{
 		double totalAcc = (double) jsonResponse.getInt("count300") * 300.0 + (double) jsonResponse.getInt("count100") * 100.0 + (double) jsonResponse.getInt("count50") * 50.0;
 		totalAcc = (totalAcc / ((double) (jsonResponse.getInt("count300") + jsonResponse.getInt("count100") + jsonResponse.getInt("count50")) * 300.0)) * 100.0;
 		
-		builder.addString("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
-		       .addString("\n\nFrom " + jsonResponse.getString("country"))
-		       .addString("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + " Country #" + Utils.veryLongNumberDisplay(getCountryRank(userId, mode)))
-		       .addString("\n" + jsonResponse.getDouble("pp_raw") + "pp")
-		       .addString("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
-		       .addString("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
-		       .addString("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
-		       .addString("\n" + totalAcc + "% total accuracy")
-		       .addString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + jsonResponse.getInt("count_rank_s") + " S) (" + jsonResponse.getInt("count_rank_a") + " A)");
-		builder.addString("```");
-		Utils.infoBypass(e.getGroup(), builder.build(Main.api));
+		builder.appendString("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
+		       .appendString("\n\nFrom " + jsonResponse.getString("country"))
+		       .appendString("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + " Country #" + Utils.veryLongNumberDisplay(getCountryRank(userId, mode)))
+		       .appendString("\n" + jsonResponse.getDouble("pp_raw") + "pp")
+		       .appendString("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
+		       .appendString("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
+		       .appendString("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
+		       .appendString("\n" + totalAcc + "% total accuracy")
+		       .appendString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + jsonResponse.getInt("count_rank_s") + " S) (" + jsonResponse.getInt("count_rank_a") + " A)");
+		builder.appendString("```");
+		Utils.infoBypass(e.getChannel(), builder.build().getContent());
 	}
 	
 }
