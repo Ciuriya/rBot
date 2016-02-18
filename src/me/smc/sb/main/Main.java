@@ -90,8 +90,10 @@ public class Main{
 			api = new JDABuilder(discordEmail, discordPassword).addListener(l).buildBlocking();
 			l.setAPI(api);
 			Listener.loadGuilds(api);
+			Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
+			IRCChatListener.yieldPMs = new Configuration(new File("login.txt")).getBoolean("yield-pms");
 		}catch(Exception e){
-			e.printStackTrace();
+			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;
 		}
 	}

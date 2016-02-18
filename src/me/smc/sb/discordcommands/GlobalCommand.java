@@ -90,6 +90,7 @@ public abstract class GlobalCommand{
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
 		commands.add(new PollIRCCommand());
+		commands.add(new ReceivePMCommand());
 		commands.add(new SearchCommand());
 		commands.add(new SetPrefixCommand());
 		commands.add(new SilentCommand());
@@ -97,6 +98,7 @@ public abstract class GlobalCommand{
 		commands.add(new StopCommand());
 		commands.add(new SuggestCommand());
 		commands.add(new UserInfoCommand());
+		commands.add(new VoiceCommand());
 	}
 	
 	public abstract void onCommand(MessageReceivedEvent e, String[] args);

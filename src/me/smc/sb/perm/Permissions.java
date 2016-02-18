@@ -43,7 +43,7 @@ public enum Permissions{
 		if(perm == null) return true;
 		if(GlobalAdmins.isAdmin(user)) return true;
 		if(perm.equals(IRC_BOT_ADMIN) && GlobalAdmins.isIRCAdmin(user)) return true;
-		if(perm.equals(BOT_ADMIN)) return true;
+		if(perm.equals(BOT_ADMIN) && GlobalAdmins.isAdmin(user)) return true;
 		return false;
 	}
 	

@@ -14,7 +14,8 @@ public class HelpCommand extends GlobalCommand{
 		      "----------\nUsage\n----------\n{prefix}help - Lists all commands\n" + 
 			  "{prefix}help {command} - Shows the help page for the specific command\n\n" +
 		      "----------\nAliases\n----------\nThere are no aliases.", 
-			  true, "help");
+			  true, 
+			  "help");
 	}
 
 	@Override

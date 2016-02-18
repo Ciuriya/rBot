@@ -8,14 +8,19 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.irccommands.IRCCommand;
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
+import me.smc.sb.utils.Utils;
 
 public class IRCChatListener extends ListenerAdapter<PircBotX>{
 
+	public static boolean yieldPMs = false;
+	
 	@Override
 	public void onPrivateMessage(PrivateMessageEvent<PircBotX> e){
 		String message = e.getMessage();
 		Log.logger.log(Level.INFO, "PM/" + e.getUser().getNick() + ": " + message);
+		if(yieldPMs) Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "PM/" + e.getUser().getNick() + ": " + message);
 		if(message.startsWith("!")) IRCCommand.handleCommand(null, e, null, message.substring(1));
 	}
 	

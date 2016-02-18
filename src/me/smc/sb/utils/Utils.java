@@ -24,6 +24,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Tournament;
 import net.dv8tion.jda.MessageBuilder;
+import net.dv8tion.jda.Permission;
 import net.dv8tion.jda.entities.Message;
 import net.dv8tion.jda.entities.MessageChannel;
 import net.dv8tion.jda.entities.PrivateChannel;
@@ -309,7 +310,9 @@ public class Utils{
 	}
 	
 	public static void deleteMessage(MessageChannel channel, Message m){
-		if(channel instanceof TextChannel) m.deleteMessage();
+		if(channel instanceof TextChannel)
+			if(((TextChannel) channel).checkPermission(Main.api.getSelfInfo(), Permission.MESSAGE_MANAGE))
+				m.deleteMessage();
 	}
 	
 }

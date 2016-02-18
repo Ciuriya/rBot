@@ -55,7 +55,13 @@ public class Listener implements EventListener{
 	        	else if(cmd == null) return;
 	        	
 	        	cmd.execute(e);
+	        	return;
 	    	}
+	    	
+	    	if(dm)
+	    		Utils.infoBypass(e.getChannel(), "It seems you are having a problem... use ~/help to get a list of commands!" +
+	    									     "\nIf you have any issues, feel free to contact Smc!" +
+	    									     "\nContact: PM, server: https://discord.gg/0phGqtqLYwSzCdwn");
 		}
     }
     
@@ -69,7 +75,6 @@ public class Listener implements EventListener{
     	}
     	
     	GlobalCommand.registerCommands();
-    	Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
     }
 	
 }

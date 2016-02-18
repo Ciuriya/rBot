@@ -46,7 +46,7 @@ public class CleanCommand extends GlobalCommand{
 		
 		int cleared = 0;
 		
-		for(Message message : history.retrieve(amount))
+		for(Message message : history.retrieve(100)){
 			if(cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getId())){
 				message.deleteMessage();
 				cleared++;
@@ -54,6 +54,8 @@ public class CleanCommand extends GlobalCommand{
 				message.deleteMessage();
 				cleared++;
 			}
+			if(cleared >= amount) break;
+		}
 		
 		Utils.info(e.getChannel(), "Cleared " + cleared + " messages!");
 	}
