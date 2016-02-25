@@ -82,11 +82,12 @@ public abstract class GlobalCommand{
 		commands.add(new BrainPowerCommand());
 		commands.add(new CleanCommand());
 		commands.add(new EditCmdCommand());
+		commands.add(new ExecIRCCommand());
 		commands.add(new HaltCommand());
 		commands.add(new HelpCommand());
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
-		commands.add(new ExecIRCCommand());
+		commands.add(new MessageIRCCommand());
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
 		commands.add(new PollIRCCommand());

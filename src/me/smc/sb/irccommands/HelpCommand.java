@@ -17,7 +17,8 @@ public class HelpCommand extends IRCCommand{
 	}
 
 	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		String msg = "```Commands";
+		String msg = "Commands";
+		if(discord != null) msg = "```" + msg;
 		
 		for(IRCCommand ic : IRCCommand.commands){
 			if(!Permissions.hasPerm(Utils.toUser(e, pe), ic.getPerm())) continue;
@@ -30,12 +31,18 @@ public class HelpCommand extends IRCCommand{
 			msg = msg.substring(0, msg.length() - 2) + ic.getUsage() +  "- " + ic.getDescription();
 		}
 		
-		if(discord == null)
+		if(discord == null){
+			int count = 0;
 			for(String part : msg.split("=")){
 				if(part.isEmpty()) continue;
+				if(count >= 5){
+					Utils.info(e, pe, discord, "And " + (msg.split("=").length - count) + " more commands!");
+					break;
+				}
 				Utils.info(e, pe, discord, part);
+				count++;
 			}
-		else Utils.info(e, pe, discord, msg + "```");
+		}else Utils.info(e, pe, discord, msg + "```");
 	}
 
 }

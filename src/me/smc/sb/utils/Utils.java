@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -36,7 +37,7 @@ public class Utils{
 
     public static boolean checkArguments(MessageReceivedEvent e, String[] args, int length){
 		if(args.length < length){
-			Utils.error(e.getChannel(), e.getAuthor(), " Invalid arguments!");
+			Utils.error(e.getChannel(), e.getAuthor(), "Invalid arguments!");
 			return false;
 		}
 		return true;
@@ -313,6 +314,10 @@ public class Utils{
 		if(channel instanceof TextChannel)
 			if(((TextChannel) channel).checkPermission(Main.api.getSelfInfo(), Permission.MESSAGE_MANAGE))
 				m.deleteMessage();
+	}
+	
+	public static int fetchRandom(int min, int max){
+		return new Random().nextInt(max - min + 1) + min;
 	}
 	
 }

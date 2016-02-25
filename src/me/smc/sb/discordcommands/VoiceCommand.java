@@ -1,30 +1,31 @@
 package me.smc.sb.discordcommands;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.CustomFilePlayer;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.audio.player.FilePlayer;
-import net.dv8tion.jda.audio.player.Player;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.entities.VoiceChannel;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class VoiceCommand extends GlobalCommand{
 
-	private static Player player = null;
+	//make this not static since the object is only instantiated once?
+	private static CustomFilePlayer player = null;
 	private static LinkedList<File> loadedSongs;
 	private static LinkedList<String> queuedSongs;
-	private static boolean paused = false;
 	private static int volume = 100;
-	private static Thread musicThread = null;
+	private static MessageReceivedEvent lastEv;
+	private static String[] lastArgs;
 	
 	public VoiceCommand(){ //queue has separate command please
 		super(null, 
@@ -41,12 +42,16 @@ public class VoiceCommand extends GlobalCommand{
 			  "voice", "v", "music");
 		loadedSongs = new LinkedList<>();
 		queuedSongs = new LinkedList<>();
+		lastEv = null;
+		lastArgs = null;
 	}
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
+		
+		e.getJDA().setDebug(true);
 		
 		switch(args[0]){
 			case "join": joinVoiceChannel(e, args); break;
@@ -59,6 +64,13 @@ public class VoiceCommand extends GlobalCommand{
 			case "clear": clearQueue(e, args); break;
 			case "skip": skipSong(e, args); break;
 		}
+		
+		Timer time = new Timer();
+		time.schedule(new TimerTask(){
+			public void run(){
+				e.getJDA().setDebug(false);
+			}
+		}, 500);
 	}
 	
 	private void joinVoiceChannel(MessageReceivedEvent e, String[] args){
@@ -86,7 +98,7 @@ public class VoiceCommand extends GlobalCommand{
 			Utils.info(e.getChannel(), "Already connected to this channel!");
 			return;
 		}else if(Main.api.getAudioManager().isConnected()){
-			if(player != null && player.isPlaying()) player.pause();
+			if(player != null) player.stop(false);
 			Main.api.getAudioManager().moveAudioConnection(vChannel);
 		}else if(Main.api.getAudioManager().isAttemptingToConnect()){
 			Main.api.getAudioManager().closeAudioConnection();
@@ -99,7 +111,7 @@ public class VoiceCommand extends GlobalCommand{
 	private void leaveVoiceChannel(MessageReceivedEvent e, String[] args){
 		if(!Permissions.hasPerm(e.getAuthor(), e.getTextChannel(), Permissions.BOT_ADMIN)) return;
 	
-		if(player != null && player.isPlaying()) player.pause();
+		if(player != null) player.stop(false);
 		Main.api.getAudioManager().closeAudioConnection();
 		
 		queuedSongs.clear();
@@ -120,7 +132,7 @@ public class VoiceCommand extends GlobalCommand{
 		
 		queuedSongs.add(args[1] + "||" + e.getAuthor().getId());
 		
-		if(player == null) startPlaying(e, args);
+		if(player == null || (queuedSongs.size() == 1 && !player.isPlaying())) startPlaying(e, args);
 		
 		Utils.info(e.getChannel(), "Queued your song, there are currently " + (queuedSongs.size() <= 1 ? "no" : queuedSongs.size() - 1) + " songs ahead!");
 	}
@@ -132,14 +144,11 @@ public class VoiceCommand extends GlobalCommand{
 		Utils.info(e.getChannel(), "Cleared the player's queue!");
 	}
 	
-	@SuppressWarnings("deprecation")
 	private void skipSong(MessageReceivedEvent e, String[] args){
 		if(!Permissions.hasPerm(e.getAuthor(), e.getTextChannel(), Permissions.MANAGE_SERVER)) return;
 		if(!checkPlayer(e)) return;
 		
-		if(player != null) player.stop();
-		player = null;
-		musicThread.stop();
+		if(player != null) player.stop(false);
 		startPlaying(e, args);
 		
 		Utils.info(e.getChannel(), "Skipping current song...");
@@ -150,25 +159,29 @@ public class VoiceCommand extends GlobalCommand{
 		if(!Permissions.hasPerm(e.getAuthor(), e.getTextChannel(), Permissions.VOICE_MUTE_MEMBERS)) return;
 		if(!Main.api.getAudioManager().isConnected()){Utils.infoBypass(e.getChannel(), "You are not connected to a voice channel!"); return;}
 		
-		if(queuedSongs.size() == 0){Utils.infoBypass(e.getChannel(), "There is no song to play!"); return;}
+		if(queuedSongs.size() == 0 && !player.isPaused()){Utils.infoBypass(e.getChannel(), "There is no song to play!"); return;}
 		
 		Thread t = new Thread(new Runnable(){
 			@SuppressWarnings("deprecation")
 			public void run(){
-				if(player == null){
+				if(player != null && player.isPaused()){
+					player.play();
+					Utils.info(e.getChannel(), "Player resumed!");
+				}else if(player == null || player.isStopped()){
 					File audioFile = null;
 					
+					lastEv = e;
+					lastArgs = args;
+					
 					try{
-						paused = true;
 						String song = queuedSongs.getFirst();
 						queuedSongs.removeFirst();
 						
 						User requester = Main.api.getUserById(song.split("\\|\\|")[1]);
 						audioFile = fetchMP3(e, song.split("\\|\\|")[0]);
-						
-						if(player != null) player.stop();
 							
-						player = new FilePlayer(audioFile);
+						if(player == null) player = new CustomFilePlayer(audioFile);
+						else player.setAudioFile(audioFile);
 						
 						player.setVolume((float) ((float) volume / 100.0));
 							
@@ -182,67 +195,26 @@ public class VoiceCommand extends GlobalCommand{
 						Utils.infoBypass(e.getChannel(), 
 										"Now playing **" + songName + 
 										"**\nAs requested by " + requester.getUsername());
-						
-						paused = false;
 					}catch(Exception ex){
 						Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
 						Utils.infoBypass(e.getChannel(), "Could not start playing!\n" +
 								                         "Error: " + ex.getMessage());
-						paused = false;
 						if(audioFile != null){
 							loadedSongs.remove(audioFile);
 							if(audioFile != null) audioFile.delete();
 						}
 					}	
-				}else if(player.isPaused()){
-					paused = false;
-					player.play();
-					Utils.info(e.getChannel(), "Player resumed!");
-				}else if(player.isStopped()){
-					player.restart();
-					Utils.info(e.getChannel(), "Player restarted!");
 				}
 				
 				Thread.currentThread().stop();
 			}
 		});
 		
-		musicThread = t;
-		
-		Thread th = new Thread(new Runnable(){
-			@SuppressWarnings("deprecation")
-			public void run(){
-				while(isPlaying() || paused) Utils.sleep(1000);
-				
-				if(player != null) player.stop();
-				player = null;
-				musicThread.stop();
-				startPlaying(e, args);
-				Thread.currentThread().stop();
-			}
-		});
-		
-		musicThread.start();
-		th.start();
+		t.start();
 	}
 	
-	private boolean isPlaying(){
-		try{
-	        Field audioConn = Main.api.getAudioManager().getClass().getDeclaredField("audioConnection");
-	        audioConn.setAccessible(true);
-	        Object audioConnObj = audioConn.get(Main.api.getAudioManager());
-
-	        Field speakingField = audioConnObj.getClass().getDeclaredField("speaking");
-	        speakingField.setAccessible(true);
-	        Object speakingObj = speakingField.get(audioConnObj);	
-	        
-	        if(speakingObj instanceof Boolean)
-	        	return (Boolean) speakingObj;
-	        
-	        return false;
-		}catch(Exception e){
-			return false;
-		}
+	public void nextSong(){
+		if(queuedSongs.size() > 0) startPlaying(lastEv, lastArgs);
 	}
 	
 	private File fetchMP3(MessageReceivedEvent e, String url) throws Exception{
@@ -290,8 +262,7 @@ public class VoiceCommand extends GlobalCommand{
 		if(!Permissions.hasPerm(e.getAuthor(), e.getTextChannel(), Permissions.VOICE_MUTE_MEMBERS)) return;
 		
 		if(!checkPlayer(e)) return;
-		
-		paused = true;
+
 		player.pause();
 		Utils.info(e.getChannel(), "Player paused!");
 	}
@@ -301,9 +272,7 @@ public class VoiceCommand extends GlobalCommand{
 		
 		if(!checkPlayer(e)) return;
 		
-		paused = false;
-		
-		player.stop();
+		player.stop(false);
 		
 		Utils.info(e.getChannel(), "Player stopped!");
 	}

@@ -69,8 +69,7 @@ public abstract class IRCCommand{
 				return;
 			}
 		
-		Utils.info(e, pe, discord, "This is not a command! ");
-		Utils.info(e, pe, discord, "Use !help if you are lost!");
+		Utils.info(e, pe, discord, "This is not a command! Use !help if you are lost!");
 	}
 	
 	public static void registerCommands(){
@@ -84,12 +83,31 @@ public abstract class IRCCommand{
 		commands.add(new DeleteMapPoolCommand());
 		commands.add(new DeleteTeamCommand());
 		commands.add(new DeleteMatchCommand());
+		commands.add(new ListMapPoolsCommand());
+		commands.add(new ListMapsInPoolCommand());
+		commands.add(new ListTournamentsCommand());
+		commands.add(new ListTeamsCommand());
+		commands.add(new ListTeamPlayersCommand());
+		commands.add(new ListMatchesCommand());
+		commands.add(new ListGamesCommand());
+		commands.add(new ListMatchAdminsCommand());
+		commands.add(new AddMatchAdminCommand());
+		commands.add(new RemoveMatchAdminCommand());
+		commands.add(new SetScoreV2Command());
 		commands.add(new AddMapToPoolCommand());
 		commands.add(new RemoveMapFromPoolCommand());
+		commands.add(new SetMapPoolSheetCommand());
 		commands.add(new SetTeamPlayersCommand());
 		commands.add(new SetMatchPoolCommand());
 		commands.add(new SetMatchTeamsCommand());
+		commands.add(new SetBestOfCommand());
 		commands.add(new SetMatchScheduleCommand());
+		commands.add(new ForceStopGameCommand());
+		commands.add(new JoinMatchCommand());
+		commands.add(new RandomCommand());
+		commands.add(new SelectMapCommand());
+		commands.add(new InvitePlayerCommand());
+		commands.add(new BanMapCommand());
 	}
 	
 	public abstract void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);

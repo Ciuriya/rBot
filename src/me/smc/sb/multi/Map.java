@@ -12,8 +12,8 @@ public class Map{
 	private int category; //0 - NM, 1 - FM, 2 - HD, 3 - HR, 4 - DT, 5 - TB
 	
 	public Map(String exported){
-		this.url = exported.split("||")[0];
-		this.category = Utils.stringToInt(exported.split("||")[1]);
+		this.url = exported.split("\\|\\|")[0];
+		this.category = Utils.stringToInt(exported.split("\\|\\|")[1]);
 	}
 	
 	public Map(String url, int category){
@@ -30,7 +30,7 @@ public class Map{
 	}
 	
 	public int getBeatmapID(){
-		String cutURL = url.split("sh/b/")[1];
+		String cutURL = url.split("sh\\/b\\/")[1];
 		if(cutURL.contains("?"))
 			cutURL = cutURL.substring(0, cutURL.indexOf("?") + 1);
 		

@@ -37,16 +37,8 @@
   <repositories>
     <repository>
       <id>central</id>
-      <name>Central Repository</name>
-      <url>https://repo.maven.apache.org/maven2</url>
-    </repository>
-    <repository>
-      <id>letece</id>
-      <url>http://lutece.paris.fr/nexus/content/repositories/lutece_third_party</url>
-    </repository>
-    <repository>
-      <id>DV8FromTheWorld</id>
-      <url>https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo</url>
+      <name>bintray</name>
+      <url>http://jcenter.bintray.com</url>
     </repository>
   </repositories>
 </project>

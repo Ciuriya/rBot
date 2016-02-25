@@ -2,14 +2,13 @@ package me.smc.sb.discordcommands;
 
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
-import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class ExecIRCCommand extends GlobalCommand{
 
 	public ExecIRCCommand(){
-		super(Permissions.IRC_BOT_ADMIN, 
+		super(null, 
 			  " - Executes an irc command", 
 			  "{prefix}execIRC\nThis command executes an IRC specific command.\n\n" +
 			  "----------\nUsage\n----------\n{prefix}execIRC {command} - Executes the IRC command\n\n" +

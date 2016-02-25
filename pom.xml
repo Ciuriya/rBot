@@ -40,7 +40,7 @@
   	<dependency>
    		<groupId>net.dv8tion</groupId>
     	<artifactId>JDA</artifactId>
-    	<version>1.2.2_139</version>
+    	<version>1.2.2_175</version>
     </dependency>
   	<dependency>
   		<groupId>org.apache.commons</groupId>
@@ -79,18 +79,10 @@
 	</dependency>
   </dependencies>
   <repositories>
-    <repository>
-        <id>central</id>
-        <name>Central Repository</name>
-        <url>https://repo.maven.apache.org/maven2</url>
-    </repository>
-    <repository>
-        <id>letece</id>
-        <url>http://lutece.paris.fr/nexus/content/repositories/lutece_third_party</url>
-    </repository>
-    <repository>
-        <id>DV8FromTheWorld</id>
-        <url>https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo</url>
-    </repository>
+	<repository>
+    	<id>central</id>
+    	<name>bintray</name>
+    	<url>http://jcenter.bintray.com</url>
+	</repository>
   </repositories>
 </project>

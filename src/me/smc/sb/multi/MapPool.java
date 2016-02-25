@@ -1,6 +1,7 @@
 package me.smc.sb.multi;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import me.smc.sb.utils.Configuration;
@@ -8,8 +9,9 @@ import me.smc.sb.utils.Configuration;
 public class MapPool{
 
 	private int poolNum;
+	private String sheetUrl;
 	private Tournament tournament;
-	private List<Map> maps;
+	private LinkedList<Map> maps;
 	
 	public MapPool(Tournament t){
 		this(t, t.incrementPoolCount(), true);
@@ -18,7 +20,8 @@ public class MapPool{
 	public MapPool(Tournament t, int poolNum, boolean append){
 		this.tournament = t;
 		this.poolNum = poolNum;
-		maps = new ArrayList<>();
+		this.sheetUrl = "";
+		maps = new LinkedList<>();
 		
 		save(append);
 		t.addPool(this);
@@ -28,8 +31,27 @@ public class MapPool{
 		return poolNum;
 	}
 	
+	public List<Map> getMaps(){
+		return maps;
+	}
+	
+	public String getSheetUrl(){
+		return sheetUrl;
+	}
+	
+	public void setSheetUrl(String sheetUrl){
+		this.sheetUrl = sheetUrl;
+	}
+	
 	public void addMap(Map map){
 		maps.add(map);
+	}
+	
+	public Map findTiebreaker(){
+		for(Map map : maps)
+			if(map.getCategory() == 5)
+				return map;
+		return maps.getLast();
 	}
 	
 	public void removeMap(String url){
@@ -48,6 +70,7 @@ public class MapPool{
 		}
 		
 		config.deleteKey("pool-" + poolNum + "-maps");
+		config.deleteKey("pool-" + poolNum + "-sheet");
 	}
 	
 	public void save(boolean append){
@@ -59,8 +82,10 @@ public class MapPool{
 			for(Map map : maps)
 				exportedMaps.add(map.export());
 			
-			config.writeStringList("pool-" + poolNum + "-maps", exportedMaps, true);
+			config.writeStringList("pool-" + poolNum + "-maps", exportedMaps, false);
 		}
+		
+		config.writeValue("pool-" + poolNum + "-sheet", sheetUrl);
 	}
 	
 }

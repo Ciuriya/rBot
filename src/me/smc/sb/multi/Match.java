@@ -1,16 +1,23 @@
 package me.smc.sb.multi;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import me.smc.sb.main.Main;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Utils;
 
-public class Match{ //resize?
+public class Match{
 
-	private int players, matchNum;
+	private int players, matchNum, bestOf;
 	private Team fTeam, sTeam;
 	private Tournament tournament;
 	private long scheduledDate;
 	private MapPool pool;
+	private Game game;
+	private ArrayList<String> matchAdmins;
 	
 	public Match(Tournament t, int players){
 		this(t, t.incrementMatchCount(), players, true);
@@ -21,9 +28,12 @@ public class Match{ //resize?
 		this.matchNum = matchNum;
 		this.tournament = t;
 		this.scheduledDate = 0;
+		this.bestOf = 5;
 		this.fTeam = null;
 		this.sTeam = null;
 		this.pool = null;
+		this.game = null;
+		this.matchAdmins = new ArrayList<>();
 		
 		save(append);
 		t.addMatch(this);
@@ -49,6 +59,53 @@ public class Match{ //resize?
 		return pool;
 	}
 	
+	public Tournament getTournament(){
+		return tournament;
+	}
+	
+	public int getBestOf(){
+		return bestOf;
+	}
+	
+	public String getLobbyName(){
+		return tournament.getName() + ": (" + fTeam + ") vs (" + sTeam + ")";
+	}
+	
+	public Game getGame(){
+		return game;
+	}
+	
+	public void addMatchAdmin(String admin){
+		if(!matchAdmins.contains(admin))
+			matchAdmins.add(admin);
+	}
+	
+	public void removeMatchAdmin(String admin){
+		if(matchAdmins.contains(admin))
+			matchAdmins.remove(admin);
+	}
+	
+	public boolean isMatchAdmin(String admin){
+		if(admin.length() == 17)
+			if(Permissions.check(Main.api.getUserById(admin), Permissions.IRC_BOT_ADMIN))
+				return true;
+		
+		return matchAdmins.contains(admin);
+	}
+	
+	public ArrayList<String> getMatchAdmins(){
+		return matchAdmins;
+	}
+	
+	public void resize(int players){
+		this.players = players;
+		if(game != null) game.resize();
+	}
+	
+	public void setGame(Game game){
+		this.game = game;
+	}
+	
 	public void setTeams(Team fTeam, Team sTeam){
 		this.fTeam = fTeam;
 		this.sTeam = sTeam;
@@ -56,6 +113,22 @@ public class Match{ //resize?
 	
 	public void setTime(long time){
 		scheduledDate = time;
+		
+		if(scheduledDate < Utils.getCurrentTimeUTC()){
+			delete();
+			return;
+		}
+		
+		Timer t = new Timer();
+		t.schedule(new TimerTask(){
+			public void run(){
+				new Game(Match.this);
+			}
+		}, scheduledDate - Utils.getCurrentTimeUTC());
+	}
+	
+	public void setBestOf(int bestOf){
+		this.bestOf = bestOf;
 	}
 	
 	public void setMapPool(MapPool pool){
@@ -76,6 +149,8 @@ public class Match{ //resize?
 		config.deleteKey("match-" + matchNum + "-team2");
 		config.deleteKey("match-" + matchNum + "-date");
 		config.deleteKey("match-" + matchNum + "-pool");
+		config.deleteKey("match-" + matchNum + "-bestof");
+		config.deleteKey("match-" + matchNum + "-admins");
 	}
 	
 	public void save(boolean append){
@@ -92,6 +167,9 @@ public class Match{ //resize?
 		config.writeValue("match-" + matchNum + "-date", scheduledDate);
 		
 		if(pool != null) config.writeValue("match-" + matchNum + "-pool", pool.getPoolNum());
+		
+		config.writeValue("match-" + matchNum + "-bestof", bestOf);
+		config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
 	}
 	
 }

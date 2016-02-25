@@ -17,6 +17,7 @@ public class Tournament{
 	private List<Team> teams;
 	private List<Match> matches;
 	private List<MapPool> pools;
+	private boolean scoreV2 = false;
 	
 	public Tournament(String name){
 		this(name, true);
@@ -36,8 +37,28 @@ public class Tournament{
 		return name;
 	}
 	
+	public boolean isScoreV2(){
+		return scoreV2;
+	}
+	
+	public void setScoreV2(boolean scoreV2){
+		this.scoreV2 = scoreV2;
+	}
+	
 	public Configuration getConfig(){
 		return new Configuration(new File("tournament-" + name + ".txt"));
+	}
+	
+	public List<Team> getTeams(){
+		return teams;
+	}
+	
+	public List<Match> getMatches(){
+		return matches;
+	}
+	
+	public List<MapPool> getMapPools(){
+		return pools;
 	}
 	
 	public void addPool(MapPool pool){
@@ -111,6 +132,7 @@ public class Tournament{
 	
 	public void save(boolean append){
 		if(append) new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", name, true);
+		getConfig().writeValue("scoreV2", scoreV2);
 	}
 	
 	public void delete(){
@@ -141,6 +163,8 @@ public class Tournament{
 			for(String sTournament : savedTournaments){
 				Tournament tournament = new Tournament(sTournament, false);
 				
+				tournament.scoreV2 = tournament.getConfig().getBoolean("scoreV2");
+				
 				tournament.loadPools();
 				tournament.loadTeams();
 				tournament.loadMatches();
@@ -160,6 +184,9 @@ public class Tournament{
 				
 				if(config.getInt("match-" + matchNum + "-pool") != 0)
 					match.setMapPool(getPool(config.getInt("match-" + matchNum + "-pool")));
+				
+				if(config.getInt("match-" + matchNum + "-date") != 0)
+					match.setTime(config.getInt("match-" + matchNum + "-date"));
 				
 				matches.add(match);
 			}
@@ -201,7 +228,7 @@ public class Tournament{
 			for(String poolNum : savedPools){
 				MapPool pool = new MapPool(this, Utils.stringToInt(poolNum), false);
 				
-				List<String> maps = config.getStringList("pools-" + poolNum + "-maps");
+				List<String> maps = config.getStringList("pool-" + poolNum + "-maps");
 				if(maps.size() != 0)
 					for(String map : maps)
 						pool.addMap(new Map(map));

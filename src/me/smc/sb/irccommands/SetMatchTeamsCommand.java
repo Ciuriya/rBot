@@ -30,13 +30,12 @@ public class SetMatchTeamsCommand extends IRCCommand{
 		fullArgs = fullArgs.substring(0, fullArgs.length() - 1);
 		
 		for(String arg : fullArgs.split("\\{")[2].split(" ")){
-			teamName2 += arg;
+			teamName2 += arg + " ";
 			if(arg.contains("}")){
-				teamName2 = teamName2.substring(0, teamName2.length() - 1);
+				teamName2 = teamName2.substring(0, teamName2.length() - 2);
 				break;
 			}
 		}
-		teamName2 = teamName2.substring(0, teamName2.length() - 1);
 		
 		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
 		if(t.getTeam(teamName2) == null){

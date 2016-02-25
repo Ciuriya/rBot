@@ -21,13 +21,6 @@ public class SetMatchScheduleCommand extends IRCCommand{
 	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
 		if(!Utils.checkArguments(e, pe, discord, args, 6)) return;
 		
-		boolean valid = false;
-		for(String arg : args) 
-			if(arg.contains("{"))
-				valid = true;
-		
-		if(!valid){Utils.info(e, pe, discord, "Invalid match number!"); return;}
-		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length - 5; i++) tournamentName += args[i] + " ";
@@ -46,7 +39,7 @@ public class SetMatchScheduleCommand extends IRCCommand{
 		t.getMatch(Utils.stringToInt(args[args.length - 5])).setTime(time);
 		t.getMatch(Utils.stringToInt(args[args.length - 5])).save(false);
 		
-		Utils.info(e, pe, discord, "Set match #" + args[args.length - 5] + " to " + date + "!");
+		Utils.info(e, pe, discord, "Set match #" + args[args.length - 5] + " to " + date);
 	}
 	
 }
