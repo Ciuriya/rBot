@@ -44,7 +44,15 @@ public class MapPool{
 	}
 	
 	public void addMap(Map map){
-		maps.add(map);
+		if(!mapExists(map)) maps.add(map);
+	}
+	
+	public boolean mapExists(Map map){
+		int bId = map.getBeatmapID();
+		for(Map m : maps)
+			if(m.getBeatmapID() == bId)
+				return true;
+		return false;
 	}
 	
 	public Map findTiebreaker(){

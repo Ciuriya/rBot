@@ -54,8 +54,8 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 
 	private boolean verifyGameCreationPM(PrivateMessageEvent<PircBotX> e){
 		if(e.getUser().getNick().equalsIgnoreCase("BanchoBot") &&
-		   e.getMessage().matches("^Created the tournament match")){
-			String trim = e.getMessage().replace("Created the tournament match", "");
+		   e.getMessage().contains("Created the tournament match")){
+			String trim = e.getMessage().replace("Created the tournament match ", "");
 			String[] trimSplit = trim.split(" ");
 			String mpLink = trimSplit[0];
 			String gameName = "";
@@ -64,9 +64,10 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 			for(int i = 1; i < trimSplit.length; i++)
 				gameName += trimSplit[i] + " ";
 			gameName = gameName.substring(0, gameName.length() - 1);
-			
-			tournamentName = gameName.split(": (")[0];
-			
+
+			tournamentName = gameName.split(" ")[0];
+			tournamentName = tournamentName.substring(0, tournamentName.length() - 1);
+
 			Tournament t = Tournament.getTournament(tournamentName);
 			if(t == null) return false;
 			

@@ -78,12 +78,12 @@ public class Utils{
 	
 	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
 		if(e != null){
-			e.respond(message);
+			e.getChannel().send().message(message);
 			Log.logger.log(Level.INFO, "{IRC message sent in channel " + e.getChannel().getName() + "} " + message);
 		}else if(pe != null){
 			Main.ircBot.sendIRC().message(toUser(e, pe), message);
 			Log.logger.log(Level.INFO, "{IRC PM sent to user " + toUser(e, pe) + "} " + message);
-		}else
+		}else if(discord != null)
 			if(Main.api.getPrivateChannelById(discord) != null)
 				infoBypass(Main.api.getPrivateChannelById(discord), message);
 			else infoBypass(Main.api.getTextChannelById(discord), message);
@@ -241,7 +241,7 @@ public class Utils{
 	
 	public static long toTime(String date){
 		long time = -1;
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy MM dd HH");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy MM dd HH mm");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try{
 			time = sdf.parse(date).getTime();
@@ -295,11 +295,11 @@ public class Utils{
 			if(args[i].contains("}")){
 				teamName += args[i].replace("}", "").replace("}", "") + " ";
 				break;
-			}else teamName += args[i].replace("{", "") + " ";
+			}else teamName += args[i].replace("\\{", "") + " ";
 		
 		if(teamName.length() == 0){Utils.info(e, pe, discord, "Invalid team name!"); return "";}
 		
-		return teamName.substring(0, teamName.length() - 1) + "|" + tournamentName.substring(0, tournamentName.length() - 1);
+		return teamName.substring(0, teamName.length() - 1).replaceAll("\\{", "") + "|" + tournamentName.substring(0, tournamentName.length() - 1);
 	}
 	
 	public static void sleep(int ms){
@@ -318,6 +318,20 @@ public class Utils{
 	
 	public static int fetchRandom(int min, int max){
 		return new Random().nextInt(max - min + 1) + min;
+	}
+	
+	public static String takeOffExtrasInBeatmapURL(String url){
+		if(url.endsWith("m=0") || url.endsWith("m=1") || url.endsWith("m=2") || url.endsWith("m=3"))
+			return url.substring(0, url.length() - 4);
+		return url;
+	}
+	
+	public static String removeExcessiveSpaces(String message){
+		if(message.contains("  ")){
+			message = message.replaceAll("  ", " ");
+			if(message.contains("  ")) return removeExcessiveSpaces(message);
+			else return message;
+		}else return message;
 	}
 	
 }

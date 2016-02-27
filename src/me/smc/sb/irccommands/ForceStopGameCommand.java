@@ -29,7 +29,7 @@ public class ForceStopGameCommand extends IRCCommand{
 		for(Tournament tournament : Tournament.tournaments)
 			for(Match match : new ArrayList<Match>(tournament.getMatches()))
 				if(match.getGame() != null && match.getGame().getMpNum() == Utils.stringToInt(args[0])){
-					if(match.isMatchAdmin(user == null ? discord : user)){
+					if(match.isMatchAdmin(user)){
 						match.getGame().stop();
 						
 						Utils.info(e, pe, discord, "Game #" + Utils.stringToInt(args[0]) + " was force stopped!");

@@ -187,8 +187,6 @@ public class Tournament{
 				
 				if(config.getInt("match-" + matchNum + "-date") != 0)
 					match.setTime(config.getInt("match-" + matchNum + "-date"));
-				
-				matches.add(match);
 			}
 	}
 	
@@ -215,8 +213,6 @@ public class Tournament{
 					
 					team.setPlayers(lPlayers);
 				}
-
-				teams.add(team);
 			}
 	}
 	
@@ -233,7 +229,8 @@ public class Tournament{
 					for(String map : maps)
 						pool.addMap(new Map(map));
 				
-				pools.add(pool);
+				if(config.getValue("pool-" + poolNum + "-sheet") != "") 
+					pool.setSheetUrl(config.getValue("pool-" + poolNum + "-sheet"));
 			}
 	}
 	

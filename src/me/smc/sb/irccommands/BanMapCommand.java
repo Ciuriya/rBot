@@ -8,7 +8,6 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Game;
-import me.smc.sb.multi.Player;
 import me.smc.sb.multi.Team;
 import me.smc.sb.utils.Utils;
 
@@ -33,9 +32,11 @@ public class BanMapCommand extends IRCCommand{
 		
 		if(!banningTeams.isEmpty())
 			for(Team team : banningTeams.keySet())
-				for(Player pl : team.getPlayers())
-					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_")))
-						banningTeams.get(team).acceptBan(args[0]);
+				if(team.getPlayers().get(0).getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
+					banningTeams.get(team).acceptBan(args[0]);
+					return;
+				}
+						
 	}
 	
 }

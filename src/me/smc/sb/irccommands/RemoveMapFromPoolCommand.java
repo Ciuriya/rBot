@@ -31,10 +31,13 @@ public class RemoveMapFromPoolCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 2]) == -1){Utils.info(e, pe, discord, "Map pool number needs to be a number!"); return;}
 		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null){Utils.info(e, pe, discord, "The map pool is invalid!"); return;}
 		
-		if(!args[args.length - 1].matches("^https:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
+		String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
+		
+		if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
 			Utils.info(e, pe, discord, "Invalid URL, example format: https://osu.ppy.sh/b/123456");
 			return;
 		}
+		
 		t.getPool(Utils.stringToInt(args[args.length - 2])).removeMap(args[args.length - 1]);
 		t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
 		

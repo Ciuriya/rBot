@@ -32,7 +32,9 @@ public class AddMapToPoolCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 3]) == -1){Utils.info(e, pe, discord, "Map pool number needs to be a number!"); return;}
 		if(t.getPool(Utils.stringToInt(args[args.length - 3])) == null){Utils.info(e, pe, discord, "The map pool is invalid!"); return;}
 		
-		if(!args[args.length - 2].matches("^https:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
+		String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
+		
+		if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
 			Utils.info(e, pe, discord, "Invalid URL, example format: https://osu.ppy.sh/b/123456");
 			return;
 		}
@@ -42,7 +44,7 @@ public class AddMapToPoolCommand extends IRCCommand{
 			return;
 		}
 		
-		Map map = new Map(args[args.length - 2], Utils.stringToInt(args[args.length - 1]));
+		Map map = new Map(url, Utils.stringToInt(args[args.length - 1]));
 		t.getPool(Utils.stringToInt(args[args.length - 3])).addMap(map);
 		t.getPool(Utils.stringToInt(args[args.length - 3])).save(false);
 		

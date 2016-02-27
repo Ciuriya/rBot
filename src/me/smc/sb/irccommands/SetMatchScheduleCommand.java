@@ -12,7 +12,7 @@ public class SetMatchScheduleCommand extends IRCCommand{
 
 	public SetMatchScheduleCommand(){
 		super("Sets a match's scheduled time in UTC.",
-			  "<tournament name> <match num> <yyyy> <MM> <dd> <HH>",
+			  "<tournament name> <match num> <yyyy> <MM> <dd> <HH> <mm> ",
 			  Permissions.IRC_BOT_ADMIN,
 			  "mpsetschedule");
 	}
@@ -23,23 +23,23 @@ public class SetMatchScheduleCommand extends IRCCommand{
 		
 		String tournamentName = "";
 		
-		for(int i = 0; i < args.length - 5; i++) tournamentName += args[i] + " ";
+		for(int i = 0; i < args.length - 6; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
-		if(Utils.stringToInt(args[args.length - 5]) == -1){Utils.info(e, pe, discord, "Match number needs to be a number!"); return;}
-		if(t.getMatch(Utils.stringToInt(args[args.length - 5])) == null){Utils.info(e, pe, discord, "The match is invalid!"); return;}
+		if(Utils.stringToInt(args[args.length - 6]) == -1){Utils.info(e, pe, discord, "Match number needs to be a number!"); return;}
+		if(t.getMatch(Utils.stringToInt(args[args.length - 6])) == null){Utils.info(e, pe, discord, "The match is invalid!"); return;}
 		
 		String date = "";
-		for(int i = args.length - 4; i < args.length; i++)
+		for(int i = args.length - 5; i < args.length; i++)
 			date += args[i] + " ";
 		long time = Utils.toTime(date.substring(0, date.length() - 1));
 		if(time == -1 || time < Utils.getCurrentTimeUTC()){Utils.info(e, pe, discord, "This time is either in the past or invalid!"); return;}
 		
-		t.getMatch(Utils.stringToInt(args[args.length - 5])).setTime(time);
-		t.getMatch(Utils.stringToInt(args[args.length - 5])).save(false);
+		t.getMatch(Utils.stringToInt(args[args.length - 6])).setTime(time);
+		t.getMatch(Utils.stringToInt(args[args.length - 6])).save(false);
 		
-		Utils.info(e, pe, discord, "Set match #" + args[args.length - 5] + " to " + date);
+		Utils.info(e, pe, discord, "Set match #" + args[args.length - 6] + " to " + date);
 	}
 	
 }

@@ -38,9 +38,9 @@ public class InvitePlayerCommand extends IRCCommand{
 			boolean senderAllowed = false, receiverAllowed = false;
 			
 			for(Player pl : team.getPlayers())
-				if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(e.getUser().getNick()))
+				if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(e.getUser().getNick().replaceAll(" ", "_")))
 					senderAllowed = true;
-				else if(pl.getName().equalsIgnoreCase(playerName))
+				else if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(playerName.replaceAll(" ", "_")))
 					receiverAllowed = true;
 			
 			if(senderAllowed && receiverAllowed) allowedInviters.get(team).invitePlayer(playerName);

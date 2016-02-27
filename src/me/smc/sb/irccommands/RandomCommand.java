@@ -34,8 +34,9 @@ public class RandomCommand extends IRCCommand{
 		Utils.info(e, pe, discord, userName + " rolled " + random + "!");
 		
 		if(waitingForRolls.containsKey(userName.replaceAll(" ", "_")) && pe == null && discord == null){
-			waitingForRolls.get(userName.replaceAll(" ", "_")).acceptRoll(userName.replaceAll(" ", "_"), random);
+			Game game = waitingForRolls.get(userName.replaceAll(" ", "_"));
 			waitingForRolls.remove(userName.replaceAll(" ", "_"));
+			game.acceptRoll(userName.replaceAll(" ", "_"), random);
 		}
 	}
 	

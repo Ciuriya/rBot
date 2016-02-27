@@ -103,6 +103,7 @@ public abstract class IRCCommand{
 		commands.add(new SetBestOfCommand());
 		commands.add(new SetMatchScheduleCommand());
 		commands.add(new ForceStopGameCommand());
+		commands.add(new ForceStartGameCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());

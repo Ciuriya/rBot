@@ -19,7 +19,7 @@ public class SelectMapCommand extends IRCCommand{
 		super("Selects a map for a tournament game.",
 			  "<map url OR map #> ",
 			  null,
-			  "select");
+			  "select", "pick");
 		gamesInSelection = new ArrayList<>();
 	}
 
@@ -33,13 +33,15 @@ public class SelectMapCommand extends IRCCommand{
 		if(!gamesInSelection.isEmpty())
 			for(Game game : gamesInSelection)
 				for(Player pl : game.getSelectingTeam().getPlayers())
-					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName)){
-						if(Utils.stringToInt(args[0]) == -1)
-							if(!args[0].matches("^https:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
+					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
+						String url = Utils.takeOffExtrasInBeatmapURL(args[0]);
+						if(Utils.stringToInt(args[0]) == -1){
+							if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
 								Utils.info(e, pe, discord, "Invalid URL, example format: https://osu.ppy.sh/b/123456");
 								return;
 							}
-						game.handleSelect(args[0]);
+						}
+						game.handleSelect(url);
 					}
 	}
 	

@@ -42,7 +42,24 @@ public class HelpCommand extends IRCCommand{
 				Utils.info(e, pe, discord, part);
 				count++;
 			}
-		}else Utils.info(e, pe, discord, msg + "```");
+		}else{
+			msg += "```";
+			
+			if(msg.length() > 2000){
+				int max = (int) Math.ceil((double) msg.length() / 1996.0);
+				
+				for(int i = 0; i < max; i++){
+					String message = "";
+					
+					if(i != 0) message = "```";
+					
+					if(i != max - 1) message += msg.substring(i * 1996, (i + 1) * 1996) + "```";
+					else message += msg.substring(i * 1996, msg.length());
+					
+					Utils.info(e, pe, discord, message);
+				}
+			}else Utils.info(e, pe, discord, msg);
+		}
 	}
 
 }

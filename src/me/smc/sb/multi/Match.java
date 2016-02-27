@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import me.smc.sb.main.Main;
-import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 
@@ -18,6 +16,7 @@ public class Match{
 	private MapPool pool;
 	private Game game;
 	private ArrayList<String> matchAdmins;
+	private Timer scheduledTime;
 	
 	public Match(Tournament t, int players){
 		this(t, t.incrementMatchCount(), players, true);
@@ -68,7 +67,7 @@ public class Match{
 	}
 	
 	public String getLobbyName(){
-		return tournament.getName() + ": (" + fTeam + ") vs (" + sTeam + ")";
+		return tournament.getName() + ": (" + fTeam.getTeamName() + ") vs (" + sTeam.getTeamName() + ")";
 	}
 	
 	public Game getGame(){
@@ -86,15 +85,18 @@ public class Match{
 	}
 	
 	public boolean isMatchAdmin(String admin){
-		if(admin.length() == 17)
-			if(Permissions.check(Main.api.getUserById(admin), Permissions.IRC_BOT_ADMIN))
-				return true;
-		
+		if(admin == null) return true;
 		return matchAdmins.contains(admin);
 	}
 	
 	public ArrayList<String> getMatchAdmins(){
 		return matchAdmins;
+	}
+	
+	public void start(){
+		if(scheduledTime != null) scheduledTime.cancel();
+		
+		new Game(this);
 	}
 	
 	public void resize(int players){
@@ -114,13 +116,15 @@ public class Match{
 	public void setTime(long time){
 		scheduledDate = time;
 		
-		if(scheduledDate < Utils.getCurrentTimeUTC()){
+		if(scheduledDate < Utils.getCurrentTimeUTC() && scheduledDate != 0){
 			delete();
 			return;
 		}
 		
-		Timer t = new Timer();
-		t.schedule(new TimerTask(){
+		if(scheduledDate == 0) return;
+		
+		scheduledTime = new Timer();
+		scheduledTime.schedule(new TimerTask(){
 			public void run(){
 				new Game(Match.this);
 			}
