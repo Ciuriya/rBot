@@ -251,6 +251,14 @@ public class Utils{
 		return time;
 	}
 	
+	public static String toDate(long time){
+		String date = "";
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		date = sdf.format(time);
+		return date;
+	}
+	
 	public static long getCurrentTimeUTC(){
 		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 		return c.getTime().getTime();

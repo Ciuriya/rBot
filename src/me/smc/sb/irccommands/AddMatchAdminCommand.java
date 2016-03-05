@@ -33,6 +33,7 @@ public class AddMatchAdminCommand extends IRCCommand{
 		Match match = t.getMatch(Utils.stringToInt(args[args.length - 2]));
 		
 		match.addMatchAdmin(args[args.length - 1]);
+		match.save(false);
 		
 		Utils.info(e, pe, discord, "Added " + args[args.length - 1] + " to the admins of match #" + match.getMatchNum());
 	}

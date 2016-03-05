@@ -33,6 +33,7 @@ public class RemoveMatchAdminCommand extends IRCCommand{
 		Match match = t.getMatch(Utils.stringToInt(args[args.length - 2]));
 		
 		match.removeMatchAdmin(args[args.length - 1]);
+		match.save(false);
 		
 		Utils.info(e, pe, discord, "Removed " + args[args.length - 1] + " to the admins of match #" + match.getMatchNum());
 	}

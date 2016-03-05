@@ -18,30 +18,24 @@ public class HelpCommand extends IRCCommand{
 
 	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
 		String msg = "Commands";
-		if(discord != null) msg = "```" + msg;
 		
-		for(IRCCommand ic : IRCCommand.commands){
-			if(!Permissions.hasPerm(Utils.toUser(e, pe), ic.getPerm())) continue;
+		if(discord != null){
+			msg = "```" + msg;
 			
-			if(discord != null) msg += "\n\n";
-			else msg += "=";
-			
-			for(String name : ic.getNames())
-				msg += "!" + name + " | ";
-			msg = msg.substring(0, msg.length() - 2) + ic.getUsage() +  "- " + ic.getDescription();
+			for(IRCCommand ic : IRCCommand.commands){
+				if(!Permissions.hasPerm(Utils.toUser(e, pe), ic.getPerm())) continue;
+				
+				if(discord != null) msg += "\n\n";
+				else msg += "=";
+				
+				for(String name : ic.getNames())
+					msg += "!" + name + " | ";
+				msg = msg.substring(0, msg.length() - 2) + ic.getUsage() +  "- " + ic.getDescription();
+			}
 		}
 		
 		if(discord == null){
-			int count = 0;
-			for(String part : msg.split("=")){
-				if(part.isEmpty()) continue;
-				if(count >= 5){
-					Utils.info(e, pe, discord, "And " + (msg.split("=").length - count) + " more commands!");
-					break;
-				}
-				Utils.info(e, pe, discord, part);
-				count++;
-			}
+			Utils.info(e, pe, discord, "[http://osu.tyjoll.com/commands.php You can find the available commands here!]");
 		}else{
 			msg += "```";
 			

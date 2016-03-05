@@ -93,7 +93,7 @@ public class MapPool{
 			config.writeStringList("pool-" + poolNum + "-maps", exportedMaps, false);
 		}
 		
-		config.writeValue("pool-" + poolNum + "-sheet", sheetUrl);
+		if(sheetUrl != "") config.writeValue("pool-" + poolNum + "-sheet", sheetUrl);
 	}
 	
 }

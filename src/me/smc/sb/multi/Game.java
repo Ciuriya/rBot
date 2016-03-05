@@ -1,6 +1,7 @@
 package me.smc.sb.multi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -19,7 +20,7 @@ import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
-public class Game{
+public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 
 	private Match match;
 	private String multiChannel;
@@ -30,13 +31,18 @@ public class Game{
 	private int rollsLeft = 2;
 	private int previousRoll = 0;
 	private int playersChecked = 0;
+	private int roomSize = 0;
 	private boolean mapSelected = false;
 	private boolean fTeamFirst = true;
 	private boolean verifyingMods = false;
 	private boolean waitingForConfirm = false;
+	private boolean fixingLobby = false;
 	private int rematchesAllowed = 1;
 	private List<String> invitesSent;
 	private List<String> playersInRoom;
+	private List<String> captains;
+	private List<String> joinQueue;
+	private java.util.Map<Integer, String> hijackedSlots;
 	private List<Map> bans;
 	private List<Map> mapsPicked;
 	private LinkedList<String> banchoFeedback;
@@ -45,7 +51,7 @@ public class Game{
 	private Map map;
 	private Map previousMap;
 	private Timer mapUpdater;
-	private List<String> captains;
+	private Timer messageUpdater;
 	
 	public Game(Match match){
 		this.match = match;
@@ -57,6 +63,8 @@ public class Game{
 		this.bans = new ArrayList<>();
 		this.mapsPicked = new ArrayList<>();
 		this.captains = new ArrayList<>();
+		this.joinQueue = new ArrayList<>();
+		this.hijackedSlots = new HashMap<>();
 		this.match.setGame(this);
 		
 		setupLobby();
@@ -71,6 +79,25 @@ public class Game{
 		sendMessage("!mp lock");
 		sendMessage("!mp size " + match.getPlayers());
 		sendMessage("!mp set 2 " + (match.getTournament().isScoreV2() ? "4" : "0"));
+		
+		String admins = "";
+		
+		if(!match.getMatchAdmins().isEmpty()){
+			for(String admin : match.getMatchAdmins())
+				admins += admin.replaceAll(" ", "_") + ", ";
+			admins = admins.substring(0, admins.length() - 2);
+			
+			sendMessage("!mp addref " + admins);
+		}
+		
+		roomSize = match.getPlayers();
+		
+		LinkedList<Player> fullList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
+		
+		fullList.addAll(match.getSecondTeam().getPlayers());
+		
+		for(Player pl : fullList)
+			pl.setSlot(-1);
 		
 		captains.add(match.getFirstTeam().getPlayers().get(0).getName().replaceAll(" ", "_"));
 		captains.add(match.getSecondTeam().getPlayers().get(0).getName().replaceAll(" ", "_"));
@@ -116,6 +143,7 @@ public class Game{
 							addNextCaptain(match.getFirstTeam());
 							addNextCaptain(match.getSecondTeam());
 							scheduleNextCaptainInvite();
+							return;
 						}else if(fTeamCaptains == 0) missingTeam = match.getFirstTeam();
 						else if(sTeamCaptains == 0) missingTeam = match.getSecondTeam();
 						else return;
@@ -125,7 +153,7 @@ public class Game{
 					}
 				}
 			}
-		}, 120000);
+		}, 60000);
 	}
 	
 	private void addNextCaptain(Team team){
@@ -135,6 +163,27 @@ public class Game{
 				invitePlayer(pl.getName().replaceAll(" ", "_"));
 				return;
 			}
+		
+		for(Player pl : team.getPlayers())
+			if(captains.contains(pl.getName().replaceAll(" ", "_")) && pl.getSlot() == -1)
+				sendInviteMessages(pl.getName().replaceAll(" ", "_"));
+	}
+	
+	private void messageUpdater(String...messages){
+		messageUpdater(0, messages);
+	}
+	
+	private void messageUpdater(int delay, String...messages){
+		if(messageUpdater != null) messageUpdater.cancel();
+		if(messages == null || messages.length <= 0) return;
+		
+		messageUpdater = new Timer();
+		messageUpdater.scheduleAtFixedRate(new TimerTask(){
+			public void run(){
+				for(String message : messages)
+					sendMessage(message);
+			}
+		}, delay * 1000, 60000);
 	}
 	
 	public void resize(){
@@ -142,24 +191,29 @@ public class Game{
 		//do some shit here I guess?
 	}
 	
+	public void setScores(int fTeamScore, int sTeamScore){
+		this.fTeamPoints = fTeamScore;
+		this.sTeamPoints = sTeamScore;
+	}
+	
 	private void mapSelection(int part){
 		switch(part){
 			case 1:
 				waitingForCaptains = -1;
-				sendMessage("Use !invite <player name> to invite your teammates.");
-				sendMessage("Both captains, please use !random to settle which team goes first.");
+				messageUpdater("Use !invite <player name> to invite your teammates or simply invite them through osu!.",
+							   "Both captains, please use !random to settle which team goes first.");
 				
 				InvitePlayerCommand.allowedInviters.put(match.getFirstTeam(), this);
 				InvitePlayerCommand.allowedInviters.put(match.getSecondTeam(), this);
 				
-				RandomCommand.waitingForRolls.put(match.getFirstTeam().getPlayers().getFirst().getName().replaceAll(" ", "_"), this);
-				RandomCommand.waitingForRolls.put(match.getSecondTeam().getPlayers().getFirst().getName().replaceAll(" ", "_"), this);
+				RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
+				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				break;
 			case 2:
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				sendMessage(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>.");
+				messageUpdater(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>.");
 				SelectMapCommand.gamesInSelection.add(this);
 				
 				startMapUpdater();
@@ -170,8 +224,8 @@ public class Game{
 				if(bans.size() >= 4) mapSelection(4);
 				else{
 					BanMapCommand.banningTeams.put(banningTeam, this);
-					sendMessage(banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
-							   (match.getMapPool().getSheetUrl().length() > 0 ? "[" + match.getMapPool().getSheetUrl() + 
+					messageUpdater(banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
+							   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 							   " You can find the maps here]" : ""));
 				}
 				
@@ -180,8 +234,8 @@ public class Game{
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				sendMessage(selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>." +
-						   (match.getMapPool().getSheetUrl().length() > 0 ? "[" + match.getMapPool().getSheetUrl() + 
+				messageUpdater(selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
+						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
 				
 				SelectMapCommand.gamesInSelection.add(this);
@@ -210,7 +264,10 @@ public class Game{
 	
 	private void changeMap(Map map){
 		sendMessage("!mp map " + map.getBeatmapID() + " 0");
-		
+		sendMessage("!mp mods " + getMod(map));
+	}
+	
+	private String getMod(Map map){
 		String mods = "";
 		
 		switch(map.getCategory()){
@@ -221,7 +278,7 @@ public class Game{
 			default: mods = "None"; break;
 		}
 		
-		sendMessage("!mp mods " + mods);
+		return mods;
 	}
 	
 	public void acceptRoll(String player, int roll){
@@ -237,8 +294,8 @@ public class Game{
 			
 			if(roll == previousRoll){
 				sendMessage("Rolls were equal! Please reroll using !random.");
-				RandomCommand.waitingForRolls.put(match.getFirstTeam().getPlayers().getFirst().getName().replaceAll(" ", "_"), this);
-				RandomCommand.waitingForRolls.put(match.getSecondTeam().getPlayers().getFirst().getName().replaceAll(" ", "_"), this);
+				RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
+				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				rollsLeft = 2;
 				return;
 			}
@@ -246,6 +303,7 @@ public class Game{
 			if(roll > previousRoll) fTeamFirst = fTeam;
 			else fTeamFirst = !fTeam;
 			
+			sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our discord group or to Smc. Thank you!");
 			mapSelection(2);
 		}else previousRoll = roll;
 	}
@@ -268,7 +326,7 @@ public class Game{
 		}else
 			for(Map m : match.getMapPool().getMaps())
 				if(m.getURL().equalsIgnoreCase(ban)){
-					if(m.getCategory() == 5){sendMessage("You cannot select the tiebreaker!"); return;}
+					if(m.getCategory() == 5){sendMessage("You cannot ban the tiebreaker!"); return;}
 					toBan = m;
 					break;
 				}
@@ -276,6 +334,12 @@ public class Game{
 		if(toBan != null && !bans.contains(toBan)){
 			BanMapCommand.banningTeams.remove(banningTeam);
 			bans.add(toBan);
+			
+			JSONObject map = Map.getMapInfo(toBan.getBeatmapID());
+			
+			sendMessage(getMod(toBan).replace("None", "Nomod") + " pick: " + map.getString("artist") + " - " + map.getString("title") + 
+						" [" + map.getString("version") + "] was banned!");
+			
 			mapSelection(3);
 		}else sendMessage("Invalid ban!");
 	}
@@ -295,9 +359,27 @@ public class Game{
 		
 		sendMessage("!mp close");
 		
+		String gameEndedMsg = "Game ended: " + match.getFirstTeam().getTeamName() + " (" + fTeamPoints + ") vs (" +
+	   						  sTeamPoints + ") " + match.getSecondTeam().getTeamName() + " - " + mpLink;
+		
+		for(String admin : match.getMatchAdmins())
+			pmUser(admin, gameEndedMsg);
+
 		Log.logger.log(Level.INFO, "Game ended: " + match.getFirstTeam().getTeamName() + " (" + fTeamPoints + ") vs (" +
-								   sTeamPoints + ") " + match.getSecondTeam().getTeamName());
+								   sTeamPoints + ") " + match.getSecondTeam().getTeamName() + " - " + mpLink);
+		
+		messageUpdater.cancel();
 		match.delete();
+	}
+	
+	private void pmUser(String user, String message){
+		try{
+			Main.ircBot.sendIRC().joinChannel(user);
+		}catch(Exception ex){
+			Log.logger.log(Level.INFO, "Could not talk to " + user + "!");
+		}
+		
+		Main.ircBot.sendIRC().message(user, message);
 	}
 	
 	private void setupLobby(){
@@ -319,6 +401,8 @@ public class Game{
 	}
 	
 	public void handleSelect(String map){
+		boolean chosen = false;
+		
 		if(Utils.stringToInt(map) != -1){
 			int num = 1;
 			for(Map m : match.getMapPool().getMaps()){
@@ -328,8 +412,8 @@ public class Game{
 					else if(warmupsLeft == 0 && !checkMap(m)){sendMessage("This map was already picked once! Please choose something else."); return;}
 					
 					this.map = m;
-					mapSelected = true;
-					return;
+					chosen = true;
+					break;
 				}
 				num++;
 			}
@@ -341,8 +425,8 @@ public class Game{
 					else if(warmupsLeft == 0 && !checkMap(m)){sendMessage("This map was already picked once! Please choose something else."); return;}
 					
 					this.map = m;
-					mapSelected = true;
-					return;
+					chosen = true;
+					break;
 				}
 			
 			if(warmupsLeft > 0){
@@ -354,9 +438,14 @@ public class Game{
 				}
 				this.map = new Map(map, 1);
 				
-				mapSelected = true;
-				return;
+				chosen = true;
 			}
+		}
+		
+		if(chosen){
+			mapSelected = true;
+			messageUpdater(30, "Waiting for all players to ready up...");
+			return;
 		}
 		
 		sendMessage("Invalid map!");
@@ -371,7 +460,9 @@ public class Game{
 		else if(message.contains("left the game.")) playerLeft(message);
 		else if(message.contains("The match has started!")) banchoFeedback.clear();
 		else if(message.contains("The match has finished!")) playEnded();
-		else if(message.startsWith("Slot ")) modVerification(message);
+		else if(message.startsWith("Slot ") && verifyingMods) modVerification(message);
+		else if(message.startsWith("Slot ") && fixingLobby) fixLobby(message);
+		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else banchoFeedback.add(message);
 	}
 	
@@ -379,6 +470,8 @@ public class Game{
 		if(waitingForConfirm) return;
 		
 		if(playersInRoom.size() == match.getPlayers() && mapSelected){ 
+			fixingLobby = false;
+			
 			if(previousMap == null || !previousMap.getURL().equalsIgnoreCase(map.getURL())){
 				changeMap(map);
 				Utils.sleep(2500);
@@ -388,13 +481,108 @@ public class Game{
 			SelectMapCommand.gamesInSelection.remove(this);
 			
 			modVerification(null);
-		}
+		}else if(mapSelected) fixLobby(null);
 		
 		banchoFeedback.clear();
 	}
 	
+	private void fixLobby(String message){
+		if(message == null){
+			fixingLobby = true;
+			messageUpdater.cancel();
+			
+			sendMessage("WARNING, VERY IMPORTANT MESSAGE! Please do not leave the lobby, doing so might break this match and thus require this match to be rescheduled!");
+			sendMessage("!mp settings");
+			playersInRoom.clear();
+			return;
+		}else{
+			int slot = Utils.stringToInt(message.split(" ")[1]);
+			
+			String[] sBracketSplit = message.split("\\[");
+			
+			String mods = sBracketSplit[sBracketSplit.length - 1].split("\\]")[0];
+			
+			message = Utils.removeExcessiveSpaces(message).replace(" [" + mods + "]", "");
+			
+			String[] spaceSplit = message.split(" ");
+			
+			int count = 0;
+			for(String arg : spaceSplit){
+				if(arg.contains("osu.ppy.sh")) break;
+				count++;
+			}
+			
+			String player = "";
+			String teamColor = "";
+			
+			for(int i = count + 1; i < spaceSplit.length; i++){
+				if(spaceSplit[i].equalsIgnoreCase("[Team")) break;
+				player += spaceSplit[i] + "_";
+			}
+			
+			player = player.substring(0, player.length() - 1);
+			
+			playersInRoom.add(player);
+			
+			Team team = findTeam(player);
+			Player p = null;
+			
+			for(Player pl : team.getPlayers())
+				if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
+					pl.setSlot(slot);
+					p = pl;
+				}
+			
+			teamColor = spaceSplit[count + 1];
+			
+			boolean fTeam = team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
+			
+			Team oppositeTeam = fTeam ? match.getSecondTeam() : match.getFirstTeam();
+			
+			if(fTeam && !teamColor.equalsIgnoreCase("Blue"))
+				sendMessage("!mp team " + player + " blue");
+			else if(!fTeam && !teamColor.equalsIgnoreCase("Red"))
+				sendMessage("!mp team " + player + " red");
+			
+			if(player != null)
+				if(fTeam && slot > match.getPlayers() / 2 || !fTeam && slot <= match.getPlayers() / 2){
+					roomSize += 1;
+					sendMessage("!mp size " + roomSize);
+					sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + roomSize);
+					
+					for(Player pl : oppositeTeam.getPlayers())
+						if(fTeam && pl.getSlot() <= match.getPlayers() / 2 || 
+							!fTeam && pl.getSlot() > match.getPlayers() / 2){
+							
+							int newSlot = pl.getSlot();
+							pl.setSlot(slot);
+							p.setSlot(newSlot);
+							sendMessage("!mp move " + pl.getName().replaceAll(" ", "_") + " " + slot);
+							sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + newSlot);
+							
+							roomSize -= 1;
+							sendMessage("!mp size " + roomSize);
+							break;
+						}
+				}
+			
+		}
+		
+		if(playersInRoom.size() == match.getPlayers()){
+			fixingLobby = false;
+			readyCheck();
+		}
+	}
+	
 	private void startMatch(int timer){
 		if(verifyingMods) return;
+		
+		messageUpdater.cancel();
+		
+		if(roomSize > match.getPlayers()){
+			roomSize = match.getPlayers();
+			sendMessage("!mp size " + roomSize);
+		}
 		
 		mapsPicked.add(map);
 		
@@ -502,7 +690,24 @@ public class Game{
 	}
 	
 	private void playerLeft(String message){
-		playersInRoom.remove(message.replace(" left the game.", "").replaceAll(" ", "_"));
+		String player = message.replace(" left the game.", "").replaceAll(" ", "_");
+		joinQueue.remove(player);
+		playersInRoom.remove(player);
+		
+		for(Player pl : findTeam(player).getPlayers())
+			if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player))
+				pl.setSlot(-1);
+		
+		if(!hijackedSlots.isEmpty()){
+			int rSlot = -1;
+			for(int slot : hijackedSlots.keySet())
+				if(hijackedSlots.get(slot).equalsIgnoreCase(player)){
+					rSlot = slot;
+					break;
+				}
+			
+			if(rSlot != -1) hijackedSlots.remove(rSlot);
+		}
 	}
 	
 	private void playEnded(){
@@ -514,19 +719,23 @@ public class Game{
 				waitingForConfirm = false;
 				
 				float fTeamScore = 0, sTeamScore = 0;
-				int fTeamPlayers = 0, sTeamPlayers = 0;
+				List<String> fTeamPlayers = new ArrayList<>();
+				List<String> sTeamPlayers = new ArrayList<>();
 				
 				for(String feedback : banchoFeedback){
 					if(feedback.contains("finished playing")){
 						String player = feedback.substring(0, feedback.indexOf(" finished"));
+						
+						if(fTeamPlayers.contains(player) || sTeamPlayers.contains(player)) continue;
+						
 						Team team = findTeam(player);
 						boolean fTeam = false;
 						
 						if(team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName()))
 							fTeam = true;
 						
-						if(fTeam) fTeamPlayers++;
-						else sTeamPlayers++;
+						if(fTeam) fTeamPlayers.add(player);
+						else sTeamPlayers.add(player);
 						
 						if(feedback.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
 							int score = Utils.stringToInt(feedback.split("Score: ")[1].split(",")[0]);
@@ -548,8 +757,8 @@ public class Game{
 					if(warmupsLeft == 0) mapSelection(3);
 					else mapSelection(2);
 				}else{
-					if((int) Math.abs(fTeamPlayers - sTeamPlayers) != 0){	
-						boolean fTeamDC = sTeamPlayers > fTeamPlayers;
+					if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
+						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
 						
 						if((fTeamDC && fTeamScore < sTeamScore) || (!fTeamDC && sTeamScore < fTeamScore)){
 							if(rematchesAllowed > 0){
@@ -608,8 +817,24 @@ public class Game{
 		}, 10000);
 	}
 	
+	private void acceptExternalInvite(String message){
+		String player = message.split(" joined in")[0].replaceAll(" ", "_");
+		if(playersInRoom.contains(player)) return;
+		if(!verifyPlayer(player)){sendMessage("!mp kick " + player); return;}
+		if(joinQueue.contains(player)) joinQueue.remove(player);
+		
+		if(joinQueue.isEmpty()){
+			joinQueue.add(player);
+			joinRoom(player, true);
+		}else{
+			int slot = Utils.stringToInt(message.split("joined in slot ")[1].split(" for team")[0]);
+			hijackedSlots.put(slot, player);
+		}
+	}
+	
 	private void sendMessage(String command){
 		Main.ircBot.sendIRC().message(multiChannel, command);
+		Log.logger.log(Level.INFO, "IRC/Sent in " + multiChannel + ": " + command);
 	}
 	
 	public void invitePlayer(String player){
@@ -628,22 +853,68 @@ public class Game{
 		invitesSent.add(player.replaceAll(" ", "_"));
 		JoinMatchCommand.gameInvites.put(player.replaceAll(" ", "_"), this);
 		
-		try{
-			Main.ircBot.sendIRC().joinChannel(player.replaceAll(" ", "_"));
-		}catch(Exception ex){
-			Log.logger.log(Level.INFO, "Could not talk to " + player + "!");
-		}
+		sendInviteMessages(player.replaceAll(" ", "_"));
+	}
+	
+	private void sendInviteMessages(String player){	
+		pmUser(player, "You have been invited to join: " + match.getLobbyName());
+		pmUser(player, "Reply with !join to join the game. Please note that this command is reusable.");
 		
-		Main.ircBot.sendIRC().message(player.replaceAll(" ", "_"), "You have been invited to join: " + match.getLobbyName());
-		Main.ircBot.sendIRC().message(player.replaceAll(" ", "_"), "Reply with !join to join the game. Please note that this command is reusable.");
+		Log.logger.log(Level.INFO, "Invited " + player + " to join " + multiChannel);
 	}
 	
 	public void acceptInvite(String player){
 		if(playersInRoom.contains(player.replaceAll(" ", "_")) || playersInRoom.size() >= match.getPlayers()) return;
 		if(!verifyPlayer(player.replaceAll(" ", "_"))) return;
 		
+		if(joinQueue.contains(player.replaceAll(" ", "_"))) return;
+		else joinQueue.add(player.replaceAll(" ", "_"));
+		
+		if(joinQueue.size() > 1) return;
+		
+		joinRoom(player.replaceAll(" ", "_"), false);
+	}
+	
+	private void joinRoom(String player, boolean hijack){
 		playersInRoom.add(player.replaceAll(" ", "_"));
-		assignSlotAndTeam(player.replaceAll(" ", "_"));
+		assignSlotAndTeam(player.replaceAll(" ", "_"), hijack);
+	}
+	
+	private void advanceQueue(String player, List<String> hijackers){
+		joinQueue.remove(player);
+		
+		if(joinQueue.size() > 0){
+			String nextPlayer = "";
+			
+			for(String pl : joinQueue){
+				nextPlayer = pl;
+				break;
+			}
+			
+			joinRoom(nextPlayer, false);
+		}
+		
+		if(!hijackers.isEmpty()){
+			for(String hijacker : hijackers)
+				joinRoom(hijacker, false);
+			
+			roomSize = match.getPlayers();
+			sendMessage("!mp size " + roomSize);
+		}
+		
+		if(!hijackedSlots.isEmpty()){
+			for(int slot : hijackedSlots.keySet()){
+				String hijackingPlayer = hijackedSlots.get(slot);
+				
+				playersInRoom.add(hijackingPlayer);
+				
+				hijackedSlots.remove(slot);
+				if(!assignSlotAndTeam(hijackingPlayer, true)){
+					playersInRoom.remove(hijackingPlayer);
+					sendMessage("!mp kick " + hijackingPlayer);
+				}
+			}
+		}
 	}
 	
 	private Team findTeam(String player){
@@ -705,16 +976,20 @@ public class Game{
 		return false;
 	}
 	
-	private void assignSlotAndTeam(String player){
+	private boolean assignSlotAndTeam(String player, boolean hijack){
+		if(!joinQueue.contains(player)) joinQueue.add(player);
+		
 		LinkedList<Player> team = new LinkedList<>();
 		String color = "blue";
 		Player pl = null;
 		int i = 1;
+		int upperBound = match.getPlayers() + 1;
 		
 		for(Player p : match.getFirstTeam().getPlayers())
 			if(p.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
 				p.setSlot(-1);
 				pl = p;
+				upperBound = match.getPlayers() / 2 + 1;
 				team = match.getFirstTeam().getPlayers();
 				break;
 			}
@@ -729,28 +1004,64 @@ public class Game{
 				break;
 			}
 		
-		List<Integer> usedSlots = new ArrayList<Integer>();
+		List<Integer> usedSlots = new ArrayList<>();
+		List<String> hijackers = new ArrayList<>();
 		if(!team.isEmpty()){
 			for(Player p : team)
 				if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1){
 					usedSlots.add(p.getSlot());
 				}
 			
-			for(; i < match.getPlayers() + 1; i++)
+			for(; i < upperBound; i++){
+				if(hijackedSlots.containsKey(i)){
+					String hijackingPlayer = hijackedSlots.get(i);
+					
+					if(hijack){
+						roomSize++;
+						sendMessage("!mp size " + roomSize);
+						sendMessage("!mp move " + hijackingPlayer + " " + roomSize);
+						hijackedSlots.remove(i);
+						hijackers.add(hijackingPlayer);
+					}else{
+						playersInRoom.add(hijackingPlayer);
+						
+						hijackedSlots.remove(i);
+						if(!assignSlotAndTeam(hijackingPlayer, true)){
+							playersInRoom.remove(hijackingPlayer);
+							sendMessage("!mp kick " + hijackingPlayer);
+						}else{
+							usedSlots.clear();
+							
+							for(Player p : team)
+								if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1){
+									usedSlots.add(p.getSlot());
+								}
+						}	
+					}
+				}
 				if(!usedSlots.contains(i)){
 					sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
-					pl.setSlot(i);
 					sendMessage("!mp team " + player.replaceAll(" ", "_") + " " + color);
+					pl.setSlot(i);
 					
 					if(isCaptain(player.replaceAll(" ", "_")))
 						waitingForCaptains--;
 					
 					if(waitingForCaptains == 0 && playersInRoom.size() < 2)
 						waitingForCaptains++;
-					else if(waitingForCaptains == 0) mapSelection(1);
+					else if(waitingForCaptains == 0){
+						advanceQueue(player.replaceAll(" ", "_"), hijackers);
+						mapSelection(1);
+						return true;
+					}
 					
-					break;
+					advanceQueue(player.replaceAll(" ", "_"), hijackers);
+					return true;
 				}
+			}
 		}
+		
+		advanceQueue(player.replaceAll(" ", "_"), hijackers);
+		return false;
 	}
 }

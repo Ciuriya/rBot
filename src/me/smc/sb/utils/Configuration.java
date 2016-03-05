@@ -84,6 +84,10 @@ public class Configuration{
 		try{return Integer.parseInt(getValue(key));}catch(Exception e){return 0;}
 	}
 	
+	public long getLong(String key){
+		try{return Long.parseLong(getValue(key));}catch(Exception e){return 0;}
+	}
+	
 	public double getDouble(String key){
 		try{return Double.parseDouble(getValue(key));}catch(Exception e){return 0;}
 	}

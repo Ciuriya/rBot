@@ -69,7 +69,8 @@ public abstract class IRCCommand{
 				return;
 			}
 		
-		Utils.info(e, pe, discord, "This is not a command! Use !help if you are lost!");
+		if(!(split[0].equalsIgnoreCase("mp") && split.length > 1))
+			Utils.info(e, pe, discord, "This is not a command! Use !help if you are lost!");
 	}
 	
 	public static void registerCommands(){
@@ -104,6 +105,7 @@ public abstract class IRCCommand{
 		commands.add(new SetMatchScheduleCommand());
 		commands.add(new ForceStopGameCommand());
 		commands.add(new ForceStartGameCommand());
+		commands.add(new SetGameScoreCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());

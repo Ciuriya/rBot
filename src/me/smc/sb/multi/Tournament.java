@@ -17,7 +17,7 @@ public class Tournament{
 	private List<Team> teams;
 	private List<Match> matches;
 	private List<MapPool> pools;
-	private boolean scoreV2 = false;
+	private boolean scoreV2;
 	
 	public Tournament(String name){
 		this(name, true);
@@ -28,6 +28,8 @@ public class Tournament{
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
+		
+		scoreV2 = getConfig().getBoolean("scoreV2");
 		
 		save(append);
 		tournaments.add(this);
@@ -163,8 +165,6 @@ public class Tournament{
 			for(String sTournament : savedTournaments){
 				Tournament tournament = new Tournament(sTournament, false);
 				
-				tournament.scoreV2 = tournament.getConfig().getBoolean("scoreV2");
-				
 				tournament.loadPools();
 				tournament.loadTeams();
 				tournament.loadMatches();
@@ -185,8 +185,14 @@ public class Tournament{
 				if(config.getInt("match-" + matchNum + "-pool") != 0)
 					match.setMapPool(getPool(config.getInt("match-" + matchNum + "-pool")));
 				
-				if(config.getInt("match-" + matchNum + "-date") != 0)
-					match.setTime(config.getInt("match-" + matchNum + "-date"));
+				if(config.getInt("match-" + matchNum + "-bestof") != 0)
+					match.setBestOf(config.getInt("match-" + matchNum + "-bestof"));
+				
+				if(config.getLong("match-" + matchNum + "-date") != 0)
+					match.setTime(config.getLong("match-" + matchNum + "-date"));
+				
+				if(!config.getStringList("match-" + matchNum + "-admins").isEmpty())
+					match.setMatchAdmins(config.getStringList("match-" + matchNum + "-admins"));
 			}
 	}
 	

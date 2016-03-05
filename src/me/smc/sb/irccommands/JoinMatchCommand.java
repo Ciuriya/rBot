@@ -26,9 +26,13 @@ public class JoinMatchCommand extends IRCCommand{
 	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
 		if(pe == null || discord != null || e != null){Utils.info(e, pe, discord, "You were not invited to any game!"); return;}
 		
-		if(gameInvites.containsKey(pe.getUser().getNick())){
-			gameInvites.get(pe.getUser().getNick()).acceptInvite(pe.getUser().getNick().replaceAll("_", " "));
-		}else Utils.info(e, pe, discord, "You were not invited to any game!");
+		if(!gameInvites.isEmpty())
+			for(String invited : gameInvites.keySet())
+				if(invited.equalsIgnoreCase(pe.getUser().getNick().replaceAll(" ", "_"))){
+					gameInvites.get(invited).acceptInvite(invited.replaceAll("_", " "));
+					return;
+				}
+		Utils.info(e, pe, discord, "You were not invited to any game!");
 	}
 	
 }

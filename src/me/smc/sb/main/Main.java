@@ -109,7 +109,7 @@ public class Main{
 		
 		ircBot = new PircBotX(new org.pircbotx.Configuration.Builder<PircBotX>()
 				  .setName(osuUser)
-				  .setServer("cho.ppy.sh", 6667)
+				  .setServer("irc.ppy.sh", 6667)
 				  .setServerPassword(osuPassword)
 				  .addListener(new IRCChatListener())
 				  .setAutoReconnect(true)
@@ -120,6 +120,7 @@ public class Main{
 			loadIRC();
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not start irc bot!");
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
 	

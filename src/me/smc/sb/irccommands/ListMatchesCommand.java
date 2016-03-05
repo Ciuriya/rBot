@@ -44,6 +44,8 @@ public class ListMatchesCommand extends IRCCommand{
 				msg += " " + match.getSecondTeam().getTeamName();
 			else msg += "  ";
 			
+			if(match.getTime() != 0) msg += " at " + Utils.toDate(match.getTime()) + " UTC";
+			
 			if(discord != null) msg += "\n";
 			else msg += "=";
 		}

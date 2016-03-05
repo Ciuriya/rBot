@@ -74,6 +74,14 @@ public class Match{
 		return game;
 	}
 	
+	public long getTime(){
+		return scheduledDate;
+	}
+	
+	public void setMatchAdmins(ArrayList<String> admins){
+		matchAdmins = admins;
+	}
+	
 	public void addMatchAdmin(String admin){
 		if(!matchAdmins.contains(admin))
 			matchAdmins.add(admin);
@@ -123,6 +131,8 @@ public class Match{
 		
 		if(scheduledDate == 0) return;
 		
+		if(scheduledTime != null) scheduledTime.cancel();
+		
 		scheduledTime = new Timer();
 		scheduledTime.schedule(new TimerTask(){
 			public void run(){
@@ -168,12 +178,12 @@ public class Match{
 			config.writeValue("match-" + matchNum + "-team2", sTeam.getTeamName());
 		}
 		
-		config.writeValue("match-" + matchNum + "-date", scheduledDate);
+		if(scheduledDate != 0) config.writeValue("match-" + matchNum + "-date", scheduledDate);
 		
 		if(pool != null) config.writeValue("match-" + matchNum + "-pool", pool.getPoolNum());
 		
-		config.writeValue("match-" + matchNum + "-bestof", bestOf);
-		config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
+		if(bestOf != 5) config.writeValue("match-" + matchNum + "-bestof", bestOf);
+		if(!matchAdmins.isEmpty()) config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
 	}
 	
 }
