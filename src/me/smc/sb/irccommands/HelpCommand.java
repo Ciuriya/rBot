@@ -16,7 +16,7 @@ public class HelpCommand extends IRCCommand{
 			  "help", "?");
 	}
 
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
 		String msg = "Commands";
 		
 		if(discord != null){
@@ -35,7 +35,7 @@ public class HelpCommand extends IRCCommand{
 		}
 		
 		if(discord == null){
-			Utils.info(e, pe, discord, "[http://osu.tyjoll.com/commands.php You can find the available commands here!]");
+			return "[http://osu.tyjoll.com/commands.php You can find the available commands here!]";
 		}else{
 			msg += "```";
 			
@@ -54,6 +54,8 @@ public class HelpCommand extends IRCCommand{
 				}
 			}else Utils.info(e, pe, discord, msg);
 		}
+		
+		return "";
 	}
 
 }

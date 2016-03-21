@@ -18,30 +18,30 @@ public class RemoveMapFromPoolCommand extends IRCCommand{
 	}
 	
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 3)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 3);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length - 2; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
+		if(t == null) return "Invalid tournament!";
 		
-		if(Utils.stringToInt(args[args.length - 2]) == -1){Utils.info(e, pe, discord, "Map pool number needs to be a number!"); return;}
-		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null){Utils.info(e, pe, discord, "The map pool is invalid!"); return;}
+		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Map pool number needs to be a number!";
+		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null) return "The map pool is invalid!";
 		
 		String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
 		
 		if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
-			Utils.info(e, pe, discord, "Invalid URL, example format: https://osu.ppy.sh/b/123456");
-			return;
+			return "Invalid URL, example format: https://osu.ppy.sh/b/123456";
 		}
 		
 		t.getPool(Utils.stringToInt(args[args.length - 2])).removeMap(args[args.length - 1]);
 		t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
 		
-		Utils.info(e, pe, discord, "Removed " + args[args.length - 1] + " from the map pool!");
+		return "Removed " + args[args.length - 1] + " from the map pool!";
 	}
 	
 }

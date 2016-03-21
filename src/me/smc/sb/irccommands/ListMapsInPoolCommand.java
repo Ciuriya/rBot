@@ -24,20 +24,21 @@ public class ListMapsInPoolCommand extends IRCCommand{
 	}
 	
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 2)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 2);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length - 1; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
-		if(Utils.stringToInt(args[args.length - 1]) == -1){Utils.info(e, pe, discord, "Map pool number needs to be a number!"); return;}
+		if(t == null) return "Invalid tournament!";
+		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Map pool number needs to be a number!";
 		
 		MapPool pool = t.getPool(Utils.stringToInt(args[args.length - 1]));
 		
-		if(pool == null){Utils.info(e, pe, discord, "Map pool does not exist!"); return;}
+		if(pool == null) return "Map pool does not exist!";
 		
 		String msg = "Maps in map pool #" + pool.getPoolNum() + " of " + t.getName();
 		msg = addNewLine(discord, msg, 2);
@@ -47,8 +48,6 @@ public class ListMapsInPoolCommand extends IRCCommand{
 		if(!pool.getMaps().isEmpty())
 			for(Map map : pool.getMaps()){
 				List<Map> list = new ArrayList<>();
-				
-				System.out.println("Map: " + map.getBeatmapID());
 				
 				if(maps.containsKey(map.getCategory()))
 					list = maps.get(map.getCategory());
@@ -62,8 +61,6 @@ public class ListMapsInPoolCommand extends IRCCommand{
 			msg += getCategoryString(i);
 			msg = addNewLine(discord, msg, 2);
 			
-			System.out.println("size " + (list == null ? "null" : list.size()));
-			
 			if(list != null && !list.isEmpty())
 				for(Map map : list){
 					msg += map.getURL();
@@ -74,12 +71,18 @@ public class ListMapsInPoolCommand extends IRCCommand{
 			else msg = msg.substring(0, msg.lastIndexOf("\n"));
 		}
 		
-		if(discord == null)
+		if(discord == null){
+			String built = "";
 			for(String part : msg.split("=")){
 				if(part.isEmpty()) continue;
-				Utils.info(e, pe, discord, part.substring(0, part.length() - 1));
+				if(e == null && pe == null) built += part.substring(0, part.length() - 1) + "\n";
+				else Utils.info(e, pe, discord, part.substring(0, part.length() - 1));
 			}
-		else Utils.info(e, pe, discord, msg);
+			
+			if(built.length() > 0) return built.substring(0, built.length() - 1);
+		}else return msg;
+		
+		return "";
 	}
 	
 	private String addNewLine(String discord, String message, int amount){

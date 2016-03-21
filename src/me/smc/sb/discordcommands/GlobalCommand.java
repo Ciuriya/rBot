@@ -90,6 +90,7 @@ public abstract class GlobalCommand{
 		commands.add(new MessageIRCCommand());
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
+		commands.add(new PingCommand());
 		commands.add(new PollIRCCommand());
 		commands.add(new ReceivePMCommand());
 		commands.add(new SearchCommand());

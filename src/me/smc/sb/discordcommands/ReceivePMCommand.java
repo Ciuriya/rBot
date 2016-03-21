@@ -11,7 +11,7 @@ import net.dv8tion.jda.events.message.MessageReceivedEvent;
 public class ReceivePMCommand extends GlobalCommand{
 
 	public ReceivePMCommand(){
-		super(Permissions.BOT_ADMIN, 
+		super(Permissions.IRC_BOT_ADMIN, 
 			  " - Toggles the osu! pm notifications to discord", 
 			  "{prefix}receivePM\nThis command toggles the pm bridge from osu! to discord.\n\n" +
 			  "----------\nUsage\n----------\n{prefix}receivePM - Toggles the private message bridge between osu! and discord\n\n" +
@@ -23,12 +23,22 @@ public class ReceivePMCommand extends GlobalCommand{
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		if(!e.isPrivate()) return;
-		IRCChatListener.yieldPMs = !IRCChatListener.yieldPMs;
-		new Configuration(new File("login.txt")).writeValue("yield-pms", IRCChatListener.yieldPMs);
+		Configuration cfg = new Configuration(new File("login.txt"));
+		
+		boolean toggled = true;
+		
+		if(cfg.getStringList("yield-pms").contains(e.getAuthor().getId())){
+			cfg.removeFromStringList("yield-pms", e.getAuthor().getId(), true);
+			IRCChatListener.pmList.remove(e.getAuthor().getId());
+			toggled = false;
+		}else{
+			cfg.appendToStringList("yield-pms", e.getAuthor().getId(), true);
+			IRCChatListener.pmList.add(e.getAuthor().getId());
+		}
 		
 		String message = "";
-		message = IRCChatListener.yieldPMs ? "You are now listening to osu! private messages!" :
-											 "You are no longer listening to osu! private messages!";
+		message = toggled ? "You are now listening to osu! private messages!" :
+							"You are no longer listening to osu! private messages!";
 		
 		Utils.infoBypass(e.getAuthor().getPrivateChannel(), message);
 	}

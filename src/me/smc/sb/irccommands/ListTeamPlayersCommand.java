@@ -20,16 +20,17 @@ public class ListTeamPlayersCommand extends IRCCommand{
 	}
 	
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 2)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 2);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String validation = Utils.validateTournamentAndTeam(e, pe, discord, args);
-		if(validation.length() == 0) return;
+		if(!validation.contains("|")) return validation;
 		
 		Team team = Tournament.getTournament(validation.split("\\|")[1]).getTeam(validation.split("\\|")[0]);
 		
 		if(team == null)
-			Utils.info(e, pe, discord, "Could not find team!");
+			return "Could not find team!";
 		else{
 			String msg = "Team " + team.getTeamName() + " in " + Tournament.getTournament(validation.split("\\|")[1]).getName();
 			if(discord != null) msg = "```" + msg + "\n";
@@ -41,13 +42,19 @@ public class ListTeamPlayersCommand extends IRCCommand{
 				else msg += "=";
 			}
 			
-			if(discord == null)
+			if(discord == null){
+				String built = "";
 				for(String part : msg.split("=")){
 					if(part.isEmpty()) continue;
-					Utils.info(e, pe, discord, part);
+					if(e == null && pe == null) built += part + "\n";
+					else Utils.info(e, pe, discord, part);
 				}
-			else Utils.info(e, pe, discord, msg + "```");
+				
+				if(built.length() > 0) return built.substring(0, built.length() - 1);
+			}else return msg + "```";
 		}
+		
+		return "";
 	}
 	
 }

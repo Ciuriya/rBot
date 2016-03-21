@@ -18,15 +18,16 @@ public class CreateTournamentCommand extends IRCCommand{
 	}
 	
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 1)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 1);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length; i++) tournamentName += args[i] + " ";
 		new Tournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		Utils.info(e, pe, discord, "Created the " + tournamentName.substring(0, tournamentName.length() - 1) + " tournament!");
+		return "Created the " + tournamentName.substring(0, tournamentName.length() - 1) + " tournament!";
 	}
 	
 }

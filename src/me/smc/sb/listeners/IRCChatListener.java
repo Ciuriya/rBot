@@ -1,7 +1,12 @@
 package me.smc.sb.listeners;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 
 import org.pircbotx.PircBotX;
@@ -19,8 +24,12 @@ import me.smc.sb.utils.Utils;
 
 public class IRCChatListener extends ListenerAdapter<PircBotX>{
 
-	public static boolean yieldPMs = false;
+	public static List<String> pmList = new ArrayList<>();
+	public static LinkedList<String> pmsToSend = new LinkedList<>();
+	public static Timer pmQueue;
+	private boolean started = false;
 	public static Map<String, Game> gamesListening = new HashMap<>();
+	public static List<String> gameCreatePMs = new ArrayList<>();
 	
 	@Override
 	public void onPrivateMessage(PrivateMessageEvent<PircBotX> e){
@@ -28,8 +37,31 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 		Log.logger.log(Level.INFO, "PM/" + e.getUser().getNick() + ": " + message);
 		if(verifyGameCreationPM(e)) return;
 		
-		if(yieldPMs) Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "PM/" + e.getUser().getNick() + ": " + message);
-		if(message.startsWith("!")) IRCCommand.handleCommand(null, e, null, message.substring(1));
+		if(!pmList.isEmpty())
+			for(String id : pmList)
+				addToPMQueue(id, "PM/" + e.getUser().getNick() + ": " + message);
+		
+		if(message.startsWith("!")) Utils.info(null, e, null, IRCCommand.handleCommand(null, e, null, message.substring(1)));
+	}
+	
+	private void addToPMQueue(String id, String message){
+		pmsToSend.add(id + "||" + message);
+		
+		if(!started){
+			started = true;
+			
+			Timer pmQueue = new Timer();
+			
+			pmQueue.scheduleAtFixedRate(new TimerTask(){
+				public void run(){
+					if(!pmsToSend.isEmpty()){
+						String basePM = pmsToSend.getLast();
+						pmsToSend.removeLast();
+						Utils.infoBypass(Main.api.getUserById(basePM.split("\\|\\|")[0]).getPrivateChannel(), basePM.split("\\|\\|")[1]);
+					}
+				}
+			}, 2000, 2000);
+		}
 	}
 	
 	@Override
@@ -38,7 +70,7 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 		Log.logger.log(Level.INFO, "IRC/" + e.getUser().getNick() + ": " + message);	
 		if(verifyBanchoFeedback(e)) return;
 		
-		if(message.startsWith("!")) IRCCommand.handleCommand(e, null, null, message.substring(1));
+		if(message.startsWith("!")) Utils.info(e, null, null, IRCCommand.handleCommand(e, null, null, message.substring(1)));
 	}
 	
 	private boolean verifyBanchoFeedback(MessageEvent<PircBotX> e){
@@ -68,6 +100,8 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 			tournamentName = gameName.split(" ")[0];
 			tournamentName = tournamentName.substring(0, tournamentName.length() - 1);
 
+			gameCreatePMs.add(mpLink.split("mp\\/")[1] + "|" + gameName);
+			
 			Tournament t = Tournament.getTournament(tournamentName);
 			if(t == null) return false;
 			
@@ -77,6 +111,8 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 					match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
 					return true;
 				}
+			
+			Log.logger.log(Level.INFO, "------------ Failed Game: " + gameName);
 		}
 		return false;
 	}

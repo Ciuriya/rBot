@@ -18,7 +18,7 @@ public class ListTournamentsCommand extends IRCCommand{
 	}
 	
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
 		String msg = "Tournaments";
 		if(discord != null) msg = "```" + msg + "\n";
 		else msg += "=";
@@ -29,11 +29,17 @@ public class ListTournamentsCommand extends IRCCommand{
 			else msg += "=";
 		}
 		
-		if(discord == null)
+		if(discord == null){
+			String built = "";
 			for(String part : msg.split("=")){
 				if(part.isEmpty()) continue;
-				Utils.info(e, pe, discord, part);
+				if(e == null && pe == null) built += part + "\n";
+				else Utils.info(e, pe, discord, part);
 			}
-		else Utils.info(e, pe, discord, msg + "```");
+			
+			if(built.length() > 0) return built.substring(0, built.length() - 1);
+		}else return msg + "```";
+		
+		return "";
 	}
 }

@@ -25,9 +25,11 @@ public class InvitePlayerCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 1)) return;
-		if(e == null || discord != null || pe != null){Utils.info(e, pe, discord, "You cannot invite a player from here!"); return;}
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 1);
+		if(argCheck.length() > 0) return argCheck;
+		
+		if(e == null || discord != null || pe != null) return "You cannot invite a player from here!";
 		
 		String playerName = "";
 		
@@ -43,8 +45,11 @@ public class InvitePlayerCommand extends IRCCommand{
 				else if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(playerName.replaceAll(" ", "_")))
 					receiverAllowed = true;
 			
-			if(senderAllowed && receiverAllowed) allowedInviters.get(team).invitePlayer(playerName);
+			if(senderAllowed && receiverAllowed)
+				allowedInviters.get(team).invitePlayer(playerName);
 		}
+		
+		return "";
 	}
 	
 }

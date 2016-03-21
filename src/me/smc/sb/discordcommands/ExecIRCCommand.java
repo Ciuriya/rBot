@@ -29,7 +29,7 @@ public class ExecIRCCommand extends GlobalCommand{
 		String id = e.isPrivate() ? e.getPrivateChannel().getId() : e.getTextChannel().getId();
 		
 		if(Main.ircBot == null) Utils.info(e.getChannel(), "The IRC bot object is null! Make sure to tell Smc!");
-		else IRCCommand.handleCommand(null, null, id, message);
+		else Utils.info(null, null, id, IRCCommand.handleCommand(null, null, id, message));
 	}
 	
 }

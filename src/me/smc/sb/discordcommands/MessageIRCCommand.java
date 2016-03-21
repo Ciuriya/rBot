@@ -11,7 +11,7 @@ import net.dv8tion.jda.events.message.MessageReceivedEvent;
 public class MessageIRCCommand extends GlobalCommand{
 
 	public MessageIRCCommand(){
-		super(Permissions.BOT_ADMIN, 
+		super(Permissions.IRC_BOT_ADMIN, 
 			  " - Send a message to an IRC user", 
 			  "{prefix}msgIRC\nThis command sends messages through IRC.\n\n" +
 			  "----------\nUsage\n----------\n{prefix}msgIRC {user} {message} - Sends a message to the specified user\n\n" +

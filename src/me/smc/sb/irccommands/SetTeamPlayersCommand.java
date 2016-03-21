@@ -21,17 +21,18 @@ public class SetTeamPlayersCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 3)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 3);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String validation = Utils.validateTournamentAndTeam(e, pe, discord, args);
-		if(validation.length() == 0) return;
+		if(!validation.contains("|")) return validation;
 		
 		String msg = "";
 		for(String arg : args) msg += arg + " ";
 		msg = msg.substring(0, msg.length() - 1).split("}")[1].substring(1);
 		
-		if(!msg.contains(",")){Utils.info(e, pe, discord, "You need more players!"); return;}
+		if(!msg.contains(",")) return "You need more players!";
 		
 		LinkedList<Player> players = new LinkedList<>();
 		
@@ -41,7 +42,8 @@ public class SetTeamPlayersCommand extends IRCCommand{
 		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
 		t.getTeam(validation.split("\\|")[0]).setPlayers(players);
 		t.getTeam(validation.split("\\|")[0]).save(false);
-		Utils.info(e, pe, discord, "Set players to the " + validation.split("\\|")[0] + " team!");
+		
+		return "Set players to the " + validation.split("\\|")[0] + " team!";
 	}
 	
 }

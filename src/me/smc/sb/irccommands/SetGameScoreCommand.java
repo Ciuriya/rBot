@@ -18,18 +18,19 @@ public class SetGameScoreCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 2)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 2);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length - 3; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
-		if(Utils.stringToInt(args[args.length - 3]) == -1){Utils.info(e, pe, discord, "Match number needs to be a number!"); return;}
-		if(Utils.stringToInt(args[args.length - 2]) == -1){Utils.info(e, pe, discord, "Scores need to be numbers!"); return;}
-		if(Utils.stringToInt(args[args.length - 1]) == -1){Utils.info(e, pe, discord, "Scores need to be numbers!"); return;}
+		if(t == null) return "Invalid tournament!";
+		if(Utils.stringToInt(args[args.length - 3]) == -1) return "Match number needs to be a number!";
+		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Scores need to be numbers!";
+		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Scores need to be numbers!";
 		
 		Match match = t.getMatch(Utils.stringToInt(args[args.length - 3]));
 		
@@ -37,8 +38,10 @@ public class SetGameScoreCommand extends IRCCommand{
 		
 		if(match.isMatchAdmin(user) && match.getGame() != null){
 			match.getGame().setScores(Utils.stringToInt(args[args.length - 2]), Utils.stringToInt(args[args.length - 1]));
-			Utils.info(e, pe, discord, "Scores switched: " + Utils.stringToInt(args[args.length - 2]) + " - " + Utils.stringToInt(args[args.length - 1]));
+			return "Scores switched: " + Utils.stringToInt(args[args.length - 2]) + " - " + Utils.stringToInt(args[args.length - 1]);
 		}
+		
+		return "";
 	}
 	
 }

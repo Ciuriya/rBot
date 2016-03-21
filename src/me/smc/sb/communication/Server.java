@@ -1,4 +1,4 @@
-package me.smc.sb.utils;
+package me.smc.sb.communication;
 
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -14,6 +14,8 @@ import java.util.logging.Level;
 
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
+import me.smc.sb.utils.Log;
+import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.OnlineStatus;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.User;
@@ -85,7 +87,7 @@ public class Server{
 							names += user.getUsername() + "`" + user.getId() + ":";
 					
 					sendMessage(names.substring(0, names.length() - 1));
-				}else if(message.startsWith("REQUEST_ID:")){
+				}else if(message.toUpperCase().startsWith("REQUEST_ID:")){
 					String name = message.replace("REQUEST_ID:", "");
 					
 					User user = null;
@@ -96,7 +98,7 @@ public class Server{
 						}
 					
 					if(user != null) sendMessage("REQUESTED_ID:" + user.getId());
-				}else if(message.startsWith("REQUEST_NAME:")){
+				}else if(message.toUpperCase().startsWith("REQUEST_NAME:")){
 					String id = message.replace("REQUEST_NAME:", "");
 					
 					User user = null;
@@ -108,19 +110,37 @@ public class Server{
 					
 					if(user != null)
 						sendMessage("REQUESTED_NAME:" + user.getUsername());
-				}else if(message.startsWith("EXECIRC")){
+				}else if(message.toUpperCase().startsWith("EXECIRC")){
 					String msg = "";
 					String[] args = message.split(" ");
 					for(int i = 1; i < args.length; i++)
 						msg += " " + args[i];
 					msg = msg.substring(1);
 					
-					IRCCommand.handleCommand(null, null, null, msg);
+					System.out.println("Trimmed message: " + msg);
+					
+					sendMessage(IRCCommand.handleCommand(null, null, null, msg).replaceAll("\n", "|"));
 				}else if(message.contains(":")){
 					String[] split = message.split(":");
 					
-					if(Main.api.getUserById(split[0]) != null){
-						Utils.infoBypass(Main.api.getUserById(split[0]).getPrivateChannel(), "Your verification code is " + split[1]); 	
+					String medium = split[0];
+					
+					switch(medium.toLowerCase()){
+						case "discord":
+							if(Main.api.getUserById(split[1]) != null)
+								Utils.infoBypass(Main.api.getUserById(split[1]).getPrivateChannel(), "Your verification code is " + split[2]); 	
+							break;
+						case "osu": 
+							String user = split[1].replaceAll(" ", "_");
+							try{
+								Main.ircBot.sendIRC().joinChannel(user);
+							}catch(Exception ex){
+								Log.logger.log(Level.INFO, "Could not talk to " + user + "!");
+							}
+							
+							Main.ircBot.sendIRC().message(user, "Your verification code is " + split[2]);
+							break;
+						default: break;
 					}
 				}
 				
@@ -150,7 +170,7 @@ public class Server{
 		t.start();
 	}
 	
-	private void sendMessage(String message){
+	public void sendMessage(String message){
 		Socket clientSocket = null;
 		OutputStream os = null;
 		OutputStreamWriter osw = null;

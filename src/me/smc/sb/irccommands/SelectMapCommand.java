@@ -24,9 +24,11 @@ public class SelectMapCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 1)) return;
-		if(e == null || discord != null || pe != null){Utils.info(e, pe, discord, "You cannot select a map in here!"); return;}
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 1);
+		if(argCheck.length() > 0) return argCheck;
+		
+		if(e == null || discord != null || pe != null) return "You cannot select a map in here!";
 		
 		String userName = e.getUser().getNick();
 		
@@ -38,11 +40,14 @@ public class SelectMapCommand extends IRCCommand{
 						if(Utils.stringToInt(args[0]) == -1){
 							if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
 								Utils.info(e, pe, discord, "Invalid URL, example format: https://osu.ppy.sh/b/123456");
-								return;
+								Utils.info(e, pe, discord, "Your URL likely uses a /s/ just click on the difficulty name and grab that link.");
+								return "";
 							}
 						}
 						game.handleSelect(url);
 					}
+		
+		return "";
 	}
 	
 }

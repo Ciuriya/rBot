@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 
 import me.smc.sb.main.Main;
@@ -51,8 +49,6 @@ public class VoiceCommand extends GlobalCommand{
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
-		e.getJDA().setDebug(true);
-		
 		switch(args[0]){
 			case "join": joinVoiceChannel(e, args); break;
 			case "leave": leaveVoiceChannel(e, args); break;
@@ -64,13 +60,6 @@ public class VoiceCommand extends GlobalCommand{
 			case "clear": clearQueue(e, args); break;
 			case "skip": skipSong(e, args); break;
 		}
-		
-		Timer time = new Timer();
-		time.schedule(new TimerTask(){
-			public void run(){
-				e.getJDA().setDebug(false);
-			}
-		}, 500);
 	}
 	
 	private void joinVoiceChannel(MessageReceivedEvent e, String[] args){

@@ -18,18 +18,19 @@ public class DeleteTournamentCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 1)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 1);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
+		if(t == null) return "Invalid tournament!";
 		
 		t.delete();
-		Utils.info(e, pe, discord, "Deleted tournament " + tournamentName.substring(0, tournamentName.length() - 1) + "!");
+		return "Deleted tournament " + tournamentName.substring(0, tournamentName.length() - 1) + "!";
 	}
 
 }

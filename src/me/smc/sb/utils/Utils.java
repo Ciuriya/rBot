@@ -1,23 +1,35 @@
 package me.smc.sb.utils;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
 import java.io.InputStreamReader;
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
@@ -43,12 +55,11 @@ public class Utils{
 		return true;
     }
     
-    public static boolean checkArguments(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args, int length){
+    public static String checkArguments(String[] args, int length){
 		if(args.length < length){
-			Utils.info(e, pe, discord, "Invalid arguments, use !help for more info!");
-			return false;
+			return "Invalid arguments, use !help for more info!";
 		}
-		return true;
+		return "";
     }
 	
 	public static void error(MessageChannel channel, User user, String message){
@@ -77,6 +88,8 @@ public class Utils{
 	}
 	
 	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
+		if(message.length() == 0) return;
+		
 		if(e != null){
 			e.getChannel().send().message(message);
 			Log.logger.log(Level.INFO, "{IRC message sent in channel " + e.getChannel().getName() + "} " + message);
@@ -87,6 +100,10 @@ public class Utils{
 			if(Main.api.getPrivateChannelById(discord) != null)
 				infoBypass(Main.api.getPrivateChannelById(discord), message);
 			else infoBypass(Main.api.getTextChannelById(discord), message);
+		else{
+			Main.server.sendMessage(message.replaceAll("\n", "|"));
+			Log.logger.log(Level.INFO, "{Message sent to website} " + message);
+		}
 	}
 	
 	public static String toUser(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe){
@@ -285,7 +302,7 @@ public class Utils{
 			if(arg.contains("{"))
 				valid = true;
 		
-		if(!valid){Utils.info(e, pe, discord, "Invalid team name!"); return "";}
+		if(!valid) return "Invalid team name!";
 		
 		String tournamentName = "";
 		int o = 0;
@@ -295,7 +312,7 @@ public class Utils{
 			else tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return "";}
+		if(t == null) return "Invalid tournament!";
 		
 		String teamName = "";
 		
@@ -305,7 +322,7 @@ public class Utils{
 				break;
 			}else teamName += args[i].replace("\\{", "") + " ";
 		
-		if(teamName.length() == 0){Utils.info(e, pe, discord, "Invalid team name!"); return "";}
+		if(teamName.length() == 0) return "Invalid team name!";
 		
 		return teamName.substring(0, teamName.length() - 1).replaceAll("\\{", "") + "|" + tournamentName.substring(0, tournamentName.length() - 1);
 	}
@@ -340,6 +357,175 @@ public class Utils{
 			if(message.contains("  ")) return removeExcessiveSpaces(message);
 			else return message;
 		}else return message;
+	}
+	
+	public static String getFinalURL(String url){
+		try{
+		    HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+		    con.setInstanceFollowRedirects(false);
+		    con.connect();
+		    con.getInputStream();
+
+		    if(con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || con.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP){
+		        String redirectUrl = con.getHeaderField("Location");
+		        return getFinalURL(redirectUrl);
+		    }
+		    
+		    return url;	
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			return url;
+		}
+	}
+	
+	public static class Login{
+		private List<String> cookies;
+		private HttpsURLConnection conn;
+		
+		public static void osu(){
+			CookieHandler.setDefault(new CookieManager());
+			
+			Login login = new Login();
+			
+			String url = "https://osu.ppy.sh/forum/ucp.php?mode=login";
+			
+			Configuration cfg = new Configuration(new File("login.txt"));
+			
+			String page = login.getPageContent(url);
+			
+			String postParams = login.getFormParams(page, cfg.getValue("osuWebUser"), 
+														  cfg.getValue("osuWebPass"));
+			
+			System.out.println("Post Params: " + postParams);
+			
+			login.sendPost(url, postParams);
+		}
+		
+		private void sendPost(String url, String postParams){
+			try{
+				URL obj = new URL(url);
+				conn = (HttpsURLConnection) obj.openConnection();
+
+				conn.setUseCaches(false);
+				conn.setRequestMethod("POST");
+				conn.setRequestProperty("Host", "osu.ppy.sh");
+				conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+				conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+				conn.setRequestProperty("Accept-Language", "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4");
+				
+				for(String cookie : this.cookies) 
+					conn.addRequestProperty("Cookie", cookie.split(";", 1)[0]);
+				
+				conn.setRequestProperty("Connection", "keep-alive");
+				conn.setRequestProperty("Referer", "https://osu.ppy.sh/forum/ucp.php?mode=login");
+				conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+				conn.setRequestProperty("Content-Length", Integer.toString(postParams.length()));
+
+				conn.setDoOutput(true);
+				conn.setDoInput(true);
+
+				DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+				wr.writeBytes(postParams);
+				wr.flush();
+				wr.close();
+
+				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				String inputLine;
+				StringBuffer response = new StringBuffer();
+
+				while((inputLine = in.readLine()) != null) response.append(inputLine);
+				
+				in.close();	
+				
+				System.out.println("Response: " + conn.getResponseCode());
+			}catch(Exception ex){
+				Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
+			}
+		}
+		
+		private String getPageContent(String url){
+			try{
+				URL obj = new URL(url);
+				conn = (HttpsURLConnection) obj.openConnection();
+
+				conn.setRequestMethod("GET");
+				conn.setUseCaches(false);
+
+				conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+				conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+				conn.setRequestProperty("Accept-Language", "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4");
+				
+				if(cookies != null)
+					for(String cookie : this.cookies)
+						conn.addRequestProperty("Cookie", cookie.split(";", 1)[0]);
+
+				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				String inputLine;
+				StringBuffer response = new StringBuffer();
+
+				while ((inputLine = in.readLine()) != null) response.append(inputLine);
+				
+				in.close();
+
+				setCookies(conn.getHeaderFields().get("Set-Cookie"));
+
+				return response.toString();
+			}catch(Exception ex){
+				Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
+				return "";
+			}
+		}
+		
+		public String getFormParams(String html, String username, String password){
+			Document doc = Jsoup.parse(html);
+
+			Element loginForm = null;
+			
+			for(Element element : doc.getAllElements())
+				if(element.attr("action").equalsIgnoreCase("/forum/ucp.php?mode=login")){
+					loginForm = element;
+					break;
+				}
+			
+			if(loginForm == null) return "";
+					
+			Elements inputElements = loginForm.getElementsByTag("input");
+			List<String> paramList = new ArrayList<String>();
+			
+			for(Element inputElement : inputElements){
+				String key = inputElement.attr("name");
+				String value = inputElement.attr("value");
+
+				if (key.equals("username"))
+					value = username;
+				else if (key.equals("password"))
+					value = password;
+				else if(key.equals("autologin") || key.equals("viewonline"))
+					value = "do not";
+				
+				try{
+					if(!value.equalsIgnoreCase("do not")) 
+						paramList.add(key + "=" + URLEncoder.encode(value, "UTF-8"));
+				}catch(Exception ex){
+					Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
+				}
+			}
+
+			StringBuilder result = new StringBuilder();
+			for(String param : paramList)
+				if(result.length() == 0) result.append(param);
+				else result.append("&" + param);
+			
+			return result.toString();
+		}
+		
+		public List<String> getCookies(){
+			return cookies;
+		}
+
+		public void setCookies(List<String> cookies){
+			this.cookies = cookies;
+		}
 	}
 	
 }

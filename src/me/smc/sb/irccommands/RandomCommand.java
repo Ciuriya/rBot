@@ -25,7 +25,7 @@ public class RandomCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
 		String userName = Utils.toUser(e, pe);
 		
 		int random = Utils.fetchRandom(1, 100);
@@ -36,8 +36,10 @@ public class RandomCommand extends IRCCommand{
 				for(Player pl : team.getPlayers())
 					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
 						waitingForRolls.get(team).acceptRoll(userName.replaceAll(" ", "_"), random);
-						return;
+						return "";
 					}
+		
+		return "";
 	}
 	
 }

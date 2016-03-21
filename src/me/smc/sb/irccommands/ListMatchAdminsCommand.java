@@ -20,16 +20,17 @@ public class ListMatchAdminsCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 2)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 2);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length - 1; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
-		if(Utils.stringToInt(args[args.length - 1]) == -1){Utils.info(e, pe, discord, "Match number needs to be a number!"); return;}
+		if(t == null) return "Invalid tournament!";
+		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Match number needs to be a number!";
 		
 		Match match = t.getMatch(Utils.stringToInt(args[args.length - 1]));
 		
@@ -43,8 +44,10 @@ public class ListMatchAdminsCommand extends IRCCommand{
 		
 		if(admins.length() > 0){
 			admins = admins.substring(0, admins.length() - 2);
-			Utils.info(e, pe, discord, "Administrators for match #" + match.getMatchNum() + " in tournament " + tournamentName + ": " + admins);
+			return "Administrators for match #" + match.getMatchNum() + " in tournament " + tournamentName + ": " + admins;
 		}
+		
+		return "";
 	}
 	
 }

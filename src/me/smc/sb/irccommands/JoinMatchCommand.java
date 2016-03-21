@@ -8,7 +8,6 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Game;
-import me.smc.sb.utils.Utils;
 
 public class JoinMatchCommand extends IRCCommand{
 
@@ -23,16 +22,17 @@ public class JoinMatchCommand extends IRCCommand{
 	}
 	
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(pe == null || discord != null || e != null){Utils.info(e, pe, discord, "You were not invited to any game!"); return;}
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		if(pe == null || discord != null || e != null) return "You were not invited to any game!";
 		
 		if(!gameInvites.isEmpty())
 			for(String invited : gameInvites.keySet())
 				if(invited.equalsIgnoreCase(pe.getUser().getNick().replaceAll(" ", "_"))){
 					gameInvites.get(invited).acceptInvite(invited.replaceAll("_", " "));
-					return;
+					return "";
 				}
-		Utils.info(e, pe, discord, "You were not invited to any game!");
+		
+		return "You were not invited to any game!";
 	}
 	
 }

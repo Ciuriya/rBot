@@ -17,6 +17,7 @@ public class Tournament{
 	private List<Team> teams;
 	private List<Match> matches;
 	private List<MapPool> pools;
+	private List<Long> matchDates;
 	private boolean scoreV2;
 	
 	public Tournament(String name){
@@ -28,6 +29,7 @@ public class Tournament{
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
+		matchDates = new ArrayList<>();
 		
 		scoreV2 = getConfig().getBoolean("scoreV2");
 		
@@ -63,6 +65,10 @@ public class Tournament{
 		return pools;
 	}
 	
+	public List<Long> getMatchDates(){
+		return matchDates;
+	}
+	
 	public void addPool(MapPool pool){
 		pools.add(pool);
 	}
@@ -73,6 +79,10 @@ public class Tournament{
 	
 	public void addMatch(Match match){
 		matches.add(match);
+	}
+	
+	public void addMatchDate(long date){
+		matchDates.add(date);
 	}
 	
 	public Match getMatch(int matchNum){
@@ -104,6 +114,10 @@ public class Tournament{
 			for(Match match : new ArrayList<Match>(matches))
 				if(match.getMatchNum() == matchNum){
 					matches.remove(match);
+					
+					if(match.getTime() != 0)
+						matchDates.remove(match.getTime());
+					
 					match.delete();
 					return true;
 				}

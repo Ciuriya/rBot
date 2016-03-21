@@ -13,6 +13,8 @@ import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.events.Event;
+import net.dv8tion.jda.events.ReadyEvent;
+import net.dv8tion.jda.events.ReconnectedEvent;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.hooks.EventListener;
 
@@ -62,7 +64,14 @@ public class Listener implements EventListener{
 	    		Utils.infoBypass(e.getChannel(), "It seems you are having a problem... use ~/help to get a list of commands!" +
 	    									     "\nIf you have any issues, feel free to contact Smc!" +
 	    									     "\nContact: PM, server: https://discord.gg/0phGqtqLYwSzCdwn");
-		}
+		}else if(event instanceof ReadyEvent){
+			api = event.getJDA();
+			api.setAutoReconnect(true);
+			loadGuilds(api);
+			Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
+			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");
+		}else if(event instanceof ReconnectedEvent)
+			Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I have reconnected!");
     }
     
     public static void loadGuilds(JDA api){

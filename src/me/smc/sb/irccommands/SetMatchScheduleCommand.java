@@ -18,28 +18,30 @@ public class SetMatchScheduleCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 6)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 7);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
 		for(int i = 0; i < args.length - 6; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(t == null){Utils.info(e, pe, discord, "Invalid tournament!"); return;}
-		if(Utils.stringToInt(args[args.length - 6]) == -1){Utils.info(e, pe, discord, "Match number needs to be a number!"); return;}
-		if(t.getMatch(Utils.stringToInt(args[args.length - 6])) == null){Utils.info(e, pe, discord, "The match is invalid!"); return;}
+		if(t == null) return "Invalid tournament!";
+		if(Utils.stringToInt(args[args.length - 6]) == -1) return "Match number needs to be a number!";
+		if(t.getMatch(Utils.stringToInt(args[args.length - 6])) == null) return "The match is invalid!";
 		
 		String date = "";
 		for(int i = args.length - 5; i < args.length; i++)
 			date += args[i] + " ";
 		long time = Utils.toTime(date.substring(0, date.length() - 1));
-		if(time == -1 || time < Utils.getCurrentTimeUTC()){Utils.info(e, pe, discord, "This time is either in the past or invalid!"); return;}
+		
+		if(time == -1 || time < Utils.getCurrentTimeUTC()) return "This time is either in the past or invalid!";
 		
 		t.getMatch(Utils.stringToInt(args[args.length - 6])).setTime(time);
 		t.getMatch(Utils.stringToInt(args[args.length - 6])).save(false);
 		
-		Utils.info(e, pe, discord, "Set match #" + args[args.length - 6] + " to " + date);
+		return "Set match #" + args[args.length - 6] + " to " + date;
 	}
 	
 }

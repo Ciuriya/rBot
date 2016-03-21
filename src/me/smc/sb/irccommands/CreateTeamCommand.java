@@ -19,14 +19,15 @@ public class CreateTeamCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 2)) return;
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 2);
+		if(argCheck.length() > 0) return argCheck;
 		
 		String validation = Utils.validateTournamentAndTeam(e, pe, discord, args);
-		if(validation.length() == 0) return;
+		if(!validation.contains("|")) return validation;
 		
 		new Team(Tournament.getTournament(validation.split("\\|")[1]), validation.split("\\|")[0]);
-		Utils.info(e, pe, discord, "Created the " + validation.split("\\|")[0] + " team!");
+		return "Created the " + validation.split("\\|")[0] + " team!";
 	}
 	
 }

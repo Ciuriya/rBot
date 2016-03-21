@@ -122,6 +122,11 @@ public class Match{
 	}
 	
 	public void setTime(long time){
+		if(tournament.getMatchDates().contains(time)){
+			setTime(time + 15000);
+			return;
+		}
+		
 		scheduledDate = time;
 		
 		if(scheduledDate < Utils.getCurrentTimeUTC() && scheduledDate != 0){
@@ -130,6 +135,8 @@ public class Match{
 		}
 		
 		if(scheduledDate == 0) return;
+		
+		tournament.addMatchDate(time);
 		
 		if(scheduledTime != null) scheduledTime.cancel();
 		
@@ -165,6 +172,12 @@ public class Match{
 		config.deleteKey("match-" + matchNum + "-pool");
 		config.deleteKey("match-" + matchNum + "-bestof");
 		config.deleteKey("match-" + matchNum + "-admins");
+		
+		this.fTeam = null;
+		this.sTeam = null;
+		this.pool = null;
+		matchAdmins.clear();
+		if(scheduledTime != null) scheduledTime.cancel();
 	}
 	
 	public void save(boolean append){

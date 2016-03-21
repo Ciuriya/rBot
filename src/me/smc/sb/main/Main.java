@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -13,14 +12,13 @@ import java.util.logging.Level;
 
 import org.pircbotx.PircBotX;
 
+import me.smc.sb.communication.Server;
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
-import me.smc.sb.utils.Server;
-import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDABuilder;
 
@@ -39,7 +37,7 @@ public class Main{
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
-	private static Server server;
+	public static Server server;
 	
 	public static void main(String[] args){
 		new Main();
@@ -71,13 +69,6 @@ public class Main{
 				            login.getInt("STwebPortIn"),
 				            login.getInt("STwebPortOut"));
 		
-		Thread thread = new Thread(new Runnable(){
-			public void run(){
-				checkForDisconnections();
-			}
-		});
-		thread.start();
-		
 		Tournament.loadTournaments();
 		
 		IRCCommand.registerCommands();
@@ -87,11 +78,7 @@ public class Main{
 	private void login(){
 		try{
 			Listener l = new Listener();
-			api = new JDABuilder(discordEmail, discordPassword).addListener(l).buildBlocking();
-			l.setAPI(api);
-			Listener.loadGuilds(api);
-			Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
-			IRCChatListener.yieldPMs = new Configuration(new File("login.txt")).getBoolean("yield-pms");
+			api = new JDABuilder(discordEmail, discordPassword).addListener(l).buildAsync();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;
@@ -159,41 +146,4 @@ public class Main{
 		File f = new File("codes.txt");
 		write(retCode + "", f);
 	}
-	
-	private void checkForDisconnections(){
-		while(true){
-	        try{
-	            Field wsc = api.getClass().getDeclaredField("client");
-	            wsc.setAccessible(true);
-	            Object wscObj = wsc.get(api);
-
-	            Field thread = wscObj.getClass().getDeclaredField("keepAliveThread");
-	            thread.setAccessible(true);
-	            Object threadObj = thread.get(wscObj);
-
-	            if(threadObj instanceof Thread){
-	            	((Thread) threadObj).join();
-	            	reconnect();
-	            }
-	        }catch(Exception e){
-	        	Log.logger.log(Level.INFO, "Reflection failure on disconnection checks, please report this to the developer!");
-	            Log.logger.log(Level.SEVERE, e.getMessage(), e);
-	        }	
-		}
-	}
-	
-	private void reconnect(){
-    	Log.logger.log(Level.INFO, "JDA lost connection!");
-        while(true){
-            try{
-            	Log.logger.log(Level.INFO, "Attempting to reconnect to JDA...");
-                login();
-                break;
-            }catch(Exception e){
-                Log.logger.log(Level.INFO, "Unable to reconnect! Trying again in 30 seconds...");
-                Utils.sleep(30000);
-            }
-        }
-	}
-	
 }

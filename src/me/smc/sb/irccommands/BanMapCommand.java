@@ -25,9 +25,11 @@ public class BanMapCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 1)) return;
-		if(e == null || discord != null || pe != null){Utils.info(e, pe, discord, "You cannot select a map in here!"); return;}
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 1);
+		if(argCheck.length() > 0) return argCheck;
+		
+		if(e == null || discord != null || pe != null) return "You cannot select a map in here!";
 		
 		String userName = e.getUser().getNick();
 		
@@ -36,9 +38,10 @@ public class BanMapCommand extends IRCCommand{
 				for(Player pl : team.getPlayers())
 					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
 						banningTeams.get(team).acceptBan(args[0]);
-						return;
+						return "";
 					}
-						
+		
+		return "";
 	}
 	
 }

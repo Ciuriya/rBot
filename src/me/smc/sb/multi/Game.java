@@ -9,6 +9,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 import org.json.JSONObject;
+import org.pircbotx.Channel;
 
 import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.InvitePlayerCommand;
@@ -20,11 +21,11 @@ import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
-public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
+public class Game{
 
 	private Match match;
 	private String multiChannel;
-	private String mpLink; //somehow make it available
+	private String mpLink;
 	private int waitingForCaptains = 2;
 	private int fTeamPoints = 0, sTeamPoints = 0;
 	private int warmupsLeft = 2;
@@ -37,6 +38,7 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 	private boolean verifyingMods = false;
 	private boolean waitingForConfirm = false;
 	private boolean fixingLobby = false;
+	private boolean verifyingLobby = false;
 	private int rematchesAllowed = 1;
 	private List<String> invitesSent;
 	private List<String> playersInRoom;
@@ -45,6 +47,8 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 	private java.util.Map<Integer, String> hijackedSlots;
 	private List<Map> bans;
 	private List<Map> mapsPicked;
+	private List<Player> playersSwapped;
+	private java.util.Map<Player, Integer> verifyingSlots;
 	private LinkedList<String> banchoFeedback;
 	private Team selectingTeam;
 	private Team banningTeam;
@@ -64,7 +68,9 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		this.mapsPicked = new ArrayList<>();
 		this.captains = new ArrayList<>();
 		this.joinQueue = new ArrayList<>();
+		this.playersSwapped = new ArrayList<>();
 		this.hijackedSlots = new HashMap<>();
+		this.verifyingSlots = new HashMap<>();
 		this.match.setGame(this);
 		
 		setupLobby();
@@ -74,6 +80,7 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		this.multiChannel = multiChannel;
 		this.mpLink = mpLink;
 		
+		IRCChatListener.gameCreatePMs.remove(multiChannel.replace("#mp_", "") + "|" + match.getLobbyName());
 		IRCChatListener.gamesListening.put(multiChannel, this);
 		
 		sendMessage("!mp lock");
@@ -126,31 +133,29 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		Timer captainFallback = new Timer();
 		captainFallback.schedule(new TimerTask(){
 			public void run(){
-				if(waitingForCaptains > 0){
-					if(!playersInRoom.isEmpty()){
-						int fTeamCaptains = 0, sTeamCaptains = 0;
-						
-						for(String player : playersInRoom)
-							if(captains.contains(player.replaceAll(" ", "_"))){
-								Team team = findTeam(player);	
-								if(team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName())) fTeamCaptains++;
-								else sTeamCaptains++;
-							}	
-						
-						Team missingTeam = null;
-						
-						if(fTeamCaptains == 0 && sTeamCaptains == 0){
-							addNextCaptain(match.getFirstTeam());
-							addNextCaptain(match.getSecondTeam());
-							scheduleNextCaptainInvite();
-							return;
-						}else if(fTeamCaptains == 0) missingTeam = match.getFirstTeam();
-						else if(sTeamCaptains == 0) missingTeam = match.getSecondTeam();
-						else return;
-						
-						addNextCaptain(missingTeam);
+				if(!playersInRoom.isEmpty()){
+					int fTeamCaptains = 0, sTeamCaptains = 0;
+					
+					for(String player : playersInRoom)
+						if(captains.contains(player.replaceAll(" ", "_"))){
+							Team team = findTeam(player);	
+							if(team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName())) fTeamCaptains++;
+							else sTeamCaptains++;
+						}	
+					
+					Team missingTeam = null;
+					
+					if(fTeamCaptains == 0 && sTeamCaptains == 0){
+						addNextCaptain(match.getFirstTeam());
+						addNextCaptain(match.getSecondTeam());
 						scheduleNextCaptainInvite();
-					}
+						return;
+					}else if(fTeamCaptains == 0) missingTeam = match.getFirstTeam();
+					else if(sTeamCaptains == 0) missingTeam = match.getSecondTeam();
+					else return;
+					
+					addNextCaptain(missingTeam);
+					scheduleNextCaptainInvite();
 				}
 			}
 		}, 60000);
@@ -158,14 +163,14 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 	
 	private void addNextCaptain(Team team){
 		for(Player pl : team.getPlayers())
-			if(!captains.contains(pl.getName().replaceAll(" ", "_"))){
+			if(!captains.contains(pl.getName().replaceAll(" ", "_")) && !playersInRoom.contains(pl.getName().replaceAll(" ", "_"))){
 				captains.add(pl.getName().replaceAll(" ", "_"));
 				invitePlayer(pl.getName().replaceAll(" ", "_"));
 				return;
 			}
 		
 		for(Player pl : team.getPlayers())
-			if(captains.contains(pl.getName().replaceAll(" ", "_")) && pl.getSlot() == -1)
+			if(captains.contains(pl.getName().replaceAll(" ", "_")) && pl.getSlot() == -1 && waitingForCaptains > 0)
 				sendInviteMessages(pl.getName().replaceAll(" ", "_"));
 	}
 	
@@ -213,7 +218,7 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				messageUpdater(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>.");
+				messageUpdater(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				SelectMapCommand.gamesInSelection.add(this);
 				
 				startMapUpdater();
@@ -265,13 +270,15 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 	private void changeMap(Map map){
 		sendMessage("!mp map " + map.getBeatmapID() + " 0");
 		sendMessage("!mp mods " + getMod(map));
+		
+		this.map = map;
 	}
 	
 	private String getMod(Map map){
 		String mods = "";
 		
 		switch(map.getCategory()){
-			case 1: mods = "Freemod"; break;
+			case 5: case 1: mods = "Freemod"; break;
 			case 2: mods = "HD"; break;
 			case 3: mods = "HR"; break;
 			case 4: mods = "DT"; break;
@@ -303,7 +310,7 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 			if(roll > previousRoll) fTeamFirst = fTeam;
 			else fTeamFirst = !fTeam;
 			
-			sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our discord group or to Smc. Thank you!");
+			sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 			mapSelection(2);
 		}else previousRoll = roll;
 	}
@@ -365,11 +372,22 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		for(String admin : match.getMatchAdmins())
 			pmUser(admin, gameEndedMsg);
 
-		Log.logger.log(Level.INFO, "Game ended: " + match.getFirstTeam().getTeamName() + " (" + fTeamPoints + ") vs (" +
-								   sTeamPoints + ") " + match.getSecondTeam().getTeamName() + " - " + mpLink);
+		Log.logger.log(Level.INFO, gameEndedMsg);
 		
-		messageUpdater.cancel();
-		match.delete();
+		if(messageUpdater != null) messageUpdater.cancel();
+		invitesSent.clear();
+		playersInRoom.clear();
+		banchoFeedback.clear();
+		bans.clear();
+		mapsPicked.clear();
+		captains.clear();
+		joinQueue.clear();
+		playersSwapped.clear();
+		hijackedSlots.clear();
+		verifyingSlots.clear();
+		match.setGame(null);
+		
+		match.getTournament().removeMatch(match.getMatchNum());
 	}
 	
 	private void pmUser(String user, String message){
@@ -390,6 +408,30 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		}
 		
 		Main.ircBot.sendIRC().message("BanchoBot", "!mp make " + match.getLobbyName());
+		
+		Timer check = new Timer();
+		check.schedule(new TimerTask(){
+			public void run(){
+				if(multiChannel.length() == 0){
+					List<String> connectedMPs = new ArrayList<String>();
+					for(Channel channel : Main.ircBot.getUserBot().getChannels())
+						connectedMPs.add(channel.getName().replace("#mp_", ""));
+					
+					for(Match match : match.getTournament().getMatches())
+						if(match.getGame() != null)
+							if(match.getGame().getMpNum() != -1) 
+								connectedMPs.remove(String.valueOf(match.getGame().getMpNum()));
+					
+					if(!connectedMPs.isEmpty() && !IRCChatListener.gameCreatePMs.isEmpty())
+						for(String unusedMP : connectedMPs)
+							for(String gamePM : new ArrayList<String>(IRCChatListener.gameCreatePMs))
+								if(gamePM.split("\\|")[0].equalsIgnoreCase(unusedMP))
+									for(Match match : match.getTournament().getMatches())
+										if(match.getGame() != null && match.getLobbyName().equalsIgnoreCase(gamePM.split("\\|")[1]))
+											match.getGame().start("#mp_" + unusedMP, "https://osu.ppy.sh/mp/" + unusedMP);
+				}
+			}
+		}, 60000);
 	}
 	
 	public Team getSelectingTeam(){
@@ -442,13 +484,23 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 			}
 		}
 		
-		if(chosen){
+		if(chosen && !mapSelected){
 			mapSelected = true;
-			messageUpdater(30, "Waiting for all players to ready up...");
+			
+			prepareReadyCheck();
+			
 			return;
 		}
 		
-		sendMessage("Invalid map!");
+		if(!chosen) sendMessage("Invalid map!");
+	}
+	
+	private void prepareReadyCheck(){
+		String message = "Waiting for all players to ready up...";
+		
+		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, make sure you are not using fallback as your score will not count!";
+		
+		messageUpdater(0, message, "If someone is on the wrong side/team, simply ready up and everything will fix itself! Please note that you can select another map if needed.");
 	}
 	
 	private boolean checkMap(Map map){
@@ -462,6 +514,7 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		else if(message.contains("The match has finished!")) playEnded();
 		else if(message.startsWith("Slot ") && verifyingMods) modVerification(message);
 		else if(message.startsWith("Slot ") && fixingLobby) fixLobby(message);
+		else if(message.startsWith("Slot ") && verifyingLobby) verifyLobby(message);
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else banchoFeedback.add(message);
 	}
@@ -469,7 +522,7 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 	private void readyCheck(){
 		if(waitingForConfirm) return;
 		
-		if(playersInRoom.size() == match.getPlayers() && mapSelected){ 
+		if(playersInRoom.size() == match.getPlayers() && mapSelected && !verifyingLobby && !verifyingMods){ 
 			fixingLobby = false;
 			
 			if(previousMap == null || !previousMap.getURL().equalsIgnoreCase(map.getURL())){
@@ -478,106 +531,181 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 			}
 			
 			if(mapUpdater != null) mapUpdater.cancel();
+			if(messageUpdater != null) messageUpdater.cancel();
+			
 			SelectMapCommand.gamesInSelection.remove(this);
 			
+			verifyLobby(null);
+		}else if(mapSelected && !verifyingLobby && !fixingLobby && !verifyingMods) fixLobby(null);
+		else if(verifyingLobby && !fixingLobby && playersInRoom.size() == match.getPlayers() && !verifyingMods){
+			verifyingLobby = false;
 			modVerification(null);
-		}else if(mapSelected) fixLobby(null);
-		
-		banchoFeedback.clear();
+		}else if(fixingLobby && playersInRoom.size() == match.getPlayers() && !verifyingMods){
+			fixingLobby = false;
+			modVerification(null);
+		}else if(!verifyingMods){
+			verifyingLobby = false;
+			fixingLobby = false;
+			verifyingMods = false;
+			prepareReadyCheck();
+			readyCheck();
+		}
+			
+		if(!verifyingMods) banchoFeedback.clear();
+	}
+	
+	private void verifyLobby(String message){
+		if(message == null){
+			verifyingLobby = true;
+			playersSwapped.clear();
+			verifyingSlots.clear();
+			
+			sendMessage("!mp settings");
+			
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					if(verifyingLobby)
+						sendMessage("!mp settings");
+				}
+			}, 2500);
+			return;
+		}else fixPlayer(message, false);
 	}
 	
 	private void fixLobby(String message){
 		if(message == null){
 			fixingLobby = true;
 			messageUpdater.cancel();
-			
-			sendMessage("WARNING, VERY IMPORTANT MESSAGE! Please do not leave the lobby, doing so might break this match and thus require this match to be rescheduled!");
+			playersSwapped.clear();
+			verifyingSlots.clear();
+
 			sendMessage("!mp settings");
 			playersInRoom.clear();
-			return;
-		}else{
-			int slot = Utils.stringToInt(message.split(" ")[1]);
 			
-			String[] sBracketSplit = message.split("\\[");
-			
-			String mods = sBracketSplit[sBracketSplit.length - 1].split("\\]")[0];
-			
-			message = Utils.removeExcessiveSpaces(message).replace(" [" + mods + "]", "");
-			
-			String[] spaceSplit = message.split(" ");
-			
-			int count = 0;
-			for(String arg : spaceSplit){
-				if(arg.contains("osu.ppy.sh")) break;
-				count++;
-			}
-			
-			String player = "";
-			String teamColor = "";
-			
-			for(int i = count + 1; i < spaceSplit.length; i++){
-				if(spaceSplit[i].equalsIgnoreCase("[Team")) break;
-				player += spaceSplit[i] + "_";
-			}
-			
-			player = player.substring(0, player.length() - 1);
-			
-			playersInRoom.add(player);
-			
-			Team team = findTeam(player);
-			Player p = null;
-			
-			for(Player pl : team.getPlayers())
-				if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
-					pl.setSlot(slot);
-					p = pl;
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					if(fixingLobby)
+						sendMessage("!mp settings");
 				}
+			}, 2500);
+			return;
+		}else fixPlayer(message, true);
+	}
+	
+	private void fixPlayer(String message, boolean fixing){
+		int slot = Utils.stringToInt(message.split(" ")[1]);
+		
+		message = Utils.removeExcessiveSpaces(message);
+		
+		String[] spaceSplit = message.split(" ");
+		
+		int count = 0;
+		for(String arg : spaceSplit){
+			if(arg.contains("osu.ppy.sh")) break;
+			count++;
+		}
+		
+		String player = "";
+		String teamColor = "";
+
+		for(int i = count + 1; i < spaceSplit.length; i++){
+			if(spaceSplit[i].equalsIgnoreCase("[Team")){
+				count = i;
+				break;
+			}
+			if(spaceSplit[i].equalsIgnoreCase("[Host")){
+				count = i + 2;
+				break;
+			}
 			
-			teamColor = spaceSplit[count + 1];
+			player += spaceSplit[i] + "_";
+		}
+		
+		player = player.substring(0, player.length() - 1);
+		
+		if(fixing) playersInRoom.add(player);
+		
+		Team team = findTeam(player);
+		Player p = null;
+		
+		if(team == null){
+			sendMessage("!mp kick " + player);
+			sendMessage(player + " is not on a team!");
+			return;
+		}
+		
+		for(Player pl : team.getPlayers())
+			if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
+				if(fixing) pl.setSlot(slot);
+				p = pl;
+				break;
+			}
+		
+		teamColor = spaceSplit[count + 1].replaceAll(" ", "");
+				
+		boolean fTeam = team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
+		
+		if(fTeam && (!teamColor.equalsIgnoreCase("Blue") && !teamColor.contains("Blue")))
+			sendMessage("!mp team " + player + " blue");
+		else if(!fTeam && (!teamColor.equalsIgnoreCase("Red") && !teamColor.contains("Red")))
+			sendMessage("!mp team " + player + " red");
+		
+		verifyingSlots.put(p, slot);
+		
+		if(verifyingSlots.size() >= match.getPlayers()){
+			lobbySwapFixing();
+			readyCheck();
+		}
+	}
+	
+	private void lobbySwapFixing(){
+		for(Player pl : verifyingSlots.keySet()){
+			if(playersSwapped.contains(pl)) continue;
+			
+			Team team = findTeam(pl.getName().replaceAll(" ", "_"));
 			
 			boolean fTeam = team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
 			
 			Team oppositeTeam = fTeam ? match.getSecondTeam() : match.getFirstTeam();
 			
-			if(fTeam && !teamColor.equalsIgnoreCase("Blue"))
-				sendMessage("!mp team " + player + " blue");
-			else if(!fTeam && !teamColor.equalsIgnoreCase("Red"))
-				sendMessage("!mp team " + player + " red");
-			
-			if(player != null)
-				if(fTeam && slot > match.getPlayers() / 2 || !fTeam && slot <= match.getPlayers() / 2){
-					roomSize += 1;
-					sendMessage("!mp size " + roomSize);
-					sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + roomSize);
-					
-					for(Player pl : oppositeTeam.getPlayers())
-						if(fTeam && pl.getSlot() <= match.getPlayers() / 2 || 
-							!fTeam && pl.getSlot() > match.getPlayers() / 2){
-							
-							int newSlot = pl.getSlot();
-							pl.setSlot(slot);
-							p.setSlot(newSlot);
-							sendMessage("!mp move " + pl.getName().replaceAll(" ", "_") + " " + slot);
-							sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + newSlot);
-							
-							roomSize -= 1;
-							sendMessage("!mp size " + roomSize);
-							break;
-						}
-				}
-			
+			swapPositions(fTeam, verifyingSlots.get(pl), pl, oppositeTeam);
 		}
-		
-		if(playersInRoom.size() == match.getPlayers()){
-			fixingLobby = false;
-			readyCheck();
+	}
+	
+	private void swapPositions(boolean fTeam, int slot, Player p, Team oppositeTeam){
+		if(fTeam && slot > match.getPlayers() / 2 || !fTeam && slot <= match.getPlayers() / 2){		
+			playersSwapped.add(p);
+			
+			for(Player pl : oppositeTeam.getPlayers()){
+				if(!verifyingSlots.containsKey(pl)) continue;
+				
+				if(fTeam && verifyingSlots.get(pl) <= match.getPlayers() / 2 || 
+					!fTeam && verifyingSlots.get(pl) > match.getPlayers() / 2){
+					roomSize += 1;
+					playersSwapped.add(pl);
+					
+					int newSlot = verifyingSlots.get(pl);
+					pl.setSlot(slot);
+					p.setSlot(newSlot);
+					sendMessage("!mp size " + roomSize);
+					sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + roomSize);
+					sendMessage("!mp move " + pl.getName().replaceAll(" ", "_") + " " + slot);
+					sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + newSlot);
+					
+					roomSize -= 1;
+					sendMessage("!mp size " + roomSize);
+					break;
+				}
+			}
 		}
 	}
 	
 	private void startMatch(int timer){
 		if(verifyingMods) return;
 		
-		messageUpdater.cancel();
+		if(messageUpdater != null) messageUpdater.cancel();
 		
 		if(roomSize > match.getPlayers()){
 			roomSize = match.getPlayers();
@@ -585,6 +713,8 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		}
 		
 		mapsPicked.add(map);
+		
+		banchoFeedback.clear();
 		
 		if(timer != 0) sendMessage("!mp start " + timer);
 		else sendMessage("!mp start");
@@ -603,6 +733,14 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 			for(Player pl : tempList) pl.setHasMod(false);
 			
 			sendMessage("!mp settings");
+			
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					if(verifyingMods)
+						sendMessage("!mp settings");
+				}
+			}, 5000);
 		}else if(map.getCategory() == 1 && warmupsLeft <= 0){
 			if(message.endsWith("]")){
 				String[] sBracketSplit = message.split("\\[");
@@ -717,6 +855,9 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 		t.schedule(new TimerTask(){
 			public void run(){
 				waitingForConfirm = false;
+				verifyingMods = false;
+				fixingLobby = false;
+				verifyingLobby = false;
 				
 				float fTeamScore = 0, sTeamScore = 0;
 				List<String> fTeamPlayers = new ArrayList<>();
@@ -739,6 +880,11 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 						
 						if(feedback.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
 							int score = Utils.stringToInt(feedback.split("Score: ")[1].split(",")[0]);
+							
+							if(score > 1500000 && match.getTournament().isScoreV2()){
+								sendMessage(player + " is on fallback, please use stable! His score is NOT counted for this pick.");
+								continue;
+							}
 							
 							if(fTeam) fTeamScore += score;
 							else sTeamScore += score;
@@ -839,16 +985,6 @@ public class Game{ //change SMT#4-1-10 to SMT#4 and make it all encompassing
 	
 	public void invitePlayer(String player){
 		if(invitesSent.contains(player.replaceAll(" ", "_"))) return;
-
-		if(player.equalsIgnoreCase("Smc")){
-			Timer t = new Timer();
-			t.schedule(new TimerTask(){
-				public void run(){
-					acceptInvite(player);
-				}
-			}, 5000);
-			return;
-		}
 		
 		invitesSent.add(player.replaceAll(" ", "_"));
 		JoinMatchCommand.gameInvites.put(player.replaceAll(" ", "_"), this);

@@ -20,9 +20,11 @@ public class ForceStopGameCommand extends IRCCommand{
 	}
 
 	@Override
-	public void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		if(!Utils.checkArguments(e, pe, discord, args, 1)) return;
-		if(Utils.stringToInt(args[0]) == -1){Utils.info(e, pe, discord, "Invalid mp #!"); return;}
+	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+		String argCheck = Utils.checkArguments(args, 1);
+		if(argCheck.length() > 0) return argCheck;
+		
+		if(Utils.stringToInt(args[0]) == -1) return "Invalid mp #!";
 		
 		String user = Utils.toUser(e, pe);
 		
@@ -32,12 +34,11 @@ public class ForceStopGameCommand extends IRCCommand{
 					if(match.isMatchAdmin(user)){
 						match.getGame().stop();
 						
-						Utils.info(e, pe, discord, "Game #" + Utils.stringToInt(args[0]) + " was force stopped!");
-						return;	
+						return "Game #" + Utils.stringToInt(args[0]) + " was force stopped!";
 					}
 				}
 		
-		Utils.info(e, pe, discord, "An error occured while force stopping the requested game!");
+		return "An error occured while force stopping the requested game!";
 	}
 	
 }

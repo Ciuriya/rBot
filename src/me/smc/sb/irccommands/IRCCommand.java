@@ -50,7 +50,7 @@ public abstract class IRCCommand{
 		return false;
 	}
 	
-	public static void handleCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String msg){
+	public static String handleCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String msg){
 		if(pe != null)
 			try{
 				Main.ircBot.sendIRC().joinChannel(pe.getUser().getNick());
@@ -65,12 +65,13 @@ public abstract class IRCCommand{
 			if(ic.isName(split[0]) && me.smc.sb.perm.Permissions.hasPerm(user, ic.perm)){
 				String[] args = msg.replace(split[0] + " ", "").split(" ");
 				if(!msg.contains(" ")) args = new String[]{};
-				ic.onCommand(e, pe, discord, args);
-				return;
+				return ic.onCommand(e, pe, discord, args);
 			}
 		
 		if(!(split[0].equalsIgnoreCase("mp") && split.length > 1))
-			Utils.info(e, pe, discord, "This is not a command! Use !help if you are lost!");
+			return "This is not a command! Use !help if you are lost!";
+		
+		return "";
 	}
 	
 	public static void registerCommands(){
@@ -86,6 +87,7 @@ public abstract class IRCCommand{
 		commands.add(new DeleteMatchCommand());
 		commands.add(new ListMapPoolsCommand());
 		commands.add(new ListMapsInPoolCommand());
+		commands.add(new GeneratePoolDownloadCommand());
 		commands.add(new ListTournamentsCommand());
 		commands.add(new ListTeamsCommand());
 		commands.add(new ListTeamPlayersCommand());
@@ -113,6 +115,6 @@ public abstract class IRCCommand{
 		commands.add(new BanMapCommand());
 	}
 	
-	public abstract void onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);
+	public abstract String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);
 	
 }

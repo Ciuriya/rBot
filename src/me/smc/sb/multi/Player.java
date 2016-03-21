@@ -31,5 +31,5 @@ public class Player{
 	public void setHasMod(boolean hasMod){
 		this.hasMod = hasMod;
 	}
-
+	
 }
