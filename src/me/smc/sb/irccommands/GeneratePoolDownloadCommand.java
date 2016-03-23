@@ -143,6 +143,8 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		byte[] b = new byte[1024];
 		
 		try{
+			if(new File(zipLocation).exists()) new File(zipLocation).delete();
+			
 			FileOutputStream fos = new FileOutputStream(zipLocation);
 			ZipOutputStream zos = new ZipOutputStream(fos);
 			

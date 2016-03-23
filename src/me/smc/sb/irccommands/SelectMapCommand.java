@@ -44,7 +44,7 @@ public class SelectMapCommand extends IRCCommand{
 								return "";
 							}
 						}
-						game.handleSelect(url);
+						game.handleMapSelect(url, true);
 					}
 		
 		return "";

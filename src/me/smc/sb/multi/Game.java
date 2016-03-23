@@ -14,6 +14,7 @@ import org.pircbotx.Channel;
 import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.InvitePlayerCommand;
 import me.smc.sb.irccommands.JoinMatchCommand;
+import me.smc.sb.irccommands.PassTurnCommand;
 import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
 import me.smc.sb.listeners.IRCChatListener;
@@ -35,10 +36,8 @@ public class Game{
 	private int roomSize = 0;
 	private boolean mapSelected = false;
 	private boolean fTeamFirst = true;
-	private boolean verifyingMods = false;
-	private boolean waitingForConfirm = false;
-	private boolean fixingLobby = false;
-	private boolean verifyingLobby = false;
+	private boolean validMods = true;
+	private GameState state;
 	private int rematchesAllowed = 1;
 	private List<String> invitesSent;
 	private List<String> playersInRoom;
@@ -71,6 +70,7 @@ public class Game{
 		this.playersSwapped = new ArrayList<>();
 		this.hijackedSlots = new HashMap<>();
 		this.verifyingSlots = new HashMap<>();
+		this.state = GameState.WAITING;
 		this.match.setGame(this);
 		
 		setupLobby();
@@ -119,7 +119,7 @@ public class Game{
 			public void run(){
 				if(waitingForCaptains > 0){
 					if(!playersInRoom.isEmpty())
-						if(findTeam(playersInRoom.get(0)).getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName())){
+						if(teamToBoolean(findTeam(playersInRoom.get(0)))){
 							fTeamPoints++;
 						}else sTeamPoints++;
 					
@@ -139,7 +139,7 @@ public class Game{
 					for(String player : playersInRoom)
 						if(captains.contains(player.replaceAll(" ", "_"))){
 							Team team = findTeam(player);	
-							if(team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName())) fTeamCaptains++;
+							if(teamToBoolean(team)) fTeamCaptains++;
 							else sTeamCaptains++;
 						}	
 					
@@ -310,45 +310,23 @@ public class Game{
 			if(roll > previousRoll) fTeamFirst = fTeam;
 			else fTeamFirst = !fTeam;
 			
-			sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
-			mapSelection(2);
+			PassTurnCommand.passingTeams.put(fTeam ? match.getFirstTeam() : match.getSecondTeam(), this);
+			
+			sendMessage((fTeam ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
+					    ", use !pass within the next 10 seconds to let the other team start instead!");
+			
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
+					mapSelection(2);
+				}
+			}, 10000);
 		}else previousRoll = roll;
 	}
 	
-	public void acceptBan(String ban){
-		ban = Utils.takeOffExtrasInBeatmapURL(ban);
-		
-		Map toBan = null;
-		
-		if(Utils.stringToInt(ban) != -1){
-			int num = 1;
-			for(Map m : match.getMapPool().getMaps()){
-				if(num == Utils.stringToInt(ban)){
-					if(m.getCategory() == 5){sendMessage("You cannot ban the tiebreaker!"); return;}
-					toBan = m;
-					break;
-				}
-				num++;
-			}
-		}else
-			for(Map m : match.getMapPool().getMaps())
-				if(m.getURL().equalsIgnoreCase(ban)){
-					if(m.getCategory() == 5){sendMessage("You cannot ban the tiebreaker!"); return;}
-					toBan = m;
-					break;
-				}
-		
-		if(toBan != null && !bans.contains(toBan)){
-			BanMapCommand.banningTeams.remove(banningTeam);
-			bans.add(toBan);
-			
-			JSONObject map = Map.getMapInfo(toBan.getBeatmapID());
-			
-			sendMessage(getMod(toBan).replace("None", "Nomod") + " pick: " + map.getString("artist") + " - " + map.getString("title") + 
-						" [" + map.getString("version") + "] was banned!");
-			
-			mapSelection(3);
-		}else sendMessage("Invalid ban!");
+	public void passFirstTurn(){
+		fTeamFirst = !fTeamFirst;
 	}
 	
 	public void stop(){
@@ -385,7 +363,27 @@ public class Game{
 		playersSwapped.clear();
 		hijackedSlots.clear();
 		verifyingSlots.clear();
+		banningTeam = null;
+		fTeamFirst = false;
+		fTeamPoints = 0;
+		map = null;
+		mapSelected = false;
+		mpLink = null;
+		multiChannel = null;
+		playersChecked = 0;
+		previousMap = null;
+		previousRoll = 0;
+		rematchesAllowed = 0;
+		rollsLeft = 0;
+		roomSize = 0;
+		selectingTeam = null;
+		state = null;
+		sTeamPoints = 0;
+		validMods = false;
+		waitingForCaptains = 0;
+		warmupsLeft = 0;
 		match.setGame(null);
+		match = null;
 		
 		match.getTournament().removeMatch(match.getMatchNum());
 	}
@@ -442,57 +440,60 @@ public class Game{
 		return Utils.stringToInt(multiChannel.replace("#mp_", ""));
 	}
 	
-	public void handleSelect(String map){
-		boolean chosen = false;
+	public void handleMapSelect(String map, boolean select){
+		Map selected = null;
 		
-		if(Utils.stringToInt(map) != -1){
-			int num = 1;
-			for(Map m : match.getMapPool().getMaps()){
-				if(num == Utils.stringToInt(map)){
-					if(warmupsLeft == 0 && bans.contains(m)){sendMessage("This map is banned! Please choose something else."); return;}
-					else if(m.getCategory() == 5){sendMessage("You cannot select the tiebreaker!"); return;}
-					else if(warmupsLeft == 0 && !checkMap(m)){sendMessage("This map was already picked once! Please choose something else."); return;}
-					
-					this.map = m;
-					chosen = true;
-					break;
-				}
-				num++;
-			}
-		}else{
-			for(Map m : match.getMapPool().getMaps())
-				if(m.getURL().equalsIgnoreCase(map)){
-					if(warmupsLeft == 0 && bans.contains(m)){sendMessage("This map is banned! Please choose something else."); return;}
-					else if(m.getCategory() == 5){sendMessage("You cannot select the tiebreaker!"); return;}
-					else if(warmupsLeft == 0 && !checkMap(m)){sendMessage("This map was already picked once! Please choose something else."); return;}
-					
-					this.map = m;
-					chosen = true;
-					break;
-				}
+		int num = 1;
+		for(Map m : match.getMapPool().getMaps()){
+			boolean chosen = false;
+			if(num == Utils.stringToInt(map)) chosen = true;
+			else if(m.getURL().equalsIgnoreCase(map)) chosen = true;
 			
-			if(warmupsLeft > 0){
-				JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID());
-				int length = jsMap.getInt("total_length");
-				if(length > 270){
-					sendMessage("The warmup selected is too long! The maximum length is 4m30s.");
-					return;
+			if(chosen){
+				if(select && warmupsLeft == 0){
+					if(bans.contains(m)){sendMessage("This map is banned! Please choose something else."); return;}
+					if(!checkMap(m)){sendMessage("This map was already picked once! Please choose something else."); return;}
 				}
-				this.map = new Map(map, 1);
 				
-				chosen = true;
+				if(m.getCategory() == 5){sendMessage("You cannot " + (select ? "select" : "ban") + " the tiebreaker!"); return;}
+				
+				selected = m;
+				break;
 			}
+			
+			num++;
 		}
 		
-		if(chosen && !mapSelected){
-			mapSelected = true;
+		if(!select && selected != null && !bans.contains(selected)){
+			BanMapCommand.banningTeams.remove(banningTeam);
+			bans.add(selected);
 			
-			prepareReadyCheck();
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID());
 			
+			sendMessage(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+					    jsMap.getString("title") + " [" + jsMap.getString("version") + "] was banned!");
+			
+			mapSelection(3);
 			return;
 		}
 		
-		if(!chosen) sendMessage("Invalid map!");
+		if(warmupsLeft > 0 && selected != null && select){
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID());
+			int length = jsMap.getInt("total_length");
+			if(length > 270){
+				sendMessage("The warmup selected is too long! The maximum length is 4m30s.");
+				return;
+			}
+		}
+		
+		if(selected != null && !mapSelected && select){
+			mapSelected = true;
+			this.map = selected;
+			prepareReadyCheck();
+			return;
+		}else if(mapSelected && select && selected != null) this.map = selected;
+		
+		if(selected == null || !select) sendMessage("Invalid " + (select ? "selection!" : "ban!"));
 	}
 	
 	private void prepareReadyCheck(){
@@ -508,23 +509,22 @@ public class Game{
 	}
 	
 	public void handleBanchoFeedback(String message){
-		if(message.contains("All players are ready")) readyCheck();
+		if(message.contains("All players are ready")) readyCheck(true);
 		else if(message.contains("left the game.")) playerLeft(message);
-		else if(message.contains("The match has started!")) banchoFeedback.clear();
-		else if(message.contains("The match has finished!")) playEnded();
-		else if(message.startsWith("Slot ") && verifyingMods) modVerification(message);
-		else if(message.startsWith("Slot ") && fixingLobby) fixLobby(message);
-		else if(message.startsWith("Slot ") && verifyingLobby) verifyLobby(message);
+		else if(message.contains("The match has started!")){
+			banchoFeedback.clear();
+			state = GameState.PLAYING;
+		}else if(message.contains("The match has finished!")) playEnded();
+		else if(message.startsWith("Slot ") && state.equals(GameState.FIXING)) fixLobby(message);
+		else if(message.startsWith("Slot ") && state.equals(GameState.VERIFYING)) verifyLobby(message);
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else banchoFeedback.add(message);
 	}
 	
-	private void readyCheck(){
-		if(waitingForConfirm) return;
+	private void readyCheck(boolean bancho){
+		if(state.equals(GameState.CONFIRMING)) return;
 		
-		if(playersInRoom.size() == match.getPlayers() && mapSelected && !verifyingLobby && !verifyingMods){ 
-			fixingLobby = false;
-			
+		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.equals(GameState.WAITING)){ 
 			if(previousMap == null || !previousMap.getURL().equalsIgnoreCase(map.getURL())){
 				changeMap(map);
 				Utils.sleep(2500);
@@ -536,36 +536,30 @@ public class Game{
 			SelectMapCommand.gamesInSelection.remove(this);
 			
 			verifyLobby(null);
-		}else if(mapSelected && !verifyingLobby && !fixingLobby && !verifyingMods) fixLobby(null);
-		else if(verifyingLobby && !fixingLobby && playersInRoom.size() == match.getPlayers() && !verifyingMods){
-			verifyingLobby = false;
-			modVerification(null);
-		}else if(fixingLobby && playersInRoom.size() == match.getPlayers() && !verifyingMods){
-			fixingLobby = false;
-			modVerification(null);
-		}else if(!verifyingMods){
-			verifyingLobby = false;
-			fixingLobby = false;
-			verifyingMods = false;
+		}else if(mapSelected && state.equals(GameState.WAITING)) fixLobby(null);
+		else if((state.equals(GameState.VERIFYING) || state.equals(GameState.FIXING)) && playersInRoom.size() == match.getPlayers()){
+			finalModCheck();
+		}else if(!bancho){
+			state = GameState.WAITING;
 			prepareReadyCheck();
-			readyCheck();
+			banchoFeedback.clear();
 		}
-			
-		if(!verifyingMods) banchoFeedback.clear();
 	}
 	
 	private void verifyLobby(String message){
 		if(message == null){
-			verifyingLobby = true;
+			state = GameState.VERIFYING;
 			playersSwapped.clear();
 			verifyingSlots.clear();
+			
+			verifyMods();
 			
 			sendMessage("!mp settings");
 			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(verifyingLobby)
+					if(state.equals(GameState.VERIFYING))
 						sendMessage("!mp settings");
 				}
 			}, 2500);
@@ -575,18 +569,20 @@ public class Game{
 	
 	private void fixLobby(String message){
 		if(message == null){
-			fixingLobby = true;
+			state = GameState.FIXING;
 			messageUpdater.cancel();
 			playersSwapped.clear();
 			verifyingSlots.clear();
 
+			verifyMods();
+			
 			sendMessage("!mp settings");
 			playersInRoom.clear();
 			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(fixingLobby)
+					if(state.equals(GameState.FIXING))
 						sendMessage("!mp settings");
 				}
 			}, 2500);
@@ -596,6 +592,33 @@ public class Game{
 	
 	private void fixPlayer(String message, boolean fixing){
 		int slot = Utils.stringToInt(message.split(" ")[1]);
+		boolean hasMod = false;
+		
+		if(message.endsWith("]") && map.getCategory() == 1 && warmupsLeft <= 0){
+			String[] sBracketSplit = message.split("\\[");
+			
+			String mods = sBracketSplit[sBracketSplit.length - 1].split("\\]")[0];
+			
+			if(mods.split(" ").length <= 2){
+				playersChecked++; 
+			}else{
+				boolean validMod = true;
+				
+				loop: for(String mod : mods.split(", ")){
+					if(mod.contains("/") && mod.contains("Team")) mod = mod.split("\\/")[1].substring(1);
+					switch(mod.toLowerCase()){
+						case "hidden": case "hardrock": case "flashlight": break;
+						default: validMod = false; break loop;
+					}
+				}
+				
+				if(!validMod){					
+					sendMessage("You can only use HD, HR or FL! Make sure you do not have any other mods!");
+					sendMessage("!mp map " + map.getBeatmapID() + " 0");
+					validMods = false;
+				}else hasMod = true;
+			}
+		}else if(map.getCategory() == 1 && warmupsLeft <= 0) playersChecked++;
 		
 		message = Utils.removeExcessiveSpaces(message);
 		
@@ -628,7 +651,6 @@ public class Game{
 		if(fixing) playersInRoom.add(player);
 		
 		Team team = findTeam(player);
-		Player p = null;
 		
 		if(team == null){
 			sendMessage("!mp kick " + player);
@@ -636,16 +658,18 @@ public class Game{
 			return;
 		}
 		
-		for(Player pl : team.getPlayers())
-			if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
-				if(fixing) pl.setSlot(slot);
-				p = pl;
-				break;
-			}
+		Player p = findPlayer(player);
+		
+		if(p != null){
+			p.setHasMod(hasMod);
+			playersChecked++;	
+		}
+		
+		if(fixing) p.setSlot(slot);
 		
 		teamColor = spaceSplit[count + 1].replaceAll(" ", "");
 				
-		boolean fTeam = team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
+		boolean fTeam = teamToBoolean(team);
 		
 		if(fTeam && (!teamColor.equalsIgnoreCase("Blue") && !teamColor.contains("Blue")))
 			sendMessage("!mp team " + player + " blue");
@@ -656,7 +680,7 @@ public class Game{
 		
 		if(verifyingSlots.size() >= match.getPlayers()){
 			lobbySwapFixing();
-			readyCheck();
+			readyCheck(false);
 		}
 	}
 	
@@ -666,7 +690,7 @@ public class Game{
 			
 			Team team = findTeam(pl.getName().replaceAll(" ", "_"));
 			
-			boolean fTeam = team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
+			boolean fTeam = teamToBoolean(team);
 			
 			Team oppositeTeam = fTeam ? match.getSecondTeam() : match.getFirstTeam();
 			
@@ -702,8 +726,8 @@ public class Game{
 		}
 	}
 	
-	private void startMatch(int timer){
-		if(verifyingMods) return;
+	private void startMatch(int timer){	
+		state = GameState.PLAYING;
 		
 		if(messageUpdater != null) messageUpdater.cancel();
 		
@@ -722,93 +746,18 @@ public class Game{
 		mapSelected = false;
 	}
 	
-	private void modVerification(String message){
-		if(message == null && map.getCategory() == 1 && warmupsLeft <= 0){
-			verifyingMods = true;
+	private void verifyMods(){
+		if(map.getCategory() == 1 && warmupsLeft <= 0){
 			playersChecked = 0;
-			
 			LinkedList<Player> tempList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
 			tempList.addAll(match.getSecondTeam().getPlayers());
 			
 			for(Player pl : tempList) pl.setHasMod(false);
-			
-			sendMessage("!mp settings");
-			
-			Timer t = new Timer();
-			t.schedule(new TimerTask(){
-				public void run(){
-					if(verifyingMods)
-						sendMessage("!mp settings");
-				}
-			}, 5000);
-		}else if(map.getCategory() == 1 && warmupsLeft <= 0){
-			if(message.endsWith("]")){
-				String[] sBracketSplit = message.split("\\[");
-				
-				String mods = sBracketSplit[sBracketSplit.length - 1].split("\\]")[0];
-				
-				boolean validMod = true;
-				
-				if(mods.split(" ").length <= 2){
-					playersChecked++; 
-					finalModCheck();
-					return;
-				}
-				
-				loop: for(String mod : mods.split(", ")){
-					if(mod.contains("/") && mod.contains("Team")) mod = mod.split("\\/")[1].substring(1);
-					switch(mod.toLowerCase()){
-						case "hidden": case "hardrock": case "flashlight": break;
-						default: validMod = false; break loop;
-					}
-				}
-				
-				if(!validMod){
-					verifyingMods = false;
-					
-					sendMessage("You can only use HD, HR or FL! Make sure you do not have any other mods!");
-					sendMessage("!mp map " + map.getBeatmapID() + " 0");
-					return;
-				}
-				
-				message = Utils.removeExcessiveSpaces(message).replace(" [" + mods + "]", "");
-				
-				String[] spaceSplit = message.split(" ");
-				
-				int count = 0;
-				for(String arg : spaceSplit){
-					if(arg.contains("osu.ppy.sh")) break;
-					count++;
-				}
-				
-				String player = "";
-				
-				for(int i = count + 1; i < spaceSplit.length; i++){
-					if(spaceSplit[i].equalsIgnoreCase("[Team")) break;
-					player += spaceSplit[i] + "_";
-				}
-				
-				player = player.substring(0, player.length() - 1);
-				
-				Team team = findTeam(player);
-				for(Player pl : team.getPlayers())
-					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player.replaceAll(" ", "_"))){
-						pl.setHasMod(true);
-						playersChecked++;
-						break;
-					}
-				
-				finalModCheck();
-			}else{
-				playersChecked++;
-				finalModCheck();
-			}
-		}else startMatch(5);
+		}
 	}
 	
 	private void finalModCheck(){
-		if(playersChecked >= match.getPlayers()){
-			verifyingMods = false;
+		if(playersChecked >= match.getPlayers() && validMods && map.getCategory() == 1 && warmupsLeft <= 0){
 			playersChecked = 0;
 			int fTeamModCount = 0, sTeamModCount = 0;
 			
@@ -823,8 +772,12 @@ public class Game{
 			if(fTeamModCount < countNeeded || sTeamModCount < countNeeded){
 				sendMessage("You need to have at least " + countNeeded + " mod users per team!");
 				sendMessage("!mp map " + map.getBeatmapID() + " 0");
+				state = GameState.PLAYING;
 			}else startMatch(0);
-		}
+		}else if(!validMods){
+			validMods = true;
+			state = GameState.PLAYING;
+		}else startMatch(5);
 	}
 	
 	private void playerLeft(String message){
@@ -833,8 +786,7 @@ public class Game{
 		playersInRoom.remove(player);
 		
 		for(Player pl : findTeam(player).getPlayers())
-			if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(player))
-				pl.setSlot(-1);
+			if(pl.equals(player)) pl.setSlot(-1);
 		
 		if(!hijackedSlots.isEmpty()){
 			int rSlot = -1;
@@ -849,15 +801,14 @@ public class Game{
 	}
 	
 	private void playEnded(){
-		waitingForConfirm = true;
+		state = GameState.CONFIRMING;
 		
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
 			public void run(){
-				waitingForConfirm = false;
-				verifyingMods = false;
-				fixingLobby = false;
-				verifyingLobby = false;
+				state = GameState.WAITING;
+				validMods = true;
+				mapSelected = false;
 				
 				float fTeamScore = 0, sTeamScore = 0;
 				List<String> fTeamPlayers = new ArrayList<>();
@@ -869,11 +820,7 @@ public class Game{
 						
 						if(fTeamPlayers.contains(player) || sTeamPlayers.contains(player)) continue;
 						
-						Team team = findTeam(player);
-						boolean fTeam = false;
-						
-						if(team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName()))
-							fTeam = true;
+						boolean fTeam = teamToBoolean(findTeam(player));
 						
 						if(fTeam) fTeamPlayers.add(player);
 						else sTeamPlayers.add(player);
@@ -1055,12 +1002,24 @@ public class Game{
 	
 	private Team findTeam(String player){
 		for(Player p : match.getFirstTeam().getPlayers())
-			if(p.getName().replaceAll(" ", "_").equalsIgnoreCase(player.replaceAll(" ", "_")))
-				return match.getFirstTeam();
+			if(p.equals(player)) return match.getFirstTeam();
 		
 		for(Player p : match.getSecondTeam().getPlayers())
-			if(p.getName().replaceAll(" ", "_").equalsIgnoreCase(player.replaceAll(" ", "_")))
-				return match.getSecondTeam();
+			if(p.equals(player)) return match.getSecondTeam();
+		
+		return null;
+	}
+
+	private boolean teamToBoolean(Team team){
+		return team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
+	}
+	
+	private Player findPlayer(String player){
+		LinkedList<Player> fullList = match.getFirstTeam().getPlayers();
+		fullList.addAll(match.getSecondTeam().getPlayers());
+		
+		for(Player p : fullList)
+			if(p.equals(player)) return p;
 		
 		return null;
 	}
@@ -1101,10 +1060,8 @@ public class Game{
 			}
 		
 		if(playerTeam != null){
-			for(String pl : playersInRoom)
-				if(findTeam(pl).getTeamName().equalsIgnoreCase(playerTeam.getTeamName()) 
-					&& !pl.equalsIgnoreCase(player.replaceAll(" ", "_")))
-					return false;
+			for(Player pl : playerTeam.getPlayers())
+				if(!pl.equals(player)) return false;
 			
 			return true;
 		}
@@ -1115,85 +1072,67 @@ public class Game{
 	private boolean assignSlotAndTeam(String player, boolean hijack){
 		if(!joinQueue.contains(player)) joinQueue.add(player);
 		
-		LinkedList<Player> team = new LinkedList<>();
-		String color = "blue";
-		Player pl = null;
-		int i = 1;
-		int upperBound = match.getPlayers() + 1;
+		Team team = findTeam(player);
+		boolean fTeam = teamToBoolean(team);
+		String color = fTeam ? "blue" : "red";
+		Player pl = findPlayer(player);
+		int i = fTeam ? 1 : (match.getPlayers() / 2 + 1);
+		int upperBound = fTeam ? (match.getPlayers() / 2 + 1) : (match.getPlayers() + 1);
 		
-		for(Player p : match.getFirstTeam().getPlayers())
-			if(p.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
-				p.setSlot(-1);
-				pl = p;
-				upperBound = match.getPlayers() / 2 + 1;
-				team = match.getFirstTeam().getPlayers();
-				break;
-			}
-		
-		for(Player p : match.getSecondTeam().getPlayers())
-			if(p.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
-				p.setSlot(-1);
-				pl = p;
-				team = match.getSecondTeam().getPlayers();
-				color = "red";
-				i = match.getPlayers() / 2 + 1;
-				break;
-			}
+		pl.setSlot(-1);
 		
 		List<Integer> usedSlots = new ArrayList<>();
 		List<String> hijackers = new ArrayList<>();
-		if(!team.isEmpty()){
-			for(Player p : team)
-				if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1){
-					usedSlots.add(p.getSlot());
-				}
-			
-			for(; i < upperBound; i++){
-				if(hijackedSlots.containsKey(i)){
-					String hijackingPlayer = hijackedSlots.get(i);
+		
+		for(Player p : team.getPlayers())
+			if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1)
+				usedSlots.add(p.getSlot());
+		
+		for(; i < upperBound; i++){
+			if(hijackedSlots.containsKey(i)){
+				String hijackingPlayer = hijackedSlots.get(i);
+				
+				if(hijack){
+					roomSize++;
+					sendMessage("!mp size " + roomSize);
+					sendMessage("!mp move " + hijackingPlayer + " " + roomSize);
+					hijackedSlots.remove(i);
+					hijackers.add(hijackingPlayer);
+				}else{
+					playersInRoom.add(hijackingPlayer);
 					
-					if(hijack){
-						roomSize++;
-						sendMessage("!mp size " + roomSize);
-						sendMessage("!mp move " + hijackingPlayer + " " + roomSize);
-						hijackedSlots.remove(i);
-						hijackers.add(hijackingPlayer);
+					hijackedSlots.remove(i);
+					if(!assignSlotAndTeam(hijackingPlayer, true)){
+						playersInRoom.remove(hijackingPlayer);
+						sendMessage("!mp kick " + hijackingPlayer);
 					}else{
-						playersInRoom.add(hijackingPlayer);
+						usedSlots.clear();
 						
-						hijackedSlots.remove(i);
-						if(!assignSlotAndTeam(hijackingPlayer, true)){
-							playersInRoom.remove(hijackingPlayer);
-							sendMessage("!mp kick " + hijackingPlayer);
-						}else{
-							usedSlots.clear();
-							
-							for(Player p : team)
-								if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1){
-									usedSlots.add(p.getSlot());
-								}
-						}	
-					}
+						for(Player p : team.getPlayers())
+							if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1)
+								usedSlots.add(p.getSlot());
+					}	
 				}
-				if(!usedSlots.contains(i)){
-					sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
-					sendMessage("!mp team " + player.replaceAll(" ", "_") + " " + color);
-					pl.setSlot(i);
-					
-					if(isCaptain(player.replaceAll(" ", "_")))
-						waitingForCaptains--;
-					
-					if(waitingForCaptains == 0 && playersInRoom.size() < 2)
-						waitingForCaptains++;
-					else if(waitingForCaptains == 0){
-						advanceQueue(player.replaceAll(" ", "_"), hijackers);
-						mapSelection(1);
-						return true;
-					}
-					
+			}
+			
+			if(!usedSlots.contains(i)){
+				sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
+				sendMessage("!mp team " + player.replaceAll(" ", "_") + " " + color);
+				pl.setSlot(i);
+				
+				if(isCaptain(player.replaceAll(" ", "_")))
+					waitingForCaptains--;
+				
+				if(waitingForCaptains == 0 && playersInRoom.size() < 2)
+					waitingForCaptains++;
+				else if(waitingForCaptains == 0){
 					advanceQueue(player.replaceAll(" ", "_"), hijackers);
+					mapSelection(1);
 					return true;
 				}
+				
+				advanceQueue(player.replaceAll(" ", "_"), hijackers);
+				return true;
 			}
 		}
 		

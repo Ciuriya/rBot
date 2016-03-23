@@ -19,6 +19,7 @@ public class Tournament{
 	private List<MapPool> pools;
 	private List<Long> matchDates;
 	private boolean scoreV2;
+	private int pickWaitTime;
 	
 	public Tournament(String name){
 		this(name, true);
@@ -32,6 +33,7 @@ public class Tournament{
 		matchDates = new ArrayList<>();
 		
 		scoreV2 = getConfig().getBoolean("scoreV2");
+		pickWaitTime = getConfig().getInt("pickWaitTime");
 		
 		save(append);
 		tournaments.add(this);
@@ -148,7 +150,9 @@ public class Tournament{
 	
 	public void save(boolean append){
 		if(append) new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", name, true);
+		
 		getConfig().writeValue("scoreV2", scoreV2);
+		getConfig().writeValue("pickWaitTime", pickWaitTime);
 	}
 	
 	public void delete(){

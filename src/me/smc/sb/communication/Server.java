@@ -20,7 +20,7 @@ import net.dv8tion.jda.OnlineStatus;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.User;
 
-public class Server{
+public class Server{ //see current lobby representation
 
 	private String ip;
 	private int portReceive, portSend;
@@ -74,75 +74,7 @@ public class Server{
 					}
 				}
 				
-				Guild stomtServer = Main.api.getGuildById("118553122904735745");
-				
-				if(message.equalsIgnoreCase("REQUEST_ONLINE_USERS")){
-					String names = "REQUESTED_USERS:";
-					
-					for(User user : stomtServer.getUsers())
-						if(user != null && 
-							user.getOnlineStatus() != null &&
-							!user.getOnlineStatus().equals(OnlineStatus.OFFLINE) &&
-							!user.getOnlineStatus().equals(OnlineStatus.UNKNOWN))
-							names += user.getUsername() + "`" + user.getId() + ":";
-					
-					sendMessage(names.substring(0, names.length() - 1));
-				}else if(message.toUpperCase().startsWith("REQUEST_ID:")){
-					String name = message.replace("REQUEST_ID:", "");
-					
-					User user = null;
-					for(User u : stomtServer.getUsers())
-						if(u.getUsername().equalsIgnoreCase(name)){
-							user = u;
-							break;
-						}
-					
-					if(user != null) sendMessage("REQUESTED_ID:" + user.getId());
-				}else if(message.toUpperCase().startsWith("REQUEST_NAME:")){
-					String id = message.replace("REQUEST_NAME:", "");
-					
-					User user = null;
-					for(User u : stomtServer.getUsers())
-						if(u.getId().equalsIgnoreCase(id)){
-							user = u;
-							break;
-						}
-					
-					if(user != null)
-						sendMessage("REQUESTED_NAME:" + user.getUsername());
-				}else if(message.toUpperCase().startsWith("EXECIRC")){
-					String msg = "";
-					String[] args = message.split(" ");
-					for(int i = 1; i < args.length; i++)
-						msg += " " + args[i];
-					msg = msg.substring(1);
-					
-					System.out.println("Trimmed message: " + msg);
-					
-					sendMessage(IRCCommand.handleCommand(null, null, null, msg).replaceAll("\n", "|"));
-				}else if(message.contains(":")){
-					String[] split = message.split(":");
-					
-					String medium = split[0];
-					
-					switch(medium.toLowerCase()){
-						case "discord":
-							if(Main.api.getUserById(split[1]) != null)
-								Utils.infoBypass(Main.api.getUserById(split[1]).getPrivateChannel(), "Your verification code is " + split[2]); 	
-							break;
-						case "osu": 
-							String user = split[1].replaceAll(" ", "_");
-							try{
-								Main.ircBot.sendIRC().joinChannel(user);
-							}catch(Exception ex){
-								Log.logger.log(Level.INFO, "Could not talk to " + user + "!");
-							}
-							
-							Main.ircBot.sendIRC().message(user, "Your verification code is " + split[2]);
-							break;
-						default: break;
-					}
-				}
+				IncomingRequest.handleRequest(message);
 				
 				Timer t = new Timer();
 				t.schedule(new TimerTask(){
