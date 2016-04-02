@@ -22,7 +22,7 @@ import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
-public class Game{
+public class Game{ //Game Types with solo and team, where they both implement most of their shit
 
 	private Match match;
 	private String multiChannel;
@@ -34,6 +34,7 @@ public class Game{
 	private int previousRoll = 0;
 	private int playersChecked = 0;
 	private int roomSize = 0;
+	private long lastPickTime = 0;
 	private boolean mapSelected = false;
 	private boolean fTeamFirst = true;
 	private boolean validMods = true;
@@ -175,18 +176,27 @@ public class Game{
 	}
 	
 	private void messageUpdater(String...messages){
-		messageUpdater(0, messages);
+		messageUpdater(0, false, messages);
 	}
 	
-	private void messageUpdater(int delay, String...messages){
+	private void messageUpdater(int delay, boolean usePickTime, String...messages){
 		if(messageUpdater != null) messageUpdater.cancel();
 		if(messages == null || messages.length <= 0) return;
 		
 		messageUpdater = new Timer();
 		messageUpdater.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
-				for(String message : messages)
-					sendMessage(message);
+				if(usePickTime){
+					if(System.currentTimeMillis() >= lastPickTime + (match.getTournament().getPickWaitTime() * 1000)) return;
+					else{
+						for(String message : messages)
+							sendMessage(message);
+						sendMessage(Utils.df(Math.ceil(((lastPickTime / 1000 + match.getTournament().getPickWaitTime()) - (System.currentTimeMillis() / 1000))) / 60, 0) +
+					            " minutes left to pick!");
+					}
+				}else 
+					for(String message : messages)
+						sendMessage(message);	
 			}
 		}, delay * 1000, 60000);
 	}
@@ -218,7 +228,8 @@ public class Game{
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				messageUpdater(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
+				pickTimer();
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				SelectMapCommand.gamesInSelection.add(this);
 				
 				startMapUpdater();
@@ -239,6 +250,7 @@ public class Game{
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
+				pickTimer();
 				messageUpdater(selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
@@ -249,6 +261,28 @@ public class Game{
 				break;
 			default: break;
 		}
+	}
+	
+	private void pickTimer(){
+		lastPickTime = System.currentTimeMillis();
+		
+		Timer t = new Timer();
+		t.schedule(new TimerTask(){
+			public void run(){
+				if(match != null && !mapSelected){
+					messageUpdater.cancel();
+					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
+					fTeamFirst = !fTeamFirst;
+					selectingTeam = findNextTeamToPick();
+					
+					pickTimer();
+					if(warmupsLeft > 0) messageUpdater(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
+					else messageUpdater(selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
+						 (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
+						 " You can find the maps here]" : ""));
+				}
+			}
+		}, match.getTournament().getPickWaitTime() * 1000);
 	}
 	
 	private void startMapUpdater(){
@@ -310,23 +344,26 @@ public class Game{
 			if(roll > previousRoll) fTeamFirst = fTeam;
 			else fTeamFirst = !fTeam;
 			
-			PassTurnCommand.passingTeams.put(fTeam ? match.getFirstTeam() : match.getSecondTeam(), this);
+			PassTurnCommand.passingTeams.put(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam(), this);
 			
-			sendMessage((fTeam ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
-					    ", use !pass within the next 10 seconds to let the other team start instead!");
+			messageUpdater((fTeamFirst ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
+					        ", use !pass within the next 20 seconds to let the other team start instead!");
 			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
+					if(SelectMapCommand.gamesInSelection.contains(this)) return;
 					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 					mapSelection(2);
 				}
-			}, 10000);
+			}, 20000);
 		}else previousRoll = roll;
 	}
 	
 	public void passFirstTurn(){
 		fTeamFirst = !fTeamFirst;
+		sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
+		mapSelection(2);
 	}
 	
 	public void stop(){
@@ -383,9 +420,9 @@ public class Game{
 		waitingForCaptains = 0;
 		warmupsLeft = 0;
 		match.setGame(null);
-		match = null;
 		
 		match.getTournament().removeMatch(match.getMatchNum());
+		match = null;
 	}
 	
 	private void pmUser(String user, String message){
@@ -477,13 +514,18 @@ public class Game{
 			return;
 		}
 		
-		if(warmupsLeft > 0 && selected != null && select){
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID());
+		if(warmupsLeft > 0 && select){
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID());
 			int length = jsMap.getInt("total_length");
 			if(length > 270){
 				sendMessage("The warmup selected is too long! The maximum length is 4m30s.");
 				return;
 			}
+			
+			this.map = new Map(map, 1);
+			mapSelected = true;
+			prepareReadyCheck();
+			return;
 		}
 		
 		if(selected != null && !mapSelected && select){
@@ -491,7 +533,10 @@ public class Game{
 			this.map = selected;
 			prepareReadyCheck();
 			return;
-		}else if(mapSelected && select && selected != null) this.map = selected;
+		}else if(mapSelected && select && selected != null){
+			this.map = selected;
+			return;
+		}
 		
 		if(selected == null || !select) sendMessage("Invalid " + (select ? "selection!" : "ban!"));
 	}
@@ -501,7 +546,7 @@ public class Game{
 		
 		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, make sure you are not using fallback as your score will not count!";
 		
-		messageUpdater(0, message, "If someone is on the wrong side/team, simply ready up and everything will fix itself! Please note that you can select another map if needed.");
+		messageUpdater(0, false, message, "If someone is on the wrong side/team, simply ready up and everything will fix itself! Please note that you can select another map if needed.");
 	}
 	
 	private boolean checkMap(Map map){
@@ -515,16 +560,16 @@ public class Game{
 			banchoFeedback.clear();
 			state = GameState.PLAYING;
 		}else if(message.contains("The match has finished!")) playEnded();
-		else if(message.startsWith("Slot ") && state.equals(GameState.FIXING)) fixLobby(message);
-		else if(message.startsWith("Slot ") && state.equals(GameState.VERIFYING)) verifyLobby(message);
 		else if(message.contains("joined in")) acceptExternalInvite(message);
+		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
+		else if(message.startsWith("Slot ") && state.eq(GameState.VERIFYING)) verifyLobby(message);
 		else banchoFeedback.add(message);
 	}
 	
 	private void readyCheck(boolean bancho){
 		if(state.equals(GameState.CONFIRMING)) return;
 		
-		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.equals(GameState.WAITING)){ 
+		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.eq(GameState.WAITING)){ 
 			if(previousMap == null || !previousMap.getURL().equalsIgnoreCase(map.getURL())){
 				changeMap(map);
 				Utils.sleep(2500);
@@ -537,7 +582,7 @@ public class Game{
 			
 			verifyLobby(null);
 		}else if(mapSelected && state.equals(GameState.WAITING)) fixLobby(null);
-		else if((state.equals(GameState.VERIFYING) || state.equals(GameState.FIXING)) && playersInRoom.size() == match.getPlayers()){
+		else if((state.eq(GameState.VERIFYING) || state.eq(GameState.FIXING)) && playersInRoom.size() == match.getPlayers()){
 			finalModCheck();
 		}else if(!bancho){
 			state = GameState.WAITING;
@@ -559,7 +604,7 @@ public class Game{
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(state.equals(GameState.VERIFYING))
+					if(state.eq(GameState.VERIFYING) && playersSwapped.isEmpty())
 						sendMessage("!mp settings");
 				}
 			}, 2500);
@@ -582,7 +627,7 @@ public class Game{
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(state.equals(GameState.FIXING))
+					if(state.eq(GameState.FIXING) && playersSwapped.isEmpty())
 						sendMessage("!mp settings");
 				}
 			}, 2500);
@@ -699,7 +744,7 @@ public class Game{
 	}
 	
 	private void swapPositions(boolean fTeam, int slot, Player p, Team oppositeTeam){
-		if(fTeam && slot > match.getPlayers() / 2 || !fTeam && slot <= match.getPlayers() / 2){		
+		if(fTeam && slot > match.getPlayers() / 2 || !fTeam && slot <= match.getPlayers() / 2){	
 			playersSwapped.add(p);
 			
 			for(Player pl : oppositeTeam.getPlayers()){
@@ -786,7 +831,7 @@ public class Game{
 		playersInRoom.remove(player);
 		
 		for(Player pl : findTeam(player).getPlayers())
-			if(pl.equals(player)) pl.setSlot(-1);
+			if(pl.eq(player)) pl.setSlot(-1);
 		
 		if(!hijackedSlots.isEmpty()){
 			int rSlot = -1;
@@ -1002,10 +1047,10 @@ public class Game{
 	
 	private Team findTeam(String player){
 		for(Player p : match.getFirstTeam().getPlayers())
-			if(p.equals(player)) return match.getFirstTeam();
+			if(p.eq(player)) return match.getFirstTeam();
 		
 		for(Player p : match.getSecondTeam().getPlayers())
-			if(p.equals(player)) return match.getSecondTeam();
+			if(p.eq(player)) return match.getSecondTeam();
 		
 		return null;
 	}
@@ -1015,11 +1060,11 @@ public class Game{
 	}
 	
 	private Player findPlayer(String player){
-		LinkedList<Player> fullList = match.getFirstTeam().getPlayers();
+		LinkedList<Player> fullList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
 		fullList.addAll(match.getSecondTeam().getPlayers());
 		
 		for(Player p : fullList)
-			if(p.equals(player)) return p;
+			if(p.eq(player)) return p;
 		
 		return null;
 	}
@@ -1051,20 +1096,10 @@ public class Game{
 	}
 	
 	private boolean isCaptain(String player){
-		Team playerTeam = null;
-		
 		for(String pl : captains)
 			if(player.replaceAll(" ", "_").equalsIgnoreCase(pl)){
-				playerTeam = findTeam(pl);
-				break;
+				return verifyPlayer(player);
 			}
-		
-		if(playerTeam != null){
-			for(Player pl : playerTeam.getPlayers())
-				if(!pl.equals(player)) return false;
-			
-			return true;
-		}
 		
 		return false;
 	}

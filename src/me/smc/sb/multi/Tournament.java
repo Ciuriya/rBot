@@ -1,17 +1,25 @@
 package me.smc.sb.multi;
 
 import java.io.File;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 
+import com.jcabi.jdbc.JdbcSession;
+import com.jcabi.jdbc.Outcome;
+
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
 public class Tournament{
-
-	//MAKE SURE YOU USE UTC
 	
+	private int tournamentId;
 	private String name;
 	public static List<Tournament> tournaments;
 	private List<Team> teams;
@@ -20,6 +28,7 @@ public class Tournament{
 	private List<Long> matchDates;
 	private boolean scoreV2;
 	private int pickWaitTime;
+	public static String tournamentDB = "Tournament_DB";
 	
 	public Tournament(String name){
 		this(name, true);
@@ -36,6 +45,20 @@ public class Tournament{
 		pickWaitTime = getConfig().getInt("pickWaitTime");
 		
 		save(append);
+		//saveSQL(true);
+		tournaments.add(this);
+	}
+	
+	public Tournament(String name, boolean scoreV2, int pickWaitTime){
+		this.name = name;
+		this.scoreV2 = scoreV2;
+		this.pickWaitTime = pickWaitTime;
+		
+		teams = new ArrayList<>();
+		matches = new ArrayList<>();
+		pools = new ArrayList<>();
+		matchDates = new ArrayList<>();
+		
 		tournaments.add(this);
 	}
 	
@@ -49,6 +72,14 @@ public class Tournament{
 	
 	public void setScoreV2(boolean scoreV2){
 		this.scoreV2 = scoreV2;
+	}
+	
+	public int getTournamentId(){
+		return tournamentId;
+	}
+	
+	public void setTournamentId(int tournamentId){
+		this.tournamentId = tournamentId;
 	}
 	
 	public Configuration getConfig(){
@@ -69,6 +100,10 @@ public class Tournament{
 	
 	public List<Long> getMatchDates(){
 		return matchDates;
+	}
+	
+	public int getPickWaitTime(){
+		return pickWaitTime;
 	}
 	
 	public void addPool(MapPool pool){
@@ -155,6 +190,31 @@ public class Tournament{
 		getConfig().writeValue("pickWaitTime", pickWaitTime);
 	}
 	
+	public void saveSQL(boolean add){
+		try{
+			if(add){
+				new JdbcSession(Main.sqlConnection)
+				.sql("INSERT INTO Tournament (name, scoreV2, pick_wait_time)" +
+				     "VALUES (?, ?, ?)")
+				.set(name)
+				.set(scoreV2 ? 1 : 0)
+				.set(pickWaitTime)
+				.insert(Outcome.VOID);
+			}else{
+				new JdbcSession(Main.sqlConnection)
+				.sql("UPDATE Tournament " +
+					 "SET scoreV2='?', pick_wait_time='?'" +
+					 "WHERE name='?'")
+				.set(scoreV2 ? 1 : 0)
+				.set(pickWaitTime)
+				.set(name)
+				.update(Outcome.VOID);
+			}
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+	
 	public void delete(){
 		Configuration config = new Configuration(new File("tournaments.txt"));
 		ArrayList<String> savedTournaments = config.getStringList("tournaments");
@@ -165,6 +225,20 @@ public class Tournament{
 		}
 		
 		getConfig().delete();
+		
+		deleteSQL();
+	}
+	
+	public void deleteSQL(){
+		try{
+			new JdbcSession(Main.sqlConnection)
+			.sql("DELETE FROM " + tournamentDB +
+				 "WHERE name='?'")
+			.set(name)
+			.update(Outcome.VOID);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 	}
 	
 	public static Tournament getTournament(String name){
@@ -187,6 +261,31 @@ public class Tournament{
 				tournament.loadTeams();
 				tournament.loadMatches();
 			}	
+	}
+	
+	public static void loadTournamentsSQL(){ //run bot once to save and then change to load as well
+		tournaments = new ArrayList<>();
+		try{
+			new JdbcSession(Main.sqlConnection)
+				     .sql("SELECT id_tournament, name, scoreV2, pick_wait_time FROM Tournament")
+				     .select(new Outcome<List<String>>(){
+				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
+				    		 while(rset.next()){
+				    			 Tournament t = new Tournament(rset.getString(2), rset.getBoolean(3), rset.getInt(4));
+				    			 
+				    			 t.setTournamentId(rset.getInt(1));
+				    			 
+				    			 t.loadPools(); //finish those 3
+				    			 t.loadTeams();
+				    			 t.loadMatches();
+				    		 }
+				    		 
+				    		 return new ArrayList<String>();
+				    	 }
+				     });
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 	}
 	
 	private void loadMatches(){

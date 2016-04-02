@@ -105,6 +105,7 @@ public abstract class IRCCommand{
 		commands.add(new SetMatchTeamsCommand());
 		commands.add(new SetBestOfCommand());
 		commands.add(new SetMatchScheduleCommand());
+		commands.add(new ScanPlayerRanksCommand());
 		commands.add(new ForceStopGameCommand());
 		commands.add(new ForceStartGameCommand());
 		commands.add(new SetGameScoreCommand());

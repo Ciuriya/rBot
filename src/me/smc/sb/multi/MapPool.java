@@ -3,12 +3,19 @@ package me.smc.sb.multi;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 
+import com.jcabi.jdbc.JdbcSession;
+import com.jcabi.jdbc.Outcome;
+
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Log;
 
 public class MapPool{
 
-	private int poolNum;
+	private int poolNum; //tournament number, to order
+	private int poolId;
 	private String sheetUrl;
 	private Tournament tournament;
 	private LinkedList<Map> maps;
@@ -24,6 +31,7 @@ public class MapPool{
 		maps = new LinkedList<>();
 		
 		save(append);
+		//saveSQL(true);
 		t.addPool(this);
 	}
 	
@@ -94,6 +102,30 @@ public class MapPool{
 		}
 		
 		if(sheetUrl != "") config.writeValue("pool-" + poolNum + "-sheet", sheetUrl);
+	}
+	
+	public void saveSQL(boolean add){
+		try{
+			if(add){
+				new JdbcSession(Main.sqlConnection)
+				.sql("INSERT INTO MapPool (sheet_url, id_tournament)" +
+				     "VALUES (?, ?)")
+				.set(sheetUrl)
+				.set(tournament.getTournamentId())
+				.insert(Outcome.VOID);
+			}else{
+				//new JdbcSession(Main.sqlConnection)
+				//.sql("UPDATE MapPool " +
+				//	 "SET sheet_url='?' " +
+				//	 "WHERE name='?'")
+				//.set(scoreV2 ? 1 : 0)
+				//.set(pickWaitTime)
+				//.set(name)
+				//.update(Outcome.VOID);
+			}
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 	}
 	
 }

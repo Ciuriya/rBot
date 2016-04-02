@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -38,6 +40,7 @@ public class Main{
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
 	public static Server server;
+	public static Connection sqlConnection;
 	
 	public static void main(String[] args){
 		new Main();
@@ -54,6 +57,8 @@ public class Main{
 				keepAlive(); //for the bash script
 			}
 		}, 0, 5000);
+		
+		setupSQL();
 	
 		serverConfigs = new HashMap<String, Configuration>();
 		
@@ -107,6 +112,18 @@ public class Main{
 			loadIRC();
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not start irc bot!");
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+	
+	private void setupSQL(){
+		String url = "jdbc:mysql://localhost/Tournament_DB";
+		String pass = new Configuration(new File("login.txt")).getValue("rootPass");
+		
+		try{
+			Class.forName("com.mysql.jdbc.Driver");
+			sqlConnection = DriverManager.getConnection(url, "root", pass);
+		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}

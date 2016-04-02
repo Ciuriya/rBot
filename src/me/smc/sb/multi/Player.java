@@ -32,11 +32,11 @@ public class Player{
 		this.hasMod = hasMod;
 	}
 	
-	public boolean equals(Player player){
-		return equals(player.getName());
+	public boolean eq(Player player){
+		return eq(player.getName());
 	}
 	
-	public boolean equals(String player){
+	public boolean eq(String player){
 		if(player.replaceAll(" ", "_").equalsIgnoreCase(name.replaceAll(" ", "_")))
 			return true;
 		return false;

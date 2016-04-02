@@ -287,8 +287,20 @@ public class Utils{
 	}
 	
 	public static double df(double num){
-		DecimalFormat df = new DecimalFormat("#.##", new DecimalFormatSymbols(Locale.US));
-		return stringToDouble(df.format(num));
+		return stringToDouble(df(num, 2));
+	}
+	
+	public static String df(double num, double decimals){
+		String format = "#";
+		
+		if(decimals > 0){
+			format += ".";
+			
+			for(int i = 0; i < decimals; i++)
+				format += "#";
+		}
+		DecimalFormat df = new DecimalFormat(format, new DecimalFormatSymbols(Locale.US));
+		return df.format(num);
 	}
 	
 	public static String toTwoDigits(int num){
