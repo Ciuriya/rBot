@@ -18,10 +18,10 @@ public abstract class IncomingRequest{
 		String localRequest = request.toLowerCase();
 		
 		switch(operation){
-			case "eq": return syntax.equalsIgnoreCase(localRequest);
-			case "cont": return syntax.contains(localRequest);
-			case "start": return syntax.startsWith(localRequest);
-			case "end": return syntax.endsWith(localRequest);
+			case "eq": return localRequest.equalsIgnoreCase(syntax);
+			case "cont": return localRequest.contains(syntax);
+			case "start": return localRequest.startsWith(syntax);
+			case "end": return localRequest.endsWith(syntax);
 			default: return false;
 		}
 	}

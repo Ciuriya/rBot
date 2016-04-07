@@ -14,6 +14,7 @@ import java.util.logging.Level;
 
 import org.pircbotx.PircBotX;
 
+import me.smc.sb.communication.IncomingRequest;
 import me.smc.sb.communication.Server;
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
@@ -70,6 +71,7 @@ public class Main{
 		
 		login();
 		
+		IncomingRequest.registerRequests();
 		server = new Server(login.getValue("STwebIP"), 
 				            login.getInt("STwebPortIn"),
 				            login.getInt("STwebPortOut"));

@@ -30,6 +30,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
@@ -90,7 +91,7 @@ public class Utils{
 	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
 		if(message.length() == 0) return;
 		
-		if(e != null){
+		if(e != null && verifyChannel(e)){
 			e.getChannel().send().message(message);
 			Log.logger.log(Level.INFO, "{IRC message sent in channel " + e.getChannel().getName() + "} " + message);
 		}else if(pe != null){
@@ -105,6 +106,27 @@ public class Utils{
 			Log.logger.log(Level.INFO, "{Message sent to website} " + message);
 		}
 	}
+	
+	public static boolean verifyChannel(MessageEvent<PircBotX> e){
+		if(!e.getChannel().getName().startsWith("#mp_")){
+			e.getChannel().send().part();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public static boolean verifyChannel(String channel){
+		if(!channel.startsWith("#mp_")){
+			for(Channel c : Main.ircBot.getUserBot().getChannels())
+				if(c.getName().equalsIgnoreCase(channel))
+					c.send().part();
+			return false;
+		}
+		
+		return true;
+	}
+	
 	
 	public static String toUser(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe){
 		if(pe != null) return pe.getUser().getNick();

@@ -35,7 +35,7 @@ public class HelpCommand extends IRCCommand{
 		}
 		
 		if(discord == null){
-			return "[http://osu.tyjoll.com/commands.php You can find the available commands here!]";
+			return "[http://tyjoll.com/commands.php You can find the available commands here!]";
 		}else{
 			msg += "```";
 			

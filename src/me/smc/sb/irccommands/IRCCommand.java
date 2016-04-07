@@ -115,6 +115,8 @@ public abstract class IRCCommand{
 		commands.add(new InvitePlayerCommand());
 		commands.add(new BanMapCommand());
 		commands.add(new PassTurnCommand());
+		commands.add(new SkipRematchCommand());
+		commands.add(new ContestCommand());
 	}
 	
 	public abstract String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);

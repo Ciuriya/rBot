@@ -27,7 +27,8 @@ public class Tournament{
 	private List<MapPool> pools;
 	private List<Long> matchDates;
 	private boolean scoreV2;
-	private int pickWaitTime;
+	private final int pickWaitTime;
+	private final int tournamentType; //0 = team
 	public static String tournamentDB = "Tournament_DB";
 	
 	public Tournament(String name){
@@ -43,16 +44,18 @@ public class Tournament{
 		
 		scoreV2 = getConfig().getBoolean("scoreV2");
 		pickWaitTime = getConfig().getInt("pickWaitTime");
+		tournamentType = getConfig().getInt("tournamentType");
 		
 		save(append);
 		//saveSQL(true);
 		tournaments.add(this);
 	}
 	
-	public Tournament(String name, boolean scoreV2, int pickWaitTime){
+	public Tournament(String name, boolean scoreV2, int pickWaitTime, int type){
 		this.name = name;
 		this.scoreV2 = scoreV2;
 		this.pickWaitTime = pickWaitTime;
+		this.tournamentType = type;
 		
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
@@ -80,6 +83,10 @@ public class Tournament{
 	
 	public void setTournamentId(int tournamentId){
 		this.tournamentId = tournamentId;
+	}
+	
+	public int getTournamentType(){
+		return tournamentType;
 	}
 	
 	public Configuration getConfig(){
@@ -188,25 +195,28 @@ public class Tournament{
 		
 		getConfig().writeValue("scoreV2", scoreV2);
 		getConfig().writeValue("pickWaitTime", pickWaitTime);
+		getConfig().writeValue("type", tournamentType);
 	}
 	
 	public void saveSQL(boolean add){
 		try{
 			if(add){
 				new JdbcSession(Main.sqlConnection)
-				.sql("INSERT INTO Tournament (name, scoreV2, pick_wait_time)" +
-				     "VALUES (?, ?, ?)")
+				.sql("INSERT INTO Tournament (name, scoreV2, pick_wait_time, type) " +
+				     "VALUES (?, ?, ?, ?)")
 				.set(name)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
+				.set(tournamentType)
 				.insert(Outcome.VOID);
 			}else{
 				new JdbcSession(Main.sqlConnection)
 				.sql("UPDATE Tournament " +
-					 "SET scoreV2='?', pick_wait_time='?'" +
+					 "SET scoreV2='?', pick_wait_time='?', type='?' " +
 					 "WHERE name='?'")
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
+				.set(tournamentType)
 				.set(name)
 				.update(Outcome.VOID);
 			}
@@ -233,7 +243,7 @@ public class Tournament{
 		try{
 			new JdbcSession(Main.sqlConnection)
 			.sql("DELETE FROM " + tournamentDB +
-				 "WHERE name='?'")
+				 " WHERE name='?'")
 			.set(name)
 			.update(Outcome.VOID);
 		}catch(Exception e){
@@ -267,11 +277,11 @@ public class Tournament{
 		tournaments = new ArrayList<>();
 		try{
 			new JdbcSession(Main.sqlConnection)
-				     .sql("SELECT id_tournament, name, scoreV2, pick_wait_time FROM Tournament")
+				     .sql("SELECT id_tournament, name, scoreV2, pick_wait_time, type FROM Tournament")
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
-				    			 Tournament t = new Tournament(rset.getString(2), rset.getBoolean(3), rset.getInt(4));
+				    			 Tournament t = new Tournament(rset.getString(2), rset.getBoolean(3), rset.getInt(4), rset.getInt(5));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

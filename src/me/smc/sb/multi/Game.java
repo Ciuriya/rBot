@@ -12,50 +12,62 @@ import org.json.JSONObject;
 import org.pircbotx.Channel;
 
 import me.smc.sb.irccommands.BanMapCommand;
+import me.smc.sb.irccommands.ContestCommand;
 import me.smc.sb.irccommands.InvitePlayerCommand;
 import me.smc.sb.irccommands.JoinMatchCommand;
 import me.smc.sb.irccommands.PassTurnCommand;
 import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
+import me.smc.sb.irccommands.SkipRematchCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
-public class Game{ //Game Types with solo and team, where they both implement most of their shit
+public abstract class Game{ //Game Types with solo and team, where they both implement most of their shit
 
-	private Match match;
-	private String multiChannel;
-	private String mpLink;
-	private int waitingForCaptains = 2;
-	private int fTeamPoints = 0, sTeamPoints = 0;
-	private int warmupsLeft = 2;
-	private int rollsLeft = 2;
-	private int previousRoll = 0;
-	private int playersChecked = 0;
-	private int roomSize = 0;
-	private long lastPickTime = 0;
-	private boolean mapSelected = false;
-	private boolean fTeamFirst = true;
-	private boolean validMods = true;
-	private GameState state;
-	private int rematchesAllowed = 1;
-	private List<String> invitesSent;
-	private List<String> playersInRoom;
-	private List<String> captains;
-	private List<String> joinQueue;
-	private java.util.Map<Integer, String> hijackedSlots;
-	private List<Map> bans;
-	private List<Map> mapsPicked;
-	private List<Player> playersSwapped;
-	private java.util.Map<Player, Integer> verifyingSlots;
-	private LinkedList<String> banchoFeedback;
-	private Team selectingTeam;
-	private Team banningTeam;
-	private Map map;
-	private Map previousMap;
-	private Timer mapUpdater;
-	private Timer messageUpdater;
+	protected Match match;
+	protected String multiChannel;
+	protected String mpLink;
+	protected int waitingForCaptains = 2;
+	protected int fTeamPoints = 0, sTeamPoints = 0;
+	protected int warmupsLeft = 2;
+	protected int rollsLeft = 2;
+	protected int previousRoll = 0;
+	protected int playersChecked = 0;
+	protected int roomSize = 0;
+	protected int skipRematchState = 0; //0 = none, 1 = f skipped, 2 = s skipped, 3 = both skip
+	protected int contestState = 0; //^
+	protected long lastPickTime = 0;
+	protected boolean mapSelected = false;
+	protected boolean fTeamFirst = true;
+	protected boolean validMods = true;
+	protected GameState state;
+	protected int rematchesAllowed = 1;
+	protected List<String> invitesSent;
+	protected List<String> playersInRoom;
+	protected List<String> captains;
+	protected List<String> joinQueue;
+	protected java.util.Map<Integer, String> hijackedSlots;
+	protected List<Map> bans;
+	protected List<Map> mapsPicked;
+	protected List<Player> playersSwapped;
+	protected java.util.Map<Player, Integer> verifyingSlots;
+	protected LinkedList<String> banchoFeedback;
+	protected Team selectingTeam;
+	protected Team banningTeam;
+	protected Team lastWinner;
+	protected Map map;
+	protected Map previousMap;
+	protected Timer mapUpdater;
+	protected Timer messageUpdater;
+	protected List<Timer> pickTimers;
+	
+	public static Game createGame(Match match){
+		if(match.getTournament().getTournamentType() == 0)
+			return new TeamGame(match);
+		else return new SoloGame(match);
+	}
 	
 	public Game(Match match){
 		this.match = match;
@@ -71,6 +83,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		this.playersSwapped = new ArrayList<>();
 		this.hijackedSlots = new HashMap<>();
 		this.verifyingSlots = new HashMap<>();
+		this.pickTimers = new ArrayList<>();
 		this.state = GameState.WAITING;
 		this.match.setGame(this);
 		
@@ -84,6 +97,12 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		IRCChatListener.gameCreatePMs.remove(multiChannel.replace("#mp_", "") + "|" + match.getLobbyName());
 		IRCChatListener.gamesListening.put(multiChannel, this);
 		
+		setupGame();
+		
+		initialInvite();
+	}
+	
+	public void setupGame(){
 		sendMessage("!mp lock");
 		sendMessage("!mp size " + match.getPlayers());
 		sendMessage("!mp set 2 " + (match.getTournament().isScoreV2() ? "4" : "0"));
@@ -99,87 +118,15 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}
 		
 		roomSize = match.getPlayers();
-		
-		LinkedList<Player> fullList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
-		
-		fullList.addAll(match.getSecondTeam().getPlayers());
-		
-		for(Player pl : fullList)
-			pl.setSlot(-1);
-		
-		captains.add(match.getFirstTeam().getPlayers().get(0).getName().replaceAll(" ", "_"));
-		captains.add(match.getSecondTeam().getPlayers().get(0).getName().replaceAll(" ", "_"));
-		
-		for(String player : captains)
-			invitePlayer(player);
-		
-		scheduleNextCaptainInvite();
-		
-		Timer timeout = new Timer();
-		timeout.schedule(new TimerTask(){
-			public void run(){
-				if(waitingForCaptains > 0){
-					if(!playersInRoom.isEmpty())
-						if(teamToBoolean(findTeam(playersInRoom.get(0)))){
-							fTeamPoints++;
-						}else sTeamPoints++;
-					
-					stop();
-				}
-			}
-		}, 600000);
 	}
 	
-	private void scheduleNextCaptainInvite(){
-		Timer captainFallback = new Timer();
-		captainFallback.schedule(new TimerTask(){
-			public void run(){
-				if(!playersInRoom.isEmpty()){
-					int fTeamCaptains = 0, sTeamCaptains = 0;
-					
-					for(String player : playersInRoom)
-						if(captains.contains(player.replaceAll(" ", "_"))){
-							Team team = findTeam(player);	
-							if(teamToBoolean(team)) fTeamCaptains++;
-							else sTeamCaptains++;
-						}	
-					
-					Team missingTeam = null;
-					
-					if(fTeamCaptains == 0 && sTeamCaptains == 0){
-						addNextCaptain(match.getFirstTeam());
-						addNextCaptain(match.getSecondTeam());
-						scheduleNextCaptainInvite();
-						return;
-					}else if(fTeamCaptains == 0) missingTeam = match.getFirstTeam();
-					else if(sTeamCaptains == 0) missingTeam = match.getSecondTeam();
-					else return;
-					
-					addNextCaptain(missingTeam);
-					scheduleNextCaptainInvite();
-				}
-			}
-		}, 60000);
-	}
+	public abstract void initialInvite();
 	
-	private void addNextCaptain(Team team){
-		for(Player pl : team.getPlayers())
-			if(!captains.contains(pl.getName().replaceAll(" ", "_")) && !playersInRoom.contains(pl.getName().replaceAll(" ", "_"))){
-				captains.add(pl.getName().replaceAll(" ", "_"));
-				invitePlayer(pl.getName().replaceAll(" ", "_"));
-				return;
-			}
-		
-		for(Player pl : team.getPlayers())
-			if(captains.contains(pl.getName().replaceAll(" ", "_")) && pl.getSlot() == -1 && waitingForCaptains > 0)
-				sendInviteMessages(pl.getName().replaceAll(" ", "_"));
-	}
-	
-	private void messageUpdater(String...messages){
+	protected void messageUpdater(String...messages){
 		messageUpdater(0, false, messages);
 	}
 	
-	private void messageUpdater(int delay, boolean usePickTime, String...messages){
+	protected void messageUpdater(int delay, boolean usePickTime, String...messages){
 		if(messageUpdater != null) messageUpdater.cancel();
 		if(messages == null || messages.length <= 0) return;
 		
@@ -187,12 +134,12 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		messageUpdater.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
 				if(usePickTime){
-					if(System.currentTimeMillis() >= lastPickTime + (match.getTournament().getPickWaitTime() * 1000)) return;
+					if(System.currentTimeMillis() >= lastPickTime + (getPickWaitTime() * 1000)) return;
 					else{
 						for(String message : messages)
 							sendMessage(message);
-						sendMessage(Utils.df(Math.ceil(((lastPickTime / 1000 + match.getTournament().getPickWaitTime()) - (System.currentTimeMillis() / 1000))) / 60, 0) +
-					            " minutes left to pick!");
+						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + getPickWaitTime()) - (System.currentTimeMillis() / 1000))) / 60, 0);
+						sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left to pick!");
 					}
 				}else 
 					for(String message : messages)
@@ -201,9 +148,10 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}, delay * 1000, 60000);
 	}
 	
-	public void resize(){
-		sendMessage("!mp size " + match.getPlayers());
-		//do some shit here I guess?
+	public int getPickWaitTime(){
+		//return match.getTournament().getConfig().getInt("pickWaitTime");
+		System.out.println("PWT: " + match.getTournament().getConfig().getInt("pickWaitTime"));
+		return 180;
 	}
 	
 	public void setScores(int fTeamScore, int sTeamScore){
@@ -211,24 +159,22 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		this.sTeamPoints = sTeamScore;
 	}
 	
+	public abstract void allowTeamInvites();
+	
 	private void mapSelection(int part){
 		switch(part){
 			case 1:
-				waitingForCaptains = -1;
-				messageUpdater("Use !invite <player name> to invite your teammates or simply invite them through osu!.",
-							   "Both captains, please use !random to settle which team goes first.");
-				
-				InvitePlayerCommand.allowedInviters.put(match.getFirstTeam(), this);
-				InvitePlayerCommand.allowedInviters.put(match.getSecondTeam(), this);
+				allowTeamInvites();
 				
 				RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
 				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				break;
 			case 2:
+				PassTurnCommand.passingTeams.remove(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam());
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				pickTimer();
+				pickTimer(false);
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				SelectMapCommand.gamesInSelection.add(this);
 				
@@ -250,8 +196,8 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				pickTimer();
-				messageUpdater(selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
+				pickTimer(false);
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
 				
@@ -263,26 +209,35 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}
 	}
 	
-	private void pickTimer(){
+	private void pickTimer(boolean returning){
+		if(state.eq(GameState.PLAYING)) return;
+		
 		lastPickTime = System.currentTimeMillis();
+		
+		if(returning){
+			if(warmupsLeft > 0) messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
+			else messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
+				 (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
+				 " You can find the maps here]" : ""));
+		}
+		
+		Log.logger.log(Level.INFO, "PickWaitTime: " + getPickWaitTime());
 		
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
 			public void run(){
-				if(match != null && !mapSelected){
+				if(match != null && !mapSelected && state != GameState.PLAYING){
 					messageUpdater.cancel();
 					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
 					fTeamFirst = !fTeamFirst;
 					selectingTeam = findNextTeamToPick();
 					
-					pickTimer();
-					if(warmupsLeft > 0) messageUpdater(selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
-					else messageUpdater(selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
-						 (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
-						 " You can find the maps here]" : ""));
+					pickTimer(true);
 				}
 			}
-		}, match.getTournament().getPickWaitTime() * 1000);
+		}, getPickWaitTime() * 1000);
+		
+		pickTimers.add(t);
 	}
 	
 	private void startMapUpdater(){
@@ -346,13 +301,15 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 			
 			PassTurnCommand.passingTeams.put(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam(), this);
 			
-			messageUpdater((fTeamFirst ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
+			sendMessage((fTeamFirst ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
 					        ", use !pass within the next 20 seconds to let the other team start instead!");
+			
+			final boolean ffTeam = fTeamFirst;
 			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(SelectMapCommand.gamesInSelection.contains(this)) return;
+					if(ffTeam != fTeamFirst) return;
 					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 					mapSelection(2);
 				}
@@ -362,7 +319,6 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 	
 	public void passFirstTurn(){
 		fTeamFirst = !fTeamFirst;
-		sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 		mapSelection(2);
 	}
 	
@@ -400,6 +356,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		playersSwapped.clear();
 		hijackedSlots.clear();
 		verifyingSlots.clear();
+		pickTimers.clear();
 		banningTeam = null;
 		fTeamFirst = false;
 		fTeamPoints = 0;
@@ -480,6 +437,22 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 	public void handleMapSelect(String map, boolean select){
 		Map selected = null;
 		
+		if(warmupsLeft > 0 && select){
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID());
+			if(jsMap == null){sendMessage("Could not find the selected map!"); return;}
+			
+			int length = jsMap.getInt("total_length");
+			if(length > 270){
+				sendMessage("The warmup selected is too long! The maximum length is 4m30s.");
+				return;
+			}
+			
+			this.map = new Map(map, 1);
+			mapSelected = true;
+			prepareReadyCheck();
+			return;
+		}
+		
 		int num = 1;
 		for(Map m : match.getMapPool().getMaps()){
 			boolean chosen = false;
@@ -514,20 +487,6 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 			return;
 		}
 		
-		if(warmupsLeft > 0 && select){
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID());
-			int length = jsMap.getInt("total_length");
-			if(length > 270){
-				sendMessage("The warmup selected is too long! The maximum length is 4m30s.");
-				return;
-			}
-			
-			this.map = new Map(map, 1);
-			mapSelected = true;
-			prepareReadyCheck();
-			return;
-		}
-		
 		if(selected != null && !mapSelected && select){
 			mapSelected = true;
 			this.map = selected;
@@ -541,7 +500,73 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		if(selected == null || !select) sendMessage("Invalid " + (select ? "selection!" : "ban!"));
 	}
 	
+	public void acceptSkipRematch(String player){
+		Team team = findTeam(player);
+		
+		switch(skipRematchState){
+			case 0: skipRematchState = teamToBoolean(team) ? 1 : 2;
+					sendMessage(team.getTeamName() + " has voted to skip the rematch!");
+					break;
+			case 1: if(teamToBoolean(team)) break;
+					else{skipRematchState = 3; break;}
+			case 2: if(!teamToBoolean(team)) break;
+					else{skipRematchState = 3; break;}
+			default: return;
+		}
+		
+		if(skipRematchState == 3){
+			SkipRematchCommand.gamesAllowedToSkip.remove(this);
+			
+			sendMessage("The rematch has been skipped.");
+			
+			skipRematchState = 0;
+			rematchesAllowed = 1;
+			
+			mapSelected = false;
+			
+			if(teamToBoolean(lastWinner)) fTeamPoints++;
+			else sTeamPoints++;
+			
+			updateScores();
+		}
+	}
+	
+	public void acceptContest(String player){
+		Team team = findTeam(player);
+		
+		switch(contestState){
+			case 0: contestState = teamToBoolean(team) ? 1 : 2;
+					sendMessage(team.getTeamName() + " has voted to contest the score!");
+					break;
+			case 1: if(teamToBoolean(team)) break;
+					else{contestState = 3; break;}
+			case 2: if(!teamToBoolean(team)) break;
+					else{contestState = 3; break;}
+			default: return;
+		}
+		
+		if(contestState == 3){
+			ContestCommand.gamesAllowedToContest.remove(this);
+			
+			sendMessage("The contest has been accepted.");
+			
+			contestState = 0;
+			
+			if(teamToBoolean(lastWinner)){
+				fTeamPoints--;
+				sTeamPoints++;
+			}else{
+				sTeamPoints--;
+				fTeamPoints++;
+			}
+			
+			updateScores();
+		}
+	}
+	
 	private void prepareReadyCheck(){
+		clearPickTimers();
+		
 		String message = "Waiting for all players to ready up...";
 		
 		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, make sure you are not using fallback as your score will not count!";
@@ -554,11 +579,13 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 	}
 	
 	public void handleBanchoFeedback(String message){
-		if(message.contains("All players are ready")) readyCheck(true);
+		if(message.contains("All players are ready") && state.eq(GameState.WAITING)) readyCheck(true);
 		else if(message.contains("left the game.")) playerLeft(message);
 		else if(message.contains("The match has started!")){
 			banchoFeedback.clear();
 			state = GameState.PLAYING;
+			clearPickTimers();
+			SkipRematchCommand.gamesAllowedToSkip.remove(this);
 		}else if(message.contains("The match has finished!")) playEnded();
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
@@ -567,7 +594,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 	}
 	
 	private void readyCheck(boolean bancho){
-		if(state.equals(GameState.CONFIRMING)) return;
+		if(state.eq(GameState.CONFIRMING) || state.eq(GameState.PLAYING)) return;
 		
 		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.eq(GameState.WAITING)){ 
 			if(previousMap == null || !previousMap.getURL().equalsIgnoreCase(map.getURL())){
@@ -592,7 +619,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 	}
 	
 	private void verifyLobby(String message){
-		if(message == null){
+		if(message == null && !state.eq(GameState.VERIFYING)){
 			state = GameState.VERIFYING;
 			playersSwapped.clear();
 			verifyingSlots.clear();
@@ -613,7 +640,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 	}
 	
 	private void fixLobby(String message){
-		if(message == null){
+		if(message == null && !state.eq(GameState.FIXING)){
 			state = GameState.FIXING;
 			messageUpdater.cancel();
 			playersSwapped.clear();
@@ -771,8 +798,25 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}
 	}
 	
+	private void clearPickTimers(){
+		try{
+			if(!pickTimers.isEmpty())
+				for(Timer t : new ArrayList<Timer>(pickTimers)){
+					if(t != null) t.cancel();	
+					pickTimers.remove(t);
+				}	
+		}catch(Exception e){
+			Log.logger.log(Level.INFO, "rip pick timers: " + e.getMessage());
+		}
+	}
+	
 	private void startMatch(int timer){	
+		clearPickTimers();
 		state = GameState.PLAYING;
+		SkipRematchCommand.gamesAllowedToSkip.remove(this);
+		ContestCommand.gamesAllowedToContest.remove(this);
+		skipRematchState = 0;
+		contestState = 0;
 		
 		if(messageUpdater != null) messageUpdater.cancel();
 		
@@ -825,32 +869,19 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}else startMatch(5);
 	}
 	
-	private void playerLeft(String message){
-		String player = message.replace(" left the game.", "").replaceAll(" ", "_");
-		joinQueue.remove(player);
-		playersInRoom.remove(player);
-		
-		for(Player pl : findTeam(player).getPlayers())
-			if(pl.eq(player)) pl.setSlot(-1);
-		
-		if(!hijackedSlots.isEmpty()){
-			int rSlot = -1;
-			for(int slot : hijackedSlots.keySet())
-				if(hijackedSlots.get(slot).equalsIgnoreCase(player)){
-					rSlot = slot;
-					break;
-				}
-			
-			if(rSlot != -1) hijackedSlots.remove(rSlot);
-		}
+	protected abstract void playerLeft(String message);
+	
+	protected boolean isTeamGame(){
+		return match.getTournament().getTournamentType() == 0;
 	}
 	
-	private void playEnded(){
+	protected void playEnded(){
 		state = GameState.CONFIRMING;
 		
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
 			public void run(){
+				clearPickTimers();
 				state = GameState.WAITING;
 				validMods = true;
 				mapSelected = false;
@@ -885,7 +916,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 				}
 				
 				if(warmupsLeft > 0){
-					if(fTeamScore == sTeamScore) sendMessage("Both teams have tied!");
+					if(fTeamScore == sTeamScore) sendMessage("Both " + (isTeamGame() ? "teams" : "players") + " have tied!");
 					else
 						sendMessage((fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
 									match.getSecondTeam().getTeamName()) + " won by " + Math.abs(fTeamScore - sTeamScore) +
@@ -895,23 +926,35 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 					if(warmupsLeft == 0) mapSelection(3);
 					else mapSelection(2);
 				}else{
-					if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
+					rematch: if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
 						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
 						
 						if((fTeamDC && fTeamScore < sTeamScore) || (!fTeamDC && sTeamScore < fTeamScore)){
+							if(match.getTournament().isScoreV2()){
+								if((fTeamDC && sTeamScore > fTeamScore + 1500000) || (!fTeamDC && fTeamScore > sTeamScore + 1500000))
+									break rematch;
+							}
+							
 							if(rematchesAllowed > 0){
 								rematchesAllowed--;
 								
+								lastWinner = fTeamScore > sTeamScore ? match.getFirstTeam() : match.getSecondTeam();
+								
 								sendMessage("Someone has disconnected, there will be a rematch!");
+								sendMessage("If you do not wish to rematch, both " + (isTeamGame() ? "teams" : "players") + " need to use !skiprematch");
+								
+								skipRematchState = 0;
+								SkipRematchCommand.gamesAllowedToSkip.add(Game.this);
+								
 								mapSelected = true;
 								banchoFeedback.clear();
 								return;
-							}	
+							}
 						}
 					}
 					
 					if(fTeamScore == sTeamScore){
-						sendMessage("Both teams have tied, there will be a rematch!");
+						sendMessage("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
 						mapSelected = true;
 						banchoFeedback.clear();
 						rematchesAllowed--;
@@ -927,27 +970,9 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 					if(fTeamWon) fTeamPoints++;
 					else sTeamPoints++;
 					
-					sendMessage(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
-								sTeamPoints + " " + match.getSecondTeam().getTeamName() +
-								"      Best of " + match.getBestOf());
+					lastWinner = fTeamScore > sTeamScore ? match.getFirstTeam() : match.getSecondTeam();
 					
-					if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
-						changeMap(match.getMapPool().findTiebreaker());
-						
-						mapSelected = true;
-					}else if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2)){
-						sendMessage((fTeamWon ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) +
-									" has won this game!");
-						sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
-						sendMessage("!mp timer");
-						
-						Timer time = new Timer();
-						time.schedule(new TimerTask(){
-							public void run(){
-								stop();
-							}
-						}, 30000);
-					}else mapSelection(4);
+					updateScores();
 				}
 				
 				banchoFeedback.clear();
@@ -955,7 +980,43 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}, 10000);
 	}
 	
-	private void acceptExternalInvite(String message){
+	protected void updateScores(){
+		sendMessage(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
+				sTeamPoints + " " + match.getSecondTeam().getTeamName() +
+				"      Best of " + match.getBestOf());
+	
+		if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
+			changeMap(match.getMapPool().findTiebreaker());
+			
+			mapSelected = true;
+			contestMessage();
+		}else if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2)){
+			sendMessage((fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) +
+						" has won this game!");
+			sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
+			sendMessage("!mp timer");
+			
+			Timer time = new Timer();
+			time.schedule(new TimerTask(){
+				public void run(){
+					stop();
+				}
+			}, 30000);
+			return;
+		}else{
+			contestMessage();
+			mapSelection(4);
+		}
+	}
+	
+	protected void contestMessage(){
+		ContestCommand.gamesAllowedToContest.add(this);
+		contestState = 0;
+		
+		sendMessage("If you wish to give the other team the point instead, both teams please use !contest");
+	}
+	
+	protected void acceptExternalInvite(String message){
 		String player = message.split(" joined in")[0].replaceAll(" ", "_");
 		if(playersInRoom.contains(player)) return;
 		if(!verifyPlayer(player)){sendMessage("!mp kick " + player); return;}
@@ -970,7 +1031,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}
 	}
 	
-	private void sendMessage(String command){
+	protected void sendMessage(String command){
 		Main.ircBot.sendIRC().message(multiChannel, command);
 		Log.logger.log(Level.INFO, "IRC/Sent in " + multiChannel + ": " + command);
 	}
@@ -984,7 +1045,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		sendInviteMessages(player.replaceAll(" ", "_"));
 	}
 	
-	private void sendInviteMessages(String player){	
+	protected void sendInviteMessages(String player){	
 		pmUser(player, "You have been invited to join: " + match.getLobbyName());
 		pmUser(player, "Reply with !join to join the game. Please note that this command is reusable.");
 		
@@ -1003,7 +1064,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		joinRoom(player.replaceAll(" ", "_"), false);
 	}
 	
-	private void joinRoom(String player, boolean hijack){
+	protected void joinRoom(String player, boolean hijack){
 		playersInRoom.add(player.replaceAll(" ", "_"));
 		assignSlotAndTeam(player.replaceAll(" ", "_"), hijack);
 	}
@@ -1045,7 +1106,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		}
 	}
 	
-	private Team findTeam(String player){
+	protected Team findTeam(String player){
 		for(Player p : match.getFirstTeam().getPlayers())
 			if(p.eq(player)) return match.getFirstTeam();
 		
@@ -1055,11 +1116,11 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		return null;
 	}
 
-	private boolean teamToBoolean(Team team){
+	protected boolean teamToBoolean(Team team){
 		return team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
 	}
 	
-	private Player findPlayer(String player){
+	protected Player findPlayer(String player){
 		LinkedList<Player> fullList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
 		fullList.addAll(match.getSecondTeam().getPlayers());
 		
@@ -1069,7 +1130,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		return null;
 	}
 	
-	private Team findNextTeamToPick(){
+	protected Team findNextTeamToPick(){
 		int totalPicked = fTeamPoints + sTeamPoints;
 		
 		if(warmupsLeft == 1) totalPicked = 1;
@@ -1081,7 +1142,7 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		return fTeam ? match.getFirstTeam() : match.getSecondTeam();
 	}
 	
-	private Team findNextTeamToBan(){
+	protected Team findNextTeamToBan(){
 		int totalBanned = bans.size();
 		
 		boolean fTeam = true;
@@ -1091,11 +1152,11 @@ public class Game{ //Game Types with solo and team, where they both implement mo
 		return fTeam ? match.getFirstTeam() : match.getSecondTeam();
 	}
 	
-	private boolean verifyPlayer(String player){
+	public boolean verifyPlayer(String player){
 		return findTeam(player) != null;
 	}
 	
-	private boolean isCaptain(String player){
+	protected boolean isCaptain(String player){
 		for(String pl : captains)
 			if(player.replaceAll(" ", "_").equalsIgnoreCase(pl)){
 				return verifyPlayer(player);

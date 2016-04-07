@@ -104,12 +104,13 @@ public class Match{
 	public void start(){
 		if(scheduledTime != null) scheduledTime.cancel();
 		
-		new Game(this);
+		Game.createGame(this);
 	}
 	
 	public void resize(int players){
 		this.players = players;
-		if(game != null) game.resize();
+		if(game != null && tournament.getTournamentType() == 0) 
+			((TeamGame) game).resize();
 	}
 	
 	public void setGame(Game game){
@@ -143,7 +144,7 @@ public class Match{
 		scheduledTime = new Timer();
 		scheduledTime.schedule(new TimerTask(){
 			public void run(){
-				new Game(Match.this);
+				Game.createGame(Match.this);
 			}
 		}, scheduledDate - Utils.getCurrentTimeUTC());
 	}

@@ -12,13 +12,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
-import me.smc.sb.irccommands.IRCCommand;
-import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
-import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.OnlineStatus;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.entities.User;
 
 public class Server{ //see current lobby representation
 

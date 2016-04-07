@@ -66,6 +66,8 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 	
 	@Override
 	public void onMessage(MessageEvent<PircBotX> e){
+		if(!Utils.verifyChannel(e)) return;
+		
 		String message = e.getMessage();
 		Log.logger.log(Level.INFO, "IRC/" + e.getUser().getNick() + ": " + message);	
 		if(verifyBanchoFeedback(e)) return;
