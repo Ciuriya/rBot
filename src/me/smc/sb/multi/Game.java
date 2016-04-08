@@ -277,6 +277,16 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		return mods;
 	}
 	
+	private double getModMultiplier(String mod){
+		switch(mod){
+			case "HD": return 1.06;
+			case "HR": return match.getTournament().isScoreV2() ? 1.1 : 1.06;
+			case "DT": return match.getTournament().isScoreV2() ? 1.2 : 1.12;
+			case "FL": return 1.12;
+			default: return 1;
+		}
+	}
+	
 	public void acceptRoll(String player, int roll){
 		rollsLeft--;
 		
@@ -515,6 +525,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		}
 		
 		if(skipRematchState == 3){
+			messageUpdater.cancel();
 			SkipRematchCommand.gamesAllowedToSkip.remove(this);
 			
 			sendMessage("The rematch has been skipped.");
@@ -581,12 +592,8 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 	public void handleBanchoFeedback(String message){
 		if(message.contains("All players are ready") && state.eq(GameState.WAITING)) readyCheck(true);
 		else if(message.contains("left the game.")) playerLeft(message);
-		else if(message.contains("The match has started!")){
-			banchoFeedback.clear();
-			state = GameState.PLAYING;
-			clearPickTimers();
-			SkipRematchCommand.gamesAllowedToSkip.remove(this);
-		}else if(message.contains("The match has finished!")) playEnded();
+		else if(message.contains("The match has started!")) startMatch(-1);
+		else if(message.contains("The match has finished!")) playEnded();
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.VERIFYING)) verifyLobby(message);
@@ -665,21 +672,24 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 	private void fixPlayer(String message, boolean fixing){
 		int slot = Utils.stringToInt(message.split(" ")[1]);
 		boolean hasMod = false;
+		double modMultiplier = 1;
 		
-		if(message.endsWith("]") && map.getCategory() == 1 && warmupsLeft <= 0){
+		if(message.endsWith("]") && (map.getCategory() == 1 || map.getCategory() == 5) && warmupsLeft <= 0){
 			String[] sBracketSplit = message.split("\\[");
 			
 			String mods = sBracketSplit[sBracketSplit.length - 1].split("\\]")[0];
 			
 			if(mods.split(" ").length <= 2){
-				playersChecked++; 
+				if(map.getCategory() == 1) playersChecked++; 
 			}else{
 				boolean validMod = true;
 				
 				loop: for(String mod : mods.split(", ")){
 					if(mod.contains("/") && mod.contains("Team")) mod = mod.split("\\/")[1].substring(1);
 					switch(mod.toLowerCase()){
-						case "hidden": case "hardrock": case "flashlight": break;
+						case "hidden": modMultiplier *= 1.06; break;
+						case "hardrock": modMultiplier *= (match.getTournament().isScoreV2() ? 1.1 : 1.06); break;
+						case "flashlight": modMultiplier *= 1.12; break;
 						default: validMod = false; break loop;
 					}
 				}
@@ -688,7 +698,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 					sendMessage("You can only use HD, HR or FL! Make sure you do not have any other mods!");
 					sendMessage("!mp map " + map.getBeatmapID() + " 0");
 					validMods = false;
-				}else hasMod = true;
+				}else if(map.getCategory() == 1) hasMod = true;
 			}
 		}else if(map.getCategory() == 1 && warmupsLeft <= 0) playersChecked++;
 		
@@ -732,8 +742,12 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		
 		Player p = findPlayer(player);
 		
+		if(map.getCategory() > 1 && map.getCategory() != 5)
+			modMultiplier = getModMultiplier(getMod(map));
+		
 		if(p != null){
 			p.setHasMod(hasMod);
+			p.setModMultiplier(modMultiplier);
 			playersChecked++;	
 		}
 		
@@ -829,19 +843,57 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		
 		banchoFeedback.clear();
 		
+		mapSelected = false;
+		switchPlaying(true, false);
+		
+		if(timer == -1) return;
+		
 		if(timer != 0) sendMessage("!mp start " + timer);
 		else sendMessage("!mp start");
+	}
+	
+	private void switchPlaying(boolean playing, boolean full){
+		if(full){
+			LinkedList<Player> tempList = new LinkedList<>(match.getFirstTeam().getPlayers());
+			tempList.addAll(match.getSecondTeam().getPlayers());
+			
+			for(Player pl : tempList){
+				pl.setPlaying(playing);
+				pl.setVerified(false);
+			}
+		}else
+			for(String player : playersInRoom){
+				Player pl = findPlayer(player);
+				pl.setPlaying(playing);
+				pl.setVerified(false);
+			}
+	}
+	
+	private int calculateMissingScores(boolean fTeam){ //v2 only
+		int score = 0;
 		
-		mapSelected = false;
+		Team team = fTeam ? match.getFirstTeam() : match.getSecondTeam();
+		
+		LinkedList<Player> tempList = new LinkedList<>(team.getPlayers());
+		
+		for(Player pl : tempList)
+			if(pl.isPlaying() && !pl.isVerified())
+				score += 1000000 * pl.getModMultiplier() + 50000;
+		
+		return score;
 	}
 	
 	private void verifyMods(){
 		if(map.getCategory() == 1 && warmupsLeft <= 0){
 			playersChecked = 0;
-			LinkedList<Player> tempList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
+			LinkedList<Player> tempList = new LinkedList<>(match.getFirstTeam().getPlayers());
 			tempList.addAll(match.getSecondTeam().getPlayers());
 			
-			for(Player pl : tempList) pl.setHasMod(false);
+			for(Player pl : tempList){
+				pl.setHasMod(false);
+				pl.setModMultiplier(1);
+				switchPlaying(false, true);
+			}
 		}
 	}
 	
@@ -901,6 +953,8 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 						if(fTeam) fTeamPlayers.add(player);
 						else sTeamPlayers.add(player);
 						
+						findPlayer(player).setVerified(true);
+						
 						if(feedback.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
 							int score = Utils.stringToInt(feedback.split("Score: ")[1].split(",")[0]);
 							
@@ -929,9 +983,13 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 					rematch: if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
 						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
 						
+						
+						
 						if((fTeamDC && fTeamScore < sTeamScore) || (!fTeamDC && sTeamScore < fTeamScore)){
 							if(match.getTournament().isScoreV2()){
-								if((fTeamDC && sTeamScore > fTeamScore + 1500000) || (!fTeamDC && fTeamScore > sTeamScore + 1500000))
+								float fScore = fTeamScore + calculateMissingScores(true);
+								float sScore = sTeamScore + calculateMissingScores(false);
+								if((fTeamDC && sScore > fScore) || (!fTeamDC && fScore > sScore))
 									break rematch;
 							}
 							
@@ -948,6 +1006,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 								
 								mapSelected = true;
 								banchoFeedback.clear();
+								switchPlaying(false, true);
 								return;
 							}
 						}
@@ -958,6 +1017,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 						mapSelected = true;
 						banchoFeedback.clear();
 						rematchesAllowed--;
+						switchPlaying(false, true);
 						return;
 					}else rematchesAllowed = 1;
 					
@@ -974,6 +1034,8 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 					
 					updateScores();
 				}
+				
+				switchPlaying(false, true);
 				
 				banchoFeedback.clear();
 			}
