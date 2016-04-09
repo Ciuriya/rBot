@@ -150,7 +150,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 	
 	public int getPickWaitTime(){
 		//return match.getTournament().getConfig().getInt("pickWaitTime");
-		System.out.println("PWT: " + match.getTournament().getConfig().getInt("pickWaitTime"));
+		Log.logger.log(Level.INFO, "PWT: " + match.getTournament().getConfig().getInt("pickWaitTime"));
 		return 180;
 	}
 	
@@ -538,7 +538,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 			if(teamToBoolean(lastWinner)) fTeamPoints++;
 			else sTeamPoints++;
 			
-			updateScores();
+			updateScores(true);
 		}
 	}
 	
@@ -556,9 +556,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 			default: return;
 		}
 		
-		if(contestState == 3){
-			ContestCommand.gamesAllowedToContest.remove(this);
-			
+		if(contestState == 3){		
 			sendMessage("The contest has been accepted.");
 			
 			contestState = 0;
@@ -566,12 +564,14 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 			if(teamToBoolean(lastWinner)){
 				fTeamPoints--;
 				sTeamPoints++;
+				lastWinner = match.getSecondTeam();
 			}else{
 				sTeamPoints--;
 				fTeamPoints++;
+				lastWinner = match.getFirstTeam();
 			}
 			
-			updateScores();
+			updateScores(false);
 		}
 	}
 	
@@ -983,8 +983,6 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 					rematch: if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
 						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
 						
-						
-						
 						if((fTeamDC && fTeamScore < sTeamScore) || (!fTeamDC && sTeamScore < fTeamScore)){
 							if(match.getTournament().isScoreV2()){
 								float fScore = fTeamScore + calculateMissingScores(true);
@@ -1032,7 +1030,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 					
 					lastWinner = fTeamScore > sTeamScore ? match.getFirstTeam() : match.getSecondTeam();
 					
-					updateScores();
+					updateScores(true);
 				}
 				
 				switchPlaying(false, true);
@@ -1042,7 +1040,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		}, 10000);
 	}
 	
-	protected void updateScores(){
+	protected void updateScores(boolean selectMaps){
 		sendMessage(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
 				sTeamPoints + " " + match.getSecondTeam().getTeamName() +
 				"      Best of " + match.getBestOf());
@@ -1051,12 +1049,16 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 			changeMap(match.getMapPool().findTiebreaker());
 			
 			mapSelected = true;
+			if(mapUpdater != null) mapUpdater.cancel();
+			
 			contestMessage();
 		}else if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2)){
 			sendMessage((fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) +
 						" has won this game!");
 			sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
 			sendMessage("!mp timer");
+			
+			if(mapUpdater != null) mapUpdater.cancel();
 			
 			Timer time = new Timer();
 			time.schedule(new TimerTask(){
@@ -1065,7 +1067,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 				}
 			}, 30000);
 			return;
-		}else{
+		}else if(selectMaps){
 			contestMessage();
 			mapSelection(4);
 		}

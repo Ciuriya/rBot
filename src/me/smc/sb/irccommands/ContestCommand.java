@@ -18,15 +18,12 @@ public class ContestCommand extends IRCCommand{
 		super("Allows teams to reverse the score of the last pick.",
 			  " ",
 			  null,
-			  "!contest");
+			  "contest");
 		gamesAllowedToContest = new ArrayList<>();
 	}
 	
 	@Override
 	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		String argCheck = Utils.checkArguments(args, 1);
-		if(argCheck.length() > 0) return argCheck;
-		
 		if(e == null || discord != null || pe != null) return "You cannot contest a score in here!";
 		
 		String userName = Utils.toUser(e, pe);
