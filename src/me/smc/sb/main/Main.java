@@ -33,7 +33,7 @@ public class Main{
 	//yt stats
 	//cooldown on commands instead of pure lockdown IMPORTANT
 	
-	private static String discordEmail, discordPassword, osuUser, osuPassword;
+	private static String discordToken, osuUser, osuPassword;
 	public static JDA api;
 	public static PircBotX ircBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
@@ -64,8 +64,7 @@ public class Main{
 		serverConfigs = new HashMap<String, Configuration>();
 		
 		Configuration login = new Configuration(new File("login.txt"));
-		discordEmail = login.getValue("discorduser");
-		discordPassword = login.getValue("discordpass");
+		discordToken = login.getValue("discordtoken");
 		osuUser = login.getValue("osuuser");
 		osuPassword = login.getValue("osupass");
 		
@@ -85,7 +84,7 @@ public class Main{
 	private void login(){
 		try{
 			Listener l = new Listener();
-			api = new JDABuilder(discordEmail, discordPassword).addListener(l).buildAsync();
+			api = new JDABuilder().setBotToken(discordToken).addListener(l).buildAsync();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;

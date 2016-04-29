@@ -104,15 +104,24 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 
 			gameCreatePMs.add(mpLink.split("mp\\/")[1] + "|" + gameName);
 			
+			Log.logger.log(Level.INFO, "Finding tournament...");
+			
 			Tournament t = Tournament.getTournament(tournamentName);
 			if(t == null) return false;
 			
-			for(Match match : t.getMatches())
+			Log.logger.log(Level.INFO, "Tournament found.");
+			
+			for(Match match : t.getMatches()){
+				if(match == null) continue;
+				Log.logger.log(Level.INFO, "Match: " + match.getLobbyName() + " | Current: " + gameName);
+				
 				if(match.getLobbyName().equalsIgnoreCase(gameName) &&
 				   match.getGame() != null){
+					Log.logger.log(Level.INFO, "Launched match.");
 					match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
 					return true;
 				}
+			}
 			
 			Log.logger.log(Level.INFO, "------------ Failed Game: " + gameName);
 		}

@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.pircbotx.Channel;
 
 import me.smc.sb.irccommands.BanMapCommand;
+import me.smc.sb.irccommands.ChangeWarmupModCommand;
 import me.smc.sb.irccommands.ContestCommand;
 import me.smc.sb.irccommands.InvitePlayerCommand;
 import me.smc.sb.irccommands.JoinMatchCommand;
@@ -24,7 +25,7 @@ import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
-public abstract class Game{ //Game Types with solo and team, where they both implement most of their shit
+public abstract class Game{
 
 	protected Match match;
 	protected String multiChannel;
@@ -150,7 +151,6 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 	
 	public int getPickWaitTime(){
 		//return match.getTournament().getConfig().getInt("pickWaitTime");
-		Log.logger.log(Level.INFO, "PWT: " + match.getTournament().getConfig().getInt("pickWaitTime"));
 		return 180;
 	}
 	
@@ -174,13 +174,19 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				pickTimer(false);
-				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
-				SelectMapCommand.gamesInSelection.add(this);
+				if(!SelectMapCommand.gamesInSelection.contains(this))
+					SelectMapCommand.gamesInSelection.add(this);
+				
+				if(!ChangeWarmupModCommand.gamesAllowedToChangeMod.contains(this))
+					ChangeWarmupModCommand.gamesAllowedToChangeMod.add(this);
 				
 				startMapUpdater();
+				
+				pickTimer(false);
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				break;
 			case 3: 
+				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
 				banningTeam = findNextTeamToBan();
 				
 				if(bans.size() >= 4) mapSelection(4);
@@ -196,14 +202,15 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
+				if(!SelectMapCommand.gamesInSelection.contains(this))
+					SelectMapCommand.gamesInSelection.add(this);
+				
+				startMapUpdater();
+				
 				pickTimer(false);
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
-				
-				SelectMapCommand.gamesInSelection.add(this);
-				
-				startMapUpdater();
 				break;
 			default: break;
 		}
@@ -220,8 +227,6 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 				 (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 				 " You can find the maps here]" : ""));
 		}
-		
-		Log.logger.log(Level.INFO, "PickWaitTime: " + getPickWaitTime());
 		
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
@@ -257,7 +262,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 	}
 	
 	private void changeMap(Map map){
-		sendMessage("!mp map " + map.getBeatmapID() + " 0");
+		sendMessage("!mp map " + map.getBeatmapID() + " " + match.getTournament().getMode());
 		sendMessage("!mp mods " + getMod(map));
 		
 		this.map = map;
@@ -352,6 +357,12 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		
 		for(String admin : match.getMatchAdmins())
 			pmUser(admin, gameEndedMsg);
+		
+		String resultDiscord = match.getTournament().getResultDiscord();
+		if(resultDiscord != null)
+			if(Main.api.getTextChannelById(resultDiscord) != null){
+				Utils.infoBypass(Main.api.getTextChannelById(resultDiscord), gameEndedMsg);
+			}else Utils.infoBypass(Main.api.getPrivateChannelById(resultDiscord), gameEndedMsg);
 
 		Log.logger.log(Level.INFO, gameEndedMsg);
 		
@@ -429,8 +440,10 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 							for(String gamePM : new ArrayList<String>(IRCChatListener.gameCreatePMs))
 								if(gamePM.split("\\|")[0].equalsIgnoreCase(unusedMP))
 									for(Match match : match.getTournament().getMatches())
-										if(match.getGame() != null && match.getLobbyName().equalsIgnoreCase(gamePM.split("\\|")[1]))
+										if(match.getGame() != null && match.getLobbyName().equalsIgnoreCase(gamePM.split("\\|")[1])){
 											match.getGame().start("#mp_" + unusedMP, "https://osu.ppy.sh/mp/" + unusedMP);
+											return;
+										}
 				}
 			}
 		}, 60000);
@@ -573,6 +586,10 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 			
 			updateScores(false);
 		}
+	}
+	
+	public void acceptWarmupModChange(String mod){
+		if(warmupsLeft > 0) sendMessage("!mp mods " + mod.toUpperCase() + " Freemod");
 	}
 	
 	private void prepareReadyCheck(){
@@ -878,7 +895,7 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 		
 		for(Player pl : tempList)
 			if(pl.isPlaying() && !pl.isVerified())
-				score += 1000000 * pl.getModMultiplier() + 50000;
+				score += 1000000 * pl.getModMultiplier() + 100000;
 		
 		return score;
 	}
@@ -1101,12 +1118,10 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 	}
 	
 	public void invitePlayer(String player){
-		if(invitesSent.contains(player.replaceAll(" ", "_"))) return;
+		if(!invitesSent.contains(player)) invitesSent.add(player);
+		JoinMatchCommand.gameInvites.put(player, this);
 		
-		invitesSent.add(player.replaceAll(" ", "_"));
-		JoinMatchCommand.gameInvites.put(player.replaceAll(" ", "_"), this);
-		
-		sendInviteMessages(player.replaceAll(" ", "_"));
+		sendInviteMessages(player);
 	}
 	
 	protected void sendInviteMessages(String player){	
@@ -1276,9 +1291,9 @@ public abstract class Game{ //Game Types with solo and team, where they both imp
 			}
 			
 			if(!usedSlots.contains(i)){
+				pl.setSlot(i);
 				sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
 				sendMessage("!mp team " + player.replaceAll(" ", "_") + " " + color);
-				pl.setSlot(i);
 				
 				if(isCaptain(player.replaceAll(" ", "_")))
 					waitingForCaptains--;

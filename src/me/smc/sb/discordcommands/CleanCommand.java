@@ -1,6 +1,5 @@
 package me.smc.sb.discordcommands;
 
-import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.MessageHistory;
@@ -41,8 +40,8 @@ public class CleanCommand extends GlobalCommand{
 		MessageHistory history = null;
 				
 		if(e.getChannel() instanceof PrivateChannel)
-			history = new MessageHistory(Main.api, e.getPrivateChannel());
-		else history = new MessageHistory(Main.api, e.getTextChannel());
+			history = new MessageHistory(e.getPrivateChannel());
+		else history = new MessageHistory(e.getTextChannel());
 		
 		int cleared = 0;
 		

@@ -45,7 +45,7 @@ public class EditCmdCommand extends GlobalCommand{
 			if(args[i].startsWith("{delimiters="))
 				delimiters = Utils.stringToInt(args[i].split("\\{delimiters=")[1].split("}")[0]);
 			else if(args[i].contains("{desc="))
-				desc = instructions.split("\\{desc=")[1].split("}")[0];
+				desc = args[i].split("\\{desc=")[1].split("}")[0];
 			else instructions += " " + args[i];
 		
 		instructions = instructions.substring(1);

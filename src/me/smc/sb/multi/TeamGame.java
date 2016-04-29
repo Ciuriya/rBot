@@ -46,6 +46,8 @@ public class TeamGame extends Game{
 	
 	@Override
 	public void allowTeamInvites(){
+		if(InvitePlayerCommand.allowedInviters.containsKey(match.getFirstTeam())) return;
+		
 		messageUpdater("Use !invite <player name> to invite your teammates or simply invite them through osu!.",
 				       "Both captains, please use !random to settle which team goes first.");
 	
@@ -78,6 +80,7 @@ public class TeamGame extends Game{
 		Timer captainFallback = new Timer();
 		captainFallback.schedule(new TimerTask(){
 			public void run(){
+				if(match == null) return;
 				int fTeamCaptains = 0, sTeamCaptains = 0;
 				
 				for(String player : playersInRoom)

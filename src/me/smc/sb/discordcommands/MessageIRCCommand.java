@@ -37,7 +37,7 @@ public class MessageIRCCommand extends GlobalCommand{
 			}catch(Exception ex){
 				Log.logger.log(Level.INFO, "Could not join channel " + args[0]);
 			}
-			if(Utils.verifyChannel(args[0])) Main.ircBot.sendIRC().message(args[0], message);
+			if(!args[0].startsWith("#") || Utils.verifyChannel(args[0])) Main.ircBot.sendIRC().message(args[0], message);
 		}
 	}
 	

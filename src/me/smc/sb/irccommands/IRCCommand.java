@@ -109,6 +109,7 @@ public abstract class IRCCommand{
 		commands.add(new ForceStopGameCommand());
 		commands.add(new ForceStartGameCommand());
 		commands.add(new SetGameScoreCommand());
+		commands.add(new SetResultDiscordCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());
@@ -117,6 +118,7 @@ public abstract class IRCCommand{
 		commands.add(new PassTurnCommand());
 		commands.add(new SkipRematchCommand());
 		commands.add(new ContestCommand());
+		commands.add(new ChangeWarmupModCommand());
 	}
 	
 	public abstract String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);

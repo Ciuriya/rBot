@@ -75,7 +75,7 @@ public class OsuTrackCommand extends GlobalCommand{
 	
 	private void loadTrackedPlayers(){
     	for(Guild guild : Main.api.getGuilds()){
-    		Configuration sCfg = new Configuration(new File(guild.getId() + ".txt"));
+    		Configuration sCfg = new Configuration(new File("Guilds/" + guild.getId() + ".txt"));
     		ArrayList<String> list = sCfg.getStringList("tracked-players");
     		trackedPlayers.put(guild.getId(), list);
     	}
@@ -126,12 +126,12 @@ public class OsuTrackCommand extends GlobalCommand{
 									
 									if(msg != ""){
 										String spacing = "\n\n\n\n\n";
-										MessageHistory history = new MessageHistory(Main.api, channel);
+										MessageHistory history = new MessageHistory(channel);
 										Message last = history == null ? null : history.retrieve(1).get(0);
 										
 										if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
 										
-										Utils.info(channel, spacing + msg);
+										Utils.info(channel, spacing + msg.replaceAll("*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~"));
 									}
 									
 									players.remove(player);
@@ -188,10 +188,10 @@ public class OsuTrackCommand extends GlobalCommand{
 					play += "\n\n" + obj.getString("date") + "\n";
 					play += map.getString("artist") + " - " + map.getString("title") + " [" +
 					        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-					        "\n" + Utils.df(getAccuracy(obj)) + "% | " + 
+					        "\n" + (mode.equals("2") ? "" : Utils.df(getAccuracy(obj)) + "% | ") + 
 					        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + map.getInt("max_combo") : "FC") +
-					        " | " + obj.getString("rank") + " rank\n" + (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
-					        (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "") + (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "") +
+					        " | " + obj.getString("rank") + " rank\n" + (mode.equals("2") ? "" : (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
+					        (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "")) + (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "") +
 					        "\nMap: http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + " | Status: " + 
 					        analyzeMapStatus(map.getInt("approved")) + "\nPlayer: http://osu.ppy.sh/u/" + obj.getInt("user_id");
 					completeMessage = true;

@@ -15,18 +15,15 @@ public class SkipRematchCommand extends IRCCommand{
 	public static List<Game> gamesAllowedToSkip;
 	
 	public SkipRematchCommand(){
-		super("Skips a tournament game's automatic rematch.",
+		super("Allows teams to skip a match's automatic rematch.",
 			  " ",
 			  null,
-			  "!skiprematch");
+			  "skiprematch");
 		gamesAllowedToSkip = new ArrayList<>();
 	}
 	
 	@Override
 	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
-		String argCheck = Utils.checkArguments(args, 1);
-		if(argCheck.length() > 0) return argCheck;
-		
 		if(e == null || discord != null || pe != null) return "You cannot skip a rematch in here!";
 		
 		String userName = Utils.toUser(e, pe);

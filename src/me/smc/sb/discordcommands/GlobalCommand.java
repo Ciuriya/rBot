@@ -68,9 +68,16 @@ public abstract class GlobalCommand{
 			if(gc.isName(split[0]) && gc.canUse(e.getAuthor(), e.getChannel())){
 				if(!gc.allowsDm() && e.isPrivate()) return true;
 				Main.commandsUsedThisSession++;
-				String[] args = msg.replace(split[0] + " ", "").split(" ");
-				if(!msg.contains(" ")) args = new String[]{};
-				gc.onCommand(e, args);
+				final String[] args = msg.replace(split[0] + " ", "").split(" ");
+				
+				Thread t = new Thread(new Runnable(){
+					public void run(){
+						if(msg.contains(" ")) gc.onCommand(e, args);
+						else gc.onCommand(e, new String[]{});
+					}
+				});
+				
+				t.start();
 				return true;
 			}
 		return false;
@@ -101,6 +108,7 @@ public abstract class GlobalCommand{
 		commands.add(new SuggestCommand());
 		commands.add(new UserInfoCommand());
 		commands.add(new VoiceCommand());
+		commands.add(new YoutubeDownloadCommand());
 	}
 	
 	public abstract void onCommand(MessageReceivedEvent e, String[] args);

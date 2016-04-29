@@ -29,6 +29,8 @@ public class Tournament{
 	private boolean scoreV2;
 	private final int pickWaitTime;
 	private final int tournamentType; //0 = team
+	private int mode;
+	private String resultDiscord;
 	public static String tournamentDB = "Tournament_DB";
 	
 	public Tournament(String name){
@@ -45,17 +47,21 @@ public class Tournament{
 		scoreV2 = getConfig().getBoolean("scoreV2");
 		pickWaitTime = getConfig().getInt("pickWaitTime");
 		tournamentType = getConfig().getInt("tournamentType");
+		resultDiscord = getConfig().getValue("resultDiscord");
+		mode = getConfig().getInt("mode");
 		
 		save(append);
 		//saveSQL(true);
 		tournaments.add(this);
 	}
 	
-	public Tournament(String name, boolean scoreV2, int pickWaitTime, int type){
+	public Tournament(String name, boolean scoreV2, int pickWaitTime, int type, int mode, String resultDiscord){
 		this.name = name;
 		this.scoreV2 = scoreV2;
 		this.pickWaitTime = pickWaitTime;
 		this.tournamentType = type;
+		this.mode = mode;
+		this.resultDiscord = resultDiscord;
 		
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
@@ -111,6 +117,22 @@ public class Tournament{
 	
 	public int getPickWaitTime(){
 		return pickWaitTime;
+	}
+	
+	public int getMode(){
+		return mode;
+	}
+	
+	public void setMode(int mode){
+		this.mode = mode;
+	}
+	
+	public String getResultDiscord(){
+		return resultDiscord;
+	}
+	
+	public void setResultDiscord(String resultDiscord){
+		this.resultDiscord = resultDiscord;
 	}
 	
 	public void addPool(MapPool pool){
@@ -196,27 +218,33 @@ public class Tournament{
 		getConfig().writeValue("scoreV2", scoreV2);
 		getConfig().writeValue("pickWaitTime", pickWaitTime);
 		getConfig().writeValue("type", tournamentType);
+		getConfig().writeValue("mode", mode);
+		getConfig().writeValue("resultDiscord", resultDiscord);
 	}
 	
 	public void saveSQL(boolean add){
 		try{
 			if(add){
 				new JdbcSession(Main.sqlConnection)
-				.sql("INSERT INTO Tournament (name, scoreV2, pick_wait_time, type) " +
-				     "VALUES (?, ?, ?, ?)")
+				.sql("INSERT INTO Tournament (name, scoreV2, pick_wait_time, type, mode, result_discord) " +
+				     "VALUES (?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
 				.set(tournamentType)
+				.set(mode)
+				.set(resultDiscord)
 				.insert(Outcome.VOID);
 			}else{
 				new JdbcSession(Main.sqlConnection)
 				.sql("UPDATE Tournament " +
-					 "SET scoreV2='?', pick_wait_time='?', type='?' " +
+					 "SET scoreV2='?', pick_wait_time='?', type='?', mode='?', result_discord='?' " +
 					 "WHERE name='?'")
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
 				.set(tournamentType)
+				.set(resultDiscord)
+				.set(mode)
 				.set(name)
 				.update(Outcome.VOID);
 			}
@@ -236,7 +264,7 @@ public class Tournament{
 		
 		getConfig().delete();
 		
-		deleteSQL();
+		//deleteSQL();
 	}
 	
 	public void deleteSQL(){
@@ -277,11 +305,11 @@ public class Tournament{
 		tournaments = new ArrayList<>();
 		try{
 			new JdbcSession(Main.sqlConnection)
-				     .sql("SELECT id_tournament, name, scoreV2, pick_wait_time, type FROM Tournament")
+				     .sql("SELECT id_tournament, name, scoreV2, pick_wait_time, type, mode, result_discord FROM Tournament")
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
-				    			 Tournament t = new Tournament(rset.getString(2), rset.getBoolean(3), rset.getInt(4), rset.getInt(5));
+				    			 Tournament t = new Tournament(rset.getString(2), rset.getBoolean(3), rset.getInt(4), rset.getInt(5), rset.getInt(6), rset.getString(7));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

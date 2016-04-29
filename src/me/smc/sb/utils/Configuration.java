@@ -112,10 +112,13 @@ public class Configuration{
 	
 	
 	public String getValue(String key){
-		if(configLines != null)
+		if(configLines != null){
 			for(String str : configLines)
-				if(str.startsWith(key + ":"))
+				if(str.startsWith(key + ":")){
 					return str.substring((key + ":").length());
+				}
+		}
+		
 		return "";
 	}
 	
@@ -158,7 +161,7 @@ public class Configuration{
 		BufferedWriter bw = null;
 		try{
 			bw = new BufferedWriter(new OutputStreamWriter(
-				    new FileOutputStream(configFile.getName()), "UTF-8"));
+				    new FileOutputStream(configFile.getPath()), "UTF-8"));
 			boolean written = false;
 			if(configLines != null)
 				for(String str : configLines)
@@ -185,7 +188,7 @@ public class Configuration{
 	
 	public static List<String> readSmallTextFile(final File configFile) throws IOException{
 		//BufferedReader bufferedReader = new BufferedReader(new FileReader(configFile));
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile.getName()), "UTF-8"));
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile.getPath()), "UTF-8"));
 		List<String> fileLines = null;
 		try{
 			String line = bufferedReader.readLine();

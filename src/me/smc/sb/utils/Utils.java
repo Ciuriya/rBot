@@ -127,7 +127,6 @@ public class Utils{
 		return true;
 	}
 	
-	
 	public static String toUser(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe){
 		if(pe != null) return pe.getUser().getNick();
 		else if(e != null) return e.getUser().getNick();

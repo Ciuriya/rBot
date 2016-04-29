@@ -38,6 +38,7 @@ public class BanMapCommand extends IRCCommand{
 				for(Player pl : team.getPlayers())
 					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
 						String url = Utils.takeOffExtrasInBeatmapURL(args[0]);
+						
 						if(Utils.stringToInt(args[0]) == -1){
 							if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
 								Utils.info(e, pe, discord, "Invalid URL, example format: https://osu.ppy.sh/b/123456");
@@ -45,11 +46,12 @@ public class BanMapCommand extends IRCCommand{
 								return "";
 							}
 						}
+						
 						banningTeams.get(team).handleMapSelect(url, false);
 						return "";
 					}
 		
-		return "";
+		return "Could not ban map!";
 	}
 	
 }

@@ -2,17 +2,19 @@ package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.entities.Message;
+import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class Command{
 
-	public static HashMap<String, HashMap<String, Command>> commands = new HashMap<String, HashMap<String, Command>>(); //perm levels in server
+	public static HashMap<String, HashMap<String, Command>> commands = new HashMap<String, HashMap<String, Command>>();
 	private String name;
 	private String instruction;
 	private int delimiters;
@@ -127,7 +129,7 @@ public class Command{
 	
 	public static void convertTag(MessageReceivedEvent e, String tag, MessageBuilder msg, String name, String server){
 		switch(tag){
-			case "user": msg.appendMention(e.getAuthor()); return;
+			case "user": msg.appendString(e.getAuthor().getAsMention()); return;
 			case "increment": 
 				Configuration cfg = Main.serverConfigs.get(server);
 				int incNum = cfg.getInt("cmd-" + name + "-increment") + 1;
@@ -146,6 +148,14 @@ public class Command{
 			}catch(Exception e1){
 				e1.printStackTrace();
 			}
+		}else if(tag.startsWith("random=")){
+			int random = new Random().nextInt(Utils.stringToInt(tag.replace("random=", "")));
+			msg.appendString(random + "");
+		}else if(tag.startsWith("mention=")){
+			msg.appendString(e.getGuild().getUsers()
+			   .stream()
+			   .filter(x -> ((User) x).getUsername().equals(tag.replace("mention=", "")))
+			   .findFirst().get().getAsMention());
 		}
 	}
 	

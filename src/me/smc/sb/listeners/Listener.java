@@ -15,6 +15,8 @@ import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.events.Event;
 import net.dv8tion.jda.events.ReadyEvent;
 import net.dv8tion.jda.events.ReconnectedEvent;
+import net.dv8tion.jda.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.hooks.EventListener;
 
@@ -65,13 +67,16 @@ public class Listener implements EventListener{
 	    									     "\nIf you have any issues, feel free to contact Smc!" +
 	    									     "\nContact: PM, server: https://discord.gg/0phGqtqLYwSzCdwn");
 		}else if(event instanceof ReadyEvent){
+			GlobalCommand.registerCommands();
 			api = event.getJDA();
 			api.setAutoReconnect(true);
 			loadGuilds(api);
-			Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
+			Utils.infoBypass(api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
 			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");
 		}else if(event instanceof ReconnectedEvent)
-			Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "I have reconnected!");
+			Utils.infoBypass(api.getUserById("91302128328392704").getPrivateChannel(), "I have reconnected!");
+		else if(event instanceof GuildJoinEvent || event instanceof GuildLeaveEvent)
+			loadGuilds(event.getJDA());
     }
     
     public static void loadGuilds(JDA api){
@@ -79,11 +84,9 @@ public class Listener implements EventListener{
     	Command.commands.clear();
     	
     	for(Guild guild : api.getGuilds()){
-    		Main.serverConfigs.put(guild.getId(), new Configuration(new File(guild.getId() + ".txt")));
+    		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
     		Command.loadCommands(guild.getId());	
     	}
-    	
-    	GlobalCommand.registerCommands();
     }
 	
 }

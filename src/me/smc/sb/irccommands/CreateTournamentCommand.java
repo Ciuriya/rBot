@@ -12,7 +12,7 @@ public class CreateTournamentCommand extends IRCCommand{
 
 	public CreateTournamentCommand(){
 		super("Creates a tournament.",
-			  "<tournament name> ",
+			  "<tournament name> (game mode 0/1/2/3) ",
 			  Permissions.IRC_BOT_ADMIN,
 			  "tournamentcreate");
 	}
@@ -23,9 +23,23 @@ public class CreateTournamentCommand extends IRCCommand{
 		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
+		int tournamentArgLength = args.length;
 		
-		for(int i = 0; i < args.length; i++) tournamentName += args[i] + " ";
-		new Tournament(tournamentName.substring(0, tournamentName.length() - 1));
+		if(args[args.length - 1].length() == 1){
+			int mode = Utils.stringToInt(args[args.length - 1]);
+			if(mode >= 0 && mode <= 3)
+				tournamentArgLength--;
+		}
+		
+		for(int i = 0; i < tournamentArgLength; i++) tournamentName += args[i] + " ";
+		if(Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)) != null)
+			return "This tournament already exists!";
+		
+		Tournament t = new Tournament(tournamentName.substring(0, tournamentName.length() - 1));
+		if(tournamentArgLength < args.length){
+			t.setMode(Utils.stringToInt(args[args.length - 1]));
+			t.save(false);
+		}
 		
 		return "Created the " + tournamentName.substring(0, tournamentName.length() - 1) + " tournament!";
 	}

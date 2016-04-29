@@ -35,7 +35,7 @@ public class ListMatchesCommand extends IRCCommand{
 		else msg += "=";
 		
 		for(Match match : t.getMatches()){
-			msg += "#" + match.getMatchNum();
+			msg += "\n#" + match.getMatchNum();
 			
 			if(match.getFirstTeam() != null)
 				msg += " - " + match.getFirstTeam().getTeamName() + " vs";
@@ -45,7 +45,12 @@ public class ListMatchesCommand extends IRCCommand{
 				msg += " " + match.getSecondTeam().getTeamName();
 			else msg += "  ";
 			
-			if(match.getTime() != 0) msg += " at " + Utils.toDate(match.getTime()) + " UTC";
+			if(match.getTime() != 0) msg += " - " + Utils.toDate(match.getTime()) + " UTC";
+			
+			msg += "\n" + match.getPlayers() + " players - BO" + 
+			       match.getBestOf() + " - MapPool #" + 
+				   (match.getMapPool() != null ? 
+				   match.getMapPool().getPoolNum() : -1);
 			
 			if(discord != null) msg += "\n";
 			else msg += "=";

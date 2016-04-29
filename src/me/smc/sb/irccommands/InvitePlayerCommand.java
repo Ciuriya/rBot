@@ -46,7 +46,7 @@ public class InvitePlayerCommand extends IRCCommand{
 					receiverAllowed = true;
 			
 			if(senderAllowed && receiverAllowed)
-				allowedInviters.get(team).invitePlayer(playerName);
+				allowedInviters.get(team).invitePlayer(playerName.replaceAll(" ", "_"));
 		}
 		
 		return "";
