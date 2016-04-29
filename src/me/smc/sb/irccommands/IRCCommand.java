@@ -110,6 +110,8 @@ public abstract class IRCCommand{
 		commands.add(new ForceStartGameCommand());
 		commands.add(new SetGameScoreCommand());
 		commands.add(new SetResultDiscordCommand());
+		commands.add(new SetRankBoundsCommand());
+		commands.add(new SetDisplayNameCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());

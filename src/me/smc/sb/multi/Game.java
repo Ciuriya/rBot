@@ -55,6 +55,7 @@ public abstract class Game{
 	protected List<Player> playersSwapped;
 	protected java.util.Map<Player, Integer> verifyingSlots;
 	protected LinkedList<String> banchoFeedback;
+	protected List<Player> playersRankChecked;
 	protected Team selectingTeam;
 	protected Team banningTeam;
 	protected Team lastWinner;
@@ -85,6 +86,7 @@ public abstract class Game{
 		this.hijackedSlots = new HashMap<>();
 		this.verifyingSlots = new HashMap<>();
 		this.pickTimers = new ArrayList<>();
+		this.playersRankChecked = new ArrayList<>();
 		this.state = GameState.WAITING;
 		this.match.setGame(this);
 		
@@ -378,6 +380,7 @@ public abstract class Game{
 		hijackedSlots.clear();
 		verifyingSlots.clear();
 		pickTimers.clear();
+		playersRankChecked.clear();
 		banningTeam = null;
 		fTeamFirst = false;
 		fTeamPoints = 0;
@@ -1100,7 +1103,13 @@ public abstract class Game{
 	protected void acceptExternalInvite(String message){
 		String player = message.split(" joined in")[0].replaceAll(" ", "_");
 		if(playersInRoom.contains(player)) return;
-		if(!verifyPlayer(player)){sendMessage("!mp kick " + player); return;}
+		
+		if(!verifyPlayer(player)){
+			sendMessage(player + " tried to join, but they are not on either team! Contact a tournament organizer if you believe this to be an error."); 
+			sendMessage("!mp kick " + player); 
+			return;
+		}
+		
 		if(joinQueue.contains(player)) joinQueue.remove(player);
 		
 		if(joinQueue.isEmpty()){
@@ -1108,6 +1117,7 @@ public abstract class Game{
 			joinRoom(player, true);
 		}else{
 			int slot = Utils.stringToInt(message.split("joined in slot ")[1].split(" for team")[0]);
+			findPlayer(player).setSlot(slot);
 			hijackedSlots.put(slot, player);
 		}
 	}
@@ -1294,6 +1304,32 @@ public abstract class Game{
 				pl.setSlot(i);
 				sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
 				sendMessage("!mp team " + player.replaceAll(" ", "_") + " " + color);
+				
+				int lower = match.getTournament().getLowerRankBound();
+				int upper = match.getTournament().getUpperRankBound();
+				
+				if(lower != upper && lower >= 1 && upper >= 1){
+					if(lower > upper){
+						int temp = upper;
+						upper = lower;
+						lower = temp;
+					}
+				}
+				
+				if(!playersRankChecked.contains(pl)){
+					int rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
+					if(rank <= 0 || rank < lower || rank > upper){
+						sendMessage(player + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
+								   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
+						sendMessage("!mp kick " + player.replaceAll(" ", "_"));
+						
+						advanceQueue(player.replaceAll(" ", "_"), hijackers);
+						pl.setSlot(-1);
+						return false;
+					}
+					
+					playersRankChecked.add(pl);
+				}
 				
 				if(isCaptain(player.replaceAll(" ", "_")))
 					waitingForCaptains--;

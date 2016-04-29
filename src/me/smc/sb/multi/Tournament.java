@@ -21,6 +21,7 @@ public class Tournament{
 	
 	private int tournamentId;
 	private String name;
+	private String displayName;
 	public static List<Tournament> tournaments;
 	private List<Team> teams;
 	private List<Match> matches;
@@ -30,6 +31,8 @@ public class Tournament{
 	private final int pickWaitTime;
 	private final int tournamentType; //0 = team
 	private int mode;
+	private int lowerRankBound;
+	private int upperRankBound;
 	private String resultDiscord;
 	public static String tournamentDB = "Tournament_DB";
 	
@@ -44,24 +47,31 @@ public class Tournament{
 		pools = new ArrayList<>();
 		matchDates = new ArrayList<>();
 		
+		displayName = getConfig().getValue("displayName");
 		scoreV2 = getConfig().getBoolean("scoreV2");
 		pickWaitTime = getConfig().getInt("pickWaitTime");
 		tournamentType = getConfig().getInt("tournamentType");
-		resultDiscord = getConfig().getValue("resultDiscord");
 		mode = getConfig().getInt("mode");
+		resultDiscord = getConfig().getValue("resultDiscord");
+		lowerRankBound = getConfig().getInt("lowerRankBound");
+		upperRankBound = getConfig().getInt("upperRankBound");
 		
 		save(append);
 		//saveSQL(true);
 		tournaments.add(this);
 	}
 	
-	public Tournament(String name, boolean scoreV2, int pickWaitTime, int type, int mode, String resultDiscord){
+	public Tournament(String name, String displayName, boolean scoreV2, int pickWaitTime, int type, int mode, 
+			          String resultDiscord, int lowerRankBound, int upperRankBound){
 		this.name = name;
+		this.displayName = displayName;
 		this.scoreV2 = scoreV2;
 		this.pickWaitTime = pickWaitTime;
 		this.tournamentType = type;
 		this.mode = mode;
 		this.resultDiscord = resultDiscord;
+		this.lowerRankBound = lowerRankBound;
+		this.upperRankBound = upperRankBound;
 		
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
@@ -73,6 +83,14 @@ public class Tournament{
 	
 	public String getName(){
 		return name;
+	}
+	
+	public String getDisplayName(){
+		return displayName;
+	}
+	
+	public void setDisplayName(String displayName){
+		this.displayName = displayName;
 	}
 	
 	public boolean isScoreV2(){
@@ -123,16 +141,32 @@ public class Tournament{
 		return mode;
 	}
 	
-	public void setMode(int mode){
-		this.mode = mode;
-	}
-	
 	public String getResultDiscord(){
 		return resultDiscord;
 	}
 	
+	public int getLowerRankBound(){
+		return lowerRankBound;
+	}
+	
+	public int getUpperRankBound(){
+		return upperRankBound;
+	}
+	
+	public void setMode(int mode){
+		this.mode = mode;
+	}
+	
 	public void setResultDiscord(String resultDiscord){
 		this.resultDiscord = resultDiscord;
+	}
+	
+	public void setLowerRankBound(int lowerRankBound){
+		this.lowerRankBound = lowerRankBound;
+	}
+	
+	public void setUpperRankBound(int upperRankBound){
+		this.upperRankBound = upperRankBound;
 	}
 	
 	public void addPool(MapPool pool){
@@ -215,36 +249,47 @@ public class Tournament{
 	public void save(boolean append){
 		if(append) new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", name, true);
 		
+		getConfig().writeValue("displayName", displayName);
 		getConfig().writeValue("scoreV2", scoreV2);
 		getConfig().writeValue("pickWaitTime", pickWaitTime);
 		getConfig().writeValue("type", tournamentType);
 		getConfig().writeValue("mode", mode);
 		getConfig().writeValue("resultDiscord", resultDiscord);
+		getConfig().writeValue("lowerRankBound", lowerRankBound);
+		getConfig().writeValue("upperRankBound", upperRankBound);
 	}
 	
 	public void saveSQL(boolean add){
 		try{
 			if(add){
 				new JdbcSession(Main.sqlConnection)
-				.sql("INSERT INTO Tournament (name, scoreV2, pick_wait_time, type, mode, result_discord) " +
-				     "VALUES (?, ?, ?, ?, ?, ?)")
+				.sql("INSERT INTO Tournament (name, display_name, scoreV2, pick_wait_time, type, mode, result_discord, " +
+				     "lower_rank_bound, upper_rank_bound) " +
+				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
+				.set(displayName)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
 				.set(tournamentType)
 				.set(mode)
 				.set(resultDiscord)
+				.set(lowerRankBound)
+				.set(upperRankBound)
 				.insert(Outcome.VOID);
 			}else{
 				new JdbcSession(Main.sqlConnection)
 				.sql("UPDATE Tournament " +
-					 "SET scoreV2='?', pick_wait_time='?', type='?', mode='?', result_discord='?' " +
+					 "SET display_name='?', scoreV2='?', pick_wait_time='?', type='?', mode='?', result_discord='?', " +
+				     "lower_rank_bound='?', upper_rank_bound='?' " +
 					 "WHERE name='?'")
+				.set(displayName)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
 				.set(tournamentType)
-				.set(resultDiscord)
 				.set(mode)
+				.set(resultDiscord)
+				.set(lowerRankBound)
+				.set(upperRankBound)
 				.set(name)
 				.update(Outcome.VOID);
 			}
@@ -305,11 +350,13 @@ public class Tournament{
 		tournaments = new ArrayList<>();
 		try{
 			new JdbcSession(Main.sqlConnection)
-				     .sql("SELECT id_tournament, name, scoreV2, pick_wait_time, type, mode, result_discord FROM Tournament")
+				     .sql("SELECT id_tournament, name, display_name, scoreV2, pick_wait_time, type, mode, result_discord, " +
+				     	  "lower_rank_bound, upper_rank_bound FROM Tournament")
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
-				    			 Tournament t = new Tournament(rset.getString(2), rset.getBoolean(3), rset.getInt(4), rset.getInt(5), rset.getInt(6), rset.getString(7));
+				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getBoolean(4), rset.getInt(5), rset.getInt(6),
+				    					                       rset.getInt(7), rset.getString(8), rset.getInt(9), rset.getInt(10));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

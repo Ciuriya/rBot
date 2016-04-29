@@ -68,7 +68,7 @@ public class Match{
 	
 	public String getLobbyName(){
 		if(fTeam == null || sTeam == null) return "";
-		return tournament.getName() + ": (" + fTeam.getTeamName() + ") vs (" + sTeam.getTeamName() + ")";
+		return tournament.getDisplayName() + ": (" + fTeam.getTeamName() + ") vs (" + sTeam.getTeamName() + ")";
 	}
 	
 	public Game getGame(){

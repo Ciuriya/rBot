@@ -62,7 +62,7 @@ public class OsuStatsCommand extends GlobalCommand{
 		       .appendString("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
 		       .appendString("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
 		       .appendString("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
-		       .appendString("\n" + totalAcc + "% total accuracy")
+		       .appendString(mode.equals("2") ? "" : "\n" + totalAcc + "% total accuracy")
 		       .appendString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + jsonResponse.getInt("count_rank_s") + " S) (" + jsonResponse.getInt("count_rank_a") + " A)");
 		builder.appendString("```");
 		Utils.infoBypass(e.getChannel(), builder.build().getContent());

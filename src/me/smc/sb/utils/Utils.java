@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,6 +36,7 @@ import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
+import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Tournament;
 import net.dv8tion.jda.MessageBuilder;
@@ -409,6 +411,16 @@ public class Utils{
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 			return url;
 		}
+	}
+	
+	public static int getOsuPlayerRank(String name, int mode){
+		String post = Utils.sendPost("https://osu.ppy.sh/api/", 
+				                     "get_user?k=" + OsuStatsCommand.apiKey + "&u=" + name + "&m=" + mode + "&type=string&event_days=1");
+		if(post == "" || !post.contains("{")) return -1;
+		
+		JSONObject jsonResponse = new JSONObject(post);
+		
+		return jsonResponse.getInt("pp_rank");
 	}
 	
 	public static class Login{
