@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.json.JSONObject;
 
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.MessageBuilder;
@@ -43,29 +44,47 @@ public class OsuStatsCommand extends GlobalCommand{
 			if(args[i].contains("{mode=")){
 				mode = args[i].split("\\{mode=")[1].split("}")[0];
 			}else user += " " + args[i];
-		user = user.substring(1);
+		final String finalUser = user.substring(1);
+		final String finalMode = mode;
 		
-		MessageBuilder builder = new MessageBuilder();
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + user + "&m=" + mode + "&type=string&event_days=1");
-		if(post == "" || !post.contains("{")) return;
+		Thread t = new Thread(new Runnable(){
+			public void run(){
+				MessageBuilder builder = new MessageBuilder();
+				String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + finalUser + 
+	                     																	"&m=" + finalMode + "&type=string&event_days=1");
+				if(post == "" || !post.contains("{")) return;
+				
+				JSONObject jsonResponse = new JSONObject(post);
+				
+				int userId = jsonResponse.getInt("user_id");
+				double totalAcc = (double) jsonResponse.getInt("count300") * 300.0 + 
+						          (double) jsonResponse.getInt("count100") * 100.0 + 
+						          (double) jsonResponse.getInt("count50") * 50.0;
+				totalAcc = (totalAcc / ((double) (jsonResponse.getInt("count300") + 
+						               			  jsonResponse.getInt("count100") + 
+						               			  jsonResponse.getInt("count50")) 
+						   						  * 300.0)) * 100.0;
+				
+				builder.appendString("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
+				       .appendString("\n\nFrom " + jsonResponse.getString("country"))
+				       .appendString("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + 
+				    		   		 " Country #" + Utils.veryLongNumberDisplay(getCountryRank(userId, finalMode)))
+				       .appendString("\n" + jsonResponse.getDouble("pp_raw") + "pp")
+				       .appendString("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + 
+				    		   		 Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
+				       .appendString("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + 
+				    		   		 " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
+				       .appendString("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
+				       .appendString(finalMode.equals("2") ? "" : "\n" + totalAcc + "% total accuracy")
+				       .appendString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + 
+				    		   		 jsonResponse.getInt("count_rank_s") + " S) (" + 
+				    		   		 jsonResponse.getInt("count_rank_a") + " A)")
+				       .appendString("```");
+				Utils.infoBypass(e.getChannel(), builder.build().getContent());
+			}
+		});
 		
-		JSONObject jsonResponse = new JSONObject(post);
-		
-		int userId = jsonResponse.getInt("user_id");
-		double totalAcc = (double) jsonResponse.getInt("count300") * 300.0 + (double) jsonResponse.getInt("count100") * 100.0 + (double) jsonResponse.getInt("count50") * 50.0;
-		totalAcc = (totalAcc / ((double) (jsonResponse.getInt("count300") + jsonResponse.getInt("count100") + jsonResponse.getInt("count50")) * 300.0)) * 100.0;
-		
-		builder.appendString("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
-		       .appendString("\n\nFrom " + jsonResponse.getString("country"))
-		       .appendString("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + " Country #" + Utils.veryLongNumberDisplay(getCountryRank(userId, mode)))
-		       .appendString("\n" + jsonResponse.getDouble("pp_raw") + "pp")
-		       .appendString("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
-		       .appendString("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
-		       .appendString("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
-		       .appendString(mode.equals("2") ? "" : "\n" + totalAcc + "% total accuracy")
-		       .appendString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + jsonResponse.getInt("count_rank_s") + " S) (" + jsonResponse.getInt("count_rank_a") + " A)");
-		builder.appendString("```");
-		Utils.infoBypass(e.getChannel(), builder.build().getContent());
+		t.start();
 	}
 	
 }

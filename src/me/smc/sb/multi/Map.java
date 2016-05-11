@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.discordcommands.OsuStatsCommand;
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 
 public class Map{
@@ -42,15 +43,23 @@ public class Map{
 	}
 	
 	public JSONObject getMapInfo(){
-		return getMapInfo(getBeatmapID());
+		return getMapInfo(getBeatmapID(), true);
+	}
+	
+	public JSONObject getMapInfoNoPriority(){
+		return getMapInfo(getBeatmapID(), false);
 	}
 	
 	public String export(){
 		return url + "||" + category;
 	}
 	
-	public static JSONObject getMapInfo(int id){
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
+	public static JSONObject getMapInfo(int id, boolean priority){
+		String post = "";
+		if(priority)
+			post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
+		else post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
+		
 		if(post == "" || !post.contains("{")) return null;
 		return new JSONArray("[" + post + "]").getJSONObject(0);
 	}

@@ -124,8 +124,8 @@ public class Match{
 	}
 	
 	public void setTime(long time){
-		if(tournament.getMatchDates().contains(time)){
-			setTime(time + 15000);
+		if(Tournament.getMatchDates().contains(time)){
+			setTime(time + 10000);
 			return;
 		}
 		
@@ -138,7 +138,7 @@ public class Match{
 		
 		if(scheduledDate == 0) return;
 		
-		tournament.addMatchDate(time);
+		Tournament.addMatchDate(time);
 		
 		if(scheduledTime != null) scheduledTime.cancel();
 		

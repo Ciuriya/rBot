@@ -26,7 +26,7 @@ public class Tournament{
 	private List<Team> teams;
 	private List<Match> matches;
 	private List<MapPool> pools;
-	private List<Long> matchDates;
+	public static List<Long> matchDates = new ArrayList<>();
 	private boolean scoreV2;
 	private final int pickWaitTime;
 	private final int tournamentType; //0 = team
@@ -45,7 +45,6 @@ public class Tournament{
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
-		matchDates = new ArrayList<>();
 		
 		displayName = getConfig().getValue("displayName");
 		scoreV2 = getConfig().getBoolean("scoreV2");
@@ -76,7 +75,6 @@ public class Tournament{
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
-		matchDates = new ArrayList<>();
 		
 		tournaments.add(this);
 	}
@@ -86,6 +84,7 @@ public class Tournament{
 	}
 	
 	public String getDisplayName(){
+		if(displayName.length() == 0) return name;
 		return displayName;
 	}
 	
@@ -129,7 +128,7 @@ public class Tournament{
 		return pools;
 	}
 	
-	public List<Long> getMatchDates(){
+	public static List<Long> getMatchDates(){
 		return matchDates;
 	}
 	
@@ -181,7 +180,7 @@ public class Tournament{
 		matches.add(match);
 	}
 	
-	public void addMatchDate(long date){
+	public static void addMatchDate(long date){
 		matchDates.add(date);
 	}
 	
@@ -329,6 +328,9 @@ public class Tournament{
 			for(Tournament t : tournaments)
 				if(t.getName().equalsIgnoreCase(name))
 					return t;
+				else if(t.getDisplayName().equalsIgnoreCase(name))
+					return t;
+		
 		return null;
 	}
 	

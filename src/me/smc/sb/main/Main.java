@@ -22,6 +22,7 @@ import me.smc.sb.listeners.Listener;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
+import me.smc.sb.utils.OsuAPIRegulator;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDABuilder;
 
@@ -42,6 +43,7 @@ public class Main{
 	public static long bootTime = 0;
 	public static Server server;
 	public static Connection sqlConnection;
+	public static OsuAPIRegulator osuRequestManager;
 	
 	public static void main(String[] args){
 		new Main();
@@ -78,6 +80,9 @@ public class Main{
 		Tournament.loadTournaments();
 		
 		IRCCommand.registerCommands();
+		
+		osuRequestManager = new OsuAPIRegulator();
+		
 		loadIRC();
 	}
 	

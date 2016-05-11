@@ -16,6 +16,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -280,8 +281,12 @@ public class Utils{
 	}
 	
 	public static long toTime(String date){
+		return toTime(date, "yyyy MM dd HH mm");
+	}
+	
+	public static long toTime(String date, String format){
 		long time = -1;
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy MM dd HH mm");
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try{
 			time = sdf.parse(date).getTime();
@@ -292,11 +297,23 @@ public class Utils{
 	}
 	
 	public static String toDate(long time){
+		return toDate(time, "yyyy/MM/dd HH:mm");
+	}
+	
+	public static String toDate(long time, String format){
 		String date = "";
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		sdf.setCalendar(getCalendar(time));
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		date = sdf.format(time);
 		return date;
+	}
+	
+	private static Calendar getCalendar(long time){
+		Calendar calendar = new GregorianCalendar();
+		calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+		calendar.setTimeInMillis(time);
+		return calendar;
 	}
 	
 	public static long getCurrentTimeUTC(){
@@ -414,13 +431,36 @@ public class Utils{
 	}
 	
 	public static int getOsuPlayerRank(String name, int mode){
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", 
-				                     "get_user?k=" + OsuStatsCommand.apiKey + "&u=" + name + "&m=" + mode + "&type=string&event_days=1");
+		String id = getOsuPlayerId(name);
+		
+		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + id + "&m=" + mode);
+		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "Performance</a>: ");
+		
+		if(line.isEmpty()) return getOsuPlayerRankByAPI(name, id, mode);
+		else{
+			int rank = stringToInt(line.get(0).split("\\(#")[1].split("\\)")[0].replaceAll(",", ""));
+			
+			if(rank == -1) return getOsuPlayerRankByAPI(name, id, mode);
+			else return rank;
+		}
+	}
+	
+	private static int getOsuPlayerRankByAPI(String name, String id, int mode){
+		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
+					  "&u=" + id + "&m=" + mode + "&type=string&event_days=1");
+		
 		if(post == "" || !post.contains("{")) return -1;
 		
 		JSONObject jsonResponse = new JSONObject(post);
-		
 		return jsonResponse.getInt("pp_rank");
+	}
+	
+	public static String getOsuPlayerId(String name){
+		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/u/" + name);
+		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "load(\"/pages/include/profile-userpage.php?u=");
+		
+		if(line.isEmpty()) return "-1";
+		else return line.get(0).split("u=")[1].split("\", function")[0];
 	}
 	
 	public static class Login{

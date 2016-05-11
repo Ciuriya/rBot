@@ -149,7 +149,7 @@ public class Command{
 				e1.printStackTrace();
 			}
 		}else if(tag.startsWith("random=")){
-			int random = new Random().nextInt(Utils.stringToInt(tag.replace("random=", "")));
+			int random = new Random().nextInt(Utils.stringToInt(tag.replace("random=", "")) + 1);
 			msg.appendString(random + "");
 		}else if(tag.startsWith("mention=")){
 			msg.appendString(e.getGuild().getUsers()

@@ -99,8 +99,7 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 				gameName += trimSplit[i] + " ";
 			gameName = gameName.substring(0, gameName.length() - 1);
 
-			tournamentName = gameName.split(" ")[0];
-			tournamentName = tournamentName.substring(0, tournamentName.length() - 1);
+			tournamentName = gameName.split(":")[0];
 
 			gameCreatePMs.add(mpLink.split("mp\\/")[1] + "|" + gameName);
 			

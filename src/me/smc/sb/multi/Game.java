@@ -339,6 +339,7 @@ public abstract class Game{
 		mapSelection(2);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void stop(){
 		waitingForCaptains = 0;
 		
@@ -404,6 +405,8 @@ public abstract class Game{
 		
 		match.getTournament().removeMatch(match.getMatchNum());
 		match = null;
+		
+		Thread.currentThread().stop();
 	}
 	
 	private void pmUser(String user, String message){
@@ -464,7 +467,7 @@ public abstract class Game{
 		Map selected = null;
 		
 		if(warmupsLeft > 0 && select){
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID());
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
 			if(jsMap == null){sendMessage("Could not find the selected map!"); return;}
 			
 			int length = jsMap.getInt("total_length");
@@ -504,7 +507,7 @@ public abstract class Game{
 			BanMapCommand.banningTeams.remove(banningTeam);
 			bans.add(selected);
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID());
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
 			
 			sendMessage(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 					    jsMap.getString("title") + " [" + jsMap.getString("version") + "] was banned!");
@@ -591,8 +594,9 @@ public abstract class Game{
 		}
 	}
 	
-	public void acceptWarmupModChange(String mod){
-		if(warmupsLeft > 0) sendMessage("!mp mods " + mod.toUpperCase() + " Freemod");
+	public void acceptWarmupModChange(String player, String mod){
+		if(warmupsLeft > 0 && findTeam(player).getTeamName().equalsIgnoreCase(selectingTeam.getTeamName())) 
+			sendMessage("!mp mods " + (mod.toUpperCase().equals("NM") ? "" : mod.toUpperCase() + " ") + "Freemod");
 	}
 	
 	private void prepareReadyCheck(){
@@ -1149,7 +1153,7 @@ public abstract class Game{
 		else joinQueue.add(player.replaceAll(" ", "_"));
 		
 		if(joinQueue.size() > 1) return;
-		
+
 		joinRoom(player.replaceAll(" ", "_"), false);
 	}
 	
@@ -1308,20 +1312,22 @@ public abstract class Game{
 				int lower = match.getTournament().getLowerRankBound();
 				int upper = match.getTournament().getUpperRankBound();
 				
-				if(lower != upper && lower >= 1 && upper >= 1){
-					if(lower > upper){
-						int temp = upper;
-						upper = lower;
-						lower = temp;
-					}
+				if(lower > upper){
+					int temp = upper;
+					upper = lower;
+					lower = temp;
 				}
 				
-				if(!playersRankChecked.contains(pl)){
+				if(lower != upper && lower >= 1 && upper >= 1 && !playersRankChecked.contains(pl)){			
 					int rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
-					if(rank <= 0 || rank < lower || rank > upper){
-						sendMessage(player + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
+					
+					if(rank != -1 && (rank < lower || rank > upper)){
+						sendMessage(pl.getName() + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
 								   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
 						sendMessage("!mp kick " + player.replaceAll(" ", "_"));
+						
+						pmUser(player, "You were kicked because your rank is out of range. You are #" + Utils.veryLongNumberDisplay(rank) +
+									   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
 						
 						advanceQueue(player.replaceAll(" ", "_"), hijackers);
 						pl.setSlot(-1);
