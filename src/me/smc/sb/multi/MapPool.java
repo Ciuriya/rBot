@@ -76,6 +76,13 @@ public class MapPool{
 				maps.remove(map);
 	}
 	
+	public Map findMap(String url){
+		for(Map map : maps)
+			if(map.getURL().equalsIgnoreCase(url))
+				return map;
+		return null;
+	}
+	
 	public void delete(){
 		Configuration config = tournament.getConfig();
 		ArrayList<String> savedPools = config.getStringList("pools");

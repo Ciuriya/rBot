@@ -250,17 +250,6 @@ public abstract class Game{
 				if(match != null && state != GameState.PLAYING){
 					messageUpdater.cancel();
 					
-					if(warmupsLeft > 0){
-						warmupsLeft--;
-						mapUpdater.cancel();
-						
-						sendMessage(selectingTeam.getTeamName() + " has taken too long to pick a warmup, they will not get a warmup!");
-						
-						if(warmupsLeft == 0) mapSelection(3);
-						else mapSelection(2);
-						return;
-					}
-					
 					if(banningTeam != null){
 						bans.add(null);
 						
@@ -276,6 +265,23 @@ public abstract class Game{
 						readyCheck(true);
 						return;
 					}
+					
+					if(warmupsLeft > 0){
+						warmupsLeft--;
+						mapUpdater.cancel();
+						
+						sendMessage(selectingTeam.getTeamName() + " has taken too long to pick a warmup, they will not get a warmup!");
+						
+						if(warmupsLeft == 0) mapSelection(3);
+						else mapSelection(2);
+						return;
+					}
+					
+					sendMessage("!mp settings");
+					
+					Utils.sleep(1000);
+					
+					if(mapSelected) return;
 					
 					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
 					fTeamFirst = !fTeamFirst;
@@ -665,7 +671,22 @@ public abstract class Game{
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.VERIFYING)) verifyLobby(message);
+		else if(message.startsWith("Beatmap: ")) updateMap(message.split(" ")[1]);
 		else banchoFeedback.add(message);
+	}
+	
+	private void updateMap(String link){
+		if(map != null && map.getURL().equalsIgnoreCase(link)) return;
+		
+		if(!mapSelected){
+			mapSelected = true;
+			this.map = match.getMapPool().findMap(link);
+			prepareReadyCheck();
+			return;
+		}else if(mapSelected){
+			this.map = match.getMapPool().findMap(link);
+			return;
+		}
 	}
 	
 	private void readyCheck(boolean bancho){
