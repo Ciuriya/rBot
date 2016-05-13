@@ -28,7 +28,9 @@ public class Tournament{
 	private List<MapPool> pools;
 	public static List<Long> matchDates = new ArrayList<>();
 	private boolean scoreV2;
-	private final int pickWaitTime;
+	private int pickWaitTime;
+	private int banWaitTime;
+	private int readyWaitTime;
 	private final int tournamentType; //0 = team
 	private int mode;
 	private int lowerRankBound;
@@ -49,6 +51,8 @@ public class Tournament{
 		displayName = getConfig().getValue("displayName");
 		scoreV2 = getConfig().getBoolean("scoreV2");
 		pickWaitTime = getConfig().getInt("pickWaitTime");
+		banWaitTime = getConfig().getInt("banWaitTime");
+		readyWaitTime = getConfig().getInt("readyWaitTime");
 		tournamentType = getConfig().getInt("tournamentType");
 		mode = getConfig().getInt("mode");
 		resultDiscord = getConfig().getValue("resultDiscord");
@@ -60,12 +64,14 @@ public class Tournament{
 		tournaments.add(this);
 	}
 	
-	public Tournament(String name, String displayName, boolean scoreV2, int pickWaitTime, int type, int mode, 
-			          String resultDiscord, int lowerRankBound, int upperRankBound){
+	public Tournament(String name, String displayName, boolean scoreV2, int pickWaitTime, int banWaitTime, 
+					  int readyWaitTime, int type, int mode, String resultDiscord, int lowerRankBound, int upperRankBound){
 		this.name = name;
 		this.displayName = displayName;
 		this.scoreV2 = scoreV2;
 		this.pickWaitTime = pickWaitTime;
+		this.banWaitTime = banWaitTime;
+		this.readyWaitTime = readyWaitTime;
 		this.tournamentType = type;
 		this.mode = mode;
 		this.resultDiscord = resultDiscord;
@@ -136,6 +142,14 @@ public class Tournament{
 		return pickWaitTime;
 	}
 	
+	public int getBanWaitTime(){
+		return banWaitTime;
+	}
+	
+	public int getReadyWaitTime(){
+		return readyWaitTime;
+	}
+	
 	public int getMode(){
 		return mode;
 	}
@@ -150,6 +164,18 @@ public class Tournament{
 	
 	public int getUpperRankBound(){
 		return upperRankBound;
+	}
+	
+	public void setPickWaitTime(int pickWaitTime){
+		this.pickWaitTime = pickWaitTime;
+	}
+	
+	public void setBanWaitTime(int banWaitTime){
+		this.banWaitTime = banWaitTime;
+	}
+	
+	public void setReadyWaitTime(int readyWaitTime){
+		this.readyWaitTime = readyWaitTime;
 	}
 	
 	public void setMode(int mode){
@@ -251,6 +277,8 @@ public class Tournament{
 		getConfig().writeValue("displayName", displayName);
 		getConfig().writeValue("scoreV2", scoreV2);
 		getConfig().writeValue("pickWaitTime", pickWaitTime);
+		getConfig().writeValue("banWaitTime", banWaitTime);
+		getConfig().writeValue("readyWaitTime", readyWaitTime);
 		getConfig().writeValue("type", tournamentType);
 		getConfig().writeValue("mode", mode);
 		getConfig().writeValue("resultDiscord", resultDiscord);
@@ -262,13 +290,15 @@ public class Tournament{
 		try{
 			if(add){
 				new JdbcSession(Main.sqlConnection)
-				.sql("INSERT INTO Tournament (name, display_name, scoreV2, pick_wait_time, type, mode, result_discord, " +
-				     "lower_rank_bound, upper_rank_bound) " +
+				.sql("INSERT INTO Tournament (name, display_name, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
+					 "type, mode, result_discord, lower_rank_bound, upper_rank_bound) " +
 				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(displayName)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
+				.set(banWaitTime)
+				.set(readyWaitTime)
 				.set(tournamentType)
 				.set(mode)
 				.set(resultDiscord)
@@ -278,12 +308,13 @@ public class Tournament{
 			}else{
 				new JdbcSession(Main.sqlConnection)
 				.sql("UPDATE Tournament " +
-					 "SET display_name='?', scoreV2='?', pick_wait_time='?', type='?', mode='?', result_discord='?', " +
-				     "lower_rank_bound='?', upper_rank_bound='?' " +
-					 "WHERE name='?'")
+					 "SET display_name='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
+					 "type='?', mode='?', result_discord='?', lower_rank_bound='?', upper_rank_bound='?' WHERE name='?'")
 				.set(displayName)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
+				.set(banWaitTime)
+				.set(readyWaitTime)
 				.set(tournamentType)
 				.set(mode)
 				.set(resultDiscord)
@@ -324,12 +355,30 @@ public class Tournament{
 	}
 	
 	public static Tournament getTournament(String name){
+		return getTournament(name, 0);
+	}
+	
+	public static Tournament getTournament(String name, int next){
+		int nextSelected = next;
+		
 		if(!tournaments.isEmpty())
 			for(Tournament t : tournaments)
-				if(t.getName().equalsIgnoreCase(name))
+				if(t.getName().equalsIgnoreCase(name)){
+					if(nextSelected > 0){
+						nextSelected--;
+						continue;
+					}
+					
 					return t;
-				else if(t.getDisplayName().equalsIgnoreCase(name))
+				}
+				else if(t.getDisplayName().equalsIgnoreCase(name)){
+					if(nextSelected > 0){
+						nextSelected--;
+						continue;
+					}
+					
 					return t;
+				}
 		
 		return null;
 	}
@@ -352,13 +401,14 @@ public class Tournament{
 		tournaments = new ArrayList<>();
 		try{
 			new JdbcSession(Main.sqlConnection)
-				     .sql("SELECT id_tournament, name, display_name, scoreV2, pick_wait_time, type, mode, result_discord, " +
-				     	  "lower_rank_bound, upper_rank_bound FROM Tournament")
+				     .sql("SELECT id_tournament, name, display_name, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
+				     	  "type, mode, result_discord, lower_rank_bound, upper_rank_bound FROM Tournament")
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
 				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getBoolean(4), rset.getInt(5), rset.getInt(6),
-				    					                       rset.getInt(7), rset.getString(8), rset.getInt(9), rset.getInt(10));
+				    					                       rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getString(10), rset.getInt(11), 
+				    					                       rset.getInt(12));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

@@ -8,13 +8,13 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
-public class SetScoreV2Command extends IRCCommand{
+public class SetReadyWaitTimeCommand extends IRCCommand{
 
-	public SetScoreV2Command(){
-		super("Sets whether or not scoreV2 will be used.",
-			  "<tournament name> <true/false> ",
+	public SetReadyWaitTimeCommand(){
+		super("Sets the time (in seconds) that players have to ready up, if exceeded, the match will attempt to start. 0 or less means unlimited.",
+			  "<tournament name> <time> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetscoring");
+			  "tournamentsetreadywaittime");
 	}
 
 	@Override
@@ -29,10 +29,10 @@ public class SetScoreV2Command extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setScoreV2(Boolean.parseBoolean(args[args.length - 1]));
+		t.setReadyWaitTime(Utils.stringToInt(args[args.length - 1]));
 		t.save(false);
 		
-		return "Set the tournament's scoring to scoreV" + (t.isScoreV2() ? "2" : "1") + "!";
+		return "Set the tournament's ready wait time to " + t.getReadyWaitTime() + "!";
 	}
 	
 }

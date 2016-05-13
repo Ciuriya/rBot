@@ -447,7 +447,7 @@ public class Utils{
 	
 	private static int getOsuPlayerRankByAPI(String name, String id, int mode){
 		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-					  "&u=" + id + "&m=" + mode + "&type=string&event_days=1");
+					  "&u=" + name.replaceAll(" ", "%20") + "&m=" + mode + "&type=string&event_days=1");
 		
 		if(post == "" || !post.contains("{")) return -1;
 		

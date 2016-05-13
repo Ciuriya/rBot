@@ -112,6 +112,9 @@ public abstract class IRCCommand{
 		commands.add(new SetResultDiscordCommand());
 		commands.add(new SetRankBoundsCommand());
 		commands.add(new SetDisplayNameCommand());
+		commands.add(new SetPickWaitTimeCommand());
+		commands.add(new SetBanWaitTimeCommand());
+		commands.add(new SetReadyWaitTimeCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());

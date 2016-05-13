@@ -142,7 +142,7 @@ public abstract class Game{
 						for(String message : messages)
 							sendMessage(message);
 						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + getPickWaitTime()) - (System.currentTimeMillis() / 1000))) / 60, 0);
-						sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left to pick!");
+						sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!");
 					}
 				}else 
 					for(String message : messages)
@@ -152,8 +152,10 @@ public abstract class Game{
 	}
 	
 	public int getPickWaitTime(){
-		//return match.getTournament().getConfig().getInt("pickWaitTime");
-		return 180;
+		if(banningTeam != null) return match.getTournament().getBanWaitTime();
+		else if(mapSelected) return match.getTournament().getReadyWaitTime();
+		
+		return match.getTournament().getPickWaitTime();
 	}
 	
 	public void setScores(int fTeamScore, int sTeamScore){
@@ -199,8 +201,11 @@ public abstract class Game{
 							   " You can find the maps here]" : ""));
 				}
 				
+				pickTimer(false);
+				
 				break;
 			case 4:
+				banningTeam = null;
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
@@ -225,16 +230,53 @@ public abstract class Game{
 		
 		if(returning){
 			if(warmupsLeft > 0) messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
+			else if(banningTeam != null) 
+				messageUpdater(0, true, banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
+							  (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
+							  " You can find the maps here]" : ""));
+			else if(mapSelected) return;
 			else messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
 				 (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 				 " You can find the maps here]" : ""));
 		}
 		
+		int pickTime = getPickWaitTime();
+		
+		if(pickTime <= 0) return;
+		
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
 			public void run(){
-				if(match != null && !mapSelected && state != GameState.PLAYING){
+				if(match != null && state != GameState.PLAYING){
 					messageUpdater.cancel();
+					
+					if(warmupsLeft > 0){
+						warmupsLeft--;
+						mapUpdater.cancel();
+						
+						sendMessage(selectingTeam.getTeamName() + " has taken too long to pick a warmup, they will not get a warmup!");
+						
+						if(warmupsLeft == 0) mapSelection(3);
+						else mapSelection(2);
+						return;
+					}
+					
+					if(banningTeam != null){
+						bans.add(null);
+						
+						BanMapCommand.banningTeams.remove(banningTeam);
+						
+						mapSelection(3);
+						return;
+					}
+					
+					if(mapSelected){
+						sendMessage("Attempting to force start ready up...");
+						
+						readyCheck(true);
+						return;
+					}
+					
 					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
 					fTeamFirst = !fTeamFirst;
 					selectingTeam = findNextTeamToPick();
@@ -242,7 +284,7 @@ public abstract class Game{
 					pickTimer(true);
 				}
 			}
-		}, getPickWaitTime() * 1000);
+		}, pickTime * 1000);
 		
 		pickTimers.add(t);
 	}
@@ -606,7 +648,9 @@ public abstract class Game{
 		
 		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, make sure you are not using fallback as your score will not count!";
 		
-		messageUpdater(0, false, message, "If someone is on the wrong side/team, simply ready up and everything will fix itself! Please note that you can select another map if needed.");
+		messageUpdater(0, true, message, "If someone is on the wrong side/team, simply ready up and everything will fix itself! Please note that you can select another map if needed.");
+		
+		pickTimer(false);
 	}
 	
 	private boolean checkMap(Map map){
@@ -1314,6 +1358,7 @@ public abstract class Game{
 				
 				if(lower > upper){
 					int temp = upper;
+					
 					upper = lower;
 					lower = temp;
 				}

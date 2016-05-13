@@ -54,7 +54,7 @@ public class YoutubeDownloadCommand extends GlobalCommand{
 			downloadedSong.renameTo(new File("/var/www/html/ydl/" + newName));
 			
 			Utils.infoBypass(e.getChannel(), "You have one hour to download the song!\nIf it only loads the song for playback, please use CTRL+S to save it!\n" +
-					                         "```http://www.smcmax.me/ydl/" + newName + "```");
+					                         "```http://smcmax.com/ydl/" + newName + "```");
 			
 			final File finalSong = downloadedSong;
 			Timer t = new Timer();

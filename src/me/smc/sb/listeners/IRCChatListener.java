@@ -97,33 +97,48 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 			
 			for(int i = 1; i < trimSplit.length; i++)
 				gameName += trimSplit[i] + " ";
+			
 			gameName = gameName.substring(0, gameName.length() - 1);
 
 			tournamentName = gameName.split(":")[0];
 
 			gameCreatePMs.add(mpLink.split("mp\\/")[1] + "|" + gameName);
 			
-			Log.logger.log(Level.INFO, "Finding tournament...");
-			
 			Tournament t = Tournament.getTournament(tournamentName);
 			if(t == null) return false;
 			
-			Log.logger.log(Level.INFO, "Tournament found.");
+			int next = 0;
 			
-			for(Match match : t.getMatches()){
-				if(match == null) continue;
-				Log.logger.log(Level.INFO, "Match: " + match.getLobbyName() + " | Current: " + gameName);
+			while(t != null){
+				Log.logger.log(Level.INFO, "Finding match in tournament: " + t.getName() + " (Display: " + t.getDisplayName() + ")");
 				
-				if(match.getLobbyName().equalsIgnoreCase(gameName) &&
-				   match.getGame() != null){
-					Log.logger.log(Level.INFO, "Launched match.");
-					match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
-					return true;
+				if(findMatch(t, gameName, mpLink)) return true;
+				else{
+					next++;
+					t = Tournament.getTournament(tournamentName, next);
 				}
 			}
 			
 			Log.logger.log(Level.INFO, "------------ Failed Game: " + gameName);
 		}
+		
+		return false;
+	}
+	
+	private boolean findMatch(Tournament t, String gameName, String mpLink){
+		for(Match match : t.getMatches()){
+			if(match == null) continue;
+			
+			Log.logger.log(Level.INFO, "Match: " + match.getLobbyName() + " | Current: " + gameName);
+			
+			if(match.getLobbyName().equalsIgnoreCase(gameName) &&
+			   match.getGame() != null){
+				Log.logger.log(Level.INFO, "Launched match.");
+				match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
+				return true;
+			}
+		}
+		
 		return false;
 	}
 	

@@ -8,13 +8,13 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
-public class SetScoreV2Command extends IRCCommand{
+public class SetPickWaitTimeCommand extends IRCCommand{
 
-	public SetScoreV2Command(){
-		super("Sets whether or not scoreV2 will be used.",
-			  "<tournament name> <true/false> ",
+	public SetPickWaitTimeCommand(){
+		super("Sets the time (in seconds) that players have to pick a map, if exceeded, warmups are skipped, picks have the team lose their turn. 0 or less means unlimited.",
+			  "<tournament name> <time> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetscoring");
+			  "tournamentsetpickwaittime");
 	}
 
 	@Override
@@ -29,10 +29,10 @@ public class SetScoreV2Command extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setScoreV2(Boolean.parseBoolean(args[args.length - 1]));
+		t.setPickWaitTime(Utils.stringToInt(args[args.length - 1]));
 		t.save(false);
 		
-		return "Set the tournament's scoring to scoreV" + (t.isScoreV2() ? "2" : "1") + "!";
+		return "Set the tournament's pick wait time to " + t.getPickWaitTime() + "!";
 	}
 	
 }
