@@ -190,18 +190,22 @@ public abstract class Game{
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				break;
 			case 3: 
+				clearPickTimers();
+				
 				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
 				banningTeam = findNextTeamToBan();
 				
-				if(bans.size() >= 4) mapSelection(4);
-				else{
-					BanMapCommand.banningTeams.put(banningTeam, this);
-					messageUpdater(banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
-							   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
-							   " You can find the maps here]" : ""));
+				if(bans.size() >= 4){
+					mapSelection(4);
+					break;
 				}
 				
+				BanMapCommand.banningTeams.put(banningTeam, this);
+				
 				pickTimer(false);
+				messageUpdater(0, true, banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
+						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
+						   " You can find the maps here]" : ""));
 				
 				break;
 			case 4:
@@ -251,7 +255,7 @@ public abstract class Game{
 					messageUpdater.cancel();
 					
 					if(banningTeam != null){
-						bans.add(null);
+						bans.add(new Map("https://osu.ppy.sh/b/1", 1));
 						
 						BanMapCommand.banningTeams.remove(banningTeam);
 						
@@ -654,7 +658,7 @@ public abstract class Game{
 		
 		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, make sure you are not using fallback as your score will not count!";
 		
-		messageUpdater(0, true, message, "If someone is on the wrong side/team, simply ready up and everything will fix itself! Please note that you can select another map if needed.");
+		messageUpdater(0, true, message, "The match will try to force start after the timer. Please note that you can select another map if needed.");
 		
 		pickTimer(false);
 	}
@@ -693,7 +697,7 @@ public abstract class Game{
 		if(state.eq(GameState.CONFIRMING) || state.eq(GameState.PLAYING)) return;
 		
 		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.eq(GameState.WAITING)){ 
-			if(previousMap == null || !previousMap.getURL().equalsIgnoreCase(map.getURL())){
+			if((map.getCategory() != 5 && previousMap == null) || (previousMap != null && !previousMap.getURL().equalsIgnoreCase(map.getURL()))){
 				changeMap(map);
 				Utils.sleep(2500);
 			}
@@ -860,12 +864,37 @@ public abstract class Game{
 	}
 	
 	private void lobbySwapFixing(){
+		List<Player> fTeamList = new ArrayList<Player>();
+		List<Player> sTeamList = new ArrayList<Player>();
+		
 		for(Player pl : verifyingSlots.keySet()){
-			if(playersSwapped.contains(pl)) continue;
-			
 			Team team = findTeam(pl.getName().replaceAll(" ", "_"));
 			
 			boolean fTeam = teamToBoolean(team);
+			
+			if(fTeam && !fTeamList.contains(pl)){
+				fTeamList.add(pl);
+				
+				if(fTeamList.size() > match.getPlayers() / 2){
+					sendMessage("!mp kick " + pl.getName().replaceAll(" ", "_"));
+					sendMessage(pl.getName() + " was kicked to the team being full!");
+					fTeamList.remove(pl);
+					
+					continue;
+				}
+			}else if(!fTeam && !sTeamList.contains(pl)){
+				sTeamList.add(pl);
+				
+				if(sTeamList.size() > match.getPlayers() / 2){
+					sendMessage("!mp kick " + pl.getName().replaceAll(" ", "_"));
+					sendMessage(pl.getName() + " was kicked to the team being full!");
+					sTeamList.remove(pl);
+					
+					continue;
+				}
+			}
+			
+			if(playersSwapped.contains(pl)) continue;
 			
 			Team oppositeTeam = fTeam ? match.getSecondTeam() : match.getFirstTeam();
 			
