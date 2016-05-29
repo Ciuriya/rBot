@@ -10,6 +10,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.BanchoCommands;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -61,14 +62,16 @@ public abstract class IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		String[] split = msg.split(" ");
+		
 		for(IRCCommand ic : commands)
 			if(ic.isName(split[0]) && me.smc.sb.perm.Permissions.hasPerm(user, ic.perm)){
 				String[] args = msg.replace(split[0] + " ", "").split(" ");
+				
 				if(!msg.contains(" ")) args = new String[]{};
 				return ic.onCommand(e, pe, discord, args);
 			}
 		
-		if(!(split[0].equalsIgnoreCase("mp") && split.length > 1))
+		if(!BanchoCommands.isBanchoCommand(split[0]))
 			return "This is not a command! Use !help if you are lost!";
 		
 		return "";

@@ -72,27 +72,36 @@ public class Utils{
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void infoBypass(MessageChannel channel, String message){
-		channel.sendMessage(message);
+	public static Message infoBypass(MessageChannel channel, String message){
+		Message jdaMsg = channel.sendMessage(message);
+		
 		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		Main.messagesSentThisSession++;
+		
+		return jdaMsg;
 	}
 	
-	public static void info(MessageChannel channel, String message){
+	public static Message info(MessageChannel channel, String message){
+		Message jdaMsg = null;
+		
 		if(channel instanceof TextChannel){
 			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
-				channel.sendMessage(message);
+				jdaMsg = channel.sendMessage(message);
 				Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 			}else Log.logger.log(Level.INFO, "{Silent message sent in " + getGroupLogString(channel) + "} " + message);
 		}else{
-			channel.sendMessage(message); 
+			jdaMsg = channel.sendMessage(message); 
 			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		}
 		Main.messagesSentThisSession++;
+		
+		return jdaMsg;
 	}
 	
-	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
-		if(message.length() == 0) return;
+	public static Message info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
+		Message jdaMsg = null;
+		
+		if(message.length() == 0) return jdaMsg;
 		
 		if(e != null && verifyChannel(e)){
 			e.getChannel().send().message(message);
@@ -102,12 +111,14 @@ public class Utils{
 			Log.logger.log(Level.INFO, "{IRC PM sent to user " + toUser(e, pe) + "} " + message);
 		}else if(discord != null)
 			if(Main.api.getPrivateChannelById(discord) != null)
-				infoBypass(Main.api.getPrivateChannelById(discord), message);
-			else infoBypass(Main.api.getTextChannelById(discord), message);
+				jdaMsg = infoBypass(Main.api.getPrivateChannelById(discord), message);
+			else jdaMsg = infoBypass(Main.api.getTextChannelById(discord), message);
 		else{
 			Main.server.sendMessage(message.replaceAll("\n", "|"));
 			Log.logger.log(Level.INFO, "{Message sent to website} " + message);
 		}
+		
+		return jdaMsg;
 	}
 	
 	public static boolean verifyChannel(MessageEvent<PircBotX> e){

@@ -114,10 +114,9 @@ public class TeamGame extends Game{
 				invitePlayer(pl.getName().replaceAll(" ", "_"));
 				return;
 			}
-		
+
 		for(Player pl : team.getPlayers())
-			if(captains.contains(pl.getName().replaceAll(" ", "_")) && pl.getSlot() == -1 && waitingForCaptains > 0)
-				sendInviteMessages(pl.getName().replaceAll(" ", "_"));
+			captains.remove(pl.getName().replaceAll(" ", "_"));
 	}
 	
 	public void resize(){

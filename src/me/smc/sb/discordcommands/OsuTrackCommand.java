@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -35,7 +34,6 @@ public class OsuTrackCommand extends GlobalCommand{
 	private static HashMap<String, String> lastUpdated;
 	private static HashMap<String, String> lastUpdateMessageSent;
 	private static HashMap<String, Thread> usersUpdating;
-	private static HashMap<String, ArrayList<String>> serversOnJoin;
 	private static ArrayList<Thread> allRunningThreads;
 	private static int requestsPerMinute = 60;
 	private static double currentRefreshRate = 0;
@@ -54,7 +52,6 @@ public class OsuTrackCommand extends GlobalCommand{
 		lastUpdateMessageSent = new HashMap<>();
 		usersUpdating = new HashMap<>();
 		allRunningThreads = new ArrayList<>();
-		serversOnJoin = new HashMap<>();
 		
 		loadTrackedPlayers();
 		calculateRefreshRate();
@@ -124,8 +121,6 @@ public class OsuTrackCommand extends GlobalCommand{
 					
 					allRunningThreads.clear();
 					
-					serversOnJoin.clear();
-					
 					refresh.scheduleAtFixedRate(new TimerTask(){
 						public void run(){
 							for(String server : new HashMap<String, ArrayList<String>>(copied).keySet()){
@@ -142,54 +137,32 @@ public class OsuTrackCommand extends GlobalCommand{
 											if(!updatedUsers.contains(player)){
 												if(!usersUpdating.containsKey(player)) updateUser(player);
 												
-												ArrayList<String> joined = new ArrayList<>();
-												if(serversOnJoin.containsKey(server)) joined = serversOnJoin.get(server);
-												if(joined.contains(player)) continue;
-												
-												joined.add(player);
-												serversOnJoin.put(server, joined);
-												
 												try{
 													usersUpdating.get(player).join();
 												}catch (InterruptedException e){
 													Log.logger.log(Level.SEVERE, e.getMessage(), e);
 												}
-												
-												ArrayList<String> nJoined = new ArrayList<>();
-												if(serversOnJoin.containsKey(server)) nJoined = serversOnJoin.get(server);
-												nJoined.remove(player);
-												serversOnJoin.put(server, nJoined);
-												
-												//just making really sure this isn't going to be at the same time (threads...)
-												//TODO: replace with a better solution
-												//there has to be a better way, I'm just a lazy piece of shit
-												Utils.sleep(new Random().nextInt(25));
-												Utils.sleep(new Random().nextInt(25));
-												Utils.sleep(new Random().nextInt(25));
-												Utils.sleep(new Random().nextInt(25));
-												Utils.sleep(new Random().nextInt(25));
-												
-												if(!updatedUsers.contains(player)) updatedUsers.add(player);
-												else continue;
 											}else skip = true;
 											
 											String msg = "";
 											
 											if(lastUpdateMessageSent.containsKey(player)) msg = lastUpdateMessageSent.get(player);
 											
-											if(msg != ""){
-												String spacing = "\n\n\n\n\n";
-												MessageHistory history = new MessageHistory(channel);
-												Message last = history == null ? null : history.retrieve(1).get(0);
+											synchronized(server){
+												if(msg != "" && copied.get(server).contains(player)){
+													String spacing = "\n\n\n\n\n";
+													MessageHistory history = new MessageHistory(channel);
+													Message last = history == null ? null : history.retrieve(1).get(0);
+													
+													if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
+													
+													Utils.info(channel, spacing + msg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~"));
+												}	
 												
-												if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
+												players.remove(player);
 												
-												Utils.info(channel, spacing + msg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~"));
+												copied.put(server, players);
 											}
-											
-											players.remove(player);
-											
-											copied.put(server, players);
 											
 											if(!skip) break;
 										}

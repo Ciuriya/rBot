@@ -1,7 +1,7 @@
 package me.smc.sb.irccommands;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -9,18 +9,19 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Game;
 import me.smc.sb.multi.Player;
+import me.smc.sb.multi.Team;
 import me.smc.sb.utils.Utils;
 
 public class SelectMapCommand extends IRCCommand{
 
-	public static List<Game> gamesInSelection;
+	public static Map<Team, Game> pickingTeams;
 	
 	public SelectMapCommand(){
 		super("Selects a map for a tournament game.",
 			  "<map url OR map #> ",
 			  null,
 			  "select", "pick");
-		gamesInSelection = new ArrayList<>();
+		pickingTeams = new HashMap<>();
 	}
 
 	@Override
@@ -32,9 +33,9 @@ public class SelectMapCommand extends IRCCommand{
 		
 		String userName = e.getUser().getNick();
 		
-		if(!gamesInSelection.isEmpty())
-			for(Game game : gamesInSelection)
-				for(Player pl : game.getSelectingTeam().getPlayers())
+		if(!pickingTeams.isEmpty())
+			for(Team team : pickingTeams.keySet())
+				for(Player pl : team.getPlayers())
 					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
 						String url = Utils.takeOffExtrasInBeatmapURL(args[0]);
 						
@@ -46,7 +47,7 @@ public class SelectMapCommand extends IRCCommand{
 							}
 						}
 						
-						game.handleMapSelect(url, true);
+						pickingTeams.get(team).handleMapSelect(url, true);
 						return "";
 					}
 		

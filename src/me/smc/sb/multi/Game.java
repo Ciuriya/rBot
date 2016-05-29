@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.logging.Level;
 
 import org.json.JSONObject;
@@ -24,6 +25,7 @@ import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.entities.Message;
 
 public abstract class Game{
 
@@ -51,6 +53,7 @@ public abstract class Game{
 	protected List<String> joinQueue;
 	protected java.util.Map<Integer, String> hijackedSlots;
 	protected List<Map> bans;
+	protected List<String> bansWithNames;
 	protected List<Map> mapsPicked;
 	protected List<Player> playersSwapped;
 	protected java.util.Map<Player, Integer> verifyingSlots;
@@ -64,6 +67,7 @@ public abstract class Game{
 	protected Timer mapUpdater;
 	protected Timer messageUpdater;
 	protected List<Timer> pickTimers;
+	protected Message discordResultMessage;
 	
 	public static Game createGame(Match match){
 		if(match.getTournament().getTournamentType() == 0)
@@ -79,6 +83,7 @@ public abstract class Game{
 		this.playersInRoom = new ArrayList<>();
 		this.banchoFeedback = new LinkedList<>();
 		this.bans = new ArrayList<>();
+		this.bansWithNames = new ArrayList<>();
 		this.mapsPicked = new ArrayList<>();
 		this.captains = new ArrayList<>();
 		this.joinQueue = new ArrayList<>();
@@ -103,6 +108,15 @@ public abstract class Game{
 		setupGame();
 		
 		initialInvite();
+		
+		String resultDiscord = match.getTournament().getResultDiscord();
+		
+		String gameMessage = buildResultMessage(false);
+		
+		if(resultDiscord != null)
+			if(Main.api.getTextChannelById(resultDiscord) != null){
+				discordResultMessage = Utils.infoBypass(Main.api.getTextChannelById(resultDiscord), gameMessage);
+			}else discordResultMessage = Utils.infoBypass(Main.api.getPrivateChannelById(resultDiscord), gameMessage);
 	}
 	
 	public void setupGame(){
@@ -174,12 +188,13 @@ public abstract class Game{
 				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				break;
 			case 2:
+				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
+				
 				PassTurnCommand.passingTeams.remove(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam());
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				if(!SelectMapCommand.gamesInSelection.contains(this))
-					SelectMapCommand.gamesInSelection.add(this);
+				SelectMapCommand.pickingTeams.put(selectingTeam, this);
 				
 				if(!ChangeWarmupModCommand.gamesAllowedToChangeMod.contains(this))
 					ChangeWarmupModCommand.gamesAllowedToChangeMod.add(this);
@@ -190,10 +205,13 @@ public abstract class Game{
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				break;
 			case 3: 
+				SelectMapCommand.pickingTeams.remove(selectingTeam);
 				clearPickTimers();
 				
 				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
 				banningTeam = findNextTeamToBan();
+				
+				if(bans.size() > 0) updateDiscordResult(buildResultMessage(false));
 				
 				if(bans.size() >= 4){
 					mapSelection(4);
@@ -209,12 +227,15 @@ public abstract class Game{
 				
 				break;
 			case 4:
+				SelectMapCommand.pickingTeams.remove(selectingTeam);
+				BanMapCommand.banningTeams.remove(banningTeam);
+				clearPickTimers();
+				
 				banningTeam = null;
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
-				if(!SelectMapCommand.gamesInSelection.contains(this))
-					SelectMapCommand.gamesInSelection.add(this);
+				SelectMapCommand.pickingTeams.put(selectingTeam, this);
 				
 				startMapUpdater();
 				
@@ -264,7 +285,7 @@ public abstract class Game{
 					}
 					
 					if(mapSelected){
-						sendMessage("Attempting to force start ready up...");
+						sendMessage("Attempting to force start...");
 						
 						readyCheck(true);
 						return;
@@ -347,15 +368,13 @@ public abstract class Game{
 	}
 	
 	public void acceptRoll(String player, int roll){
+		Team team = findTeam(player);
+		
 		rollsLeft--;
+		RandomCommand.waitingForRolls.remove(team);
 		
 		if(rollsLeft == 0){
-			boolean fTeam = false;
-			for(Player p : match.getFirstTeam().getPlayers())
-				if(p.getName().replaceAll(" ", "_").equalsIgnoreCase(player)){
-					fTeam = true;
-					break;
-				}
+			boolean fTeam = teamToBoolean(team);
 			
 			if(roll == previousRoll){
 				sendMessage("Rolls were equal! Please reroll using !random.");
@@ -371,7 +390,7 @@ public abstract class Game{
 			PassTurnCommand.passingTeams.put(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam(), this);
 			
 			sendMessage((fTeamFirst ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
-					        ", use !pass within the next 20 seconds to let the other team start instead!");
+					        ", you can use !pass within the next 20 seconds to let the other team start instead!");
 			
 			final boolean ffTeam = fTeamFirst;
 			
@@ -379,6 +398,8 @@ public abstract class Game{
 			t.schedule(new TimerTask(){
 				public void run(){
 					if(ffTeam != fTeamFirst) return;
+					
+					updateDiscordResult(buildResultMessage(false));
 					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 					mapSelection(2);
 				}
@@ -403,29 +424,27 @@ public abstract class Game{
 		
 		IRCChatListener.gamesListening.remove(multiChannel);
 		
-		SelectMapCommand.gamesInSelection.remove(this);
-		
 		sendMessage("!mp close");
 		
-		String gameEndedMsg = "Game ended: " + match.getFirstTeam().getTeamName() + " (" + fTeamPoints + ") vs (" +
-	   						  sTeamPoints + ") " + match.getSecondTeam().getTeamName() + " - " + mpLink;
+		String gameEndedMsg = buildResultMessage(true);
+		
+		String shortGameEndMsg = match.getFirstTeam().getTeamName() + " (" + fTeamPoints + 
+				  				 ") vs (" + sTeamPoints + ") " + match.getSecondTeam().getTeamName() + 
+				  				 " - " + mpLink;
 		
 		for(String admin : match.getMatchAdmins())
-			pmUser(admin, gameEndedMsg);
+			pmUser(admin, shortGameEndMsg);
 		
-		String resultDiscord = match.getTournament().getResultDiscord();
-		if(resultDiscord != null)
-			if(Main.api.getTextChannelById(resultDiscord) != null){
-				Utils.infoBypass(Main.api.getTextChannelById(resultDiscord), gameEndedMsg);
-			}else Utils.infoBypass(Main.api.getPrivateChannelById(resultDiscord), gameEndedMsg);
+		updateDiscordResult(gameEndedMsg);
 
-		Log.logger.log(Level.INFO, gameEndedMsg);
+		Log.logger.log(Level.INFO, shortGameEndMsg);
 		
 		if(messageUpdater != null) messageUpdater.cancel();
 		invitesSent.clear();
 		playersInRoom.clear();
 		banchoFeedback.clear();
 		bans.clear();
+		bansWithNames.clear();
 		mapsPicked.clear();
 		captains.clear();
 		joinQueue.clear();
@@ -459,6 +478,71 @@ public abstract class Game{
 		match = null;
 		
 		Thread.currentThread().stop();
+	}
+	
+	private String buildResultMessage(boolean finished){
+		String message = mpLink + " ```\n" + match.getFirstTeam().getTeamName() + " - " +
+						 match.getSecondTeam().getTeamName() + "\n";
+		
+		for(int i = 0; i < match.getFirstTeam().getTeamName().length() - 1; i++)
+			message += " ";
+				
+		message += fTeamPoints + " | " + sTeamPoints + "\n";
+		
+		for(int i = 0; i < match.getFirstTeam().getTeamName().length() - 3; i++)
+			message += " ";
+		
+		message += "Best of " + match.getBestOf() + "\n\n";
+		
+		message += "Status: " + (finished ? "ended" : getMatchStatus());
+		
+		if(!finished && playersInRoom.size() > 0){
+			message += "\n\nLobby\n";
+			
+			java.util.Map<Integer, String> players = new HashMap<>();
+			
+			LinkedList<Player> fullList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
+			fullList.addAll(match.getSecondTeam().getPlayers());
+			
+			for(Player pl : fullList)
+				if(pl.getSlot() != -1)
+					players.put(pl.getSlot(), pl.getName());
+			
+			for(int i = 1; i <= match.getPlayers(); i++)
+				if(!players.containsKey(i))
+					players.put(i, "----");
+			
+			java.util.Map<Integer, String> orderedMap = new TreeMap<>(players);
+			
+			for(String name : orderedMap.values())
+				message += name + "\n";
+		}
+		
+		return message;
+	}
+	
+	private String getMatchStatus(){
+		if(rollsLeft != 0) return "pre-warmup";
+		else if(warmupsLeft > 0) return "warm-up";
+		else if(bans.size() < 4) return "bans";
+		else return "ongoing";
+	}
+	
+	private void updateDiscordResult(String message){
+		String resultDiscord = match.getTournament().getResultDiscord();
+		
+		String localMessage = message;
+		
+		if(resultDiscord != null && discordResultMessage != null){
+			if(bansWithNames.size() > 0){
+				localMessage += "\nBans\n";
+				
+				for(String banned : bansWithNames)
+					localMessage += banned + "\n";
+			}
+			
+			discordResultMessage = discordResultMessage.updateMessage(localMessage + "```");
+		}
 	}
 	
 	private void pmUser(String user, String message){
@@ -561,8 +645,12 @@ public abstract class Game{
 			
 			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
 			
-			sendMessage(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-					    jsMap.getString("title") + " [" + jsMap.getString("version") + "] was banned!");
+			String name = getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+				    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
+			
+			sendMessage(name + " was banned!");
+			
+			bansWithNames.add("{" + name.replace(" pick:", "}"));
 			
 			mapSelection(3);
 			return;
@@ -656,9 +744,9 @@ public abstract class Game{
 		
 		String message = "Waiting for all players to ready up...";
 		
-		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, make sure you are not using fallback as your score will not count!";
+		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, stable (fallback) scores will not count!";
 		
-		messageUpdater(0, true, message, "The match will try to force start after the timer. Please note that you can select another map if needed.");
+		messageUpdater(0, true, message, "The match will force start after the timer. You may change map if needed.");
 		
 		pickTimer(false);
 	}
@@ -683,7 +771,9 @@ public abstract class Game{
 		if(map != null && map.getURL().equalsIgnoreCase(link)) return;
 		
 		if(!mapSelected){
+			state = GameState.WAITING;
 			mapSelected = true;
+			
 			this.map = match.getMapPool().findMap(link);
 			prepareReadyCheck();
 			return;
@@ -697,15 +787,17 @@ public abstract class Game{
 		if(state.eq(GameState.CONFIRMING) || state.eq(GameState.PLAYING)) return;
 		
 		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.eq(GameState.WAITING)){ 
-			if((map.getCategory() != 5 && previousMap == null) || (previousMap != null && !previousMap.getURL().equalsIgnoreCase(map.getURL()))){
+			if((map.getCategory() != 5 && previousMap == null) || (previousMap != null && map.getCategory() != 5 
+																  && !previousMap.getURL().equalsIgnoreCase(map.getURL()))){
 				changeMap(map);
 				Utils.sleep(2500);
+				return;
 			}
 			
 			if(mapUpdater != null) mapUpdater.cancel();
 			if(messageUpdater != null) messageUpdater.cancel();
 			
-			SelectMapCommand.gamesInSelection.remove(this);
+			SelectMapCommand.pickingTeams.remove(selectingTeam);
 			
 			verifyLobby(null);
 		}else if(mapSelected && state.equals(GameState.WAITING)) fixLobby(null);
@@ -968,6 +1060,8 @@ public abstract class Game{
 		
 		if(timer != 0) sendMessage("!mp start " + timer);
 		else sendMessage("!mp start");
+		
+		updateDiscordResult(buildResultMessage(false));
 	}
 	
 	private void switchPlaying(boolean playing, boolean full){
@@ -1031,11 +1125,14 @@ public abstract class Game{
 			if(fTeamModCount < countNeeded || sTeamModCount < countNeeded){
 				sendMessage("You need to have at least " + countNeeded + " mod users per team!");
 				sendMessage("!mp map " + map.getBeatmapID() + " 0");
-				state = GameState.PLAYING;
+				state = GameState.WAITING;
+				
+				prepareReadyCheck();
 			}else startMatch(0);
 		}else if(!validMods){
 			validMods = true;
-			state = GameState.PLAYING;
+			state = GameState.WAITING;
+			prepareReadyCheck();
 		}else startMatch(5);
 	}
 	
@@ -1052,6 +1149,7 @@ public abstract class Game{
 		t.schedule(new TimerTask(){
 			public void run(){
 				clearPickTimers();
+				
 				state = GameState.WAITING;
 				validMods = true;
 				mapSelected = false;
@@ -1077,7 +1175,7 @@ public abstract class Game{
 							int score = Utils.stringToInt(feedback.split("Score: ")[1].split(",")[0]);
 							
 							if(score > 1500000 && match.getTournament().isScoreV2()){
-								sendMessage(player + " is on fallback, please use stable! His score is NOT counted for this pick.");
+								sendMessage(player + " is on fallback, please use stable! His score is not counted for this pick.");
 								continue;
 							}
 							
@@ -1095,8 +1193,11 @@ public abstract class Game{
 									" points!");
 					warmupsLeft--;
 					
-					if(warmupsLeft == 0) mapSelection(3);
-					else mapSelection(2);
+					if(warmupsLeft == 0){
+						updateDiscordResult(buildResultMessage(false));
+						
+						mapSelection(3);
+					}else mapSelection(2);
 				}else{
 					rematch: if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
 						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
@@ -1162,6 +1263,8 @@ public abstract class Game{
 		sendMessage(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
 				sTeamPoints + " " + match.getSecondTeam().getTeamName() +
 				"      Best of " + match.getBestOf());
+		
+		updateDiscordResult(buildResultMessage(false));
 	
 		if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
 			changeMap(match.getMapPool().findTiebreaker());
