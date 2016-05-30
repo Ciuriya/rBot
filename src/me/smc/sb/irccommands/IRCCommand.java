@@ -19,13 +19,19 @@ public abstract class IRCCommand{
 	private final String[] names;
 	private final String description, usage;
 	private final Permissions perm;
+	private final boolean allowsTwitch;
 	public static List<IRCCommand> commands;
 	
 	public IRCCommand(String description, String usage, Permissions perm, String...names){
+		this(description, usage, perm, false, names);
+	}
+	
+	public IRCCommand(String description, String usage, Permissions perm, boolean twitch, String...names){
 		this.names = names;
 		this.perm = perm;
 		this.description = description;
 		this.usage = usage;
+		this.allowsTwitch = twitch;
 	}
 	
 	public String getDescription(){
@@ -42,6 +48,10 @@ public abstract class IRCCommand{
 	
 	public Permissions getPerm(){
 		return perm;
+	}
+	
+	public boolean allowsTwitch(){
+		return allowsTwitch;
 	}
 	
 	public boolean isName(String name){
@@ -65,6 +75,8 @@ public abstract class IRCCommand{
 		
 		for(IRCCommand ic : commands)
 			if(ic.isName(split[0]) && me.smc.sb.perm.Permissions.hasPerm(user, ic.perm)){
+				if(!ic.allowsTwitch() && Utils.isTwitch(e)) continue;
+					
 				String[] args = msg.replace(split[0] + " ", "").split(" ");
 				
 				if(!msg.contains(" ")) args = new String[]{};
@@ -118,6 +130,7 @@ public abstract class IRCCommand{
 		commands.add(new SetPickWaitTimeCommand());
 		commands.add(new SetBanWaitTimeCommand());
 		commands.add(new SetReadyWaitTimeCommand());
+		commands.add(new SetTwitchChannelCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());

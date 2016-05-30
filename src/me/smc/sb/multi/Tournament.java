@@ -22,6 +22,8 @@ public class Tournament{
 	private int tournamentId;
 	private String name;
 	private String displayName;
+	private String twitchChannel;
+	private Game currentlyStreamed; //game switching from twitch channel? idk
 	public static List<Tournament> tournaments;
 	private List<Team> teams;
 	private List<Match> matches;
@@ -49,6 +51,7 @@ public class Tournament{
 		pools = new ArrayList<>();
 		
 		displayName = getConfig().getValue("displayName");
+		twitchChannel = getConfig().getValue("twitchChannel");
 		scoreV2 = getConfig().getBoolean("scoreV2");
 		pickWaitTime = getConfig().getInt("pickWaitTime");
 		banWaitTime = getConfig().getInt("banWaitTime");
@@ -59,15 +62,18 @@ public class Tournament{
 		lowerRankBound = getConfig().getInt("lowerRankBound");
 		upperRankBound = getConfig().getInt("upperRankBound");
 		
+		currentlyStreamed = null;
+		
 		save(append);
 		//saveSQL(true);
 		tournaments.add(this);
 	}
 	
-	public Tournament(String name, String displayName, boolean scoreV2, int pickWaitTime, int banWaitTime, 
+	public Tournament(String name, String displayName, String twitchChannel, boolean scoreV2, int pickWaitTime, int banWaitTime, 
 					  int readyWaitTime, int type, int mode, String resultDiscord, int lowerRankBound, int upperRankBound){
 		this.name = name;
 		this.displayName = displayName;
+		this.twitchChannel = twitchChannel;
 		this.scoreV2 = scoreV2;
 		this.pickWaitTime = pickWaitTime;
 		this.banWaitTime = banWaitTime;
@@ -77,6 +83,8 @@ public class Tournament{
 		this.resultDiscord = resultDiscord;
 		this.lowerRankBound = lowerRankBound;
 		this.upperRankBound = upperRankBound;
+		
+		currentlyStreamed = null;
 		
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
@@ -164,6 +172,51 @@ public class Tournament{
 	
 	public int getUpperRankBound(){
 		return upperRankBound;
+	}
+	
+	public String getTwitchChannel(){
+		return twitchChannel;
+	}
+	
+	public boolean isStreaming(){
+		return currentlyStreamed != null;
+	}
+	
+	public boolean isStreamed(Game game){
+		if(currentlyStreamed == null) return false;
+		
+		if(game.getMpNum() == currentlyStreamed.getMpNum())
+			return true;
+		
+		return false;
+	}
+	
+	public boolean startStreaming(Game game){
+		if(isChannelInUse()) return false;
+		
+		currentlyStreamed = game;
+		
+		return true;
+	}
+	
+	public void stopStreaming(Game game){
+		if(!isStreaming()) return;
+		
+		if(currentlyStreamed.getMpNum() == game.getMpNum())
+			currentlyStreamed = null;
+	}
+	
+	public boolean isChannelInUse(){
+		for(Tournament t : tournaments)
+			if(t.getTwitchChannel().equalsIgnoreCase(twitchChannel) &&
+				t.isStreaming())
+				return true;
+		
+		return false;
+	}
+	
+	public void setTwitchChannel(String twitchChannel){
+		this.twitchChannel = twitchChannel;
 	}
 	
 	public void setPickWaitTime(int pickWaitTime){
@@ -275,6 +328,7 @@ public class Tournament{
 		if(append) new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", name, true);
 		
 		getConfig().writeValue("displayName", displayName);
+		getConfig().writeValue("twitchChannel", twitchChannel);
 		getConfig().writeValue("scoreV2", scoreV2);
 		getConfig().writeValue("pickWaitTime", pickWaitTime);
 		getConfig().writeValue("banWaitTime", banWaitTime);
@@ -290,11 +344,12 @@ public class Tournament{
 		try{
 			if(add){
 				new JdbcSession(Main.sqlConnection)
-				.sql("INSERT INTO Tournament (name, display_name, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
+				.sql("INSERT INTO Tournament (name, display_name, twitch_channel, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
 					 "type, mode, result_discord, lower_rank_bound, upper_rank_bound) " +
-				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(displayName)
+				.set(twitchChannel)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
 				.set(banWaitTime)
@@ -308,9 +363,10 @@ public class Tournament{
 			}else{
 				new JdbcSession(Main.sqlConnection)
 				.sql("UPDATE Tournament " +
-					 "SET display_name='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
+					 "SET display_name='?', twitch_channel='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
 					 "type='?', mode='?', result_discord='?', lower_rank_bound='?', upper_rank_bound='?' WHERE name='?'")
 				.set(displayName)
+				.set(twitchChannel)
 				.set(scoreV2 ? 1 : 0)
 				.set(pickWaitTime)
 				.set(banWaitTime)
@@ -406,9 +462,9 @@ public class Tournament{
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
-				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getBoolean(4), rset.getInt(5), rset.getInt(6),
-				    					                       rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getString(10), rset.getInt(11), 
-				    					                       rset.getInt(12));
+				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getString(4), rset.getBoolean(5), 
+				    					 					   rset.getInt(6), rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getInt(10), 
+				    					 					   rset.getString(11), rset.getInt(12), rset.getInt(13));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

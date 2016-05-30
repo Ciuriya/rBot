@@ -1,6 +1,7 @@
 package me.smc.sb.discordcommands;
 
 import org.pircbotx.Channel;
+import org.pircbotx.PircBotX;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
@@ -22,19 +23,31 @@ public class PollIRCCommand extends GlobalCommand{
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		if(Main.ircBot == null) Utils.info(e.getChannel(), "The IRC bot object is null! Make sure to tell Smc!");
+		
+		String msg = "IRC\n";
+		
+		msg += scanBot(Main.ircBot) + "\n\nTwitch\n";
+		msg += scanBot(Main.twitchBot);
+
+		Utils.info(e.getChannel(), msg);
+	}
+	
+	private String scanBot(PircBotX bot){
+		if(bot == null) return "This bot object is null!";
 		else{
-			String msg = "Status: " + (Main.ircBot.isConnected() ? "Connected" : "Disconnected");
+			String msg = "Status: " + (bot.isConnected() ? "Connected" : "Disconnected");
 			
-			if(Main.ircBot.isConnected())
-				if(!Main.ircBot.getUserBot().getChannels().isEmpty()){
+			if(bot.isConnected())
+				if(!bot.getUserBot().getChannels().isEmpty()){
 					msg += "\nConnected channels: ";
-					for(Channel channel : Main.ircBot.getUserBot().getChannels())
+					
+					for(Channel channel : bot.getUserBot().getChannels())
 						msg += channel.getName() + ", ";
+					
 					msg = msg.substring(0, msg.length() - 2);
 				}	
 			
-			Utils.info(e.getChannel(), msg);	
+			return msg;
 		}
 	}
 	

@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 import org.pircbotx.PircBotX;
+import org.pircbotx.cap.EnableCapHandler;
 
 import me.smc.sb.communication.IncomingRequest;
 import me.smc.sb.communication.Server;
@@ -23,6 +24,7 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.OsuAPIRegulator;
+import me.smc.sb.utils.TwitchRegulator;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDABuilder;
 
@@ -37,6 +39,7 @@ public class Main{
 	private static String discordToken, osuUser, osuPassword;
 	public static JDA api;
 	public static PircBotX ircBot = null;
+	public static PircBotX twitchBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
@@ -44,6 +47,7 @@ public class Main{
 	public static Server server;
 	public static Connection sqlConnection;
 	public static OsuAPIRegulator osuRequestManager;
+	public static TwitchRegulator twitchRegulator;
 	
 	public static void main(String[] args){
 		new Main();
@@ -83,7 +87,34 @@ public class Main{
 		
 		osuRequestManager = new OsuAPIRegulator();
 		
-		loadIRC();
+		twitchRegulator = new TwitchRegulator();
+		
+		new Thread(new Runnable(){ //osu irc
+			public void run(){
+				loadBot(ircBot, new org.pircbotx.Configuration.Builder<PircBotX>()
+					    .setName(osuUser)
+					    .setServer("irc.ppy.sh", 6667)
+					    .setServerPassword(osuPassword)
+					    .addListener(new IRCChatListener())
+					    .setAutoReconnect(true)
+					    .buildConfiguration(), false);
+			}
+		}).start();
+		
+		new Thread(new Runnable(){ //twitch irc
+			public void run(){
+				loadBot(twitchBot, new org.pircbotx.Configuration.Builder<PircBotX>()
+					    .setName(login.getValue("twitch-user"))
+					    .setServer("irc.chat.twitch.tv", 6667)
+					    .setServerPassword("oauth:" + login.getValue("twitch-oauth"))
+					    .addListener(new IRCChatListener())
+					    .setAutoReconnect(true)
+					    .setAutoNickChange(false)
+					    .setCapEnabled(true)
+					    .addCapHandler(new EnableCapHandler("twitch.tv/membership"))
+					    .buildConfiguration(), true);
+			}
+		}).start();
 	}
 	
 	private void login(){
@@ -96,28 +127,27 @@ public class Main{
 		}
 	}
 	
-	private void loadIRC(){
-		if(ircBot != null){
-			ircBot.stopBotReconnect();
-			while(ircBot.isConnected())
+	private void loadBot(PircBotX bot, org.pircbotx.Configuration<PircBotX> config, boolean twitch){
+		if(bot != null){
+			bot.stopBotReconnect();
+			
+			while(bot.isConnected())
 				try{Thread.sleep(100);
 				}catch(InterruptedException e){}
-			ircBot = null;
+			
+			bot = null;
 		}
 		
-		ircBot = new PircBotX(new org.pircbotx.Configuration.Builder<PircBotX>()
-				  .setName(osuUser)
-				  .setServer("irc.ppy.sh", 6667)
-				  .setServerPassword(osuPassword)
-				  .addListener(new IRCChatListener())
-				  .setAutoReconnect(true)
-				  .buildConfiguration());
+		bot = new PircBotX(config);
+		
+		if(twitch) twitchBot = bot;
+		else ircBot = bot;
 		
 		try{
-			ircBot.startBot();
-			loadIRC();
+			bot.startBot();
+			loadBot(bot, config, twitch);
 		}catch(Exception e){
-			Log.logger.log(Level.SEVERE, "Could not start irc bot!");
+			Log.logger.log(Level.SEVERE, "Could not start bot!");
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}

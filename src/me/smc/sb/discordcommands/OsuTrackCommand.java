@@ -288,6 +288,8 @@ public class OsuTrackCommand extends GlobalCommand{
 				
 				builder.appendString("\n");
 				
+				//error
+				
 				if(completeMessage) lastUpdateMessageSent.put(player, builder.build().getStrippedContent());
 				
 				lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));

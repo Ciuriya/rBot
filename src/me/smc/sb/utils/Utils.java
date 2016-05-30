@@ -34,6 +34,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
+import org.pircbotx.hooks.Event;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -102,6 +103,11 @@ public class Utils{
 		Message jdaMsg = null;
 		
 		if(message.length() == 0) return jdaMsg;
+		
+		if(isTwitch(e)){
+			Main.twitchRegulator.sendMessage(e.getChannel().getName().replace("#", ""), message);
+			return jdaMsg;
+		}
 		
 		if(e != null && verifyChannel(e)){
 			e.getChannel().send().message(message);
@@ -198,12 +204,16 @@ public class Utils{
 		else return "" + num;
 	}
 	
-
 	public static String sendPost(String urlString, String urlParameters){
+		return sendPost(urlString, urlParameters, "");
+	}
+	
+	public static String sendPost(String urlString, String urlParameters, String query){
 		String answer = "";
 		try{
 			URL url = new URL(urlString + urlParameters);
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			
 			connection.setRequestMethod("POST");
 			connection.setConnectTimeout(30000);
 			connection.setReadTimeout(30000);
@@ -211,13 +221,21 @@ public class Utils{
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("charset", "utf-8");
 			connection.setRequestProperty("Content-Length", "" + Integer.toString(urlParameters.getBytes().length));
+			connection.setDoOutput(true);
+			
+			if(query.length() > 0) connection.getOutputStream().write(query.getBytes("UTF8"));
+			
 			BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			String inputLine;
 			StringBuffer response = new StringBuffer();
+			
 			while((inputLine = inputStream.readLine()) != null) response.append(inputLine);
+			
 			inputStream.close();
+			
 			response.deleteCharAt(0);
 			response.deleteCharAt(response.length() - 1);
+			
 			answer = response.toString();
 		}catch(Exception e){e.printStackTrace();}
 		return answer;
@@ -474,6 +492,13 @@ public class Utils{
 		else return line.get(0).split("u=")[1].split("\", function")[0];
 	}
 	
+	public static boolean isTwitch(Event<PircBotX> e){
+		if(e != null && e.getBot().getBotId() == Main.twitchBot.getBotId())
+			return true;
+		
+		return false;
+	}
+	
 	public static class Login{
 		private List<String> cookies;
 		private HttpsURLConnection conn;
@@ -492,19 +517,17 @@ public class Utils{
 			String postParams = login.getFormParams(page, cfg.getValue("osuWebUser"), 
 														  cfg.getValue("osuWebPass"));
 			
-			System.out.println("Post Params: " + postParams);
-			
-			login.sendPost(url, postParams);
+			login.sendPost(url, "osu.ppy.sh", postParams);
 		}
 		
-		private void sendPost(String url, String postParams){
+		private void sendPost(String url, String host, String postParams){
 			try{
 				URL obj = new URL(url);
 				conn = (HttpsURLConnection) obj.openConnection();
 
 				conn.setUseCaches(false);
 				conn.setRequestMethod("POST");
-				conn.setRequestProperty("Host", "osu.ppy.sh");
+				conn.setRequestProperty("Host", host);
 				conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 				conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
 				conn.setRequestProperty("Accept-Language", "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4");
@@ -532,8 +555,6 @@ public class Utils{
 				while((inputLine = in.readLine()) != null) response.append(inputLine);
 				
 				in.close();	
-				
-				System.out.println("Response: " + conn.getResponseCode());
 			}catch(Exception ex){
 				Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
 			}

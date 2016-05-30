@@ -111,7 +111,7 @@ public abstract class Game{
 		
 		String resultDiscord = match.getTournament().getResultDiscord();
 		
-		String gameMessage = buildResultMessage(false);
+		String gameMessage = buildResultMessage(false) + "```";
 		
 		if(resultDiscord != null)
 			if(Main.api.getTextChannelById(resultDiscord) != null){
@@ -155,6 +155,7 @@ public abstract class Game{
 					else{
 						for(String message : messages)
 							sendMessage(message);
+						
 						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + getPickWaitTime()) - (System.currentTimeMillis() / 1000))) / 60, 0);
 						sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!");
 					}
@@ -211,9 +212,8 @@ public abstract class Game{
 				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
 				banningTeam = findNextTeamToBan();
 				
-				if(bans.size() > 0) updateDiscordResult(buildResultMessage(false));
-				
 				if(bans.size() >= 4){
+					updateDiscordResult(false);
 					mapSelection(4);
 					break;
 				}
@@ -224,6 +224,8 @@ public abstract class Game{
 				messageUpdater(0, true, banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
+				
+				if(bans.size() > 0) updateDiscordResult(false);
 				
 				break;
 			case 4:
@@ -301,12 +303,6 @@ public abstract class Game{
 						else mapSelection(2);
 						return;
 					}
-					
-					sendMessage("!mp settings");
-					
-					Utils.sleep(1000);
-					
-					if(mapSelected) return;
 					
 					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
 					fTeamFirst = !fTeamFirst;
@@ -399,7 +395,7 @@ public abstract class Game{
 				public void run(){
 					if(ffTeam != fTeamFirst) return;
 					
-					updateDiscordResult(buildResultMessage(false));
+					updateDiscordResult(false);
 					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 					mapSelection(2);
 				}
@@ -426,8 +422,6 @@ public abstract class Game{
 		
 		sendMessage("!mp close");
 		
-		String gameEndedMsg = buildResultMessage(true);
-		
 		String shortGameEndMsg = match.getFirstTeam().getTeamName() + " (" + fTeamPoints + 
 				  				 ") vs (" + sTeamPoints + ") " + match.getSecondTeam().getTeamName() + 
 				  				 " - " + mpLink;
@@ -435,7 +429,7 @@ public abstract class Game{
 		for(String admin : match.getMatchAdmins())
 			pmUser(admin, shortGameEndMsg);
 		
-		updateDiscordResult(gameEndedMsg);
+		updateDiscordResult(true);
 
 		Log.logger.log(Level.INFO, shortGameEndMsg);
 		
@@ -500,13 +494,17 @@ public abstract class Game{
 			message += "\n\nLobby\n";
 			
 			java.util.Map<Integer, String> players = new HashMap<>();
+			LinkedList<String> unslottedPlayers = new LinkedList<>();
 			
 			LinkedList<Player> fullList = new LinkedList<Player>(match.getFirstTeam().getPlayers());
 			fullList.addAll(match.getSecondTeam().getPlayers());
 			
-			for(Player pl : fullList)
-				if(pl.getSlot() != -1)
-					players.put(pl.getSlot(), pl.getName());
+			for(String inRoom : playersInRoom){
+				Player pl = findPlayer(inRoom);
+				
+				if(pl.getSlot() == -1) unslottedPlayers.add(inRoom);
+				else players.put(pl.getSlot(), inRoom);
+			}
 			
 			for(int i = 1; i <= match.getPlayers(); i++)
 				if(!players.containsKey(i))
@@ -523,25 +521,40 @@ public abstract class Game{
 	
 	private String getMatchStatus(){
 		if(rollsLeft != 0) return "pre-warmup";
-		else if(warmupsLeft > 0) return "warm-up";
-		else if(bans.size() < 4) return "bans";
+		else if(warmupsLeft > 0) return "warm-up (" + (warmupsLeft == 2 ? 1 : 2) + "/2)";
+		else if(bans.size() < 4) return "bans (" + bans.size() + "/4)";
 		else return "ongoing";
 	}
 	
-	private void updateDiscordResult(String message){
-		String resultDiscord = match.getTournament().getResultDiscord();
-		
-		String localMessage = message;
-		
-		if(resultDiscord != null && discordResultMessage != null){
-			if(bansWithNames.size() > 0){
-				localMessage += "\nBans\n";
-				
-				for(String banned : bansWithNames)
-					localMessage += banned + "\n";
-			}
+	private void updateDiscordResult(boolean finished){
+		if(!finished){
+			new Thread(new Runnable(){
+				public void run(){
+					actualDiscordResultUpdate(finished);
+				}
+			}).start();
+		}else actualDiscordResultUpdate(finished);
+
+	}
+	
+	private void actualDiscordResultUpdate(boolean finished){
+		try{
+			String resultDiscord = match.getTournament().getResultDiscord();
 			
-			discordResultMessage = discordResultMessage.updateMessage(localMessage + "```");
+			String localMessage = buildResultMessage(finished);
+			
+			if(resultDiscord != null && discordResultMessage != null){
+				if(bansWithNames.size() > 0){
+					localMessage += (finished ? "\n" : "") + "\nBans\n";
+					
+					for(String banned : bansWithNames)
+						localMessage += banned + "\n";
+				}
+				
+				discordResultMessage = discordResultMessage.updateMessage(localMessage + "```");
+			}
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
 	
@@ -650,7 +663,8 @@ public abstract class Game{
 			
 			sendMessage(name + " was banned!");
 			
-			bansWithNames.add("{" + name.replace(" pick:", "}"));
+			bansWithNames.add("{" + getMod(selected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 
+			    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + banningTeam.getTeamName() + ")");
 			
 			mapSelection(3);
 			return;
@@ -746,9 +760,9 @@ public abstract class Game{
 		
 		if(match.getTournament().isScoreV2()) message = "Waiting for all players to ready up, stable (fallback) scores will not count!";
 		
-		messageUpdater(0, true, message, "The match will force start after the timer. You may change map if needed.");
-		
 		pickTimer(false);
+		
+		messageUpdater(0, true, message, "The match will force start after the timer. You may change map if needed.");
 	}
 	
 	private boolean checkMap(Map map){
@@ -806,7 +820,6 @@ public abstract class Game{
 		}else if(!bancho){
 			state = GameState.WAITING;
 			prepareReadyCheck();
-			banchoFeedback.clear();
 		}
 	}
 	
@@ -1061,7 +1074,7 @@ public abstract class Game{
 		if(timer != 0) sendMessage("!mp start " + timer);
 		else sendMessage("!mp start");
 		
-		updateDiscordResult(buildResultMessage(false));
+		updateDiscordResult(false);
 	}
 	
 	private void switchPlaying(boolean playing, boolean full){
@@ -1193,11 +1206,10 @@ public abstract class Game{
 									" points!");
 					warmupsLeft--;
 					
-					if(warmupsLeft == 0){
-						updateDiscordResult(buildResultMessage(false));
-						
-						mapSelection(3);
-					}else mapSelection(2);
+					updateDiscordResult(false);
+					
+					if(warmupsLeft == 0) mapSelection(3);
+					else mapSelection(2);
 				}else{
 					rematch: if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
 						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
@@ -1264,7 +1276,7 @@ public abstract class Game{
 				sTeamPoints + " " + match.getSecondTeam().getTeamName() +
 				"      Best of " + match.getBestOf());
 		
-		updateDiscordResult(buildResultMessage(false));
+		updateDiscordResult(false);
 	
 		if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
 			changeMap(match.getMapPool().findTiebreaker());

@@ -33,6 +33,8 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 	
 	@Override
 	public void onPrivateMessage(PrivateMessageEvent<PircBotX> e){
+		if(Utils.isTwitch(e)) return;
+		
 		String message = e.getMessage();
 		Log.logger.log(Level.INFO, "PM/" + e.getUser().getNick() + ": " + message);
 		if(verifyGameCreationPM(e)) return;
@@ -66,11 +68,16 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 	
 	@Override
 	public void onMessage(MessageEvent<PircBotX> e){
-		if(!Utils.verifyChannel(e)) return;
+		boolean twitch = Utils.isTwitch(e);
+		
+		if(!Utils.verifyChannel(e) && !twitch) return;
 		
 		String message = e.getMessage();
-		Log.logger.log(Level.INFO, "IRC/" + e.getUser().getNick() + ": " + message);	
-		if(verifyBanchoFeedback(e)) return;
+
+		if(!twitch){
+			Log.logger.log(Level.INFO, "IRC/" + e.getUser().getNick() + ": " + message);
+			if(verifyBanchoFeedback(e)) return;
+		}
 		
 		if(message.startsWith("!")) Utils.info(e, null, null, IRCCommand.handleCommand(e, null, null, message.substring(1)));
 	}

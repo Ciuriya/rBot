@@ -20,6 +20,7 @@ public class RandomCommand extends IRCCommand{
 		super("Rolls a random number from 1 to 100.",
 			  " ",
 			  null,
+			  true,
 			  "random");
 		waitingForRolls = new HashMap<>();
 	}
@@ -31,7 +32,7 @@ public class RandomCommand extends IRCCommand{
 		int random = Utils.fetchRandom(1, 100);
 		Utils.info(e, pe, discord, userName + " rolled " + random + "!");
 		
-		if(!waitingForRolls.isEmpty())
+		if(!waitingForRolls.isEmpty() && !Utils.isTwitch(e))
 			for(Team team : waitingForRolls.keySet())
 				for(Player pl : team.getPlayers())
 					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
