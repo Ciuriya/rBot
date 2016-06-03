@@ -45,6 +45,7 @@ public abstract class Game{
 	protected boolean mapSelected = false;
 	protected boolean fTeamFirst = true;
 	protected boolean validMods = true;
+	protected boolean streamed = false;
 	protected GameState state;
 	protected int rematchesAllowed = 1;
 	protected List<String> invitesSent;
@@ -111,12 +112,14 @@ public abstract class Game{
 		
 		String resultDiscord = match.getTournament().getResultDiscord();
 		
-		String gameMessage = buildResultMessage(false) + "```";
+		String gameMessage = buildDiscordResultMessage(false) + "```";
 		
 		if(resultDiscord != null)
 			if(Main.api.getTextChannelById(resultDiscord) != null){
 				discordResultMessage = Utils.infoBypass(Main.api.getTextChannelById(resultDiscord), gameMessage);
 			}else discordResultMessage = Utils.infoBypass(Main.api.getPrivateChannelById(resultDiscord), gameMessage);
+		
+		updateTwitch("Waiting for players to join the lobby...");
 	}
 	
 	public void setupGame(){
@@ -213,7 +216,7 @@ public abstract class Game{
 				banningTeam = findNextTeamToBan();
 				
 				if(bans.size() >= 4){
-					updateDiscordResult(false);
+					updateResults(false);
 					mapSelection(4);
 					break;
 				}
@@ -225,7 +228,7 @@ public abstract class Game{
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
 				
-				if(bans.size() > 0) updateDiscordResult(false);
+				if(bans.size() > 0) updateResults(false);
 				
 				break;
 			case 4:
@@ -395,7 +398,7 @@ public abstract class Game{
 				public void run(){
 					if(ffTeam != fTeamFirst) return;
 					
-					updateDiscordResult(false);
+					updateResults(false);
 					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
 					mapSelection(2);
 				}
@@ -410,6 +413,8 @@ public abstract class Game{
 	
 	@SuppressWarnings("deprecation")
 	public void stop(){
+		match.getTournament().stopStreaming(this);
+		
 		waitingForCaptains = 0;
 		
 		for(String player : invitesSent)
@@ -429,7 +434,7 @@ public abstract class Game{
 		for(String admin : match.getMatchAdmins())
 			pmUser(admin, shortGameEndMsg);
 		
-		updateDiscordResult(true);
+		updateResults(true);
 
 		Log.logger.log(Level.INFO, shortGameEndMsg);
 		
@@ -464,6 +469,7 @@ public abstract class Game{
 		state = null;
 		sTeamPoints = 0;
 		validMods = false;
+		streamed = false;
 		waitingForCaptains = 0;
 		warmupsLeft = 0;
 		match.setGame(null);
@@ -474,7 +480,7 @@ public abstract class Game{
 		Thread.currentThread().stop();
 	}
 	
-	private String buildResultMessage(boolean finished){
+	private String buildDiscordResultMessage(boolean finished){
 		String message = mpLink + " ```\n" + match.getFirstTeam().getTeamName() + " - " +
 						 match.getSecondTeam().getTeamName() + "\n";
 		
@@ -526,7 +532,20 @@ public abstract class Game{
 		else return "ongoing";
 	}
 	
-	private void updateDiscordResult(boolean finished){
+	private boolean connectToStream(){
+		if(match.getTournament().isStreamed(this)) streamed = true;
+		else{
+			streamed = match.getTournament().startStreaming(this);
+			
+			if(streamed)
+				Main.twitchRegulator.sendMessage(match.getTournament().getTwitchChannel(),
+												 "Game switched to " + match.getLobbyName());
+		}
+		
+		return streamed;
+	}
+	
+	private void updateResults(boolean finished){
 		if(!finished){
 			new Thread(new Runnable(){
 				public void run(){
@@ -534,14 +553,13 @@ public abstract class Game{
 				}
 			}).start();
 		}else actualDiscordResultUpdate(finished);
-
 	}
 	
 	private void actualDiscordResultUpdate(boolean finished){
 		try{
 			String resultDiscord = match.getTournament().getResultDiscord();
 			
-			String localMessage = buildResultMessage(finished);
+			String localMessage = buildDiscordResultMessage(finished);
 			
 			if(resultDiscord != null && discordResultMessage != null){
 				if(bansWithNames.size() > 0){
@@ -556,6 +574,16 @@ public abstract class Game{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+	}
+	
+	private void updateTwitch(String message){
+		new Thread(new Runnable(){
+			public void run(){
+				if(connectToStream()){
+					Main.twitchRegulator.sendMessage(match.getTournament().getTwitchChannel(), message);
+				}
+			}
+		}).start();
 	}
 	
 	private void pmUser(String user, String message){
@@ -627,6 +655,11 @@ public abstract class Game{
 			
 			this.map = new Map(map, 1);
 			mapSelected = true;
+			
+			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+			    	  	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+			    	  	 selectingTeam.getTeamName() + "!");
+			
 			prepareReadyCheck();
 			return;
 		}
@@ -666,6 +699,8 @@ public abstract class Game{
 			bansWithNames.add("{" + getMod(selected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 
 			    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + banningTeam.getTeamName() + ")");
 			
+			updateTwitch(name + " was banned by " + banningTeam.getTeamName() + "!");
+			
 			mapSelection(3);
 			return;
 		}
@@ -673,10 +708,24 @@ public abstract class Game{
 		if(selected != null && !mapSelected && select){
 			mapSelected = true;
 			this.map = selected;
+			
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
+			
+			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+		    	  	 	 selectingTeam.getTeamName() + "!");
+			
 			prepareReadyCheck();
 			return;
 		}else if(mapSelected && select && selected != null){
 			this.map = selected;
+			
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
+			
+			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+		    	  	 	 selectingTeam.getTeamName() + "!");
+			
 			return;
 		}
 		
@@ -789,10 +838,24 @@ public abstract class Game{
 			mapSelected = true;
 			
 			this.map = match.getMapPool().findMap(link);
+			
+			JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), true);
+			
+			updateTwitch(getMod(map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+		    	  	 	 selectingTeam.getTeamName() + "!");
+			
 			prepareReadyCheck();
 			return;
 		}else if(mapSelected){
 			this.map = match.getMapPool().findMap(link);
+			
+			JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), true);
+			
+			updateTwitch(getMod(map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+		    	  	 	 selectingTeam.getTeamName() + "!");
+			
 			return;
 		}
 	}
@@ -1074,7 +1137,8 @@ public abstract class Game{
 		if(timer != 0) sendMessage("!mp start " + timer);
 		else sendMessage("!mp start");
 		
-		updateDiscordResult(false);
+		updateResults(false);
+		updateTwitch("The match has begun!");
 	}
 	
 	private void switchPlaying(boolean playing, boolean full){
@@ -1199,14 +1263,20 @@ public abstract class Game{
 				}
 				
 				if(warmupsLeft > 0){
-					if(fTeamScore == sTeamScore) sendMessage("Both " + (isTeamGame() ? "teams" : "players") + " have tied!");
+					String updateMessage = "";
+					
+					if(fTeamScore == sTeamScore) updateMessage = "Both " + (isTeamGame() ? "teams" : "players") + " have tied!";
 					else
-						sendMessage((fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
-									match.getSecondTeam().getTeamName()) + " won by " + Math.abs(fTeamScore - sTeamScore) +
-									" points!");
+						updateMessage = (fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
+										 match.getSecondTeam().getTeamName()) + " won by " + 
+										 Math.abs(fTeamScore - sTeamScore) + " points!";
+					
 					warmupsLeft--;
 					
-					updateDiscordResult(false);
+					sendMessage(updateMessage);
+					updateTwitch(updateMessage);
+					
+					updateResults(false);
 					
 					if(warmupsLeft == 0) mapSelection(3);
 					else mapSelection(2);
@@ -1230,6 +1300,8 @@ public abstract class Game{
 								sendMessage("Someone has disconnected, there will be a rematch!");
 								sendMessage("If you do not wish to rematch, both " + (isTeamGame() ? "teams" : "players") + " need to use !skiprematch");
 								
+								updateTwitch("There was a disconnection, the match will be replayed!");
+								
 								skipRematchState = 0;
 								SkipRematchCommand.gamesAllowedToSkip.add(Game.this);
 								
@@ -1245,16 +1317,23 @@ public abstract class Game{
 						sendMessage("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
 						mapSelected = true;
 						banchoFeedback.clear();
+						
 						rematchesAllowed--;
 						switchPlaying(false, true);
+						
+						updateTwitch("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
+						
 						return;
 					}else rematchesAllowed = 1;
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
 					
-					sendMessage((fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
-						match.getSecondTeam().getTeamName()) + " won by " + Math.abs(fTeamScore - sTeamScore) +
-						" points!");
+					String updateMessage = (fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
+											match.getSecondTeam().getTeamName()) + " won by " + 
+											Math.abs(fTeamScore - sTeamScore) + " points!";
+					
+					sendMessage(updateMessage);
+					updateTwitch(updateMessage);
 					
 					if(fTeamWon) fTeamPoints++;
 					else sTeamPoints++;
@@ -1276,7 +1355,9 @@ public abstract class Game{
 				sTeamPoints + " " + match.getSecondTeam().getTeamName() +
 				"      Best of " + match.getBestOf());
 		
-		updateDiscordResult(false);
+		updateResults(false);
+		updateTwitch(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
+					 sTeamPoints + " " + match.getSecondTeam().getTeamName() + " BO" + match.getBestOf());
 	
 		if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
 			changeMap(match.getMapPool().findTiebreaker());
@@ -1286,12 +1367,17 @@ public abstract class Game{
 			
 			contestMessage();
 		}else if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2)){
-			sendMessage((fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) +
-						" has won this game!");
+			String winningTeam = (fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName());
+			
+			sendMessage(winningTeam + " has won this game!");
 			sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
 			sendMessage("!mp timer");
 			
 			if(mapUpdater != null) mapUpdater.cancel();
+			
+			updateTwitch(winningTeam + " has won this game! " + mpLink);
+			
+			match.getTournament().stopStreaming(this);
 			
 			Timer time = new Timer();
 			time.schedule(new TimerTask(){

@@ -9,7 +9,7 @@ import me.smc.sb.utils.Utils;
 
 public class Match{
 
-	private int players, matchNum, bestOf;
+	private int players, matchNum, bestOf, streamPriority;
 	private Team fTeam, sTeam;
 	private Tournament tournament;
 	private long scheduledDate;
@@ -33,6 +33,7 @@ public class Match{
 		this.pool = null;
 		this.game = null;
 		this.matchAdmins = new ArrayList<>();
+		streamPriority = 1;
 		
 		save(append);
 		t.addMatch(this);
@@ -77,6 +78,14 @@ public class Match{
 	
 	public long getTime(){
 		return scheduledDate;
+	}
+	
+	public int getStreamPriority(){
+		return streamPriority;
+	}
+	
+	public void setStreamPriority(int priority){
+		streamPriority = priority;
 	}
 	
 	public void setMatchAdmins(ArrayList<String> admins){
@@ -168,6 +177,7 @@ public class Match{
 		}
 		
 		config.deleteKey("match-" + matchNum + "-players");
+		config.deleteKey("match-" + matchNum + "-priority");
 		config.deleteKey("match-" + matchNum + "-team1");
 		config.deleteKey("match-" + matchNum + "-team2");
 		config.deleteKey("match-" + matchNum + "-date");
@@ -187,6 +197,8 @@ public class Match{
 		
 		if(append) config.appendToStringList("matches", String.valueOf(matchNum), true);
 		config.writeValue("match-" + matchNum + "-players", players);
+		
+		config.writeValue("match-" + matchNum + "-priority", streamPriority);
 		
 		if(fTeam != null && sTeam != null){
 			config.writeValue("match-" + matchNum + "-team1", fTeam.getTeamName());

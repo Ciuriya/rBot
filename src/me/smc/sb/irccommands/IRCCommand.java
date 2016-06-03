@@ -131,6 +131,7 @@ public abstract class IRCCommand{
 		commands.add(new SetBanWaitTimeCommand());
 		commands.add(new SetReadyWaitTimeCommand());
 		commands.add(new SetTwitchChannelCommand());
+		commands.add(new SetMatchPriorityCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());
@@ -140,6 +141,8 @@ public abstract class IRCCommand{
 		commands.add(new SkipRematchCommand());
 		commands.add(new ContestCommand());
 		commands.add(new ChangeWarmupModCommand());
+		commands.add(new MPLinkCommand());
+		commands.add(new CurrentScoreCommand());
 	}
 	
 	public abstract String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);

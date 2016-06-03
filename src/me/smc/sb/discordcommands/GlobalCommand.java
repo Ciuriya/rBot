@@ -92,6 +92,7 @@ public abstract class GlobalCommand{
 		commands.add(new ExecIRCCommand());
 		commands.add(new HaltCommand());
 		commands.add(new HelpCommand());
+		commands.add(new IdToUserCommand());
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
 		commands.add(new MessageIRCCommand());

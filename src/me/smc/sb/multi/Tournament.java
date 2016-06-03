@@ -5,8 +5,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 
 import com.jcabi.jdbc.JdbcSession;
@@ -24,6 +26,7 @@ public class Tournament{
 	private String displayName;
 	private String twitchChannel;
 	private Game currentlyStreamed; //game switching from twitch channel? idk
+	private static java.util.Map<String, LinkedList<Game>> twitchQueue = new HashMap<>();
 	public static List<Tournament> tournaments;
 	private List<Team> teams;
 	private List<Match> matches;
@@ -178,6 +181,14 @@ public class Tournament{
 		return twitchChannel;
 	}
 	
+	public Game getCurrentlyStreamed(){
+		return currentlyStreamed;
+	}
+	
+	public void setCurrentlyStreamed(Game game){
+		this.currentlyStreamed = game;
+	}
+	
 	public boolean isStreaming(){
 		return currentlyStreamed != null;
 	}
@@ -192,7 +203,10 @@ public class Tournament{
 	}
 	
 	public boolean startStreaming(Game game){
-		if(isChannelInUse()) return false;
+		if(isChannelInUse(twitchChannel)){
+			addToTwitchQueue(game);
+			return false;
+		}
 		
 		currentlyStreamed = game;
 		
@@ -200,19 +214,91 @@ public class Tournament{
 	}
 	
 	public void stopStreaming(Game game){
-		if(!isStreaming()) return;
+		if(!isStreaming() || !isStreamed(game)) return;
 		
-		if(currentlyStreamed.getMpNum() == game.getMpNum())
-			currentlyStreamed = null;
+		currentlyStreamed = null;
+		
+		Game next = getNextFromTwitchQueue(1);
+		if(next != null)
+			next.match.getTournament().setCurrentlyStreamed(next);
 	}
 	
-	public boolean isChannelInUse(){
+	public static boolean isChannelInUse(String channel){
 		for(Tournament t : tournaments)
-			if(t.getTwitchChannel().equalsIgnoreCase(twitchChannel) &&
+			if(t.getTwitchChannel().equalsIgnoreCase(channel) &&
 				t.isStreaming())
 				return true;
 		
 		return false;
+	}
+	
+	private void addToTwitchQueue(Game game){
+		LinkedList<Game> games = new LinkedList<>();
+		
+		if(twitchQueue.containsKey(twitchChannel)) 
+			games = twitchQueue.get(twitchChannel);
+		
+		if(!games.contains(game)) games.add(game);
+		
+		twitchQueue.put(twitchChannel, games);
+	}
+	
+	private Game getNextFromTwitchQueue(int priority){
+		if(twitchQueue.containsKey(twitchChannel)){
+			Optional<Game> optGame = twitchQueue.get(twitchChannel).stream()
+									 .filter(g -> g.match.getStreamPriority() == priority).findFirst();
+			
+			if(optGame.isPresent()){
+				removeFromTwitchQueue(optGame.get());
+				
+				return optGame.get();	
+			}else if(twitchQueue.get(twitchChannel).stream()
+					 .filter(g -> g.match.getStreamPriority() > priority)
+					 .count() > 0)
+				return getNextFromTwitchQueue(priority + 1);
+		}
+		
+		return null;
+	}
+	
+	private void removeFromTwitchQueue(Game game){
+		if(twitchQueue.containsKey(twitchChannel)){
+			LinkedList<Game> games = twitchQueue.get(twitchChannel);
+			games.remove(game);
+			
+			if(games.size() > 0) twitchQueue.put(twitchChannel, games);
+			else twitchQueue.remove(twitchChannel);
+		}
+	}
+	
+	public static String getCurrentMPLink(String channel){
+		String c = channel;
+		if(channel.startsWith("#")) c = channel.substring(1);
+		
+		for(Tournament t : tournaments)
+			if(t.getTwitchChannel().equalsIgnoreCase(c) &&
+				t.isStreaming())
+				return t.currentlyStreamed.mpLink;
+			
+		return "Unknown";
+	}
+	
+	public static String getCurrentScore(String channel){
+		String c = channel;
+		if(channel.startsWith("#")) c = channel.substring(1);
+		
+		for(Tournament t : tournaments)
+			if(t.getTwitchChannel().equalsIgnoreCase(c) &&
+				t.isStreaming()){
+				Game game = t.getCurrentlyStreamed();
+				Match match = game.match;
+				
+				return match.getFirstTeam().getTeamName() + " " + game.fTeamPoints + " | " +
+				 	   game.sTeamPoints + " " + match.getSecondTeam().getTeamName() + " BO" + 
+				 	   match.getBestOf();
+			}
+			
+		return "Unknown";
 	}
 	
 	public void setTwitchChannel(String twitchChannel){
