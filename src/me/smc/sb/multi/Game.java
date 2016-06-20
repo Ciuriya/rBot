@@ -41,6 +41,7 @@ public abstract class Game{
 	protected int roomSize = 0;
 	protected int skipRematchState = 0; //0 = none, 1 = f skipped, 2 = s skipped, 3 = both skip
 	protected int contestState = 0; //^
+	protected int expectedPlayers = 0;
 	protected long lastPickTime = 0;
 	protected boolean mapSelected = false;
 	protected boolean fTeamFirst = true;
@@ -291,7 +292,7 @@ public abstract class Game{
 					
 					if(mapSelected){
 						sendMessage("Attempting to force start...");
-						
+
 						readyCheck(true);
 						return;
 					}
@@ -463,6 +464,7 @@ public abstract class Game{
 		previousMap = null;
 		previousRoll = 0;
 		rematchesAllowed = 0;
+		expectedPlayers = 0;
 		rollsLeft = 0;
 		roomSize = 0;
 		selectingTeam = null;
@@ -576,10 +578,27 @@ public abstract class Game{
 		}
 	}
 	
-	private void updateTwitch(String message){
+	private void updateTwitch(String message, int delay){
+		Timer t = new Timer();
+		t.schedule(new TimerTask(){
+			public void run(){
+				updateTwitch(message);
+			}
+		}, delay * 1000);
+	}
+	
+	protected void updateTwitch(String message){
 		new Thread(new Runnable(){
 			public void run(){
 				if(connectToStream()){
+					Timer t = new Timer();
+					t.schedule(new TimerTask(){
+						public void run(){
+							if(!Main.twitchBot.getUserBot().getChannels().stream().anyMatch(c -> c.getName().equals("#" + match.getTournament().getTwitchChannel())))
+								Main.twitchBot.sendIRC().joinChannel("#" + match.getTournament().getTwitchChannel());
+						}
+					}, (long) (30000.0 / 20.0 + 500));
+					
 					Main.twitchRegulator.sendMessage(match.getTournament().getTwitchChannel(), message);
 				}
 			}
@@ -656,7 +675,7 @@ public abstract class Game{
 			this.map = new Map(map, 1);
 			mapSelected = true;
 			
-			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+			updateTwitch(getMod(this.map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 			    	  	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
 			    	  	 selectingTeam.getTeamName() + "!");
 			
@@ -709,7 +728,7 @@ public abstract class Game{
 			mapSelected = true;
 			this.map = selected;
 			
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
 			
 			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
@@ -720,7 +739,7 @@ public abstract class Game{
 		}else if(mapSelected && select && selected != null){
 			this.map = selected;
 			
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
 			
 			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
@@ -802,7 +821,7 @@ public abstract class Game{
 			sendMessage("!mp mods " + (mod.toUpperCase().equals("NM") ? "" : mod.toUpperCase() + " ") + "Freemod");
 	}
 	
-	private void prepareReadyCheck(){
+	protected void prepareReadyCheck(){
 		clearPickTimers();
 		
 		String message = "Waiting for all players to ready up...";
@@ -811,7 +830,7 @@ public abstract class Game{
 		
 		pickTimer(false);
 		
-		messageUpdater(0, true, message, "The match will force start after the timer. You may change map if needed.");
+		messageUpdater(0, true, message, "The match will force start after the timer. You may change map if needed (not in case of disconnection)");
 	}
 	
 	private boolean checkMap(Map map){
@@ -821,12 +840,13 @@ public abstract class Game{
 	public void handleBanchoFeedback(String message){
 		if(message.contains("All players are ready") && state.eq(GameState.WAITING)) readyCheck(true);
 		else if(message.contains("left the game.")) playerLeft(message);
-		else if(message.contains("The match has started!")) startMatch(-1);
 		else if(message.contains("The match has finished!")) playEnded();
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.VERIFYING)) verifyLobby(message);
 		else if(message.startsWith("Beatmap: ")) updateMap(message.split(" ")[1]);
+		else if(message.startsWith("Players: ") && (state.eq(GameState.FIXING) || state.eq(GameState.VERIFYING)))
+			expectedPlayers = Utils.stringToInt(message.split(" ")[1]);
 		else banchoFeedback.add(message);
 	}
 	
@@ -889,8 +909,10 @@ public abstract class Game{
 	private void verifyLobby(String message){
 		if(message == null && !state.eq(GameState.VERIFYING)){
 			state = GameState.VERIFYING;
+			
 			playersSwapped.clear();
 			verifyingSlots.clear();
+			expectedPlayers = 0;
 			
 			verifyMods();
 			
@@ -910,10 +932,12 @@ public abstract class Game{
 	private void fixLobby(String message){
 		if(message == null && !state.eq(GameState.FIXING)){
 			state = GameState.FIXING;
+			
 			messageUpdater.cancel();
 			playersSwapped.clear();
 			verifyingSlots.clear();
-
+			expectedPlayers = 0;
+			
 			verifyMods();
 			
 			sendMessage("!mp settings");
@@ -1025,7 +1049,8 @@ public abstract class Game{
 		
 		verifyingSlots.put(p, slot);
 		
-		if(verifyingSlots.size() >= match.getPlayers()){
+		if(verifyingSlots.size() >= match.getPlayers() || 
+				(expectedPlayers > 0 && verifyingSlots.size() >= expectedPlayers)){
 			lobbySwapFixing();
 			readyCheck(false);
 		}
@@ -1110,9 +1135,19 @@ public abstract class Game{
 		}
 	}
 	
-	private void startMatch(int timer){	
+	private void startMatch(int timer, boolean backupCall){	
 		clearPickTimers();
-		state = GameState.PLAYING;
+		
+		if(!backupCall){
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					if(playersInRoom.size() == match.getPlayers() && !state.eq(GameState.PLAYING))
+						startMatch(0, true);
+				}
+			}, timer * 1000 + 1000);	
+		}
+		
 		SkipRematchCommand.gamesAllowedToSkip.remove(this);
 		ContestCommand.gamesAllowedToContest.remove(this);
 		skipRematchState = 0;
@@ -1139,9 +1174,11 @@ public abstract class Game{
 		
 		updateResults(false);
 		updateTwitch("The match has begun!");
+		
+		state = GameState.PLAYING;
 	}
 	
-	private void switchPlaying(boolean playing, boolean full){
+	protected void switchPlaying(boolean playing, boolean full){
 		if(full){
 			LinkedList<Player> tempList = new LinkedList<>(match.getFirstTeam().getPlayers());
 			tempList.addAll(match.getSecondTeam().getPlayers());
@@ -1205,12 +1242,12 @@ public abstract class Game{
 				state = GameState.WAITING;
 				
 				prepareReadyCheck();
-			}else startMatch(0);
+			}else startMatch(0, false);
 		}else if(!validMods){
 			validMods = true;
 			state = GameState.WAITING;
 			prepareReadyCheck();
-		}else startMatch(5);
+		}else startMatch(5, false);
 	}
 	
 	protected abstract void playerLeft(String message);
@@ -1220,6 +1257,7 @@ public abstract class Game{
 	}
 	
 	protected void playEnded(){
+		if(state.eq(GameState.WAITING)) return;
 		state = GameState.CONFIRMING;
 		
 		Timer t = new Timer();
@@ -1274,7 +1312,7 @@ public abstract class Game{
 					warmupsLeft--;
 					
 					sendMessage(updateMessage);
-					updateTwitch(updateMessage);
+					updateTwitch(updateMessage, 20);
 					
 					updateResults(false);
 					
@@ -1308,6 +1346,8 @@ public abstract class Game{
 								mapSelected = true;
 								banchoFeedback.clear();
 								switchPlaying(false, true);
+								
+								prepareReadyCheck();
 								return;
 							}
 						}
@@ -1333,7 +1373,7 @@ public abstract class Game{
 											Math.abs(fTeamScore - sTeamScore) + " points!";
 					
 					sendMessage(updateMessage);
-					updateTwitch(updateMessage);
+					updateTwitch(updateMessage, 20);
 					
 					if(fTeamWon) fTeamPoints++;
 					else sTeamPoints++;
@@ -1357,7 +1397,7 @@ public abstract class Game{
 		
 		updateResults(false);
 		updateTwitch(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
-					 sTeamPoints + " " + match.getSecondTeam().getTeamName() + " BO" + match.getBestOf());
+					 sTeamPoints + " " + match.getSecondTeam().getTeamName() + " BO" + match.getBestOf(), 20);
 	
 		if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
 			changeMap(match.getMapPool().findTiebreaker());
@@ -1375,9 +1415,14 @@ public abstract class Game{
 			
 			if(mapUpdater != null) mapUpdater.cancel();
 			
-			updateTwitch(winningTeam + " has won this game! " + mpLink);
+			updateTwitch(winningTeam + " has won this game! " + mpLink, 20);
 			
-			match.getTournament().stopStreaming(this);
+			Timer twitchCloseDelay = new Timer();
+			twitchCloseDelay.schedule(new TimerTask(){
+				public void run(){
+					match.getTournament().stopStreaming(Game.this);
+				}
+			}, 25500);
 			
 			Timer time = new Timer();
 			time.schedule(new TimerTask(){
@@ -1385,6 +1430,7 @@ public abstract class Game{
 					stop();
 				}
 			}, 30000);
+			
 			return;
 		}else if(selectMaps){
 			contestMessage();

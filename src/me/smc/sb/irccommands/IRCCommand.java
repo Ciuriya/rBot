@@ -74,7 +74,7 @@ public abstract class IRCCommand{
 		String[] split = msg.split(" ");
 		
 		for(IRCCommand ic : commands)
-			if(ic.isName(split[0]) && me.smc.sb.perm.Permissions.hasPerm(user, ic.perm)){
+			if(ic.isName(split[0]) && (me.smc.sb.perm.Permissions.hasPerm(user, ic.perm) || Utils.isTwitch(e))){
 				if(!ic.allowsTwitch() && Utils.isTwitch(e)) continue;
 					
 				String[] args = msg.replace(split[0] + " ", "").split(" ");
@@ -143,6 +143,7 @@ public abstract class IRCCommand{
 		commands.add(new ChangeWarmupModCommand());
 		commands.add(new MPLinkCommand());
 		commands.add(new CurrentScoreCommand());
+		commands.add(new CurrentMapCommand());
 	}
 	
 	public abstract String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);

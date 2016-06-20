@@ -203,18 +203,46 @@ public class Tournament{
 	}
 	
 	public boolean startStreaming(Game game){
+		if(isStreamed(game)) return true;
+		
 		if(isChannelInUse(twitchChannel)){
-			addToTwitchQueue(game);
-			return false;
+			Game streamed = getStreamed(twitchChannel);
+			
+			if(streamed.match.getStreamPriority() >= game.match.getStreamPriority()){
+				addToTwitchQueue(game);
+				return false;
+			}else
+				streamed.match.getTournament().setCurrentlyStreamed(null);
 		}
 		
 		currentlyStreamed = game;
+		
+		String accessToken = new Configuration(new File("login.txt")).getValue("twitch-access");
+		
+		String title = name + ":+" + game.match.getFirstTeam().getTeamName() + "+vs+" + game.match.getSecondTeam().getTeamName();
+		
+		try{
+			String curl = "curl -H 'Accept: application/vnd.twitchtv.v2+json' -H 'Authorization: OAuth " + accessToken + "' " +
+				      "-d \"channel[status]=" + title.replaceAll(" ", "+") + "\" " +
+				      "-X PUT https://api.twitch.tv/kraken/channels/" + twitchChannel;
+			
+			Log.logger.log(Level.INFO, "cURL to change title: " + curl);
+			
+			Process p = Runtime.getRuntime().exec(curl);	
+			
+			p.waitFor();
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 		
 		return true;
 	}
 	
 	public void stopStreaming(Game game){
-		if(!isStreaming() || !isStreamed(game)) return;
+		if(!isStreaming() || !isStreamed(game)){
+			removeFromTwitchQueue(game);
+			return;
+		}
 		
 		currentlyStreamed = null;
 		
@@ -230,6 +258,15 @@ public class Tournament{
 				return true;
 		
 		return false;
+	}
+	
+	public static Game getStreamed(String channel){
+		for(Tournament t : tournaments)
+			if(t.getTwitchChannel().equalsIgnoreCase(channel) &&
+				t.isStreaming())
+				return t.getCurrentlyStreamed();
+		
+		return null;
 	}
 	
 	private void addToTwitchQueue(Game game){
@@ -296,6 +333,24 @@ public class Tournament{
 				return match.getFirstTeam().getTeamName() + " " + game.fTeamPoints + " | " +
 				 	   game.sTeamPoints + " " + match.getSecondTeam().getTeamName() + " BO" + 
 				 	   match.getBestOf();
+			}
+			
+		return "Unknown";
+	}
+	
+	public static String getCurrentMap(String channel){
+		String c = channel;
+		if(channel.startsWith("#")) c = channel.substring(1);
+		
+		for(Tournament t : tournaments)
+			if(t.getTwitchChannel().equalsIgnoreCase(c) &&
+				t.isStreaming()){
+				Game game = t.getCurrentlyStreamed();
+				Map map = game.map;
+				
+				if(map == null) return "No map chosen yet!";
+				
+				return "" + map.getBeatmapID();
 			}
 			
 		return "Unknown";
@@ -589,6 +644,8 @@ public class Tournament{
 				
 				if(!config.getStringList("match-" + matchNum + "-admins").isEmpty())
 					match.setMatchAdmins(config.getStringList("match-" + matchNum + "-admins"));
+				
+				match.setStreamPriority(config.getInt("match-" + matchNum + "-priority"));
 			}
 	}
 	

@@ -36,7 +36,6 @@ public class TwitchRegulator{
 						int requestNum = optRequest.get();
 						
 						new Thread(new Runnable(){
-							@SuppressWarnings("deprecation")
 							public void run(){
 								String full = requests.get(requestNum);
 								requests.remove(requestNum);
@@ -45,8 +44,7 @@ public class TwitchRegulator{
 								String message = full.replace(full.split(" ")[0] + " ", "");
 								
 								try{
-									if(!Main.twitchBot.getUserBot().getChannels().stream().anyMatch(c -> c.getName().equals(channel)))
-										Main.twitchBot.sendIRC().joinChannel(channel);
+									Main.twitchBot.sendIRC().joinChannel(channel);
 								}catch(Exception ex){
 									Log.logger.log(Level.INFO, "Could not join channel " + channel);
 								}
@@ -54,7 +52,11 @@ public class TwitchRegulator{
 								Main.twitchBot.sendIRC().message(channel, message);
 								Log.logger.log(Level.INFO, "{Twitch message sent in channel " + channel + "} " + message);
 								
-								Thread.currentThread().stop();
+								try{
+									Main.twitchBot.sendIRC().joinChannel(channel);
+								}catch(Exception ex){
+									Log.logger.log(Level.INFO, "Could not join channel " + channel);
+								}
 							}
 						}).start();
 					}

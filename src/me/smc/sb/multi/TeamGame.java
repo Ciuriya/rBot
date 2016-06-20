@@ -74,6 +74,26 @@ public class TeamGame extends Game{
 			
 			if(rSlot != -1) hijackedSlots.remove(rSlot);
 		}
+		
+		if(state.eq(GameState.PLAYING) && rematchesAllowed > 0){
+			rematchesAllowed--;
+			
+			state = GameState.WAITING;
+			mapSelected = true;
+			
+			sendMessage("!mp abort");
+			sendMessage("!mp aborttimer");
+			
+			sendMessage("Someone has disconnected, there will be a rematch!");
+			
+			updateTwitch("There was a disconnection, the match will be replayed!");
+			
+			banchoFeedback.clear();
+			switchPlaying(false, true);
+			
+			prepareReadyCheck();
+			return;
+		}
 	}
 
 	private void scheduleNextCaptainInvite(){

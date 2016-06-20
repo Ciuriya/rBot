@@ -16,6 +16,7 @@ public class CustomFilePlayer extends FilePlayer{
 	private LinkedList<String> queuedSongs;
 	private MessageReceivedEvent lastEv;
 	private String[] lastArgs;
+	private boolean isConverting;
 	
 	public CustomFilePlayer(Guild guild){
 		super();
@@ -37,12 +38,20 @@ public class CustomFilePlayer extends FilePlayer{
 		return lastArgs;
 	}
 	
+	public boolean isConverting(){
+		return isConverting;
+	}
+	
 	public void setLastEvent(MessageReceivedEvent e){
 		lastEv = e;
 	}
 	
 	public void setLastArgs(String[] args){
 		lastArgs = args;
+	}
+	
+	public void setConverting(boolean converting){
+		isConverting = converting;
 	}
 	
 	public void addLoadedSong(File file){

@@ -121,7 +121,7 @@ public class VoiceCommand extends GlobalCommand{
 		int queuedSongsSize = players.get(e.getGuild().getId()).getQueuedSongs().size();
 		
 		if(players.containsKey(e.getGuild().getId()) || (queuedSongsSize == 1 && 
-		   !players.get(e.getGuild().getId()).isPlaying())) 
+		   !players.get(e.getGuild().getId()).isPlaying() && !players.get(e.getGuild().getId()).isConverting())) 
 			startPlaying(e, args);
 		
 		players.get(e.getGuild().getId()).setLastEvent(e);
@@ -159,6 +159,8 @@ public class VoiceCommand extends GlobalCommand{
 					CustomFilePlayer player = players.get(e.getGuild().getId());
 					
 					try{
+						player.setConverting(true);
+						
 						String song = player.getQueuedSongs().getFirst();
 						player.removeQueuedSong();
 						
@@ -177,6 +179,8 @@ public class VoiceCommand extends GlobalCommand{
 						Utils.infoBypass(e.getChannel(), 
 										"Now playing **" + songName + 
 										"**\nAs requested by " + requester.getUsername());
+						
+						player.setConverting(false);
 					}catch(Exception ex){
 						Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
 						Utils.infoBypass(e.getChannel(), "Could not start playing!\n" +
