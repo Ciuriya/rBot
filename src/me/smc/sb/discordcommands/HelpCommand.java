@@ -2,7 +2,6 @@ package me.smc.sb.discordcommands;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class HelpCommand extends GlobalCommand{
@@ -21,43 +20,47 @@ public class HelpCommand extends GlobalCommand{
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		MessageBuilder msg = new MessageBuilder();
+		StringBuilder msg = new StringBuilder();
 		
     	String serverId = "-1";
     	if(!e.isPrivate()) serverId = e.getGuild().getId();
     	
     	if(args.length > 0){
-    		msg.appendString("```");
+    		msg.append("```");
+    		
     		boolean added = false;
+    		
     		for(GlobalCommand gc : GlobalCommand.commands)
     			if(gc.isName(args[0])){
     				if(!gc.canUse(e.getAuthor(), e.getChannel())) return;
-    				msg.appendString(gc.getExtendedDescription().replaceAll("\\{prefix}", Main.getCommandPrefix(serverId)));
+    				msg.append(gc.getExtendedDescription().replaceAll("\\{prefix}", Main.getCommandPrefix(serverId)));
     				added = true;
     				break;
     			}
+    		
     		if(!added)
     			if(Command.commands.containsKey(serverId) && Command.commands.get(serverId).containsKey(args[0].toLowerCase())){
     				Command cmd = Command.commands.get(serverId).get(args[0].toLowerCase());
-    				msg.appendString(Main.getCommandPrefix(serverId) + args[0].toLowerCase() + " - " + cmd.getDesc()); //add extended support here later
+    				msg.append(Main.getCommandPrefix(serverId) + args[0].toLowerCase() + " - " + cmd.getDesc()); //add extended support here later
     			}
     	}else{
-        	msg.appendString("```Use '" + Main.getCommandPrefix(serverId) + "help {command}' for specific help per command\n\nGlobal Commands\n\n");
-        	
-    		for(GlobalCommand gc : GlobalCommand.commands)
+        	msg.append("```Use '" + Main.getCommandPrefix(serverId) + "help {command}' for specific help per command\n\nGlobal Commands\n\n");
+    		
+    		for(GlobalCommand gc : GlobalCommand.commands)		
     			if(serverId.equalsIgnoreCase("-1") && !gc.allowsDm()) continue;
-    			else if(gc.canUse(e.getAuthor(), e.getChannel())) msg.appendString(Main.getCommandPrefix(serverId) + gc.getNamesDisplay() + gc.getDescription() + "\n");
+    			else if(gc.canUse(e.getAuthor(), e.getChannel())) msg.append(Main.getCommandPrefix(serverId) + gc.getNamesDisplay() + gc.getDescription() + "\n");
     		
     		if(!serverId.equalsIgnoreCase("-1")){ 
-    			msg.appendString("\n\nUser Commands\n\n");
+    			msg.append("\n\nUser Commands\n\n");
+    			
     			for(String name : Command.commands.get(serverId).keySet()){
     				String desc = Command.commands.get(serverId).get(name).getDesc();
-    				msg.appendString(Main.getCommandPrefix(serverId) + name + (desc != "" ? (" - " + desc) : "") + "\n");
+    				msg.append(Main.getCommandPrefix(serverId) + name + (desc != "" ? (" - " + desc) : "") + "\n");
     			}
     		}
     	}
     	
-		Utils.info(e.getAuthor().getPrivateChannel(), msg.appendString("```").build().getContent());
+		Utils.info(e.getAuthor().getPrivateChannel(), msg.append("```").toString());
 	}
 	
 }

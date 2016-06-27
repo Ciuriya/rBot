@@ -9,7 +9,7 @@ public class OsuAPIRegulator{
 
 	private static HashMap<Integer, APIRequest> requests;
 	private static int requestNumber = 0;
-	private static int requestsPerMinute = 30;
+	private static int requestsPerMinute = 45;
 	private Timer requestTimer;
 	
 	public OsuAPIRegulator(){

@@ -158,6 +158,8 @@ public class VoiceCommand extends GlobalCommand{
 					File audioFile = null;
 					CustomFilePlayer player = players.get(e.getGuild().getId());
 					
+					if(player.isConverting()) return;
+					
 					try{
 						player.setConverting(true);
 						
@@ -182,6 +184,7 @@ public class VoiceCommand extends GlobalCommand{
 						
 						player.setConverting(false);
 					}catch(Exception ex){
+						player.setConverting(false);
 						Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
 						Utils.infoBypass(e.getChannel(), "Could not start playing!\n" +
 								                         "Error: " + ex.getMessage());
@@ -215,8 +218,8 @@ public class VoiceCommand extends GlobalCommand{
 					return loaded;
 		
 		Process proc = Runtime.getRuntime().exec("youtube-dl --max-filesize 100m " +
-								  			     "-o /home/discordbot/Songs/" + player.getGuild().getId() + "/%(title)s~" + url.replaceAll("/", "|") + ".%(ext)s "
-								  			     + url);
+								  			     "-o /home/discordbot/Songs/" + player.getGuild().getId() + "/%(title)s~" + 
+								  			     url.replaceAll("/", "|") + ".%(ext)s " + url);
 		proc.waitFor();
 		
 		File file = findNewSong(url.replaceAll("/", "|"), player);

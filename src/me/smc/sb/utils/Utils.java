@@ -57,6 +57,7 @@ public class Utils{
 			Utils.error(e.getChannel(), e.getAuthor(), "Invalid arguments!");
 			return false;
 		}
+		
 		return true;
     }
     
@@ -64,11 +65,13 @@ public class Utils{
 		if(args.length < length){
 			return "Invalid arguments, use !help for more info!";
 		}
+		
 		return "";
     }
 	
 	public static void error(MessageChannel channel, User user, String message){
 		channel.sendMessage(new MessageBuilder().appendString(message).build());
+		
 		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(channel) + " to " + user.getUsername() + " } " + message);
 		Main.messagesSentThisSession++;
 	}
@@ -94,6 +97,7 @@ public class Utils{
 			jdaMsg = channel.sendMessage(message); 
 			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		}
+		
 		Main.messagesSentThisSession++;
 		
 		return jdaMsg;

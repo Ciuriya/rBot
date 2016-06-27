@@ -7,8 +7,6 @@ import java.util.Random;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
-import net.dv8tion.jda.entities.Message;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
@@ -50,18 +48,21 @@ public class Command{
 		Thread t = new Thread(new Runnable(){
 			@SuppressWarnings("deprecation")
 			public void run(){
-				MessageBuilder msg = new MessageBuilder();
+				StringBuilder msg = new StringBuilder();
 				String tempInstruction = instruction;
 				
 				if(delimiters > 0){
 					String message = e.getMessage().getContent();
 					String[] dels = message.split(" ");
 					String path = "cmd-" + name;
+					
 					if(dels.length < delimiters + 1){
 						Utils.error(e.getChannel(), e.getAuthor(), " Invalid arguments!");
 						return;
 					}
+					
 					for(int i = 1; i < delimiters + 1; i++) path += "|||" + dels[i];
+					
 					Configuration cfg = Main.serverConfigs.get(server);
 					tempInstruction = cfg.getValue(path);
 				}
@@ -79,19 +80,20 @@ public class Command{
 						String tag = str.split("}")[0];
 						convertTag(e, str.split("}")[0], msg, name, server);
 						
-						if(tag.startsWith("delay=")) msg = new MessageBuilder();
+						if(tag.startsWith("delay=")) msg = new StringBuilder();
 						
 						if(str.split("}").length > 1)
-							msg.appendString(str.split("}")[1]);
+							msg.append(str.split("}")[1]);
 						
-					}else msg.appendString(str);	
+					}else msg.append(str);	
 				}
 				
-				Message m = msg.build();
-				if(m.getContent().startsWith(" "))
-					m = new MessageBuilder().appendString(Utils.removeStartSpaces(m.getContent())).build();
+				String m = msg.toString();
 				
-				Utils.infoBypass(e.getChannel(), m.getContent());
+				if(m.startsWith(" "))
+					m = Utils.removeStartSpaces(m);
+				
+				Utils.infoBypass(e.getChannel(), m);
 				
 				ArrayList<Thread> sThreads = new ArrayList<Thread>();
 				if(threads.containsKey(e.getGuild().getId())) sThreads = threads.get(e.getGuild().getId());
@@ -118,7 +120,9 @@ public class Command{
 		if(delimiters > 0 && dels.length >= delimiters){
 			Configuration cfg = Main.serverConfigs.get(server);
 			String path = "cmd-" + name;
+			
 			for(int i = 0; i < delimiters; i++) path += "|||" + dels[i];
+			
 			cfg.writeValue(path, instruction);
 		}
 	}
@@ -127,13 +131,14 @@ public class Command{
 		return server;
 	}
 	
-	public static void convertTag(MessageReceivedEvent e, String tag, MessageBuilder msg, String name, String server){
+	public static void convertTag(MessageReceivedEvent e, String tag, StringBuilder msg, String name, String server){
 		switch(tag){
-			case "user": msg.appendString(e.getAuthor().getAsMention()); return;
+			case "user": msg.append(e.getAuthor().getAsMention()); return;
 			case "increment": 
 				Configuration cfg = Main.serverConfigs.get(server);
 				int incNum = cfg.getInt("cmd-" + name + "-increment") + 1;
-				msg.appendString(incNum + "");
+				
+				msg.append(incNum + "");
 				cfg.writeValue("cmd-" + name + "-increment", incNum);
 				return;
 			case "nextdel": return;
@@ -142,17 +147,18 @@ public class Command{
 		
 		if(tag.startsWith("delay=")){
 			int length = Utils.stringToInt(tag.replace("delay=", ""));
-			Utils.infoBypass(e.getChannel(), msg.build().getContent());
+			Utils.infoBypass(e.getChannel(), msg.toString());
 			
-			try{Thread.sleep(length);
+			try{
+				Thread.sleep(length);
 			}catch(Exception e1){
 				e1.printStackTrace();
 			}
 		}else if(tag.startsWith("random=")){
 			int random = new Random().nextInt(Utils.stringToInt(tag.replace("random=", "")) + 1);
-			msg.appendString(random + "");
+			msg.append(random + "");
 		}else if(tag.startsWith("mention=")){
-			msg.appendString(e.getGuild().getUsers()
+			msg.append(e.getGuild().getUsers()
 			   .stream()
 			   .filter(x -> ((User) x).getUsername().equals(tag.replace("mention=", "")))
 			   .findFirst().get().getAsMention());

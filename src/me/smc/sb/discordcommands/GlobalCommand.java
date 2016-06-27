@@ -50,8 +50,10 @@ public abstract class GlobalCommand{
 	
 	public String getNamesDisplay(){
 		String build = "";
+		
 		for(String name : names)
 			build += "/" + name;
+		
 		return build.substring(1);
 	}
 	
@@ -64,10 +66,14 @@ public abstract class GlobalCommand{
 	
 	public static boolean handleCommand(MessageReceivedEvent e, String msg){
 		String[] split = msg.split(" ");
+		
 		for(GlobalCommand gc : commands)
 			if(gc.isName(split[0]) && gc.canUse(e.getAuthor(), e.getChannel())){
+				
 				if(!gc.allowsDm() && e.isPrivate()) return true;
+				
 				Main.commandsUsedThisSession++;
+				
 				final String[] args = msg.replace(split[0] + " ", "").split(" ");
 				
 				Thread t = new Thread(new Runnable(){
@@ -96,6 +102,7 @@ public abstract class GlobalCommand{
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
 		commands.add(new MessageIRCCommand());
+		commands.add(new OsuLastTopPlays());
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
 		commands.add(new PingCommand());

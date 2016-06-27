@@ -222,13 +222,14 @@ public class Tournament{
 		String title = name + ":+" + game.match.getFirstTeam().getTeamName() + "+vs+" + game.match.getSecondTeam().getTeamName();
 		
 		try{
-			String curl = "curl -H 'Accept: application/vnd.twitchtv.v2+json' -H 'Authorization: OAuth " + accessToken + "' " +
-				      "-d \"channel[status]=" + title.replaceAll(" ", "+") + "\" " +
-				      "-X PUT https://api.twitch.tv/kraken/channels/" + twitchChannel;
-			
-			Log.logger.log(Level.INFO, "cURL to change title: " + curl);
-			
-			Process p = Runtime.getRuntime().exec(curl);	
+		    ProcessBuilder pb = new ProcessBuilder(
+		            "curl",
+		            "-H 'Accept: application/vnd.twitchtv.v2+json'",
+		            "-H 'Authorization: OAuth " + accessToken + "'",
+		            "-d \"channel[status]=" + title.replaceAll(" ", "+") + "\"",
+		            "-X PUT https://api.twitch.tv/kraken/channels/" + twitchChannel);
+		    
+		    Process p = pb.start();
 			
 			p.waitFor();
 		}catch(Exception e){

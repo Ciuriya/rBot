@@ -21,7 +21,6 @@ import me.smc.sb.multi.Map;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.MessageHistory;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.Message;
@@ -34,6 +33,7 @@ public class OsuTrackCommand extends GlobalCommand{
 	private static HashMap<String, String> lastUpdated;
 	private static HashMap<String, String> lastUpdateMessageSent;
 	private static HashMap<String, Thread> usersUpdating;
+	private static HashMap<String, HashMap<String, String>> lastPlayerUpdates;
 	private static ArrayList<Thread> allRunningThreads;
 	private static int requestsPerMinute = 60;
 	private static double currentRefreshRate = 0;
@@ -47,10 +47,12 @@ public class OsuTrackCommand extends GlobalCommand{
 		      "----------\nAliases\n----------\nThere are no aliases.", 
 			  false, 
 			  "osutrack");
+		
 		trackedPlayers = new HashMap<>();
 		lastUpdated = new HashMap<>();
 		lastUpdateMessageSent = new HashMap<>();
 		usersUpdating = new HashMap<>();
+		lastPlayerUpdates = new HashMap<>();
 		allRunningThreads = new ArrayList<>();
 		
 		loadTrackedPlayers();
@@ -64,22 +66,33 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		String user = "", mUser = "";
 		String mode = "0";
+		boolean ext = false;
+		
 		for(int i = 0; i < args.length; i++)
-			if(args[i].contains("{mode=")){
+			if(args[i].contains("{mode="))
 				mode = args[i].split("\\{mode=")[1].split("}")[0];
-			}else user += " " + args[i];
+			else if(args[i].contains("{ext}")) ext = true;
+			else user += " " + args[i];
+			
+		
 		user = user.substring(1);
 		mUser = user + "&m=" + mode;
 		
 		if(isTracked(e.getGuild().getId(), mUser)){
 			stopTracking(e.getGuild().getId(), mUser);
+			
 			Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-update-group", e.getTextChannel().getId());
+			Main.serverConfigs.get(e.getGuild().getId()).deleteKey(mUser + "-update-group");
+			
 			Utils.info(e.getChannel(), "Stopped tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
 			return;
 		}
 		
 		startTracking(e.getGuild().getId(), mUser);
-		Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-update-group", e.getTextChannel().getId());
+		
+		if(!ext) Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-update-group", e.getTextChannel().getId());
+		else Main.serverConfigs.get(e.getGuild().getId()).writeValue(mUser + "-update-group", e.getTextChannel().getId());
+		
 		Utils.info(e.getChannel(), "Started tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
 	}
 	
@@ -112,7 +125,6 @@ public class OsuTrackCommand extends GlobalCommand{
 					
 					ArrayList<String> updatedUsers = new ArrayList<>();
 				
-					lastUpdateMessageSent.clear();
 					usersUpdating.clear();
 					
 					if(!allRunningThreads.isEmpty())
@@ -129,12 +141,15 @@ public class OsuTrackCommand extends GlobalCommand{
 								if(players.isEmpty()) continue;
 								
 								TextChannel channel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue("track-update-group"));
+								
 								Thread t = new Thread(new Runnable(){
 									public void run(){
 										for(String player : new ArrayList<String>(players)){
 											boolean skip = false;
 											
 											if(!updatedUsers.contains(player)){
+												lastUpdateMessageSent.remove(player);
+												
 												if(!usersUpdating.containsKey(player)) updateUser(player);
 												
 												try{
@@ -149,14 +164,20 @@ public class OsuTrackCommand extends GlobalCommand{
 											if(lastUpdateMessageSent.containsKey(player)) msg = lastUpdateMessageSent.get(player);
 											
 											synchronized(server){
-												if(msg != "" && copied.get(server).contains(player)){
+												if(msg != "" && copied.get(server).contains(player) && 
+													!getLastPlayerUpdate(player, server).equals(lastUpdated.get(player))){
 													String spacing = "\n\n\n\n\n";
 													MessageHistory history = new MessageHistory(channel);
 													Message last = history == null ? null : history.retrieve(1).get(0);
 													
 													if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
+													setLastPlayerUpdate(player, server);
 													
-													Utils.info(channel, spacing + msg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~"));
+													TextChannel fChannel = channel;
+													if(!Main.serverConfigs.get(server).getValue(player + "-update-group").equals(""))
+														fChannel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue(player + "-update-group"));
+													
+													Utils.info(fChannel, spacing + msg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~"));
 												}	
 												
 												players.remove(player);
@@ -250,9 +271,9 @@ public class OsuTrackCommand extends GlobalCommand{
 					return;
 				}
 				
-				MessageBuilder builder = new MessageBuilder();
+				StringBuilder builder = new StringBuilder();
 				
-				builder.appendString("—————————————————\nMost recent plays for " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
+				builder.append("—————————————————\nMost recent plays for " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
 				
 				post = "[" + post + "]";
 				
@@ -275,22 +296,22 @@ public class OsuTrackCommand extends GlobalCommand{
 							        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
 							        "\n" + (mode.equals("2") ? "" : Utils.df(getAccuracy(obj)) + "% | ") + 
 							        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC") +
-							        " | " + obj.getString("rank") + " rank\n" + (mode.equals("2") ? "" : (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
+							        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + (mode.equals("2") ? "" : (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
 							        (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "")) + (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "") +
 							        "\nMap: http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + " | Status: " + 
 							        analyzeMapStatus(map.getInt("approved")) + "\nPlayer: http://osu.ppy.sh/u/" + obj.getInt("user_id");
 							
 							completeMessage = true;
-							builder.appendString(play);
+							builder.append(play);
 						}
 					}
 				}
 				
-				builder.appendString("\n");
+				builder.append("\n");
 				
 				//error
 				
-				if(completeMessage) lastUpdateMessageSent.put(player, builder.build().getStrippedContent());
+				if(completeMessage) lastUpdateMessageSent.put(player, builder.toString());
 				
 				lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
 				
@@ -305,7 +326,26 @@ public class OsuTrackCommand extends GlobalCommand{
 		t.start();
 	}
 	
-	private String analyzeMapStatus(int code){
+	private String getLastPlayerUpdate(String player, String server){
+		HashMap<String, String> servers = new HashMap<>();
+		
+		if(lastPlayerUpdates.containsKey(player)) servers = lastPlayerUpdates.get(player);
+		
+		if(!servers.containsKey(server)) return "2000-01-01 00:00:00";
+		
+		return servers.get(server);
+	}
+	
+	private void setLastPlayerUpdate(String player, String server){
+		HashMap<String, String> servers = new HashMap<>();
+		
+		if(lastPlayerUpdates.containsKey(player)) servers = lastPlayerUpdates.get(player);
+		
+		servers.put(server, lastUpdated.get(player));
+		lastPlayerUpdates.put(player, servers);
+	}
+	
+	public static String analyzeMapStatus(int code){
 		switch(code){
 			case -2: return "Graveyard";
 			case -1: return "WIP";
@@ -317,7 +357,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		}
 	}
 	
-	private String convertMode(int mode){
+	public static String convertMode(int mode){
 		switch(mode){
 			case 0: return "Standard";
 			case 1: return "Taiko";
@@ -327,19 +367,20 @@ public class OsuTrackCommand extends GlobalCommand{
 		}
 	}
 	
-	private double getAccuracy(JSONObject play){
+	public static double getAccuracy(JSONObject play){
 		double acc = play.getInt("count300") * 300 + play.getInt("count100") * 100 + play.getInt("count50") * 50;
 		return (acc / ((play.getInt("count300") + play.getInt("count100") + play.getInt("count50") + play.getInt("countmiss")) * 300)) * 100;
 	}
 	
-	private String osuDateToCurrentDate(String sDate){
+	public static String osuDateToCurrentDate(String sDate){
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		formatter.setTimeZone(TimeZone.getTimeZone("Asia/Singapore"));
 		
 		Date date = null;
+		
 		try{
 			date = formatter.parse(sDate);
-		}catch (ParseException e){
+		}catch(ParseException e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 		
@@ -347,7 +388,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		return formatter.format(date);
 	}
 	
-	private boolean dateGreaterThanDate(String date, String date1){
+	public static boolean dateGreaterThanDate(String date, String date1){
 		int year = Utils.stringToInt(date.split("-")[0]), year1 = Utils.stringToInt(date1.split("-")[0]);
 		
 		if(year > year1) return true;
@@ -461,6 +502,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			String display = "";
 			int used = modsUsed;
 			List<Mods> mods = new ArrayList<>();
+			
 			for(int i = 16384; i >= 1; i /= 2){
 				Mods mod = Mods.getMod(i);
 				if(used >= i){
@@ -471,6 +513,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			
 			if(mods.contains(Mods.None)) mods.remove(Mods.None);
 			if(mods.contains(Mods.Nightcore)) mods.remove(Mods.DoubleTime);
+			if(mods.contains(Mods.Perfect)) mods.remove(Mods.SuddenDeath);
 			
 			for(Mods mod : mods)
 				display = mod.getShortName() + display;

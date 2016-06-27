@@ -7,7 +7,6 @@ import org.json.JSONObject;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class OsuStatsCommand extends GlobalCommand{
@@ -49,7 +48,7 @@ public class OsuStatsCommand extends GlobalCommand{
 		
 		Thread t = new Thread(new Runnable(){
 			public void run(){
-				MessageBuilder builder = new MessageBuilder();
+				StringBuilder builder = new StringBuilder();
 				String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + finalUser + 
 	                     																	"&m=" + finalMode + "&type=string&event_days=1");
 				if(post == "" || !post.contains("{")) return;
@@ -65,22 +64,22 @@ public class OsuStatsCommand extends GlobalCommand{
 						               			  jsonResponse.getInt("count50")) 
 						   						  * 300.0)) * 100.0;
 				
-				builder.appendString("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
-				       .appendString("\n\nFrom " + jsonResponse.getString("country"))
-				       .appendString("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + 
+				builder.append("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
+				       .append("\n\nFrom " + jsonResponse.getString("country"))
+				       .append("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + 
 				    		   		 " Country #" + Utils.veryLongNumberDisplay(getCountryRank(userId, finalMode)))
-				       .appendString("\n" + jsonResponse.getDouble("pp_raw") + "pp")
-				       .appendString("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + 
+				       .append("\n" + jsonResponse.getDouble("pp_raw") + "pp")
+				       .append("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + 
 				    		   		 Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
-				       .appendString("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + 
+				       .append("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + 
 				    		   		 " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
-				       .appendString("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
-				       .appendString(finalMode.equals("2") ? "" : "\n" + totalAcc + "% total accuracy")
-				       .appendString("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + 
+				       .append("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
+				       .append(finalMode.equals("2") ? "" : "\n" + totalAcc + "% total accuracy")
+				       .append("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + 
 				    		   		 jsonResponse.getInt("count_rank_s") + " S) (" + 
 				    		   		 jsonResponse.getInt("count_rank_a") + " A)")
-				       .appendString("```");
-				Utils.infoBypass(e.getChannel(), builder.build().getContent());
+				       .append("```");
+				Utils.infoBypass(e.getChannel(), builder.toString());
 			}
 		});
 		

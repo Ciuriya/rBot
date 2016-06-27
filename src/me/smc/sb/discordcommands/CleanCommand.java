@@ -1,10 +1,9 @@
 package me.smc.sb.discordcommands;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import me.smc.sb.perm.Permissions;
-import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.MessageHistory;
 import net.dv8tion.jda.entities.Message;
@@ -50,29 +49,27 @@ public class CleanCommand extends GlobalCommand{
 		int cleared = 0;
 		
 		List<Message> messageList = history.retrieve(100);	
+		List<Message> toDelete = new ArrayList<>();
 		
-		try{ //it shouldn't throw errors, but in case of null or something similar
-			while(cleared < amount && messageList.size() > 0){
-				Message message = messageList.get(0);
+		while(cleared < amount && messageList.size() > 0){
+			Message message = messageList.get(0);
+			
+			messageList.remove(0);
+			
+			if((cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getId())) || cleanUser == null){
+				cleared++;
 				
-				messageList.remove(0);
-				
-				if(cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getId())){
+				if(e.getChannel() instanceof PrivateChannel){
 					message.deleteMessage();
-					cleared++;
 					Utils.sleep(350);
-				}else if(cleanUser == null){
-					message.deleteMessage();
-					cleared++;
-					Utils.sleep(350);
-				}
-				
-				if(messageList.size() == 0 && cleared < amount)
-					messageList = history.retrieve(100);
+				}else toDelete.add(message);
 			}
-		}catch(Exception ex){
-			Log.logger.log(Level.SEVERE, ex.getMessage(), ex);
+			
+			if(messageList.size() == 0 && cleared < amount)
+				messageList = history.retrieve(100);
 		}
+		
+		if(!toDelete.isEmpty()) e.getTextChannel().deleteMessages(toDelete);
 		
 		Utils.info(e.getChannel(), "Cleared " + cleared + " messages!");
 	}
