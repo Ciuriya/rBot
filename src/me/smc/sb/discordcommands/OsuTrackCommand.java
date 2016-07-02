@@ -1,6 +1,14 @@
 package me.smc.sb.discordcommands;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -12,9 +20,12 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Map;
@@ -38,6 +49,7 @@ public class OsuTrackCommand extends GlobalCommand{
 	private static int requestsPerMinute = 60;
 	private static double currentRefreshRate = 0;
 	private static Timer update, refresh;
+	public static String tillerinoKey;
 	
 	public OsuTrackCommand(){
 		super(null, 
@@ -54,6 +66,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		usersUpdating = new HashMap<>();
 		lastPlayerUpdates = new HashMap<>();
 		allRunningThreads = new ArrayList<>();
+		tillerinoKey = new Configuration(new File("login.txt")).getValue("tillerinoKey");
 		
 		loadTrackedPlayers();
 		calculateRefreshRate();
@@ -119,12 +132,12 @@ public class OsuTrackCommand extends GlobalCommand{
 					
 					refresh = new Timer();
 					int delay = Math.abs((int) (currentRefreshRate / (double) trackedUsersWithoutDuplicates()));
-					
+
 					final HashMap<String, ArrayList<String>> copied = new HashMap<>();
 					copied.putAll(trackedPlayers);
 					
 					ArrayList<String> updatedUsers = new ArrayList<>();
-				
+					
 					usersUpdating.clear();
 					
 					if(!allRunningThreads.isEmpty())
@@ -144,12 +157,8 @@ public class OsuTrackCommand extends GlobalCommand{
 								
 								Thread t = new Thread(new Runnable(){
 									public void run(){
-										for(String player : new ArrayList<String>(players)){
-											boolean skip = false;
-											
+										for(String player : new ArrayList<String>(players)){										
 											if(!updatedUsers.contains(player)){
-												lastUpdateMessageSent.remove(player);
-												
 												if(!usersUpdating.containsKey(player)) updateUser(player);
 												
 												try{
@@ -157,15 +166,14 @@ public class OsuTrackCommand extends GlobalCommand{
 												}catch (InterruptedException e){
 													Log.logger.log(Level.SEVERE, e.getMessage(), e);
 												}
-											}else skip = true;
+											}
 											
 											String msg = "";
 											
 											if(lastUpdateMessageSent.containsKey(player)) msg = lastUpdateMessageSent.get(player);
 											
 											synchronized(server){
-												if(msg != "" && copied.get(server).contains(player) && 
-													!getLastPlayerUpdate(player, server).equals(lastUpdated.get(player))){
+												if(msg != "" && !getLastPlayerUpdate(player, server).equals(lastUpdated.get(player))){
 													String spacing = "\n\n\n\n\n";
 													MessageHistory history = new MessageHistory(channel);
 													Message last = history == null ? null : history.retrieve(1).get(0);
@@ -185,7 +193,7 @@ public class OsuTrackCommand extends GlobalCommand{
 												copied.put(server, players);
 											}
 											
-											if(!skip) break;
+											break;
 										}
 										
 										if(players.isEmpty())
@@ -217,7 +225,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			public void run(){
 				String mode = player.split("&m=")[1];
 				String user = player.split("&m=")[0];
-				String lastUpdate = "2000-01-01 00:00:00";
+				String lastUpdate = "2000-01-01 00:00:01";
 				int limit = 50;
 				
 				if(lastUpdated.containsKey(player)) lastUpdate = lastUpdated.get(player);
@@ -232,7 +240,6 @@ public class OsuTrackCommand extends GlobalCommand{
 				String[] pageHistory = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-history.php?u=" + Utils.getOsuPlayerId(user) + "&m=" + mode);
 				
 				if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):")){
-					lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
 					usersUpdating.remove(player);
 					allRunningThreads.remove(Thread.currentThread());
 					Thread.currentThread().stop();
@@ -253,7 +260,6 @@ public class OsuTrackCommand extends GlobalCommand{
 				}
 				
 				if(!valid){
-					lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
 					usersUpdating.remove(player);
 					allRunningThreads.remove(Thread.currentThread());
 					Thread.currentThread().stop();
@@ -264,7 +270,6 @@ public class OsuTrackCommand extends GlobalCommand{
 						                                         "&u=" + user + "&m=" + mode + "&limit=" + limit + "&type=string&event_days=1");
 				
 				if(post == "" || !post.contains("{")){
-					lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
 					usersUpdating.remove(player);
 					allRunningThreads.remove(Thread.currentThread());
 					Thread.currentThread().stop();
@@ -291,6 +296,21 @@ public class OsuTrackCommand extends GlobalCommand{
 							if(obj.getString("rank").equalsIgnoreCase("F")) continue;
 							JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), false);
 							
+							//String pp = Utils.df(fetchPPForAcc(obj.getInt("beatmap_id"), Utils.df(getAccuracy(obj)), obj.getInt("enabled_mods")), 2);
+							String pp = "";
+							
+							if(mode.equals("0")){
+								int combo = 0;
+								if(obj.getInt("perfect") == 0) combo = obj.getInt("maxcombo");
+								
+								pp = Utils.df(fetchPPFromOppai(obj.getInt("beatmap_id"), 
+																	  map.getInt("beatmapset_id"), 
+																	  Utils.df(getAccuracy(obj)),
+																	  combo,
+																	  Mods.getMods(obj.getInt("enabled_mods")), 
+																	  obj.getInt("countmiss")), 2);	
+							}
+							
 							play += "\n\n" + osuDate + " UTC\n";
 							play += map.getString("artist") + " - " + map.getString("title") + " [" +
 							        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
@@ -298,8 +318,9 @@ public class OsuTrackCommand extends GlobalCommand{
 							        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC") +
 							        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + (mode.equals("2") ? "" : (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
 							        (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "")) + (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "") +
-							        "\nMap: http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + " | Status: " + 
-							        analyzeMapStatus(map.getInt("approved")) + "\nPlayer: http://osu.ppy.sh/u/" + obj.getInt("user_id");
+							        (mode.equals("0") ? "\n**~" + pp + "pp**" : "") + "\n\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> | Status: " + 
+							        analyzeMapStatus(map.getInt("approved")) + "\nPlayer: <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\n" +
+							        "BG: http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
 							
 							completeMessage = true;
 							builder.append(play);
@@ -309,12 +330,9 @@ public class OsuTrackCommand extends GlobalCommand{
 				
 				builder.append("\n");
 				
-				//error
-				
 				if(completeMessage) lastUpdateMessageSent.put(player, builder.toString());
 				
 				lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
-				
 				usersUpdating.remove(player);
 				allRunningThreads.remove(Thread.currentThread());
 				Thread.currentThread().stop();
@@ -324,6 +342,213 @@ public class OsuTrackCommand extends GlobalCommand{
 		allRunningThreads.add(t);
 		usersUpdating.put(player, t);
 		t.start();
+	}
+	
+	private double fetchPPFromOppai(int beatmapId, int setId, double accuracy, int combo, String mods, int misses){
+		Utils.Login.osu();
+		File osuFile = fetchOsuFile(beatmapId, setId);
+		
+		if(osuFile == null) return 0.0;
+		
+		osuFile.renameTo(new File(beatmapId + ".osu"));
+		
+		osuFile = new File(beatmapId + ".osu");
+		
+		String command = "./oppai " + osuFile.getName() + (accuracy == 100 ? "" : " " + accuracy + "%") +
+						 (mods.length() != 0 ? " " + mods : "") +
+						 (combo == 0 ? "" : " " + combo + "x") +
+						 (misses == 0 ? "" : " " + misses + "m");
+		
+		try{
+			Process p = Runtime.getRuntime().exec(command);
+			
+			BufferedReader pIn = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			
+			String s = null;
+			String t = null;
+			
+			while((t = pIn.readLine()) != null)
+				if(t != null) s = t;
+			
+			if(s == null) throw new Exception("string is null");
+			
+			osuFile.delete();
+			
+			double pp = Utils.stringToDouble(s.split("pp")[0]);
+			return pp;
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			osuFile.delete();
+			
+			return 0.0;
+		}
+	}
+	
+	private File fetchOsuFile(int beatmapId, int setId){
+		String[] html = Utils.getHTMLCode("https://osu.ppy.sh/b/" + beatmapId);
+
+		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "beatmapTab active");
+		if(line.isEmpty()) return null;
+
+		String diffName = Jsoup.parse(line.get(0).split("<span>")[1].split("</span>")[0]).text();
+		
+		String url = "https://osu.ppy.sh/d/" + setId + "n";
+		
+		url = Utils.getFinalURL(url);
+		
+		URLConnection connection = establishConnection(url);
+		boolean bloodcat = false;
+		
+		if(connection.getContentLength() <= 100){
+			connection = establishConnection("http://bloodcat.com/osu/b/" + beatmapId);
+			bloodcat = true;
+		}
+		
+		File file = null;
+		
+        try{
+			InputStream in = connection.getInputStream();
+			FileOutputStream out = new FileOutputStream((bloodcat ? beatmapId + ".osu" : setId + ".zip"));
+			
+	        byte[] b = new byte[1024];
+	        int count;
+	        
+	        while((count = in.read(b)) >= 0)
+	        	out.write(b, 0, count);
+	        
+			in.close();
+			out.close();
+			
+			file = new File((bloodcat ? beatmapId + ".osu" : setId + ".zip"));
+			
+			if(bloodcat && file != null) return file;
+			if(file == null) return null;
+			
+			ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
+			ZipEntry entry = zis.getNextEntry();
+			File finalFile = null;
+			
+			while(entry != null){
+				if(entry.getName().endsWith(".osu")){
+					BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(entry.getName()));
+					
+					byte[] buffer = new byte[4096];
+					int read = 0;
+					
+					while((read = zis.read(buffer)) >= 0)
+						bos.write(buffer, 0, read);
+					
+					bos.close();  
+					
+					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(entry.getName()), "UTF-8"));
+					
+					String l = br.readLine();
+					boolean found = false;
+					
+					while(l != null){
+						if(l.startsWith("Version:") && l.replaceFirst("Version:", "").equalsIgnoreCase(diffName)){
+							found = true;
+							break;
+						}
+						
+						l = br.readLine();
+					}
+					
+					br.close();
+					
+					if(found){
+						zis.closeEntry();
+						zis.close();
+						
+						finalFile = new File(entry.getName());
+						break;
+					}
+					
+					new File(entry.getName()).delete();
+				}
+				
+				zis.closeEntry();
+				entry = zis.getNextEntry();
+			}
+			
+			zis.close();
+			file.delete();
+			
+			return finalFile;
+        }catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			if(file != null && file.exists()) file.delete();
+			
+			return null;
+		}
+	}
+	
+	private URLConnection establishConnection(String url){
+		URLConnection connection = null;
+		
+		try{
+			connection = new URL(url).openConnection();
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+		
+        connection.setDoOutput(true);
+        connection.setDoInput(true);
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+        connection.setRequestProperty("content-type", "binary/data");
+        return connection;
+	}
+	
+	//tillerino temp support
+	private double fetchPPForAcc(int beatmapId, double accuracy, int mods){
+		String post = Utils.sendPost("http://bot.tillerino.org:1666/beatmapinfo", "?k=" + tillerinoKey + "&wait=2000&beatmapid=" + beatmapId + "&mods=" + mods, "", true);
+
+		if(post == "") return 0.0;
+		try{
+			JSONObject response = new JSONObject("{" + post + "}");
+			JSONObject ppForAcc = response.getJSONObject("ppForAcc");
+			JSONArray entry = ppForAcc.getJSONArray("entry");
+			
+			HashMap<Double, Double> accuracyMap = new HashMap<Double, Double>();
+			
+			accuracyMap.put(1.0, entry.getJSONObject(13).getDouble("value"));
+			accuracyMap.put(0.995, entry.getJSONObject(12).getDouble("value"));
+			accuracyMap.put(0.99, entry.getJSONObject(11).getDouble("value"));
+			accuracyMap.put(0.985, entry.getJSONObject(10).getDouble("value"));
+			accuracyMap.put(0.98, entry.getJSONObject(9).getDouble("value"));
+			accuracyMap.put(0.975, entry.getJSONObject(8).getDouble("value"));
+			accuracyMap.put(0.97, entry.getJSONObject(7).getDouble("value"));
+			accuracyMap.put(0.96, entry.getJSONObject(6).getDouble("value"));
+			accuracyMap.put(0.95, entry.getJSONObject(5).getDouble("value"));
+			accuracyMap.put(0.93, entry.getJSONObject(4).getDouble("value"));
+			accuracyMap.put(0.9, entry.getJSONObject(3).getDouble("value"));
+			accuracyMap.put(0.85, entry.getJSONObject(2).getDouble("value"));
+			accuracyMap.put(0.8, entry.getJSONObject(1).getDouble("value"));
+			accuracyMap.put(0.75, entry.getJSONObject(0).getDouble("value"));
+			
+			return accuracyMap.get(roundToNearestExistingAcc(accuracy) / 100);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			return 0.0;
+		}
+	}
+	
+	//tillerino temp support
+	private static double roundToNearestExistingAcc(double acc){
+		if(acc >= 99.75) return 100;
+		else if(acc >= 99.25 && acc < 99.75) return 99.5;
+		else if(acc >= 98.75 && acc < 99.25) return 99;
+		else if(acc >= 98.25 && acc < 98.75) return 98.5;
+		else if(acc >= 97.75 && acc < 98.25) return 98;
+		else if(acc >= 97.25 && acc < 97.75) return 97.5;
+		else if(acc >= 96.5 && acc < 97.25) return 97;
+		else if(acc >= 95.5 && acc < 96.5) return 96;
+		else if(acc >= 94 && acc < 95.5) return 95;
+		else if(acc >= 91.5 && acc < 94) return 93;
+		else if(acc >= 87.5 && acc < 91.5) return 90;
+		else if(acc >= 82.5 && acc < 87.5) return 85;
+		else if(acc >= 77.5 && acc < 82.5) return 80;
+		else return 75;
 	}
 	
 	private String getLastPlayerUpdate(String player, String server){
@@ -443,22 +668,36 @@ public class OsuTrackCommand extends GlobalCommand{
 	
 	private int trackedUsersWithoutDuplicates(){
 		ArrayList<String> scanned = new ArrayList<>();
+		
 		for(String server : trackedPlayers.keySet())
 			for(String player : trackedPlayers.get(server))
 				if(!scanned.contains(player))
 					scanned.add(player);
+		
 		return scanned.size();
 	}
 	
 	private boolean isTracked(String server, String player){
-		return trackedPlayers.get(server).contains(player);
+		for(String pl : trackedPlayers.get(server))
+			if(pl.equalsIgnoreCase(player))
+				return true;
+		
+		return false;
 	}
 	
 	private void startTracking(String server, String player){
 		loadTrackedPlayers();
 		
 		ArrayList<String> list = trackedPlayers.get(server);
-		if(!list.contains(player)) list.add(player);
+		
+		boolean contained = false;
+		
+		for(String pl : list)
+			if(pl.equalsIgnoreCase(player))
+				contained = true;
+		
+		if(!contained) list.add(player);
+		
 		Main.serverConfigs.get(server).writeStringList("tracked-players", list, true);
 		
 		loadTrackedPlayers();
@@ -469,7 +708,11 @@ public class OsuTrackCommand extends GlobalCommand{
 		loadTrackedPlayers();
 		
 		ArrayList<String> list = trackedPlayers.get(server);
-		if(list.contains(player)) list.remove(player);
+		
+		for(String pl : new ArrayList<>(list))
+			if(pl.equalsIgnoreCase(player))
+				list.remove(pl);
+
 		Main.serverConfigs.get(server).writeStringList("tracked-players", list, true);
 		
 		loadTrackedPlayers();
@@ -499,6 +742,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		public static String getMods(int modsUsed){
 			if(modsUsed == 0) return "";
+			
 			String display = "";
 			int used = modsUsed;
 			List<Mods> mods = new ArrayList<>();

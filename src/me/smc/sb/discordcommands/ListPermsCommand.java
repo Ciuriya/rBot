@@ -2,7 +2,6 @@ package me.smc.sb.discordcommands;
 
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
@@ -28,9 +27,9 @@ public class ListPermsCommand extends GlobalCommand{
 			user += " " + arg;
 		user = user.substring(1);
 		
-		MessageBuilder builder = new MessageBuilder();
+		StringBuilder builder = new StringBuilder();
 		
-		builder.appendString("```Permissions for " + user + "\n");
+		builder.append("```Permissions for " + user + "\n");
 		
 		User u = null;
 		for(User gUser : e.getGuild().getUsers())
@@ -46,11 +45,11 @@ public class ListPermsCommand extends GlobalCommand{
 		
 		for(Permissions perm : Permissions.values()){
 			boolean allowed = e.isPrivate() ? Permissions.check(u, perm) : Permissions.hasPerm(u, e.getTextChannel(), perm);
-			builder.appendString(perm.name() + " (" + allowed + ")\n");
+			builder.append(perm.name() + " (" + allowed + ")\n");
 		}
 		
-		builder.appendString("```");
-		Utils.infoBypass(e.getChannel(), builder.build().getContent());
+		builder.append("```");
+		Utils.infoBypass(e.getChannel(), builder.toString());
 	}
 
 }

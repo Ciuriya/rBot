@@ -3,7 +3,6 @@ package me.smc.sb.discordcommands;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.OnlineStatus;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.User;
@@ -38,17 +37,17 @@ public class StatsCommand extends GlobalCommand{
 			}
 		}
 		
-		MessageBuilder builder = new MessageBuilder();
+		StringBuilder builder = new StringBuilder();
 		
 		long uptime = System.currentTimeMillis() - Main.bootTime;
-		builder.appendString("```Connected to " + servers + " servers!\n") 
-			   .appendString("There are " + users + " total users (" + connected + " connected) in those servers!\n")
-			   .appendString("Uptime: " + Utils.toDuration(uptime) + "\n")
-			   .appendString("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
-			   .appendString("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
-			   .appendString("Commands used since startup: " + Main.commandsUsedThisSession + "```");
+		builder.append("```Connected to " + servers + " servers!\n") 
+			   .append("There are " + users + " total users (" + connected + " connected) in those servers!\n")
+			   .append("Uptime: " + Utils.toDuration(uptime) + "\n")
+			   .append("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
+			   .append("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
+			   .append("Commands used since startup: " + Main.commandsUsedThisSession + "```");
 		
-		Utils.infoBypass(e.getChannel(), builder.build().getContent());
+		Utils.infoBypass(e.getChannel(), builder.toString());
 	}
 
 }

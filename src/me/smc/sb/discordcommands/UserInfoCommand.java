@@ -1,7 +1,6 @@
 package me.smc.sb.discordcommands;
 
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageBuilder;
 import net.dv8tion.jda.entities.Role;
 import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
@@ -40,15 +39,15 @@ public class UserInfoCommand extends GlobalCommand{
 		for(Role r : e.getGuild().getRolesForUser(gUser)) roles += " - " + r.getName();
 		roles = roles.substring(3);
 		
-		MessageBuilder builder = new MessageBuilder();
-		builder.appendString("```User info for " + user + "\n")
-			   .appendString("User status: " + gUser.getOnlineStatus().name().toLowerCase() + "\n")
-			   .appendString("Playing (" + gUser.getCurrentGame() + ")\n")
-		       .appendString("User id: " + gUser.getId() + "\n")
-		       .appendString("Discriminator: " + gUser.getDiscriminator() + "\n")
-		       .appendString("Roles: " + roles + "\n")
-		       .appendString("Avatar: " + gUser.getAvatarUrl() + "```");
-		Utils.infoBypass(e.getChannel(), builder.build().getContent());
+		StringBuilder builder = new StringBuilder();
+		builder.append("```User info for " + user + "\n")
+			   .append("User status: " + gUser.getOnlineStatus().name().toLowerCase() + "\n")
+			   .append("Playing (" + gUser.getCurrentGame() + ")\n")
+		       .append("User id: " + gUser.getId() + "\n")
+		       .append("Discriminator: " + gUser.getDiscriminator() + "\n")
+		       .append("Roles: " + roles + "\n")
+		       .append("Avatar: " + gUser.getAvatarUrl() + "```");
+		Utils.infoBypass(e.getChannel(), builder.toString());
 	}
 
 }

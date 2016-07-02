@@ -96,6 +96,7 @@ public abstract class GlobalCommand{
 		commands.add(new CleanCommand());
 		commands.add(new EditCmdCommand());
 		commands.add(new ExecIRCCommand());
+		commands.add(new ExecProcessCommand());
 		commands.add(new HaltCommand());
 		commands.add(new HelpCommand());
 		commands.add(new IdToUserCommand());
