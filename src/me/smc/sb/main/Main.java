@@ -45,9 +45,10 @@ public class Main{
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
 	public static Server server;
-	public static Connection sqlConnection;
+	public static Connection tourneySQL, rpgSQL;
 	public static OsuAPIRegulator osuRequestManager;
 	public static TwitchRegulator twitchRegulator;
+	public static String defaultPrefix = "~/";
 	
 	public static void main(String[] args){
 		new Main();
@@ -153,12 +154,14 @@ public class Main{
 	}
 	
 	private void setupSQL(){
-		String url = "jdbc:mysql://localhost/Tournament_DB";
+		String tUrl = "jdbc:mysql://localhost/Tournament_DB";
+		String rUrl = "jdbc:mysql://localhost/DRPG";
 		String pass = new Configuration(new File("login.txt")).getValue("rootPass");
 		
 		try{
 			Class.forName("com.mysql.jdbc.Driver");
-			sqlConnection = DriverManager.getConnection(url, "root", pass);
+			tourneySQL = DriverManager.getConnection(tUrl, "root", pass);
+			rpgSQL = DriverManager.getConnection(rUrl, "root", pass);
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
@@ -172,9 +175,11 @@ public class Main{
 	}
 	
 	public static String getCommandPrefix(String server){
- 		if(!Main.serverConfigs.containsKey(server)) return "~/";
+ 		if(!Main.serverConfigs.containsKey(server)) return defaultPrefix;
+ 		
  		String prefix = Main.serverConfigs.get(server).getValue("command-prefix");
-		if(prefix == "") return "~/";
+ 		
+		if(prefix == "") return defaultPrefix;
 		else return prefix;
 	}
 	

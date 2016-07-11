@@ -114,7 +114,7 @@ public class MapPool{
 	public void saveSQL(boolean add){
 		try{
 			if(add){
-				new JdbcSession(Main.sqlConnection)
+				new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO MapPool (sheet_url, id_tournament)" +
 				     "VALUES (?, ?)")
 				.set(sheetUrl)

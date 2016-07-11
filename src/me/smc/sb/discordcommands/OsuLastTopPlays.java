@@ -109,6 +109,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 		
 		if(mostRecentPlays.size() > 0){
 			int size = mostRecentPlays.size();
+			
 			for(int i = 0; i < size; i++){
 				String date = getMostRecentDate(mostRecentPlays.keySet());
 				JSONObject obj = mostRecentPlays.get(date);
@@ -117,14 +118,15 @@ public class OsuLastTopPlays extends GlobalCommand{
 				
 				mostRecentPlays.remove(date);
 				
+				String hits = OsuTrackCommand.fetchHitText(Utils.stringToInt(mode), obj);
+				
 				play += "**" + getTimeDifference(date) + "** | **" + Utils.df(obj.getDouble("pp"), 2) + "pp**\n" + 
 						map.getString("artist") + " - " + map.getString("title") + " [" +
 				        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-				        "\n" + (mode.equals("2") ? "" : Utils.df(OsuTrackCommand.getAccuracy(obj)) + "% | ") + 
+				        "\n" + Utils.df(OsuTrackCommand.getAccuracy(obj, Utils.stringToInt(mode))) + "% | " + 
 				        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC") +
-				        " | " + obj.getString("rank").replace("X", "SS") + " rank | " + (mode.equals("2") ? "" : (obj.getInt("count100") > 0 ? obj.getInt("count100") + 
-				        "x100 " : "") + (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "")) + 
-				        (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "") + "\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + ">\n\n";
+				        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + hits + 
+				        "\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + ">\n\n";
 				
 				if(builder.toString().length() > 1998){
 					seperatePosts.add(builder.toString());

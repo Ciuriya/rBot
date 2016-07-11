@@ -44,7 +44,7 @@ public class HelpCommand extends GlobalCommand{
     				msg.append(Main.getCommandPrefix(serverId) + args[0].toLowerCase() + " - " + cmd.getDesc()); //add extended support here later
     			}
     	}else{
-        	msg.append("```Use '" + Main.getCommandPrefix(serverId) + "help {command}' for specific help per command\n\nGlobal Commands\n\n");
+        	msg.append("```Use 'help {command}' for specific help per command (you do not need a command prefix in PM)\n\nGlobal Commands\n\n");
     		
     		for(GlobalCommand gc : GlobalCommand.commands)		
     			if(serverId.equalsIgnoreCase("-1") && !gc.allowsDm()) continue;

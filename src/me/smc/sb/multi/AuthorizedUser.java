@@ -77,7 +77,7 @@ public class AuthorizedUser{
 			return;
 		
 		try{
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 			.sql("INSERT INTO Authorization (id_user, id_tournament, relation) " +
 			     "VALUES (?, ?, ?)")
 			.set(userId)
@@ -99,7 +99,7 @@ public class AuthorizedUser{
 			return;
 		
 		try{
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 			.sql("DELETE FROM Authorization " +
 			     "WHERE id_user='?' AND id_tournament='?' AND relation='?'")
 			.set(userId)
@@ -117,7 +117,7 @@ public class AuthorizedUser{
 	
 	public void loadAuthorizations(){
 		try{
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 			.sql("SELECT id_tournament, relation FROM Authorization WHERE id_user = ?")
 			.set(userId)
 			.select(new Outcome<List<String>>(){
@@ -137,7 +137,7 @@ public class AuthorizedUser{
 	
 	public static void load(){
 		try{
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 			.sql("SELECT id_user, id_discord, osu_user FROM AuthorizedUser")
 			.select(new Outcome<List<String>>(){
 		    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -155,14 +155,14 @@ public class AuthorizedUser{
 	public void save(boolean add){
 		try{
 			if(add){
-				userId = new JdbcSession(Main.sqlConnection)
+				userId = new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO AuthorizedUser (id_discord, osu_user) " +
 				     "VALUES (?, ?)")
 				.set(discordId)
 				.set(osuName)
 				.insert(new SingleOutcome<Integer>(Integer.class));
 			}else{
-				new JdbcSession(Main.sqlConnection)
+				new JdbcSession(Main.tourneySQL)
 				.sql("UPDATE AuthorizedUser " +
 					 "SET id_discord='?', osu_user='?' " +
 					 "WHERE id_user='?'")
@@ -186,7 +186,7 @@ public class AuthorizedUser{
 				for(int tournamentId : new ArrayList<Integer>(tournamentsAllowed))
 					removeAuthorization(tournamentId, false);
 			
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 			.sql("DELETE FROM AuthorizedUser " +
 			     "WHERE id_user='?'")
 			.set(userId)

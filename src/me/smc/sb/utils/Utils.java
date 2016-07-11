@@ -209,35 +209,24 @@ public class Utils{
 	}
 	
 	public static String sendPost(String urlString, String urlParameters){
-		return sendPost(urlString, urlParameters, "", false);
+		return sendPost(urlString, urlParameters, "");
 	}
 	
 	public static String sendPost(String urlString, String urlParameters, String query){
-		return sendPost(urlString, urlParameters, query, false);
-	}
-	
-	public static String sendPost(String urlString, String urlParameters, String query, boolean tillerino){
 		String answer = "";
 		
 		try{
 			URL url = new URL(urlString + urlParameters);
-			URLConnection connection = url.openConnection();
-			
-			if(!tillerino){
-				HttpURLConnection c = (HttpURLConnection) connection;
-				
-				c.setRequestMethod("POST");
-				c.setRequestProperty("User-Agent", "Mozilla/5.0");
-				c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-				c.setDoOutput(true);	
-				
-				connection = c;
-			}
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
+			connection.setRequestMethod("POST");	
 			connection.setConnectTimeout(30000);
 			connection.setReadTimeout(30000);
+			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("charset", "utf-8");
 			connection.setRequestProperty("Content-Length", "" + Integer.toString(urlParameters.getBytes().length));
+			connection.setDoOutput(true);
 			
 			if(query.length() > 0) connection.getOutputStream().write(query.getBytes("UTF8"));
 			

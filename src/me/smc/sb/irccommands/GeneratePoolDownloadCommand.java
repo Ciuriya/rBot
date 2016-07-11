@@ -101,8 +101,12 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		
 		URLConnection connection = establishConnection(url);
 		
-		if(connection.getContentLength() <= 100) 
-			connection = establishConnection("http://bloodcat.com/osu/s/" + setID);
+		if(connection.getContentLength() <= 100){
+			connection = establishConnection("https://osu.ppy.sh/d/" + setID);
+			
+			if(connection.getContentLength() <= 100)
+				connection = establishConnection("http://bloodcat.com/osu/s/" + setID);
+		}
 			
         try{
 			InputStream in = connection.getInputStream();

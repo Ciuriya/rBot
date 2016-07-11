@@ -284,7 +284,8 @@ public class Tournament{
 	private Game getNextFromTwitchQueue(int priority){
 		if(twitchQueue.containsKey(twitchChannel)){
 			Optional<Game> optGame = twitchQueue.get(twitchChannel).stream()
-									 .filter(g -> g.match.getStreamPriority() == priority).findFirst();
+									 .filter(g -> g.match.getStreamPriority() == priority)
+									 .findFirst();
 			
 			if(optGame.isPresent()){
 				removeFromTwitchQueue(optGame.get());
@@ -485,7 +486,7 @@ public class Tournament{
 	public void saveSQL(boolean add){
 		try{
 			if(add){
-				new JdbcSession(Main.sqlConnection)
+				new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO Tournament (name, display_name, twitch_channel, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
 					 "type, mode, result_discord, lower_rank_bound, upper_rank_bound) " +
 				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -503,7 +504,7 @@ public class Tournament{
 				.set(upperRankBound)
 				.insert(Outcome.VOID);
 			}else{
-				new JdbcSession(Main.sqlConnection)
+				new JdbcSession(Main.tourneySQL)
 				.sql("UPDATE Tournament " +
 					 "SET display_name='?', twitch_channel='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
 					 "type='?', mode='?', result_discord='?', lower_rank_bound='?', upper_rank_bound='?' WHERE name='?'")
@@ -542,7 +543,7 @@ public class Tournament{
 	
 	public void deleteSQL(){
 		try{
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 			.sql("DELETE FROM " + tournamentDB +
 				 " WHERE name='?'")
 			.set(name)
@@ -598,7 +599,7 @@ public class Tournament{
 	public static void loadTournamentsSQL(){ //run bot once to save and then change to load as well
 		tournaments = new ArrayList<>();
 		try{
-			new JdbcSession(Main.sqlConnection)
+			new JdbcSession(Main.tourneySQL)
 				     .sql("SELECT id_tournament, name, display_name, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
 				     	  "type, mode, result_discord, lower_rank_bound, upper_rank_bound FROM Tournament")
 				     .select(new Outcome<List<String>>(){

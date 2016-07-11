@@ -48,14 +48,35 @@ public class Listener implements EventListener{
 	    	String cmdPrefix = Main.getCommandPrefix(serverId);
 	    	String msg = e.getMessage().getContent();
 	    	
-	    	if(msg.startsWith(cmdPrefix) && msg.contains(cmdPrefix)){
+	    	String strippedMsg = msg;
+	    	
+	    	if(!cmdPrefix.equals(Main.defaultPrefix) && msg.startsWith(cmdPrefix))
+	    		strippedMsg = strippedMsg.replace(cmdPrefix, "");
+	    	else strippedMsg = strippedMsg.replace(Main.defaultPrefix, "");
+	    	
+	    	if(!strippedMsg.equals(msg)){
+	    		if(!dm && Main.serverConfigs.get(serverId).getStringList("rpg-enabled-channels").contains(e.getTextChannel().getId()))
+	    			strippedMsg = "rpg " + strippedMsg;
+	    		
 	        	Log.logger.log(Level.INFO, "{Command in " + Utils.getGroupLogString(e.getChannel())
 				 + " sent by " + e.getAuthor().getUsername() + " <" + e.getAuthor().getId() + ">}\n" + msg);
 	        	
 	        	Command cmd = null;
-	        	cmd = Command.findCommand(serverId, msg.split(" ")[0].replace(cmdPrefix, ""));
+	        	cmd = Command.findCommand(serverId, strippedMsg.split(" ")[0]);
 	        	
-	        	if(GlobalCommand.handleCommand(e, msg.replace(cmdPrefix, ""))) return;
+	        	if(GlobalCommand.handleCommand(e, strippedMsg)) return;
+	        	else if(cmd == null) return;
+	        	
+	        	cmd.execute(e);
+	        	return;
+	    	}else if(dm && !msg.startsWith(Main.defaultPrefix)){
+	        	Log.logger.log(Level.INFO, "{Prefixless command in " + Utils.getGroupLogString(e.getChannel())
+				 + " sent by " + e.getAuthor().getUsername() + " <" + e.getAuthor().getId() + ">}\n" + msg);
+	        	
+	        	Command cmd = null;
+	        	cmd = Command.findCommand(serverId, msg.split(" ")[0]);
+	        	
+	        	if(GlobalCommand.handleCommand(e, msg)) return;
 	        	else if(cmd == null) return;
 	        	
 	        	cmd.execute(e);

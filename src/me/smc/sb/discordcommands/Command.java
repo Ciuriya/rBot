@@ -25,9 +25,11 @@ public class Command{
 		this.name = name;
 		this.instruction = instruction;
 		this.delimiters = delimiters;
+		
 		HashMap<String, Command> serverComms = commands.get(server);
 		serverComms.put(name, this);
 		commands.put(server, serverComms);
+		
 		this.server = server;
 	}
 	

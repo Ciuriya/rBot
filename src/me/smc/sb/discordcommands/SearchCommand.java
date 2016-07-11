@@ -1,18 +1,7 @@
 package me.smc.sb.discordcommands;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.UUID;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
@@ -23,8 +12,7 @@ public class SearchCommand extends GlobalCommand{
 		super(null, 
 			  " - Lets you search many different sites (including nsfw sites)", 
 			  "{prefix}search\nThis command lets you search the internet.\n\n" +
-			  "----------\nUsage\n----------\n{prefix}search google {search} - Sends the first google search result\n" + 
-			  "{prefix}search google {search} ({result={result number under 64}) - Sends the nth google search result\n" +
+			  "----------\nUsage\n----------\n{prefix}search google {search} - Sends the first google search result\n" +
 			  "{prefix}search konachan (search tags) - Finds a random konachan picture\n" +
 			  "{prefix}search hentai (search tags) - Finds a random e-hentai gallery\n" +
 			  "{prefix}search hentai (search tags) ({type={e-hentai type w/o spaces}}) - Finds a random e-hentai gallery using types\n" + 
@@ -49,7 +37,6 @@ public class SearchCommand extends GlobalCommand{
 				if(query.length() > 0) query = query.substring(1);
 				
 				switch(args[0].toLowerCase()){
-					case "google": google(e, query); break;
 					case "konachan": konachan(e, query); break;
 					case "hentai": hentai(e, query); break;
 					case "e621": e621(e, query); break;
@@ -60,64 +47,6 @@ public class SearchCommand extends GlobalCommand{
 			}
 		});
 		t.start();
-	}
-	
-	private void google(MessageReceivedEvent e, String query){	
-		int resultNum = 1;
-		
-		if(query.contains("{result=")){
-			resultNum = Utils.stringToInt(query.split("\\{result=")[1].split("}")[0]);
-			query = query.replaceFirst("\\{result=" + resultNum + "}", "");
-		}
-		
-		if(resultNum > 64){
-			Utils.infoBypass(e.getChannel(), "Result #" + resultNum + " is out of range!");
-			return;
-		}
-		
-		String searchQuery = "";
-		String[] split = query.split(" ");
-		
-		for(int i = 0; i < split.length; i++)
-			searchQuery += " " + split[i];
-		searchQuery = searchQuery.substring(1).replaceAll(" ", "+");
-
-		JsonArray results = null;
-		JsonObject responseData = null;
-		
-        try{
-            StringBuilder searchURLString = new StringBuilder();
-            searchURLString.append("https://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + searchQuery + "&rsz=1&start=" + (resultNum - 1));
-            
-            URL searchURL = new URL(searchURLString.toString());
-            URLConnection conn = searchURL.openConnection();
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:39.0) Gecko/20100101 " + UUID.randomUUID().toString().substring(0, 10));
-            
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder json = new StringBuilder();
-            
-            String line;
-            while ((line = in.readLine()) != null)
-                json.append(line).append("\n");
-            
-            
-            in.close();
-
-            JsonElement element = new JsonParser().parse(json.toString());
-            responseData = element.getAsJsonObject().getAsJsonObject("responseData");
-            results = responseData.getAsJsonArray("results");
-        }catch(IOException ex){
-            ex.printStackTrace();
-        }
-        
-        JsonObject result = results.get(0).getAsJsonObject();
-        
-        Utils.infoBypass(e.getChannel(), "Showing result #**" + resultNum + "** out of **" + 
-                                 Utils.fixString(responseData.getAsJsonObject("cursor").get("estimatedResultCount").toString()) + "** results in "
-        		                 + "**" + Utils.fixString(responseData.getAsJsonObject("cursor").get("searchResultTime").toString()) + "** seconds.\n\n" +
-        	                     "**" + Utils.fixString(result.get("titleNoFormatting").toString()) + "** \n" + Utils.fixString(result.get("url").toString()) + "\n\n" +
-        	                     Utils.fixString(result.get("content").toString()));
-        return;
 	}
 	
 	private void konachan(MessageReceivedEvent e, String query){

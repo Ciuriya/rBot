@@ -49,7 +49,6 @@ public class OsuTrackCommand extends GlobalCommand{
 	private static int requestsPerMinute = 60;
 	private static double currentRefreshRate = 0;
 	private static Timer update, refresh;
-	public static String tillerinoKey;
 	
 	public OsuTrackCommand(){
 		super(null, 
@@ -66,7 +65,6 @@ public class OsuTrackCommand extends GlobalCommand{
 		usersUpdating = new HashMap<>();
 		lastPlayerUpdates = new HashMap<>();
 		allRunningThreads = new ArrayList<>();
-		tillerinoKey = new Configuration(new File("login.txt")).getValue("tillerinoKey");
 		
 		loadTrackedPlayers();
 		calculateRefreshRate();
@@ -296,29 +294,31 @@ public class OsuTrackCommand extends GlobalCommand{
 							if(obj.getString("rank").equalsIgnoreCase("F")) continue;
 							JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), false);
 							
-							//String pp = Utils.df(fetchPPForAcc(obj.getInt("beatmap_id"), Utils.df(getAccuracy(obj)), obj.getInt("enabled_mods")), 2);
 							String pp = "";
 							
 							if(mode.equals("0")){
 								int combo = 0;
 								if(obj.getInt("perfect") == 0) combo = obj.getInt("maxcombo");
 								
-								pp = Utils.df(fetchPPFromOppai(obj.getInt("beatmap_id"), 
-																	  map.getInt("beatmapset_id"), 
-																	  Utils.df(getAccuracy(obj)),
-																	  combo,
-																	  Mods.getMods(obj.getInt("enabled_mods")), 
-																	  obj.getInt("countmiss")), 2);	
+								pp = fetchPPFromOppai(obj.getInt("beatmap_id"), 
+													  map.getInt("beatmapset_id"), 
+													  Utils.df(getAccuracy(obj, Utils.stringToInt(mode))),
+													  combo, 
+													  Mods.getMods(obj.getInt("enabled_mods")), 
+													  obj.getInt("countmiss"),
+													  obj.getInt("count50"),
+													  obj.getInt("count100"));
 							}
+							
+							String hits = fetchHitText(Utils.stringToInt(mode), obj);
 							
 							play += "\n\n" + osuDate + " UTC\n";
 							play += map.getString("artist") + " - " + map.getString("title") + " [" +
 							        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-							        "\n" + (mode.equals("2") ? "" : Utils.df(getAccuracy(obj)) + "% | ") + 
+							        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "% | " + 
 							        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC") +
-							        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + (mode.equals("2") ? "" : (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
-							        (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "")) + (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "") +
-							        (mode.equals("0") ? "\n**~" + pp + "pp**" : "") + "\n\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> | Status: " + 
+							        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + hits +
+							        (mode.equals("0") ? "\n" + pp : "") + "\n\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> | Status: " + 
 							        analyzeMapStatus(map.getInt("approved")) + "\nPlayer: <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\n" +
 							        "BG: http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
 							
@@ -344,24 +344,70 @@ public class OsuTrackCommand extends GlobalCommand{
 		t.start();
 	}
 	
-	private double fetchPPFromOppai(int beatmapId, int setId, double accuracy, int combo, String mods, int misses){
+	public static String fetchHitText(int mode, JSONObject obj){
+		switch(mode){
+			case 0:
+				return (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
+		        	   (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "") + 
+		        	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			case 1:
+				return (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
+	        	   	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			case 2:
+				return (obj.getInt("countkatu") > 0 ? obj.getInt("countkatu") + "x droplets " : "") +
+        	   	   	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			case 3:
+				return (obj.getInt("countgeki") > 0 ? obj.getInt("countgeki") + "xMAX " : "") +
+					   (obj.getInt("count300") > 0 ? obj.getInt("count300") + "x300 " : "") +
+					   (obj.getInt("countkatu") > 0 ? obj.getInt("countkatu") + "x200 " : "") +
+	        	   	   (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") + 
+	        	   	   (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "") + 
+	        	   	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			default: return "";
+		}
+	}
+	
+	private String fetchPPFromOppai(int beatmapId, int setId, double accuracy, int combo, String mods, int misses, int fifties, int hundreds){
 		Utils.Login.osu();
 		File osuFile = fetchOsuFile(beatmapId, setId);
 		
-		if(osuFile == null) return 0.0;
+		if(osuFile == null) return "**~0.0pp**";
 		
 		osuFile.renameTo(new File(beatmapId + ".osu"));
 		
 		osuFile = new File(beatmapId + ".osu");
 		
-		String command = "./oppai " + osuFile.getName() + (accuracy == 100 ? "" : " " + accuracy + "%") +
+		String actual = "./oppai " + osuFile.getName() + (accuracy == 100 ? "" : " " + accuracy + "%") +
 						 (mods.length() != 0 ? " " + mods : "") +
 						 (combo == 0 ? "" : " " + combo + "x") +
 						 (misses == 0 ? "" : " " + misses + "m");
 		
+		String forFC = "./oppai " + osuFile.getName() + " " + hundreds + "x100 " + fifties + "x50" +
+					   (mods.length() != 0 ? " " + mods : "");
+		
 		try{
-			Process p = Runtime.getRuntime().exec(command);
+			Process p = Runtime.getRuntime().exec(actual);
+			double pp = fetchOppaiPP(p);
 			
+			double fc = 0.0;
+			if(combo != 0){
+				Process p2 = Runtime.getRuntime().exec(forFC);
+				fc = fetchOppaiPP(p2);	
+			}
+			
+			osuFile.delete();
+			
+			return "**~" + Utils.df(pp, 2) + "pp**" + (fc == 0.0 ? "" : " (" + Utils.df(fc, 2) + "pp for FC)");
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			osuFile.delete();
+			
+			return "**~0.0pp**";
+		}
+	}
+	
+	private double fetchOppaiPP(Process p){
+		try{
 			BufferedReader pIn = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			
 			String s = null;
@@ -372,13 +418,10 @@ public class OsuTrackCommand extends GlobalCommand{
 			
 			if(s == null) throw new Exception("string is null");
 			
-			osuFile.delete();
-			
 			double pp = Utils.stringToDouble(s.split("pp")[0]);
-			return pp;
+			return pp;	
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
-			osuFile.delete();
 			
 			return 0.0;
 		}
@@ -499,58 +542,6 @@ public class OsuTrackCommand extends GlobalCommand{
         return connection;
 	}
 	
-	//tillerino temp support
-	private double fetchPPForAcc(int beatmapId, double accuracy, int mods){
-		String post = Utils.sendPost("http://bot.tillerino.org:1666/beatmapinfo", "?k=" + tillerinoKey + "&wait=2000&beatmapid=" + beatmapId + "&mods=" + mods, "", true);
-
-		if(post == "") return 0.0;
-		try{
-			JSONObject response = new JSONObject("{" + post + "}");
-			JSONObject ppForAcc = response.getJSONObject("ppForAcc");
-			JSONArray entry = ppForAcc.getJSONArray("entry");
-			
-			HashMap<Double, Double> accuracyMap = new HashMap<Double, Double>();
-			
-			accuracyMap.put(1.0, entry.getJSONObject(13).getDouble("value"));
-			accuracyMap.put(0.995, entry.getJSONObject(12).getDouble("value"));
-			accuracyMap.put(0.99, entry.getJSONObject(11).getDouble("value"));
-			accuracyMap.put(0.985, entry.getJSONObject(10).getDouble("value"));
-			accuracyMap.put(0.98, entry.getJSONObject(9).getDouble("value"));
-			accuracyMap.put(0.975, entry.getJSONObject(8).getDouble("value"));
-			accuracyMap.put(0.97, entry.getJSONObject(7).getDouble("value"));
-			accuracyMap.put(0.96, entry.getJSONObject(6).getDouble("value"));
-			accuracyMap.put(0.95, entry.getJSONObject(5).getDouble("value"));
-			accuracyMap.put(0.93, entry.getJSONObject(4).getDouble("value"));
-			accuracyMap.put(0.9, entry.getJSONObject(3).getDouble("value"));
-			accuracyMap.put(0.85, entry.getJSONObject(2).getDouble("value"));
-			accuracyMap.put(0.8, entry.getJSONObject(1).getDouble("value"));
-			accuracyMap.put(0.75, entry.getJSONObject(0).getDouble("value"));
-			
-			return accuracyMap.get(roundToNearestExistingAcc(accuracy) / 100);
-		}catch(Exception e){
-			Log.logger.log(Level.SEVERE, e.getMessage(), e);
-			return 0.0;
-		}
-	}
-	
-	//tillerino temp support
-	private static double roundToNearestExistingAcc(double acc){
-		if(acc >= 99.75) return 100;
-		else if(acc >= 99.25 && acc < 99.75) return 99.5;
-		else if(acc >= 98.75 && acc < 99.25) return 99;
-		else if(acc >= 98.25 && acc < 98.75) return 98.5;
-		else if(acc >= 97.75 && acc < 98.25) return 98;
-		else if(acc >= 97.25 && acc < 97.75) return 97.5;
-		else if(acc >= 96.5 && acc < 97.25) return 97;
-		else if(acc >= 95.5 && acc < 96.5) return 96;
-		else if(acc >= 94 && acc < 95.5) return 95;
-		else if(acc >= 91.5 && acc < 94) return 93;
-		else if(acc >= 87.5 && acc < 91.5) return 90;
-		else if(acc >= 82.5 && acc < 87.5) return 85;
-		else if(acc >= 77.5 && acc < 82.5) return 80;
-		else return 75;
-	}
-	
 	private String getLastPlayerUpdate(String player, String server){
 		HashMap<String, String> servers = new HashMap<>();
 		
@@ -592,9 +583,40 @@ public class OsuTrackCommand extends GlobalCommand{
 		}
 	}
 	
-	public static double getAccuracy(JSONObject play){
-		double acc = play.getInt("count300") * 300 + play.getInt("count100") * 100 + play.getInt("count50") * 50;
-		return (acc / ((play.getInt("count300") + play.getInt("count100") + play.getInt("count50") + play.getInt("countmiss")) * 300)) * 100;
+	public static double getAccuracy(JSONObject play, int mode){
+		int totalHits = 0;
+		int points = 0;
+		
+		switch(mode){
+			case 0:
+				totalHits = play.getInt("count300") + play.getInt("count100") + play.getInt("count50") + play.getInt("countmiss");
+				points = play.getInt("count300") * 300 + play.getInt("count100") * 100 + play.getInt("count50") * 50;
+				
+				totalHits *= 300;
+				return ((double) points / (double) totalHits) * 100;
+			case 1:
+				totalHits = play.getInt("countmiss") + play.getInt("count100") + play.getInt("count300");
+				double dPoints = play.getInt("count100") * 0.5 + play.getInt("count300");
+				
+				dPoints *= 300;
+				totalHits *= 300;
+				
+				return (dPoints / (double) totalHits) * 100;
+			case 2:
+				int caught = play.getInt("count50") + play.getInt("count100") + play.getInt("count300");
+				int fruits = play.getInt("countmiss") + caught + play.getInt("countkatu");
+				
+				return ((double) caught / (double) fruits) * 100;
+			case 3:
+				totalHits = play.getInt("countmiss") + play.getInt("count50") + play.getInt("count100") + 
+						    play.getInt("count300") + play.getInt("countgeki") + play.getInt("countkatu");
+				points = play.getInt("count50") * 50 + play.getInt("count100") * 100 + play.getInt("countkatu") * 200 +
+						 play.getInt("count300") * 300 + play.getInt("countgeki") * 300;
+				
+				totalHits *= 300;
+				return ((double) points / (double) totalHits) * 100;
+			default: return 0.0;
+		}
 	}
 	
 	public static String osuDateToCurrentDate(String sDate){
