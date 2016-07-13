@@ -2,7 +2,6 @@ package me.smc.sb.drpg;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Territory{
 
@@ -26,6 +25,9 @@ public class Territory{
 		this.controllable = controllable;
 		this.desc = desc; //can be null
 		if(guildId != -1 && controllable) guild = Guild.getGuild(guildId);
+		
+		tiles = new ArrayList<>();
+		Tile.tiles.stream().filter(t -> t.getTerritory().id == id).forEach(t -> tiles.add(t));
 		
 		if(id == -1) //-1 for adding
 			insert();
@@ -54,7 +56,7 @@ public class Territory{
 	}
 	
 	public List<Tile> getTiles(){
-		return Tile.tiles.stream().filter(t -> t.getTerritory().id == id).collect(Collectors.toList());
+		return tiles;
 	}
 	
 	public static Territory getTerritory(int id){

@@ -434,6 +434,10 @@ public class Utils{
 		return new Random().nextInt(max - min + 1) + min;
 	}
 	
+	public static float fetchRandom(float min, float max){
+		return new Random().nextFloat() * (max - min + 1) + min;
+	}
+	
 	public static String takeOffExtrasInBeatmapURL(String url){
 		if(url.endsWith("m=0") || url.endsWith("m=1") || url.endsWith("m=2") || url.endsWith("m=3"))
 			return url.substring(0, url.length() - 4);

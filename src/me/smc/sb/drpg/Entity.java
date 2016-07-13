@@ -39,7 +39,7 @@ public class Entity{
 		load();
 	}
 	
-	public Entity(int id, String name, float exp, String _class, String spec, String race,
+	public Entity(int id, String name, float exp, String className, String specName, String raceName,
 				  boolean gender, float str, float end, float dex, float intel, float wis, float cha,
 				  float x, float y, String desc, int guildId, int tileId, int currentPartyId){
 		this.id = id;
