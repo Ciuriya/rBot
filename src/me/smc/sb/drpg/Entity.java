@@ -11,9 +11,9 @@ public class Entity{
 	private int id;
 	private String name;
 	private float exp;
-	//class here
-	//spec here
-	//race here
+	private Class eClass;
+	private Specialization spec;
+	private Race race;
 	private boolean gender; //true is male
 	private float str;
 	private float end;
@@ -45,9 +45,9 @@ public class Entity{
 		this.id = id;
 		this.name = name;
 		this.exp = exp;
-		//class
-		//spec
-		//race
+		this.eClass = Class.getClass(className);
+		this.spec = Specialization.getSpecialization(specName);
+		this.race = Race.getRace(raceName);
 		this.gender = gender;
 		this.str = str;
 		this.end = end;
@@ -129,6 +129,18 @@ public class Entity{
 		return y;
 	}
 	
+	public me.smc.sb.drpg.Class getEntityClass(){
+		return eClass;
+	}
+	
+	public Specialization getSpec(){
+		return spec;
+	}
+	
+	public Race getRace(){
+		return race;
+	}
+	
 	public String getDescription(){
 		return desc;
 	}
@@ -151,6 +163,14 @@ public class Entity{
 	
 	public Battle getBattle(){
 		return Battle.battles.stream().filter(b -> b.getFightingEntities().contains(id)).findFirst().orElse(null);
+	}
+	
+	public List<Integer> getFriends(){
+		return friends;
+	}
+	
+	public List<String> getDialogs(){
+		return dialogs;
 	}
 	
 	public List<Integer> getSkills(){

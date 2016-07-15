@@ -43,7 +43,12 @@ public class Listener implements EventListener{
 	    	if(!dm && HaltCommand.stopCommands.containsKey(e.getGuild().getId()) && HaltCommand.stopCommands.get(e.getGuild().getId())) return;
 	    	
 	    	String serverId = "-1";
-	    	if(!dm) serverId = e.getGuild().getId();
+	    	if(!dm){
+	    		serverId = e.getGuild().getId();
+	    		
+	    		if(!Main.serverConfigs.containsKey(serverId))
+	    			loadGuilds(event.getJDA());
+	    	}
 	    	
 	    	String cmdPrefix = Main.getCommandPrefix(serverId);
 	    	String msg = e.getMessage().getContent();
