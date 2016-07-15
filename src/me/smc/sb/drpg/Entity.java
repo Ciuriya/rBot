@@ -2,6 +2,13 @@ package me.smc.sb.drpg;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+
+import com.jcabi.jdbc.JdbcSession;
+import com.jcabi.jdbc.Outcome;
+
+import me.smc.sb.main.Main;
+import me.smc.sb.utils.Log;
 
 public class Entity{
 	
@@ -189,15 +196,107 @@ public class Entity{
 	}
 	
 	private void insert(){
-		
+		try{
+			Long id = new JdbcSession(Main.rpgSQL)
+			.sql("INSERT INTO Entity (name, experience, class, specialization, race, gender, " +
+				 "strength, endurance, dexterity, intelligence, wisdom, charisma, x, y, description, " +
+				 "Guild_id_guild, Tile_id_tile, Party_id_party) " +
+			     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+			.set(name)
+			.set(exp)
+			.set(eClass.getName())
+			.set(spec.getName())
+			.set(race.getName())
+			.set(gender ? 1 : 0)
+			.set(str)
+			.set(end)
+			.set(dex)
+			.set(intel)
+			.set(wis)
+			.set(cha)
+			.set(x)
+			.set(y)
+			.set(desc)
+			.set(guild == null ? null : guild.getId())
+			.set(tile.getId())
+			.set(party == null ? null : party.getId())
+			.insert(Outcome.LAST_INSERT_ID);
+			
+			if(id != null) this.id = (int) ((long) id);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 	}
 	
 	public void save(){
+		if(id == -1){
+			insert();
+			return;
+		}
 		
+		try{
+			new JdbcSession(Main.rpgSQL)
+			.sql("UPDATE Entity " +
+				 "SET name='?', experience='?', class='?', specialization='?', race='?', gender='?', strength='?', " +
+				 "endurance='?', dexterity='?', intelligence='?', wisdom='?', charisma='?', x='?', y='?', description='?', " +
+				 "Guild_id_guild='?', Tile_id_tile='?', Party_id_party='?' WHERE id_entity='?'")
+			.set(name)
+			.set(exp)
+			.set(eClass.getName())
+			.set(spec.getName())
+			.set(race.getName())
+			.set(gender ? 1 : 0)
+			.set(str)
+			.set(end)
+			.set(dex)
+			.set(intel)
+			.set(wis)
+			.set(cha)
+			.set(x)
+			.set(y)
+			.set(desc)
+			.set(guild == null ? null : guild.getId())
+			.set(tile.getId())
+			.set(party == null ? null : party.getId())
+			.set(id)
+			.update(Outcome.VOID);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 	}
 	
 	public void delete(){
+		try{
+			new JdbcSession(Main.rpgSQL)
+			.sql("DELETE FROM Entity WHERE id_entity='?'")
+			.set(id)
+			.update(Outcome.VOID);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 		
+		entities.remove(this);
+		name = null;
+		eClass = null;
+		spec = null;
+		race = null;
+		str = 0;
+		end = 0;
+		dex = 0;
+		intel = 0;
+		wis = 0;
+		cha = 0;
+		x = 0f;
+		y = 0f;
+		desc = null;
+		guild = null;
+		tile = null;
+		if(party != null) party.removeMember(id);
+		party = null;
+		friends.clear(); friends = null;
+		dialogs.clear(); dialogs = null;
+		skills.clear(); skills = null;
+		id = -1;
 	}
 	
 	private void load(){

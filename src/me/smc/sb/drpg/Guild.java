@@ -25,6 +25,8 @@ public class Guild{
 		this.desc = desc; //can be null
 		if(factionId != -1) faction = Faction.getFaction(factionId);
 		
+		//add entities and make sure to unlink in entity delete
+		
 		if(id == -1) //-1 for adding
 			insert();
 		
