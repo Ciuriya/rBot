@@ -1,5 +1,9 @@
 package me.smc.sb.drpg;
 
+import java.sql.Blob;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -14,6 +18,8 @@ public class Entity{
 	
 	//dynamic mob adding and shit?
 	//if id is player, don't load
+	//change the != -1 checks to != 0 since SQL null returns 0
+	//still need to load friends and dialogs
 	
 	private int id;
 	private String name;
@@ -31,6 +37,7 @@ public class Entity{
 	private float x; //more precise than just the tile
 	private float y; //these store the exact location within the tile (how long until they exit it for example)
 	private String desc;
+	private int guildStatus;
 	private Guild guild;
 	private Tile tile;
 	private Party party;
@@ -43,12 +50,12 @@ public class Entity{
 	public Entity(int id){
 		this.id = id;
 		
-		load();
+		load(id);
 	}
 	
 	public Entity(int id, String name, float exp, String className, String specName, String raceName,
 				  boolean gender, float str, float end, float dex, float intel, float wis, float cha,
-				  float x, float y, String desc, int guildId, int tileId, int currentPartyId){
+				  float x, float y, String desc, int guildStatus, int guildId, int tileId, int currentPartyId){
 		this.id = id;
 		this.name = name;
 		this.exp = exp;
@@ -65,9 +72,10 @@ public class Entity{
 		this.x = x;
 		this.y = y;
 		this.desc = desc; //can be null
-		if(guildId != -1) this.guild = Guild.getGuild(guildId);
+		this.guildStatus = guildStatus;
+		if(guildId != 0) this.guild = Guild.getGuild(guildId);
 		this.tile = Tile.getTile(tileId);
-		if(currentPartyId != -1) party = Party.getParty(currentPartyId);
+		if(currentPartyId != 0) party = Party.getParty(currentPartyId);
 		
 		skills = new ArrayList<>();
 		ESkill.skills.stream().filter(s -> s.getEntity().id == id).forEach(s -> skills.add(s.getId()));
@@ -152,6 +160,10 @@ public class Entity{
 		return desc;
 	}
 	
+	public int getGuildStatus(){
+		return guildStatus;
+	}
+	
 	public Guild getGuild(){
 		return guild;
 	}
@@ -200,8 +212,8 @@ public class Entity{
 			Long id = new JdbcSession(Main.rpgSQL)
 			.sql("INSERT INTO Entity (name, experience, class, specialization, race, gender, " +
 				 "strength, endurance, dexterity, intelligence, wisdom, charisma, x, y, description, " +
-				 "Guild_id_guild, Tile_id_tile, Party_id_party) " +
-			     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+				 "guild_status, Guild_id_guild, Tile_id_tile, Party_id_party) " +
+			     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 			.set(name)
 			.set(exp)
 			.set(eClass.getName())
@@ -217,6 +229,7 @@ public class Entity{
 			.set(x)
 			.set(y)
 			.set(desc)
+			.set(guildStatus)
 			.set(guild == null ? null : guild.getId())
 			.set(tile.getId())
 			.set(party == null ? null : party.getId())
@@ -239,7 +252,7 @@ public class Entity{
 			.sql("UPDATE Entity " +
 				 "SET name='?', experience='?', class='?', specialization='?', race='?', gender='?', strength='?', " +
 				 "endurance='?', dexterity='?', intelligence='?', wisdom='?', charisma='?', x='?', y='?', description='?', " +
-				 "Guild_id_guild='?', Tile_id_tile='?', Party_id_party='?' WHERE id_entity='?'")
+				 "guild_status='?', Guild_id_guild='?', Tile_id_tile='?', Party_id_party='?' WHERE id_entity='?'")
 			.set(name)
 			.set(exp)
 			.set(eClass.getName())
@@ -255,6 +268,7 @@ public class Entity{
 			.set(x)
 			.set(y)
 			.set(desc)
+			.set(guildStatus)
 			.set(guild == null ? null : guild.getId())
 			.set(tile.getId())
 			.set(party == null ? null : party.getId())
@@ -289,6 +303,8 @@ public class Entity{
 		x = 0f;
 		y = 0f;
 		desc = null;
+		guildStatus = 0;
+		if(guild != null) guild.removeMember(id);
 		guild = null;
 		tile = null;
 		if(party != null) party.removeMember(id);
@@ -299,8 +315,62 @@ public class Entity{
 		id = -1;
 	}
 	
-	private void load(){
-		
+	private void load(int id){
+		try{
+			new JdbcSession(Main.rpgSQL)
+			.sql("SELECT id_entity, name, experience, class, specialization, race, gender, strength, endurance, " +
+				 "dexterity, intelligence, wisdom, charisma, x, y, description, guild_status, Guild_id_guild, " +
+				 "Tile_id_tile, Party_id_party FROM Entity WHERE id_entity='?'")
+			.set(id)
+			.select(new Outcome<List<String>>(){
+		    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
+		    		 if(rset.next()) load(rset);
+		    		 
+		    		 rset.close();
+		    		 
+		    		 return new ArrayList<String>();
+		    	 }
+		     });
+			
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+	
+	private static void load(ResultSet rset){
+		try{
+			Blob descBlob = rset.getBlob(16);
+			new Entity(rset.getInt(1), rset.getString(2), rset.getFloat(3), rset.getString(4),
+					   rset.getString(5), rset.getString(6), rset.getBoolean(7), rset.getFloat(8),
+					   rset.getFloat(9), rset.getFloat(10), rset.getFloat(11), rset.getFloat(12),
+					   rset.getFloat(13), rset.getFloat(14), rset.getFloat(15), 
+					   new String(descBlob.getBytes(1L, (int) descBlob.length())), 
+					   rset.getInt(17), rset.getInt(18), rset.getInt(19), rset.getInt(20));
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+	
+	public static void loadAll(){
+		try{
+			new JdbcSession(Main.rpgSQL)
+			.sql("SELECT id_entity, name, experience, class, specialization, race, gender, strength, endurance, " +
+				 "dexterity, intelligence, wisdom, charisma, x, y, description, guild_status, Guild_id_guild, " +
+				 "Tile_id_tile, Party_id_party FROM Entity")
+			.select(new Outcome<List<String>>(){
+			    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
+			    		 while(rset.next()){
+			    			 load(rset);
+			    		 }
+			    		 
+			    		 rset.close();
+			    		 
+			    		 return new ArrayList<String>();
+			    	 }
+			     });
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 	}
 	
 }

@@ -474,12 +474,20 @@ public class Utils{
 	public static int getOsuPlayerRank(String name, int mode){
 		String id = getOsuPlayerId(name);
 		
+		if(id.equals("-1")) return -1;
+		
 		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + id + "&m=" + mode);
 		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "Performance</a>: ");
 		
 		if(line.isEmpty()) return getOsuPlayerRankByAPI(name, id, mode);
 		else{
-			int rank = stringToInt(line.get(0).split("\\(#")[1].split("\\)")[0].replaceAll(",", ""));
+			int rank = -1;
+			
+			try{
+				rank = stringToInt(line.get(0).split("\\(#")[1].split("\\)")[0].replaceAll(",", ""));
+			}catch(Exception e){
+				return -1;
+			}
 			
 			if(rank == -1) return getOsuPlayerRankByAPI(name, id, mode);
 			else return rank;
@@ -498,10 +506,14 @@ public class Utils{
 	
 	public static String getOsuPlayerId(String name){
 		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/u/" + name);
-		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "load(\"/pages/include/profile-userpage.php?u=");
+		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "var userId =");
 		
-		if(line.isEmpty()) return "-1";
-		else return line.get(0).split("u=")[1].split("\", function")[0];
+		try{
+			if(line.isEmpty()) return "-1";
+			else return line.stream().findFirst().orElse("= -1;").split("= ")[1].split(";")[0];	
+		}catch(Exception e){
+			return "-1";
+		}
 	}
 	
 	public static boolean isTwitch(Event<PircBotX> e){

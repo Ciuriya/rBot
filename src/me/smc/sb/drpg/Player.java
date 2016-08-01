@@ -74,7 +74,7 @@ public class Player{
 		//insert in player
 		//change that shit for better values
 		entity = new Entity(-1, name, 0f, "Peasant", "None", "Caucasian", true, 
-							0f, 0f, 0f, 0f, 0f, 0f, -1, -1, "", -1, -1, -1);
+							0f, 0f, 0f, 0f, 0f, 0f, -1, -1, "", 0, -1, -1, -1);
 	}
 	
 	public void save(){

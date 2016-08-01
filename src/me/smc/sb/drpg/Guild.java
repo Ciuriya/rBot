@@ -10,6 +10,7 @@ public class Guild{
 	private String icon;
 	private String desc;
 	private Faction faction;
+	private List<Integer> members;
 	public static List<Guild> guilds = new ArrayList<>();
 	
 	public Guild(int id){
@@ -25,6 +26,8 @@ public class Guild{
 		this.desc = desc; //can be null
 		if(factionId != -1) faction = Faction.getFaction(factionId);
 		
+		members = new ArrayList<>();
+		Entity.entities.stream().filter(e -> e.getGuild() != null && e.getGuild().id == id).forEach(e -> members.add(e.getId()));
 		//add entities and make sure to unlink in entity delete
 		
 		if(id == -1) //-1 for adding
@@ -51,6 +54,24 @@ public class Guild{
 	
 	public Faction getFaction(){
 		return faction;
+	}
+	
+	public void addMember(int entityId){
+		if(!members.contains(entityId)){
+			members.add(entityId);
+			save();
+		}
+	}
+	
+	public List<Integer> getMembers(){
+		return members;
+	}
+	
+	public void removeMember(int entityId){
+		if(members.contains(entityId)){
+			members.remove((Integer) entityId);
+			save();
+		}
 	}
 	
 	public static Guild getGuild(int id){
