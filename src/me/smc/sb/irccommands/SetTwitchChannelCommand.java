@@ -14,7 +14,7 @@ public class SetTwitchChannelCommand extends IRCCommand{
 		super("Sets the twitch channel to use for the tournament.",
 			  "<tournament name> <channel name> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsettwitch");
+			  "settwitchchannel");
 	}
 
 	@Override

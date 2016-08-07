@@ -14,7 +14,7 @@ public class SetPickWaitTimeCommand extends IRCCommand{
 		super("Sets the time (in seconds) that players have to pick a map, if exceeded, warmups are skipped, picks have the team lose their turn. 0 or less means unlimited.",
 			  "<tournament name> <time> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetpickwaittime");
+			  "setpickwaittime");
 	}
 
 	@Override

@@ -132,6 +132,9 @@ public abstract class IRCCommand{
 		commands.add(new SetBanWaitTimeCommand());
 		commands.add(new SetReadyWaitTimeCommand());
 		commands.add(new SetTwitchChannelCommand());
+		commands.add(new SetWarmupSkipCommand());
+		commands.add(new SetPickStrategyCommand());
+		commands.add(new SetRematchesAllowedCommand());
 		commands.add(new SetMatchPriorityCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());

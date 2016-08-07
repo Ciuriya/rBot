@@ -14,7 +14,7 @@ public class SetResultDiscordCommand extends IRCCommand{
 		super("Sets the discord channel to send match results in.",
 			  "<tournament name> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetresultdiscord");
+			  "setresultdiscord");
 	}
 	
 	@Override

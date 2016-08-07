@@ -8,13 +8,13 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
-public class SetReadyWaitTimeCommand extends IRCCommand{
+public class SetRematchesAllowedCommand extends IRCCommand{
 
-	public SetReadyWaitTimeCommand(){
-		super("Sets the time (in seconds) that players have to ready up, if exceeded, the match will attempt to start. 0 or less means unlimited.",
-			  "<tournament name> <time> ",
+	public SetRematchesAllowedCommand(){
+		super("Set rematches allowed per match per team.",
+			  "<tournament name> <amount> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "setreadywaittime");
+			  "setrematchesallowed");
 	}
 
 	@Override
@@ -28,11 +28,12 @@ public class SetReadyWaitTimeCommand extends IRCCommand{
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null) return "Invalid tournament!";
+		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Invalid amount";		
 		
-		t.setReadyWaitTime(Utils.stringToInt(args[args.length - 1]));
+		t.setRematchesAllowed(Utils.stringToInt(args[args.length - 1]));
 		t.save(false);
 		
-		return "Set the tournament's ready wait time to " + t.getReadyWaitTime() + "!";
+		return "Set the tournament's rematches allowed per match to " + t.getRematchesAllowed() + "!";
 	}
 	
 }

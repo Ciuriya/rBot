@@ -75,8 +75,8 @@ public class TeamGame extends Game{
 			if(rSlot != -1) hijackedSlots.remove(rSlot);
 		}
 		
-		if(state.eq(GameState.PLAYING) && rematchesAllowed > 0){
-			rematchesAllowed--;
+		if(state.eq(GameState.PLAYING) && rematchesLeft > 0){
+			rematchesLeft--;
 			
 			state = GameState.WAITING;
 			mapSelected = true;

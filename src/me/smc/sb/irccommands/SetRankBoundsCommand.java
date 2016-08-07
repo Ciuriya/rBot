@@ -14,7 +14,7 @@ public class SetRankBoundsCommand extends IRCCommand{
 		super("Sets the rank bounds used to verify player ranks.",
 			  "<tournament name> <lower bound (closest to 1)> <upper bound> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetrankbounds");
+			  "setrankbounds");
 	}
 	
 	@Override

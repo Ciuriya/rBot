@@ -14,7 +14,7 @@ public class SetScoreV2Command extends IRCCommand{
 		super("Sets whether or not scoreV2 will be used.",
 			  "<tournament name> <true/false> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetscoring");
+			  "setscoring");
 	}
 
 	@Override

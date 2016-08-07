@@ -14,7 +14,7 @@ public class SetDisplayNameCommand extends IRCCommand{
 		super("Sets the lobby display name of the tournament.",
 			  "<tournament name> {display name} ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetdisplayname");
+			  "setdisplayname");
 	}
 
 	@Override

@@ -48,7 +48,7 @@ public abstract class Game{
 	protected boolean validMods = true;
 	protected boolean streamed = false;
 	protected GameState state;
-	protected int rematchesAllowed = 1;
+	protected int rematchesLeft = 0;
 	protected List<String> invitesSent;
 	protected List<String> playersInRoom;
 	protected List<String> captains;
@@ -96,6 +96,7 @@ public abstract class Game{
 		this.playersRankChecked = new ArrayList<>();
 		this.state = GameState.WAITING;
 		this.match.setGame(this);
+		this.rematchesLeft = match.getTournament().getRematchesAllowed();
 		
 		setupLobby();
 	}
@@ -143,6 +144,14 @@ public abstract class Game{
 	
 	public abstract void initialInvite();
 	
+	public boolean isWarmingUp(){
+		return warmupsLeft != 0;
+	}
+	
+	public PickStrategy getPickStrategy(){
+		return match.getTournament().getPickStrategy();
+	}
+	
 	protected void messageUpdater(String...messages){
 		messageUpdater(0, false, messages);
 	}
@@ -154,7 +163,7 @@ public abstract class Game{
 		messageUpdater = new Timer();
 		messageUpdater.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
-				if(usePickTime){
+				if(usePickTime && getPickWaitTime() > 0){
 					if(System.currentTimeMillis() >= lastPickTime + (getPickWaitTime() * 1000)) return;
 					else{
 						for(String message : messages)
@@ -184,7 +193,7 @@ public abstract class Game{
 	
 	public abstract void allowTeamInvites();
 	
-	private void mapSelection(int part){
+	protected void mapSelection(int part){
 		switch(part){
 			case 1:
 				allowTeamInvites();
@@ -196,6 +205,13 @@ public abstract class Game{
 				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
 				
 				PassTurnCommand.passingTeams.remove(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam());
+
+				if(match.getTournament().isSkippingWarmups()){
+					warmupsLeft = 0;
+					mapSelection(3);
+					return;
+				}
+				
 				selectingTeam = findNextTeamToPick();
 				map = null;
 				
@@ -209,11 +225,18 @@ public abstract class Game{
 				pickTimer(false);
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
 				break;
-			case 3: 
-				SelectMapCommand.pickingTeams.remove(selectingTeam);
+			case 3: 		
+				if(getPickStrategy() instanceof ModPickStrategy){
+					mapSelection(4);
+					return;
+				}
+				
+				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
 				clearPickTimers();
 				
-				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+				if(ChangeWarmupModCommand.gamesAllowedToChangeMod.contains(this))
+					ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+				
 				banningTeam = findNextTeamToBan();
 				
 				if(bans.size() >= 4){
@@ -221,9 +244,9 @@ public abstract class Game{
 					mapSelection(4);
 					break;
 				}
-				
+
 				BanMapCommand.banningTeams.put(banningTeam, this);
-				
+
 				pickTimer(false);
 				messageUpdater(0, true, banningTeam.getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
@@ -233,8 +256,8 @@ public abstract class Game{
 				
 				break;
 			case 4:
-				SelectMapCommand.pickingTeams.remove(selectingTeam);
-				BanMapCommand.banningTeams.remove(banningTeam);
+				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
+				if(banningTeam != null) BanMapCommand.banningTeams.remove(banningTeam);
 				clearPickTimers();
 				
 				banningTeam = null;
@@ -343,7 +366,7 @@ public abstract class Game{
 		this.map = map;
 	}
 	
-	private String getMod(Map map){
+	protected String getMod(Map map){
 		String mods = "";
 		
 		switch(map.getCategory()){
@@ -463,7 +486,7 @@ public abstract class Game{
 		playersChecked = 0;
 		previousMap = null;
 		previousRoll = 0;
-		rematchesAllowed = 0;
+		rematchesLeft = 0;
 		expectedPlayers = 0;
 		rollsLeft = 0;
 		roomSize = 0;
@@ -659,96 +682,8 @@ public abstract class Game{
 		return Utils.stringToInt(multiChannel.replace("#mp_", ""));
 	}
 	
-	public void handleMapSelect(String map, boolean select){
-		Map selected = null;
-		
-		if(warmupsLeft > 0 && select){
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
-			if(jsMap == null){sendMessage("Could not find the selected map!"); return;}
-			
-			int length = jsMap.getInt("total_length");
-			if(length > 270){
-				sendMessage("The warmup selected is too long! The maximum length is 4m30s.");
-				return;
-			}
-			
-			this.map = new Map(map, 1);
-			mapSelected = true;
-			
-			updateTwitch(getMod(this.map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-			    	  	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-			    	  	 selectingTeam.getTeamName() + "!");
-			
-			prepareReadyCheck();
-			return;
-		}
-		
-		int num = 1;
-		for(Map m : match.getMapPool().getMaps()){
-			boolean chosen = false;
-			if(num == Utils.stringToInt(map)) chosen = true;
-			else if(m.getURL().equalsIgnoreCase(map)) chosen = true;
-			
-			if(chosen){
-				if(select && warmupsLeft == 0){
-					if(bans.contains(m)){sendMessage("This map is banned! Please choose something else."); return;}
-					if(!checkMap(m)){sendMessage("This map was already picked once! Please choose something else."); return;}
-				}
-				
-				if(m.getCategory() == 5){sendMessage("You cannot " + (select ? "select" : "ban") + " the tiebreaker!"); return;}
-				
-				selected = m;
-				break;
-			}
-			
-			num++;
-		}
-		
-		if(!select && selected != null && !bans.contains(selected)){
-			BanMapCommand.banningTeams.remove(banningTeam);
-			bans.add(selected);
-			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
-			
-			String name = getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-				    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
-			
-			sendMessage(name + " was banned!");
-			
-			bansWithNames.add("{" + getMod(selected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 
-			    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + banningTeam.getTeamName() + ")");
-			
-			updateTwitch(name + " was banned by " + banningTeam.getTeamName() + "!");
-			
-			mapSelection(3);
-			return;
-		}
-		
-		if(selected != null && !mapSelected && select){
-			mapSelected = true;
-			this.map = selected;
-			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
-			
-			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-		    	  	 	 selectingTeam.getTeamName() + "!");
-			
-			prepareReadyCheck();
-			return;
-		}else if(mapSelected && select && selected != null){
-			this.map = selected;
-			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
-			
-			updateTwitch(getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-		    	  	 	 selectingTeam.getTeamName() + "!");
-			
-			return;
-		}
-		
-		if(selected == null || !select) sendMessage("Invalid " + (select ? "selection!" : "ban!"));
+	public void handleMapSelect(String map, boolean select, String mod){
+		getPickStrategy().handleMapSelect(this, map, select, mod);
 	}
 	
 	public void acceptSkipRematch(String player){
@@ -772,7 +707,7 @@ public abstract class Game{
 			sendMessage("The rematch has been skipped.");
 			
 			skipRematchState = 0;
-			rematchesAllowed = 1;
+			rematchesLeft++;
 			
 			mapSelected = false;
 			
@@ -833,7 +768,7 @@ public abstract class Game{
 		messageUpdater(0, true, message, "The match will force start after the timer. You may change map if needed (not in case of disconnection)");
 	}
 	
-	private boolean checkMap(Map map){
+	protected boolean checkMap(Map map){
 		return !mapsPicked.contains(map);
 	}
 	
@@ -1330,8 +1265,8 @@ public abstract class Game{
 									break rematch;
 							}
 							
-							if(rematchesAllowed > 0){
-								rematchesAllowed--;
+							if(rematchesLeft > 0){
+								rematchesLeft--;
 								
 								lastWinner = fTeamScore > sTeamScore ? match.getFirstTeam() : match.getSecondTeam();
 								
@@ -1358,13 +1293,13 @@ public abstract class Game{
 						mapSelected = true;
 						banchoFeedback.clear();
 						
-						rematchesAllowed--;
+						rematchesLeft--;
 						switchPlaying(false, true);
 						
 						updateTwitch("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
 						
 						return;
-					}else rematchesAllowed = 1;
+					}
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
 					

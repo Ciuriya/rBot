@@ -14,7 +14,7 @@ public class SetBanWaitTimeCommand extends IRCCommand{
 		super("Sets the time (in seconds) that players have to ban a map, if exceeded, the ban is skipped. 0 or less means unlimited.",
 			  "<tournament name> <time> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "tournamentsetbanwaittime");
+			  "setbanwaittime");
 	}
 
 	@Override

@@ -4,17 +4,18 @@ import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
+import me.smc.sb.multi.PickStrategy;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
-public class SetReadyWaitTimeCommand extends IRCCommand{
+public class SetPickStrategyCommand extends IRCCommand{
 
-	public SetReadyWaitTimeCommand(){
-		super("Sets the time (in seconds) that players have to ready up, if exceeded, the match will attempt to start. 0 or less means unlimited.",
-			  "<tournament name> <time> ",
+	public SetPickStrategyCommand(){
+		super("Sets the tourney's picking strategy (any map, mod picking, etc.)",
+			  "<tournament name> <strategy name (regular, mod)> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "setreadywaittime");
+			  "setpickstrategy");
 	}
 
 	@Override
@@ -29,10 +30,10 @@ public class SetReadyWaitTimeCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setReadyWaitTime(Utils.stringToInt(args[args.length - 1]));
+		t.setPickStrategy(args[args.length - 1]);
 		t.save(false);
 		
-		return "Set the tournament's ready wait time to " + t.getReadyWaitTime() + "!";
+		return "Set the tournament's pick strategy to " + PickStrategy.getStrategyName(t.getPickStrategy()) + "!";
 	}
 	
 }

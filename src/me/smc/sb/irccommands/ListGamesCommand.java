@@ -14,7 +14,7 @@ public class ListGamesCommand extends IRCCommand{
 		super("Lists all running games.",
 			  "<tournament name> ",
 			  null,
-			  "tournamentlistgames");
+			  "listgames");
 	}
 
 	@Override
