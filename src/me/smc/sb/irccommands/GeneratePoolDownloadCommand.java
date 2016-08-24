@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.pircbotx.PircBotX;
@@ -74,7 +75,7 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.getName() + "-" + pool.getPoolNum(), "UTF-8").replaceAll("+", "%20") + ".zip";
 						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url);
 					}catch(Exception ex){
-						Utils.info(e, pe, discord, "Could not zip the package!");
+						Utils.info(e, pe, discord, "Could not zip the package: " + ex.getMessage());
 					}
 				}
 				
@@ -100,31 +101,70 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		url = Utils.getFinalURL(url);
 		
 		URLConnection connection = establishConnection(url);
+
+		boolean bloodcat = false;
 		
 		if(connection.getContentLength() <= 100){
 			connection = establishConnection("https://osu.ppy.sh/d/" + setID);
-			
-			if(connection.getContentLength() <= 100)
+
+			if(connection.getContentLength() <= 100){
 				connection = establishConnection("http://bloodcat.com/osu/s/" + setID);
+				bloodcat = true;
+			}
 		}
-			
-        try{
+
+		String location = downloadFromURL(connection, parent, setID);
+		
+		if(!oszContainsAudio(location) && !bloodcat)
+			location = downloadFromURL(establishConnection("http://bloodcat.com/osu/s/" + setID), parent, setID);
+		
+		return new File(location);
+	}
+	
+	private static String downloadFromURL(URLConnection connection, File parent, int setID){
+		try{
 			InputStream in = connection.getInputStream();
-			FileOutputStream out = new FileOutputStream(parent.getAbsolutePath() + File.separator + map.getBeatmapID() + ".osz");
-			
-	        byte[] b = new byte[1024];
-	        int count;
-	        
-	        while((count = in.read(b)) >= 0)
-	        	out.write(b, 0, count);
-	        
+			FileOutputStream out = new FileOutputStream(parent.getAbsolutePath() + File.separator + setID + ".osz");
+
+			byte[] b = new byte[4096];
+			int count;
+
+			while((count = in.read(b)) >= 0)
+				out.write(b, 0, count);
+
 			in.close();
 			out.close();
-			return new File(parent.getAbsolutePath() + File.separator + map.getBeatmapID() + ".osz");
-        }catch(Exception e){
-			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			return parent.getAbsolutePath() + File.separator + setID + ".osz";
+		}catch(Exception e){
+			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	private static boolean oszContainsAudio(String oszLocation){
+		try{
+			FileInputStream fis = new FileInputStream(oszLocation);
+			ZipInputStream zis = new ZipInputStream(fis);
+			
+			while(zis.available() == 1){
+				ZipEntry entry = zis.getNextEntry();
+				
+				if(entry.getName().endsWith(".mp3")){
+					zis.close();
+					fis.close();
+					return true;
+				}
+				
+				zis.closeEntry();
+			}
+			
+			zis.close();
+			fis.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return false;
 	}
 	
 	private URLConnection establishConnection(String url){

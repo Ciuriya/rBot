@@ -4,6 +4,7 @@ import java.io.File;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.User;
 
@@ -29,7 +30,7 @@ public class DiscordNameRequest extends IncomingRequest{
 			}
 		
 		if(user != null)
-			Main.server.sendMessage("REQUESTED_NAME:" + user.getUsername());
+			Utils.info(null, null, null, "REQUESTED_NAME:" + user.getUsername());
 	}
 
 }

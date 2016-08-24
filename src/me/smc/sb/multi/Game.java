@@ -269,7 +269,12 @@ public abstract class Game{
 				startMapUpdater();
 				
 				pickTimer(false);
-				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
+				
+				String selectUsage = "!select <map url> or !select <map #>";
+				
+				if(getPickStrategy() instanceof ModPickStrategy) selectUsage = "!select <mod>";
+				
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using " + selectUsage +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 						   " You can find the maps here]" : ""));
 				break;
@@ -289,9 +294,15 @@ public abstract class Game{
 							  (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
 							  " You can find the maps here]" : ""));
 			else if(mapSelected) return;
-			else messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using !select <map url> or !select <map #>" +
-				 (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
-				 " You can find the maps here]" : ""));
+			else{
+				String selectUsage = "!select <map url> or !select <map #>";
+				
+				if(getPickStrategy() instanceof ModPickStrategy) selectUsage = "!select <mod>";
+				
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using " + selectUsage +
+						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
+						   " You can find the maps here]" : ""));
+			}
 		}
 		
 		int pickTime = getPickWaitTime();
@@ -601,7 +612,7 @@ public abstract class Game{
 		}
 	}
 	
-	private void updateTwitch(String message, int delay){
+	protected void updateTwitch(String message, int delay){
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
 			public void run(){
@@ -1066,7 +1077,7 @@ public abstract class Game{
 					pickTimers.remove(t);
 				}	
 		}catch(Exception e){
-			Log.logger.log(Level.INFO, "rip pick timers: " + e.getMessage());
+			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}
 	}
 	
@@ -1172,7 +1183,8 @@ public abstract class Game{
 			int countNeeded = (int) Math.ceil((double) match.getPlayers() / 4.0);
 			
 			if(fTeamModCount < countNeeded || sTeamModCount < countNeeded){
-				sendMessage("You need to have at least " + countNeeded + " mod users per team!");
+				sendMessage("You need to have at least " + countNeeded + " mod user" + 
+							(countNeeded <= 1 ? "" : "s") + " per team!");
 				sendMessage("!mp map " + map.getBeatmapID() + " 0");
 				state = GameState.WAITING;
 				
@@ -1549,9 +1561,10 @@ public abstract class Game{
 		List<Integer> usedSlots = new ArrayList<>();
 		List<String> hijackers = new ArrayList<>();
 		
-		for(Player p : team.getPlayers())
-			if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1)
-				usedSlots.add(p.getSlot());
+		if(isTeamGame())
+			for(Player p : team.getPlayers())
+				if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1)
+					usedSlots.add(p.getSlot());
 		
 		for(; i < upperBound; i++){
 			if(hijackedSlots.containsKey(i)){

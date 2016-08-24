@@ -26,8 +26,8 @@ public enum Permissions{
 	VOICE_DEAFEN_MEMBERS(23),
 	VOICE_MOVE_MEMBERS(24),
 	VOICE_USE_VAD(25),
-	BOT_ADMIN(30),
-	IRC_BOT_ADMIN(31);
+	BOT_ADMIN(1000),
+	IRC_BOT_ADMIN(1001);
 	
 	int offset;
 	
@@ -48,9 +48,10 @@ public enum Permissions{
 	}
 	
 	public static boolean hasPerm(User user, TextChannel channel, Permissions perm){
-		if(!check(user, perm))
+		if(check(user, perm)) return true;
+		else if(!(perm.equals(BOT_ADMIN) || perm.equals(IRC_BOT_ADMIN)))
 			return channel.checkPermission(user, Permission.getFromOffset(perm.getOffset()));
-		else return true;
+		else return false;
 	}
 	
 	public static boolean hasPerm(String user, Permissions perm){

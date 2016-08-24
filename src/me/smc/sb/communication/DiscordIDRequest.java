@@ -4,6 +4,7 @@ import java.io.File;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.User;
 
@@ -28,7 +29,8 @@ public class DiscordIDRequest extends IncomingRequest{
 				break;
 			}
 		
-		if(user != null) Main.server.sendMessage("REQUESTED_ID:" + user.getId());
+		if(user != null) 
+			Utils.info(null, null, null, "REQUESTED_ID:" + user.getId());
 	}
 	
 }

@@ -38,6 +38,7 @@ import org.pircbotx.hooks.Event;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
+import me.smc.sb.communication.Server;
 import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Tournament;
@@ -124,8 +125,10 @@ public class Utils{
 				jdaMsg = infoBypass(Main.api.getPrivateChannelById(discord), message);
 			else jdaMsg = infoBypass(Main.api.getTextChannelById(discord), message);
 		else{
-			Main.server.sendMessage(message.replaceAll("\n", "|"));
-			Log.logger.log(Level.INFO, "{Message sent to website} " + message);
+			for(Server server : Main.servers)
+				server.sendMessage(message.replaceAll("\n", "|"));
+			
+			Log.logger.log(Level.INFO, "{Message sent to websites} " + message);
 		}
 		
 		return jdaMsg;
@@ -252,23 +255,32 @@ public class Utils{
 	public static String[] getHTMLCode(String link){
 		BufferedReader in = null;
 		String[] toReturn = new String[]{};
+		
 		try{
 			URL url = new URL(link);
 			StringBuilder page = new StringBuilder();
 			String str = null;
+			
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Accept-Language", "en-US");
 			connection.setConnectTimeout(30000);
 			connection.setReadTimeout(30000);
+			
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
+			
 			while((str = in.readLine()) != null) page.append(str + "\n");
+			
 			toReturn = page.toString().split("\n");
 		}catch(Exception e){
 		}finally{
-			try{if(in != null) in.close();
-			}catch(Exception e){e.printStackTrace();}
+			try{
+				if(in != null) in.close();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 		}
+		
 		return toReturn;
 	}
 	
@@ -278,13 +290,18 @@ public class Utils{
 
 	public static ArrayList<String> getNextLineCodeFromLink(String[] lines, int offsetLine, String... gets){
 		ArrayList<String> allLines = new ArrayList<String>();
+		
 		for(int i = 0; i < lines.length; i++)
 			for(String get : gets)
 				if(lines[i].contains(get)){
-					try{allLines.add(lines[i + offsetLine]);
-					}catch(Exception e){e.printStackTrace();}
+					try{
+						allLines.add(lines[i + offsetLine]);
+					}catch(Exception e){
+						e.printStackTrace();
+					}
 					break;
 				}
+		
 		if(allLines.size() > 0) return allLines;
 		else return new ArrayList<String>();
 	}

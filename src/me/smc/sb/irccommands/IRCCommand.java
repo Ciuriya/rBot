@@ -136,6 +136,7 @@ public abstract class IRCCommand{
 		commands.add(new SetPickStrategyCommand());
 		commands.add(new SetRematchesAllowedCommand());
 		commands.add(new SetMatchPriorityCommand());
+		commands.add(new ConfirmTeamCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());

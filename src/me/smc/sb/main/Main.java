@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -25,6 +27,7 @@ import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.OsuAPIRegulator;
 import me.smc.sb.utils.TwitchRegulator;
+import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.JDA;
 import net.dv8tion.jda.JDABuilder;
 
@@ -44,7 +47,8 @@ public class Main{
 	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
-	public static Server server;
+	//public static Server server;
+	public static List<Server> servers;
 	public static Connection tourneySQL, rpgSQL;
 	public static OsuAPIRegulator osuRequestManager;
 	public static TwitchRegulator twitchRegulator;
@@ -78,9 +82,17 @@ public class Main{
 		login();
 		
 		IncomingRequest.registerRequests();
-		server = new Server(login.getValue("STwebIP"), 
-				            login.getInt("STwebPortIn"),
-				            login.getInt("STwebPortOut"));
+
+		try{
+			servers = new ArrayList<Server>();
+			
+			for(String server : login.getStringList("servers"))
+				servers.add(new Server(server.split(":")[0],
+									   Utils.stringToInt(server.split(":")[1]),
+									   Utils.stringToInt(server.split(":")[2])));	
+		}catch(Exception e){
+			Log.logger.log(Level.INFO, e.getMessage(), e);
+		}
 		
 		Tournament.loadTournaments();
 		
@@ -168,7 +180,11 @@ public class Main{
 	}
 	
 	public static void stop(int code){
-		server.stop();
+		if(!servers.isEmpty())
+			for(Server server : servers)
+				if(server != null)
+					server.stop();
+		
 		writeCodes(code);
 		api.shutdown();
 		System.exit(0);

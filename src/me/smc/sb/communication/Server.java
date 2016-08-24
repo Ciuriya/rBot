@@ -14,7 +14,7 @@ import java.util.logging.Level;
 
 import me.smc.sb.utils.Log;
 
-public class Server{ //see current lobby representation
+public class Server{
 
 	private String ip;
 	private int portReceive, portSend;
@@ -24,6 +24,7 @@ public class Server{ //see current lobby representation
 		this.ip = ip;
 		this.portReceive = portReceive;
 		this.portSend = portSend;
+		
 		waitForMessage();
 	}
 	
@@ -101,6 +102,7 @@ public class Server{ //see current lobby representation
 		OutputStream os = null;
 		OutputStreamWriter osw = null;
 		BufferedWriter bw = null;
+		
 		try{
 			clientSocket = new Socket(ip, portSend);
 	        os = clientSocket.getOutputStream();

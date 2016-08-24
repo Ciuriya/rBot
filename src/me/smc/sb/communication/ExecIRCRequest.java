@@ -1,7 +1,7 @@
 package me.smc.sb.communication;
 
 import me.smc.sb.irccommands.IRCCommand;
-import me.smc.sb.main.Main;
+import me.smc.sb.utils.Utils;
 
 public class ExecIRCRequest extends IncomingRequest{
 
@@ -17,7 +17,10 @@ public class ExecIRCRequest extends IncomingRequest{
 			msg += " " + args[i];
 		msg = msg.substring(1);
 		
-		Main.server.sendMessage(IRCCommand.handleCommand(null, null, null, msg).replaceAll("\n", "|"));
+		String answer = IRCCommand.handleCommand(null, null, null, msg).replaceAll("\n", "|");
+		
+		if(answer.length() > 0)
+			Utils.info(null, null, null, answer);
 	}
 
 }

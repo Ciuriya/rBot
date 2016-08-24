@@ -32,12 +32,12 @@ public class SetTeamPlayersCommand extends IRCCommand{
 		for(String arg : args) msg += arg + " ";
 		msg = msg.substring(0, msg.length() - 1).split("}")[1].substring(1);
 		
-		if(!msg.contains(",")) return "You need more players!";
-		
 		LinkedList<Player> players = new LinkedList<>();
 		
-		for(String p : msg.split(","))
-			players.add(new Player(p));
+		if(msg.contains(","))
+			for(String p : msg.split(","))
+				players.add(new Player(p));
+		else players.add(new Player(msg));
 		
 		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
 		t.getTeam(validation.split("\\|")[0]).setPlayers(players);
