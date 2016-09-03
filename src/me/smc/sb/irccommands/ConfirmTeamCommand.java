@@ -52,24 +52,24 @@ public class ConfirmTeamCommand extends IRCCommand{
 		try{
 			Class.forName("com.mysql.jdbc.Driver");
 			Connection upSQL = DriverManager.getConnection(login.getValue("WTURL"), 
-											  			   login.getValue("WTUser"),
-											  			   login.getValue("WTPass"));
+                                                           login.getValue("WTUser"),
+                                                           login.getValue("WTPass"));
 			
 			new JdbcSession(upSQL)
-			.sql("UPDATE wt_teammembers SET confirmed=1 " +
-				 "WHERE `wt_teammembers_data.user_id`=? AND " +
-				 "`wt_teams.id`=?")
+			.sql("UPDATE teammembers SET confirmed=1 " +
+				 "WHERE `player_data.user_id`=? AND " +
+				 "`teams.id`=?")
 			.set(userID)
 			.set(teamID)
 			.update(Outcome.VOID);
 			
 			Connection delSQL = DriverManager.getConnection(login.getValue("WTURL"), 
-					  						  				login.getValue("WTUser"),
-					  						  				login.getValue("WTPass"));
+                                                            login.getValue("WTUser"),
+                                                            login.getValue("WTPass"));
 			
 			new JdbcSession(delSQL)
-			.sql("DELETE FROM wt_teammembers " +
-				 "WHERE `wt_teammembers_data.user_id`=? AND " +
+			.sql("DELETE FROM teammembers " +
+				 "WHERE `player_data.user_id`=? AND " +
 				 "confirmed=0")
 			.set(userID)
 			.update(Outcome.VOID);

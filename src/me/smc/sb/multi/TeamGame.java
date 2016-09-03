@@ -1,13 +1,18 @@
 package me.smc.sb.multi;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import me.smc.sb.irccommands.InvitePlayerCommand;
+import me.smc.sb.utils.Utils;
 
 public class TeamGame extends Game{
 
+	private ArrayList<Player> fTeamPlayers;
+	private ArrayList<Player> sTeamPlayers;
+	
 	public TeamGame(Match match){
 		super(match);
 	}
@@ -103,12 +108,11 @@ public class TeamGame extends Game{
 				if(match == null) return;
 				int fTeamCaptains = 0, sTeamCaptains = 0;
 				
-				for(String player : playersInRoom)
-					if(captains.contains(player.replaceAll(" ", "_"))){
-						Team team = findTeam(player);	
-						if(teamToBoolean(team)) fTeamCaptains++;
-						else sTeamCaptains++;
-					}	
+				for(String player : playersInRoom){
+					Team team = findTeam(player);	
+					if(teamToBoolean(team)) fTeamCaptains++;
+					else sTeamCaptains++;
+				}
 				
 				Team missingTeam = null;
 				
@@ -139,8 +143,143 @@ public class TeamGame extends Game{
 			captains.remove(pl.getName().replaceAll(" ", "_"));
 	}
 	
-	public void resize(){
-		sendMessage("!mp size " + match.getPlayers());
-		//do some shit here I guess?
+	public void resize(String message){
+		if(message == null && !state.eq(GameState.RESIZING)){
+			state = GameState.RESIZING;
+			
+			fTeamPlayers = new ArrayList<>();
+			sTeamPlayers = new ArrayList<>();
+			
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					if(match.getPlayers() > roomSize){
+						sendMessage("!mp size " + match.getPlayers());
+						roomSize = match.getPlayers();
+						
+						ArrayList<Integer> freeSlots = new ArrayList<>();
+						ArrayList<Player> toMove = new ArrayList<>();
+						
+						for(int i = match.getPlayers() / 2 + 1; i <= match.getPlayers(); i++)
+							freeSlots.add(i);
+
+						for(Player p : sTeamPlayers)
+							if(p.getSlot() > match.getPlayers() / 2)
+								freeSlots.remove((Integer) p.getSlot());
+							else toMove.add(p);
+						
+						for(Player p : new ArrayList<>(toMove)){
+							int slot = freeSlots.stream().findFirst().orElse(-1);
+							
+							if(slot != -1){
+								freeSlots.remove((Integer) slot);
+								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								toMove.remove(p);
+							}else sendMessage("!mp kick " + p.getName().replaceAll(" ", "_"));
+						}				
+					}else{
+						ArrayList<Integer> freeSlots = new ArrayList<>();
+						ArrayList<Player> toMove = new ArrayList<>();
+						
+						for(int i = 1; i <= match.getPlayers() / 2; i++)
+							freeSlots.add(i);
+
+						for(Player p : fTeamPlayers)
+							if(p.getSlot() <= match.getPlayers() / 2)
+								freeSlots.remove((Integer) p.getSlot());
+							else toMove.add(p);
+						
+						for(Player p : new ArrayList<>(toMove)){
+							int slot = freeSlots.stream().findFirst().orElse(-1);
+							
+							if(slot != -1){
+								freeSlots.remove((Integer) slot);
+								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								toMove.remove(p);
+							}else sendMessage("!mp kick " + p.getName().replaceAll(" ", "_"));
+						}				
+						
+						freeSlots.clear();
+						toMove.clear();
+						
+						for(int i = match.getPlayers() / 2 + 1; i <= match.getPlayers(); i++)
+							freeSlots.add(i);
+
+						for(Player p : sTeamPlayers)
+							if(p.getSlot() > match.getPlayers() / 2 && p.getSlot() <= match.getPlayers())
+								freeSlots.remove((Integer) p.getSlot());
+							else toMove.add(p);
+						
+						for(Player p : new ArrayList<>(toMove)){
+							int slot = freeSlots.stream().findFirst().orElse(-1);
+							
+							if(slot != -1){
+								freeSlots.remove((Integer) slot);
+								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								toMove.remove(p);
+							}else sendMessage("!mp kick " + p.getName().replaceAll(" ", "_"));
+						}
+						
+						sendMessage("!mp size " + match.getPlayers());
+						roomSize = match.getPlayers();
+					}
+					
+					state = GameState.WAITING;
+				}
+			}, 2500);
+		}else{
+			int slot = Utils.stringToInt(message.split(" ")[1]);
+			message = Utils.removeExcessiveSpaces(message);
+			String[] spaceSplit = message.split(" ");
+			
+			int count = 0;
+			for(String arg : spaceSplit){
+				if(arg.contains("osu.ppy.sh")) break;
+				count++;
+			}
+			
+			String player = "";
+
+			for(int i = count + 1; i < spaceSplit.length; i++){
+				if(spaceSplit[i].equalsIgnoreCase("[Team")){
+					count = i;
+					break;
+				}
+				if(spaceSplit[i].equalsIgnoreCase("[Host")){
+					count = i + 2;
+					break;
+				}
+				
+				player += spaceSplit[i] + "_";
+			}
+			
+			player = player.substring(0, player.length() - 1);
+			
+			Team team = findTeam(player);
+			
+			if(team == null){
+				sendMessage("!mp kick " + player);
+				sendMessage(player + " is not on a team!");
+				return;
+			}
+			
+			Player p = findPlayer(player);
+
+			if(p != null) p.setSlot(slot);
+			
+			if(teamToBoolean(team)){
+				if(fTeamPlayers.size() >= match.getPlayers() / 2){
+					sendMessage("!mp kick " + player);
+					return;
+				}
+				
+				fTeamPlayers.add(p);
+			}else{
+				if(sTeamPlayers.size() >= match.getPlayers() / 2)
+					sendMessage("!mp kick " + player);
+				
+				sTeamPlayers.add(p);
+			}
+		}
 	}
 }

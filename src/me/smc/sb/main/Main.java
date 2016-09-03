@@ -33,21 +33,13 @@ import net.dv8tion.jda.JDABuilder;
 
 public class Main{
 	
-	//read suggestions
-	//!createlist {list name} !addlist {list name} {text} !listprint {list name}
-	//clean specific user
-	//yt stats
-	//cooldown on commands instead of pure lockdown IMPORTANT
-	
 	private static String discordToken, osuUser, osuPassword;
 	public static JDA api;
 	public static PircBotX ircBot = null;
 	public static PircBotX twitchBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
-	public static final double version = 0.01;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static long bootTime = 0;
-	//public static Server server;
 	public static List<Server> servers;
 	public static Connection tourneySQL, rpgSQL;
 	public static OsuAPIRegulator osuRequestManager;

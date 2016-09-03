@@ -119,8 +119,9 @@ public class Match{
 	
 	public void resize(int players){
 		this.players = players;
+		
 		if(game != null && tournament.getTournamentType() == 0) 
-			((TeamGame) game).resize();
+			((TeamGame) game).resize(null);
 	}
 	
 	public void setGame(Game game){

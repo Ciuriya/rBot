@@ -448,6 +448,7 @@ public abstract class Game{
 	
 	@SuppressWarnings("deprecation")
 	public void stop(){
+		clearPickTimers();
 		match.getTournament().stopStreaming(this);
 		
 		waitingForCaptains = 0;
@@ -457,6 +458,17 @@ public abstract class Game{
 		
 		InvitePlayerCommand.allowedInviters.remove(match.getFirstTeam());
 		InvitePlayerCommand.allowedInviters.remove(match.getSecondTeam());
+		RandomCommand.waitingForRolls.remove(match.getFirstTeam());
+		RandomCommand.waitingForRolls.remove(match.getSecondTeam());
+		SelectMapCommand.pickingTeams.remove(match.getFirstTeam());
+		SelectMapCommand.pickingTeams.remove(match.getSecondTeam());
+		PassTurnCommand.passingTeams.remove(match.getFirstTeam());
+		PassTurnCommand.passingTeams.remove(match.getSecondTeam());
+		ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+		BanMapCommand.banningTeams.remove(match.getFirstTeam());
+		BanMapCommand.banningTeams.remove(match.getSecondTeam());
+		SkipRematchCommand.gamesAllowedToSkip.remove(this);
+		ContestCommand.gamesAllowedToContest.remove(this);
 		
 		IRCChatListener.gamesListening.remove(multiChannel);
 		
@@ -474,6 +486,7 @@ public abstract class Game{
 		Log.logger.log(Level.INFO, shortGameEndMsg);
 		
 		if(messageUpdater != null) messageUpdater.cancel();
+		
 		invitesSent.clear();
 		playersInRoom.clear();
 		banchoFeedback.clear();
@@ -790,6 +803,7 @@ public abstract class Game{
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.VERIFYING)) verifyLobby(message);
+		else if(message.startsWith("Slot ") && state.eq(GameState.RESIZING)) ((TeamGame) this).resize(message);
 		else if(message.startsWith("Beatmap: ")) updateMap(message.split(" ")[1]);
 		else if(message.startsWith("Players: ") && (state.eq(GameState.FIXING) || state.eq(GameState.VERIFYING)))
 			expectedPlayers = Utils.stringToInt(message.split(" ")[1]);
@@ -1426,7 +1440,7 @@ public abstract class Game{
 		sendInviteMessages(player);
 	}
 	
-	protected void sendInviteMessages(String player){	
+	protected void sendInviteMessages(String player){
 		pmUser(player, "You have been invited to join: " + match.getLobbyName());
 		pmUser(player, "Reply with !join to join the game. Please note that this command is reusable.");
 		

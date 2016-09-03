@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -15,6 +16,7 @@ import me.smc.sb.multi.Player;
 import me.smc.sb.multi.Team;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
 public class SeedTeamsCommand extends IRCCommand{
@@ -70,8 +72,12 @@ public class SeedTeamsCommand extends IRCCommand{
 					
 					Collections.sort(ranks);
 					
-					for(int i = 1; i < 5; i++)
-						average += ranks.get(ranks.size() - i);
+					try{
+						for(int i = 0; i < 4; i++)
+							average += ranks.get(i);
+					}catch(Exception e){
+						Log.logger.log(Level.SEVERE, e.getMessage() + " (team: " + team.getTeamName() + ")", e);
+					}
 					
 					average /= 4f;
 					

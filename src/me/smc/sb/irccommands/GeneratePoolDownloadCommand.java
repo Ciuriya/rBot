@@ -72,7 +72,7 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 					zipPackage(dlFolder, "/var/www/html/s/" + t.getName() + "-" + pool.getPoolNum() + ".zip");
 					
 					try{
-						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.getName() + "-" + pool.getPoolNum(), "UTF-8").replaceAll("+", "%20") + ".zip";
+						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.getName() + "-" + pool.getPoolNum(), "UTF-8").replaceAll("\\+", "%20") + ".zip";
 						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url);
 					}catch(Exception ex){
 						Utils.info(e, pe, discord, "Could not zip the package: " + ex.getMessage());

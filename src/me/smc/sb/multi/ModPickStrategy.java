@@ -47,6 +47,8 @@ public class ModPickStrategy implements PickStrategy{
 			return;
 		}
 		
+		if(game.mapSelected) return;
+		
 		int category = 0;
 		
 		switch(map.toLowerCase()){
@@ -62,9 +64,22 @@ public class ModPickStrategy implements PickStrategy{
 		
 		final int fCategory = category;
 		
+		boolean valid = false;
 		List<Map> maps = game.match.getMapPool().getMaps().stream().filter(m -> m.getCategory() == fCategory).collect(Collectors.toList());
-		int num = Utils.fetchRandom(0, maps.size() - 1);
-		selected = maps.get(num);
+		
+		while(!valid){
+			if(maps.size() == 0){
+				game.sendMessage("You have already picked all maps in this mod!");
+				return;
+			}
+			
+			int num = Utils.fetchRandom(0, maps.size() - 1);
+			selected = maps.get(num);
+			
+			if(!game.mapsPicked.contains(selected))
+				valid = true;
+			else maps.remove(selected);
+		}
 		
 		if(selected != null && !game.mapSelected && select){
 			game.mapSelected = true;
