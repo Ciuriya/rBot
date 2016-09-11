@@ -17,9 +17,8 @@ import me.smc.sb.utils.Log;
 public class Entity{
 	
 	//dynamic mob adding and shit?
-	//if id is player, don't load
+	//if id is player, don't load //wtf, yes you do fucking shit
 	//change the != -1 checks to != 0 since SQL null returns 0
-	//still need to load friends and dialogs
 	
 	private int id;
 	private String name;
@@ -207,6 +206,22 @@ public class Entity{
 		return entities.stream().filter(e -> e.id == id).findFirst().orElse(null);
 	}
 	
+	public void addFriend(int friendId){
+		if(friends == null) 
+			friends = new ArrayList<>();
+		
+		if(!friends.contains((Integer) friendId))
+			friends.add(friendId);
+	}
+	
+	public void addDialog(String dialog){
+		if(dialogs == null)
+			dialogs = new ArrayList<>();
+		
+		if(!dialogs.contains(dialog))
+			dialogs.add(dialog);
+	}
+	
 	private void insert(){
 		try{
 			Long id = new JdbcSession(Main.rpgSQL)
@@ -353,24 +368,84 @@ public class Entity{
 	
 	public static void loadAll(){
 		try{
-			new JdbcSession(Main.rpgSQL)
-			.sql("SELECT id_entity, name, experience, class, specialization, race, gender, strength, endurance, " +
-				 "dexterity, intelligence, wisdom, charisma, x, y, description, guild_status, Guild_id_guild, " +
-				 "Tile_id_tile, Party_id_party FROM Entity")
-			.select(new Outcome<List<String>>(){
-			    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
-			    		 while(rset.next()){
-			    			 load(rset);
-			    		 }
-			    		 
-			    		 rset.close();
-			    		 
-			    		 return new ArrayList<String>();
-			    	 }
-			     });
+			String entityQuery = 
+					"SELECT id_entity, name, experience, class, specialization, race, gender, strength, endurance, " +
+					"dexterity, intelligence, wisdom, charisma, x, y, description, guild_status, Guild_id_guild, " +
+					"Tile_id_tile, Party_id_party FROM Entity";
+			Outcome<List<String>> entityOutcome = 
+					new Outcome<List<String>>(){
+		    	 		@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
+		    	 			while(rset.next()){
+		    	 				load(rset);
+		    	 			}
+		    		 
+		    	 			rset.close();
+		    		 
+		    	 			return new ArrayList<String>();
+		    	 		}
+		     		};
+		     		
+			Thread t = execQuery(entityQuery, entityOutcome);
+			t.join();
+			
+			Outcome<List<String>> friendOutcome =
+				new Outcome<List<String>>(){
+	 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
+	 					while(rset.next()){
+	 						getEntity(rset.getInt(0)).addFriend(rset.getInt(1));
+	 					}
+    		 
+	 					rset.close();
+    		 
+	 					return new ArrayList<String>();
+	 				}
+     			};
+     		
+     		t = execQuery("SELECT id_entity, friend_id FROM Friends", friendOutcome);
+     		t.join();
+     		
+			Outcome<List<String>> dialogOutcome =
+				new Outcome<List<String>>(){
+    	 			@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
+    	 				while(rset.next()){
+    	 					Blob dialogBlob = rset.getBlob(0);
+    	 					getEntity(rset.getInt(1))
+    	 						.addDialog(
+    	 								new String(dialogBlob.getBytes(1L, (int) dialogBlob.length())));
+    	 				}
+    		 
+    	 				rset.close();
+    		 
+    	 				return new ArrayList<String>();
+    	 			}
+     			};
+     		
+     		t = execQuery("SELECT dialog, entity_id FROM Dialog", dialogOutcome);
+     		t.join();
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+	}
+	
+	//code shortening zzz
+	private static Thread execQuery(String query, Outcome<List<String>> outcome){
+		Thread t = new Thread(new Runnable(){
+			@SuppressWarnings("deprecation")
+			public void run(){
+				try{
+					new JdbcSession(Main.rpgSQL)
+					.sql(query)
+					.select(outcome);
+				}catch(SQLException e){
+					Log.logger.log(Level.SEVERE, e.getMessage(), e);
+				}finally{
+					Thread.currentThread().stop();
+				}
+			}
+		});
+		
+		t.start();
+		return t;
 	}
 	
 }
