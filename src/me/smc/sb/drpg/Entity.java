@@ -304,6 +304,10 @@ public class Entity{
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 		
+		unload();
+	}
+	
+	public void unload(){
 		entities.remove(this);
 		name = null;
 		eClass = null;

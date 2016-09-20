@@ -99,24 +99,26 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		String url = "https://osu.ppy.sh/d/" + setID + "n";
 		
 		url = Utils.getFinalURL(url);
-		
+
 		URLConnection connection = establishConnection(url);
 
 		boolean bloodcat = false;
-		
+
 		if(connection.getContentLength() <= 100){
-			connection = establishConnection("https://osu.ppy.sh/d/" + setID);
+			connection = establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID));
 
 			if(connection.getContentLength() <= 100){
-				connection = establishConnection("http://bloodcat.com/osu/s/" + setID);
+				connection = establishConnection(Utils.getFinalURL("http://bloodcat.com/osu/s/" + setID));
 				bloodcat = true;
 			}
 		}
 
 		String location = downloadFromURL(connection, parent, setID);
 		
-		if(!oszContainsAudio(location) && !bloodcat)
-			location = downloadFromURL(establishConnection("http://bloodcat.com/osu/s/" + setID), parent, setID);
+		if(!oszContainsAudio(location)){
+			if(!bloodcat) location = downloadFromURL(establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID)), parent, setID);
+			else return null;
+		}
 		
 		return new File(location);
 	}

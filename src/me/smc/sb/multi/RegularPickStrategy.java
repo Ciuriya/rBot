@@ -32,6 +32,7 @@ public class RegularPickStrategy implements PickStrategy{
 			
 			game.map = new Map(map, 1);
 			game.mapSelected = true;
+			game.mapSelectedTime = System.currentTimeMillis();
 			
 			if(mod.length() > 0)
 				game.sendMessage("!mp mods " + mod.toUpperCase() + " Freemod");
@@ -89,6 +90,7 @@ public class RegularPickStrategy implements PickStrategy{
 		if(selected != null && !game.mapSelected && select){
 			game.mapSelected = true;
 			game.map = selected;
+			game.mapSelectedTime = System.currentTimeMillis();
 			
 			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
 			

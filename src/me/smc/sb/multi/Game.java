@@ -43,6 +43,7 @@ public abstract class Game{
 	protected int contestState = 0; //^
 	protected int expectedPlayers = 0;
 	protected long lastPickTime = 0;
+	protected long mapSelectedTime = 0;
 	protected boolean mapSelected = false;
 	protected boolean fTeamFirst = true;
 	protected boolean validMods = true;
@@ -194,6 +195,8 @@ public abstract class Game{
 	public abstract void allowTeamInvites();
 	
 	protected void mapSelection(int part){
+		mapSelectedTime = 0;
+		
 		switch(part){
 			case 1:
 				allowTeamInvites();
@@ -344,7 +347,9 @@ public abstract class Game{
 					
 					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
 					fTeamFirst = !fTeamFirst;
+					SelectMapCommand.pickingTeams.remove(selectingTeam);
 					selectingTeam = findNextTeamToPick();
+					SelectMapCommand.pickingTeams.put(selectingTeam, Game.this);
 					
 					pickTimer(true);
 				}
@@ -360,6 +365,11 @@ public abstract class Game{
 		mapUpdater = new Timer();
 		mapUpdater.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
+				if(mapSelectedTime != 0 && mapSelectedTime + (long)(getPickWaitTime() / 2 * 1000) <= System.currentTimeMillis()){
+					mapUpdater.cancel();
+					return;
+				}
+				
 				if(map != null){
 					if(previousMap != null && previousMap.getURL().equalsIgnoreCase(map.getURL())) return;
 					
@@ -367,7 +377,7 @@ public abstract class Game{
 					changeMap(map);
 				}
 			}
-		}, 10000, 10000);
+		}, 10000, 10000);	
 	}
 	
 	private void changeMap(Map map){
@@ -404,6 +414,9 @@ public abstract class Game{
 	public void acceptRoll(String player, int roll){
 		Team team = findTeam(player);
 		
+		if(!RandomCommand.waitingForRolls.containsKey(team))
+			return;
+			
 		rollsLeft--;
 		RandomCommand.waitingForRolls.remove(team);
 		
@@ -425,6 +438,8 @@ public abstract class Game{
 			
 			sendMessage((fTeamFirst ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
 					        ", you can use !pass within the next 20 seconds to let the other team start instead!");
+			
+			if(messageUpdater != null) messageUpdater.cancel();
 			
 			final boolean ffTeam = fTeamFirst;
 			
@@ -505,6 +520,7 @@ public abstract class Game{
 		fTeamPoints = 0;
 		map = null;
 		mapSelected = false;
+		mapSelectedTime = 0;
 		mpLink = null;
 		multiChannel = null;
 		playersChecked = 0;
@@ -1112,6 +1128,7 @@ public abstract class Game{
 		ContestCommand.gamesAllowedToContest.remove(this);
 		skipRematchState = 0;
 		contestState = 0;
+		mapSelectedTime = 0;
 		
 		if(messageUpdater != null) messageUpdater.cancel();
 		
@@ -1381,16 +1398,20 @@ public abstract class Game{
 			Timer twitchCloseDelay = new Timer();
 			twitchCloseDelay.schedule(new TimerTask(){
 				public void run(){
-					match.getTournament().stopStreaming(Game.this);
+					if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2))
+						match.getTournament().stopStreaming(Game.this);
 				}
 			}, 25500);
 			
 			Timer time = new Timer();
 			time.schedule(new TimerTask(){
 				public void run(){
-					stop();
+					if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2))
+						stop();
 				}
 			}, 30000);
+			
+			contestMessage();
 			
 			return;
 		}else if(selectMaps){

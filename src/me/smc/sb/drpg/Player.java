@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.jcabi.jdbc.JdbcSession;
+
+import me.smc.sb.main.Main;
+
 public class Player{
 
 	private Entity entity;
@@ -75,10 +79,15 @@ public class Player{
 		//change that shit for better values
 		entity = new Entity(-1, name, 0f, "Peasant", "None", "Caucasian", true, 
 							0f, 0f, 0f, 0f, 0f, 0f, -1, -1, "", 0, -1, -1, -1);
+	
+		new JdbcSession(Main.rpgSQL)
+		.sql("INSERT INTO Player (id_entity, discord_id) VALUES (?, ?)")
+		.set(entity.getId())
+		.set(discordId);
 	}
 	
 	public void save(){
-		
+
 	}
 	
 	public void delete(){
