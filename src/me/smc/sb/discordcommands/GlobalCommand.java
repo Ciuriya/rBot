@@ -102,6 +102,7 @@ public abstract class GlobalCommand{
 		commands.add(new IdToUserCommand());
 		commands.add(new JoinServerCommand());
 		commands.add(new ListPermsCommand());
+		commands.add(new ListServersCommand());
 		commands.add(new MessageIRCCommand());
 		commands.add(new OsuLastTopPlays());
 		commands.add(new OsuStatsCommand());

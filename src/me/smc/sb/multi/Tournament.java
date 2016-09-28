@@ -42,6 +42,8 @@ public class Tournament{
 	private int upperRankBound;
 	private boolean skipWarmups;
 	private String resultDiscord;
+	private String alertDiscord;
+	private String alertMessage;
 	private PickStrategy pickStrategy;
 	private int rematchesAllowed;
 	public static String tournamentDB = "Tournament_DB";
@@ -65,6 +67,8 @@ public class Tournament{
 		tournamentType = getConfig().getInt("tournamentType");
 		mode = getConfig().getInt("mode");
 		resultDiscord = getConfig().getValue("resultDiscord");
+		alertDiscord = getConfig().getValue("alertDiscord");
+		alertMessage = getConfig().getValue("alertMessage");
 		lowerRankBound = getConfig().getInt("lowerRankBound");
 		upperRankBound = getConfig().getInt("upperRankBound");
 		skipWarmups = getConfig().getBoolean("skipWarmups");
@@ -79,8 +83,8 @@ public class Tournament{
 	}
 	
 	public Tournament(String name, String displayName, String twitchChannel, boolean scoreV2, int pickWaitTime, int banWaitTime, 
-					  int readyWaitTime, int type, int mode, String resultDiscord, int lowerRankBound, int upperRankBound, boolean skipWarmups,
-					  String pickStrategy, int rematchesAllowed){
+					  int readyWaitTime, int type, int mode, String resultDiscord, String alertDiscord, String alertMessage,
+					  int lowerRankBound, int upperRankBound, boolean skipWarmups, String pickStrategy, int rematchesAllowed){
 		this.name = name;
 		this.displayName = displayName;
 		this.twitchChannel = twitchChannel;
@@ -91,6 +95,8 @@ public class Tournament{
 		this.tournamentType = type;
 		this.mode = mode;
 		this.resultDiscord = resultDiscord;
+		this.alertDiscord = alertDiscord;
+		this.alertMessage = alertMessage;
 		this.lowerRankBound = lowerRankBound;
 		this.upperRankBound = upperRankBound;
 		this.skipWarmups = skipWarmups;
@@ -177,6 +183,14 @@ public class Tournament{
 	
 	public String getResultDiscord(){
 		return resultDiscord;
+	}
+	
+	public String getAlertDiscord(){
+		return alertDiscord;
+	}
+	
+	public String getAlertMessage(){
+		return alertMessage;
 	}
 	
 	public int getLowerRankBound(){
@@ -416,6 +430,14 @@ public class Tournament{
 		this.resultDiscord = resultDiscord;
 	}
 	
+	public void setAlertDiscord(String alertDiscord){
+		this.alertDiscord = alertDiscord;
+	}
+	
+	public void setAlertMessage(String alertMessage){
+		this.alertMessage = alertMessage;
+	}
+	
 	public void setLowerRankBound(int lowerRankBound){
 		this.lowerRankBound = lowerRankBound;
 	}
@@ -513,6 +535,8 @@ public class Tournament{
 		getConfig().writeValue("type", tournamentType);
 		getConfig().writeValue("mode", mode);
 		getConfig().writeValue("resultDiscord", resultDiscord);
+		getConfig().writeValue("alertDiscord", alertDiscord);
+		getConfig().writeValue("alertMessage", alertMessage);
 		getConfig().writeValue("lowerRankBound", lowerRankBound);
 		getConfig().writeValue("upperRankBound", upperRankBound);
 		getConfig().writeValue("skipWarmups", skipWarmups);
@@ -525,8 +549,8 @@ public class Tournament{
 			if(add){
 				new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO Tournament (name, display_name, twitch_channel, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
-					 "type, mode, result_discord, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed) " +
-				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+					 "type, mode, result_discord, alert_discord, alert_message, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed) " +
+				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(displayName)
 				.set(twitchChannel)
@@ -537,6 +561,8 @@ public class Tournament{
 				.set(tournamentType)
 				.set(mode)
 				.set(resultDiscord)
+				.set(alertDiscord)
+				.set(alertMessage)
 				.set(lowerRankBound)
 				.set(upperRankBound)
 				.set(skipWarmups)
@@ -547,8 +573,8 @@ public class Tournament{
 				new JdbcSession(Main.tourneySQL)
 				.sql("UPDATE Tournament " +
 					 "SET display_name='?', twitch_channel='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
-					 "type='?', mode='?', result_discord='?', lower_rank_bound='?', upper_rank_bound='?', skip_warmups='?', pick_strategy='?', " +
-					 "rematches_allowed='?' WHERE name='?'")
+					 "type='?', mode='?', result_discord='?', alert_discord='?', alert_message='?', lower_rank_bound='?', upper_rank_bound='?', " +
+					 "skip_warmups='?', pick_strategy='?', rematches_allowed='?' WHERE name='?'")
 				.set(displayName)
 				.set(twitchChannel)
 				.set(scoreV2 ? 1 : 0)
@@ -558,6 +584,8 @@ public class Tournament{
 				.set(tournamentType)
 				.set(mode)
 				.set(resultDiscord)
+				.set(alertDiscord)
+				.set(alertMessage)
 				.set(lowerRankBound)
 				.set(upperRankBound)
 				.set(skipWarmups)
@@ -652,8 +680,8 @@ public class Tournament{
 				    		 while(rset.next()){
 				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getString(4), rset.getBoolean(5), 
 				    					 					   rset.getInt(6), rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getInt(10), 
-				    					 					   rset.getString(11), rset.getInt(12), rset.getInt(13), rset.getBoolean(14),
-				    					 					   rset.getString(15), rset.getInt(16));
+				    					 					   rset.getString(11), rset.getString(12), rset.getString(13), rset.getInt(14), 
+				    					 					   rset.getInt(15), rset.getBoolean(16), rset.getString(17), rset.getInt(18));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

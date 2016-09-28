@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import org.json.JSONObject;
 import org.pircbotx.Channel;
 
+import me.smc.sb.irccommands.AlertStaffCommand;
 import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.ChangeWarmupModCommand;
 import me.smc.sb.irccommands.ContestCommand;
@@ -29,7 +30,7 @@ import net.dv8tion.jda.entities.Message;
 
 public abstract class Game{
 
-	protected Match match;
+	public Match match;
 	protected String multiChannel;
 	protected String mpLink;
 	protected int waitingForCaptains = 2;
@@ -123,6 +124,8 @@ public abstract class Game{
 			}else discordResultMessage = Utils.infoBypass(Main.api.getPrivateChannelById(resultDiscord), gameMessage);
 		
 		updateTwitch("Waiting for players to join the lobby...");
+		
+		AlertStaffCommand.gamesAllowedToAlert.add(this);
 	}
 	
 	public void setupGame(){
@@ -175,7 +178,7 @@ public abstract class Game{
 					}
 				}else 
 					for(String message : messages)
-						sendMessage(message);	
+						sendMessage(message);
 			}
 		}, delay * 1000, 60000);
 	}
@@ -484,6 +487,7 @@ public abstract class Game{
 		BanMapCommand.banningTeams.remove(match.getSecondTeam());
 		SkipRematchCommand.gamesAllowedToSkip.remove(this);
 		ContestCommand.gamesAllowedToContest.remove(this);
+		AlertStaffCommand.gamesAllowedToAlert.remove(this);
 		
 		IRCChatListener.gamesListening.remove(multiChannel);
 		

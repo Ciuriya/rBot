@@ -126,6 +126,8 @@ public abstract class IRCCommand{
 		commands.add(new ForceStartGameCommand());
 		commands.add(new SetGameScoreCommand());
 		commands.add(new SetResultDiscordCommand());
+		commands.add(new SetAlertDiscordCommand());
+		commands.add(new SetAlertMessageCommand());
 		commands.add(new SetRankBoundsCommand());
 		commands.add(new SetDisplayNameCommand());
 		commands.add(new SetPickWaitTimeCommand());
@@ -147,6 +149,7 @@ public abstract class IRCCommand{
 		commands.add(new SkipRematchCommand());
 		commands.add(new ContestCommand());
 		commands.add(new ChangeWarmupModCommand());
+		commands.add(new AlertStaffCommand());
 		commands.add(new MPLinkCommand());
 		commands.add(new CurrentScoreCommand());
 		commands.add(new CurrentMapCommand());

@@ -12,8 +12,11 @@ import net.dv8tion.jda.events.message.MessageReceivedEvent;
 public class ExecProcessCommand extends GlobalCommand{
 
 	public ExecProcessCommand(){
-		super(Permissions.IRC_BOT_ADMIN, 
-			  " - Executes a process", "",  
+		super(Permissions.BOT_ADMIN, 
+			  " - Executes a process", 
+			  "{prefix}execP\nThis command executes a linux process.\n\n" +
+			  "----------\nUsage\n----------\n{prefix}execP {command} - Executes the linux process\n\n" +
+			  "----------\nAliases\n----------\nThere are no aliases.",  
 			  true,
 			  "execP");
 	}

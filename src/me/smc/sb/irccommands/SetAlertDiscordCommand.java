@@ -8,13 +8,13 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
-public class SetResultDiscordCommand extends IRCCommand{
+public class SetAlertDiscordCommand extends IRCCommand{
 
-	public SetResultDiscordCommand(){
-		super("Sets the discord channel to send match results in.",
+	public SetAlertDiscordCommand(){
+		super("Sets the discord channel to send staff alerts in.",
 			  "<tournament name> ",
 			  Permissions.IRC_BOT_ADMIN,
-			  "setresultdiscord");
+			  "setalertdiscord");
 	}
 	
 	@Override
@@ -29,12 +29,12 @@ public class SetResultDiscordCommand extends IRCCommand{
 		if(Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)) == null)
 			return "The tournament does not exist!";
 		
-		if(discord == null) return "You need to use this command in the discord channel you wish to receive results into!";
+		if(discord == null) return "You need to use this command in the discord channel you wish to receive alerts into!";
 		
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).setResultDiscord(discord);
+		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).setAlertDiscord(discord);
 		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).save(false);
 		
-		return "The result discord was set!";
+		return "The alert discord was set!";
 	}
 	
 }

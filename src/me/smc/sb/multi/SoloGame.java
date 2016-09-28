@@ -3,6 +3,8 @@ package me.smc.sb.multi;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import me.smc.sb.utils.FinalInt;
+
 public class SoloGame extends Game{
 
 	public SoloGame(Match match){
@@ -25,7 +27,7 @@ public class SoloGame extends Game{
 
 	@Override
 	public void allowTeamInvites(){
-		messageUpdater("Both players, please use !random to settle who goes first.");
+		messageUpdater("Both players, use !random to settle who goes first. If you need help, use !alert <message>");
 	}
 
 	@Override
@@ -110,21 +112,6 @@ public class SoloGame extends Game{
 				}
 			}, 0, 10000);
 		}
-	}
-
-	class FinalInt{
-		
-		int val;
-		
-		public FinalInt(int val){ set(val); }
-		
-		public int get(){ return val; }
-		
-		public void set(int val){ this.val = val; }
-		
-		public void add(int val){ this.val += val; }
-		
-		public void sub(int val){ this.val -= val; }
 	}
 	
 }
