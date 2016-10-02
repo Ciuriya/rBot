@@ -189,7 +189,9 @@ public class Match{
 		this.fTeam = null;
 		this.sTeam = null;
 		this.pool = null;
+		
 		matchAdmins.clear();
+		
 		if(scheduledTime != null) scheduledTime.cancel();
 	}
 	
@@ -201,10 +203,8 @@ public class Match{
 		
 		config.writeValue("match-" + matchNum + "-priority", streamPriority);
 		
-		if(fTeam != null && sTeam != null){
-			config.writeValue("match-" + matchNum + "-team1", fTeam.getTeamName());
-			config.writeValue("match-" + matchNum + "-team2", sTeam.getTeamName());
-		}
+		if(fTeam != null) config.writeValue("match-" + matchNum + "-team1", fTeam.getTeamName());
+		if(sTeam != null) config.writeValue("match-" + matchNum + "-team2", sTeam.getTeamName());
 		
 		if(scheduledDate != 0) config.writeValue("match-" + matchNum + "-date", scheduledDate);
 		

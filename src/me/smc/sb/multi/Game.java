@@ -349,6 +349,7 @@ public abstract class Game{
 					}
 					
 					sendMessage(selectingTeam.getTeamName() + " has taken too long to select a map!");
+					
 					fTeamFirst = !fTeamFirst;
 					SelectMapCommand.pickingTeams.remove(selectingTeam);
 					selectingTeam = findNextTeamToPick();
@@ -491,6 +492,27 @@ public abstract class Game{
 		
 		IRCChatListener.gamesListening.remove(multiChannel);
 		
+		if(fTeamPoints != sTeamPoints){
+			Team winningTeam = fTeamPoints > sTeamPoints ? match.getFirstTeam() : match.getSecondTeam();
+			Team losingTeam = winningTeam.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName()) ? match.getSecondTeam() : match.getFirstTeam();
+			
+			if(match.getTournament().getConditionalTeams().size() > 0){
+				for(String conditional : new HashMap<String, Match>(match.getTournament().getConditionalTeams()).keySet()){
+					if(match.getMatchNum() != Utils.stringToInt(conditional.split(" ")[1])) continue;
+					
+					Team cTeam = conditional.split(" ")[0].equalsIgnoreCase("winner") ? winningTeam : losingTeam;
+					Match conditionalMatch = match.getTournament().getConditionalTeams().get(conditional);
+					boolean fTeam = Utils.stringToInt(conditional.split(" ")[2]) == 1;
+					
+					conditionalMatch.setTeams(fTeam ? cTeam : conditionalMatch.getFirstTeam(), 
+											  !fTeam ? cTeam : conditionalMatch.getSecondTeam());
+					conditionalMatch.save(false);
+					
+					Log.logger.log(Level.INFO, "Set conditional team " + cTeam.getTeamName() + " to match #" + conditionalMatch.getMatchNum());
+				}
+			}
+		}
+			
 		sendMessage("!mp close");
 		
 		String shortGameEndMsg = match.getFirstTeam().getTeamName() + " (" + fTeamPoints + 
@@ -955,12 +977,13 @@ public abstract class Game{
 						case "hidden": modMultiplier *= 1.06; break;
 						case "hardrock": modMultiplier *= (match.getTournament().isScoreV2() ? 1.1 : 1.06); break;
 						case "flashlight": modMultiplier *= 1.12; break;
+						case "easy": modMultiplier *= 0.5; break;
 						default: validMod = false; break loop;
 					}
 				}
 				
 				if(!validMod){					
-					sendMessage("You can only use HD, HR or FL! Make sure you do not have any other mods!");
+					sendMessage("You can only use HD, HR, EZ or FL! Make sure you do not have any other mods!");
 					sendMessage("!mp map " + map.getBeatmapID() + " 0");
 					validMods = false;
 				}else if(map.getCategory() == 1) hasMod = true;
@@ -1478,8 +1501,6 @@ public abstract class Game{
 		
 		if(joinQueue.contains(player.replaceAll(" ", "_"))) return;
 		else joinQueue.add(player.replaceAll(" ", "_"));
-		
-		if(joinQueue.size() > 1) return;
 
 		joinRoom(player.replaceAll(" ", "_"), false);
 	}

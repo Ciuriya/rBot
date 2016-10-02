@@ -30,11 +30,7 @@ public class StatsCommand extends GlobalCommand{
 		for(Guild guild : Main.api.getGuilds()){
 			users += guild.getUsers().size();
 			
-			for(User user : guild.getUsers()){
-				OnlineStatus status = user.getOnlineStatus();
-				if(status == OnlineStatus.ONLINE || status == OnlineStatus.AWAY)
-					connected++;
-			}
+			connected += getOnlineUsers(guild);
 		}
 		
 		StringBuilder builder = new StringBuilder();
@@ -50,4 +46,16 @@ public class StatsCommand extends GlobalCommand{
 		Utils.infoBypass(e.getChannel(), builder.toString());
 	}
 
+	public static int getOnlineUsers(Guild guild){
+		int connected = 0;
+		
+		for(User user : guild.getUsers()){
+			OnlineStatus status = user.getOnlineStatus();
+			if(status == OnlineStatus.ONLINE || status == OnlineStatus.AWAY)
+				connected++;
+		}
+		
+		return connected;
+	}
+	
 }

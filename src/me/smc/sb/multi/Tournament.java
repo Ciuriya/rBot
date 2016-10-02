@@ -28,6 +28,7 @@ public class Tournament{
 	private Game currentlyStreamed; //game switching from twitch channel? idk
 	private static java.util.Map<String, LinkedList<Game>> twitchQueue = new HashMap<>();
 	public static List<Tournament> tournaments;
+	public java.util.Map<String, Match> conditionalTeams = new HashMap<>();
 	private List<Team> teams;
 	private List<Match> matches;
 	private List<MapPool> pools;
@@ -233,6 +234,14 @@ public class Tournament{
 		return currentlyStreamed;
 	}
 	
+	public java.util.Map<String, Match> getConditionalTeams(){
+		return conditionalTeams;
+	}
+	
+	public void removeConditionalTeam(String team){
+		conditionalTeams.remove(team);
+	}
+	
 	public void setCurrentlyStreamed(Game game){
 		this.currentlyStreamed = game;
 	}
@@ -256,7 +265,7 @@ public class Tournament{
 		if(isChannelInUse(twitchChannel)){
 			Game streamed = getStreamed(twitchChannel);
 			
-			if(streamed.match.getStreamPriority() >= game.match.getStreamPriority()){
+			if(game.match.getStreamPriority() >= streamed.match.getStreamPriority()){
 				addToTwitchQueue(game);
 				return false;
 			}else
@@ -706,8 +715,24 @@ public class Tournament{
 			for(String matchNum : savedMatches){
 				Match match = new Match(this, Utils.stringToInt(matchNum), config.getInt("match-" + matchNum + "-players"), false);
 				
-				if(config.getValue("match-" + matchNum + "-team1") != "" && config.getValue("match-" + matchNum + "-team2") != "")
-					match.setTeams(getTeam(config.getValue("match-" + matchNum + "-team1")), getTeam(config.getValue("match-" + matchNum + "-team2")));
+				if(config.getValue("match-" + matchNum + "-team1") != "" || config.getValue("match-" + matchNum + "-team2") != ""){
+					Team team1 = getTeam(config.getValue("match-" + matchNum + "-team1"));
+					Team team2 = getTeam(config.getValue("match-" + matchNum + "-team2"));
+					
+					if(team1 == null || team2 == null){
+						if(team1 == null && isMatchConditional(config.getValue("match-" + matchNum + "-team1"))){
+							conditionalTeams.put(config.getValue("match-" + matchNum + "-team1") + " 1", match);
+							Log.logger.log(Level.INFO, "Match #" + matchNum + " loaded conditional " + config.getValue("match-" + matchNum + "-team1") + " 1");
+						}
+						
+						if(team2 == null && isMatchConditional(config.getValue("match-" + matchNum + "-team2"))){
+							conditionalTeams.put(config.getValue("match-" + matchNum + "-team2") + " 2", match);
+							Log.logger.log(Level.INFO, "Match #" + matchNum + " loaded conditional " + config.getValue("match-" + matchNum + "-team2") + " 2");
+						}
+					}
+					
+					match.setTeams(team1, team2);
+				}
 				
 				if(config.getInt("match-" + matchNum + "-pool") != 0)
 					match.setMapPool(getPool(config.getInt("match-" + matchNum + "-pool")));
@@ -723,6 +748,15 @@ public class Tournament{
 				
 				match.setStreamPriority(config.getInt("match-" + matchNum + "-priority"));
 			}
+	}
+	
+	protected boolean isMatchConditional(String conditionalStr){
+		if(conditionalStr.split(" ")[0].equalsIgnoreCase("loser") || conditionalStr.split(" ")[0].equalsIgnoreCase("winner")){
+			if(Utils.stringToInt(conditionalStr.split(" ")[1]) != -1 && conditionalStr.split(" ").length == 2)
+				return true;
+		}
+		
+		return false;
 	}
 	
 	protected int incrementMatchCount(){

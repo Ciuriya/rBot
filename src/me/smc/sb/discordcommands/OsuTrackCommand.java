@@ -693,8 +693,8 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		for(String server : trackedPlayers.keySet())
 			for(String player : trackedPlayers.get(server))
-				if(!scanned.contains(player))
-					scanned.add(player);
+				if(!scanned.contains(player.toLowerCase()))
+					scanned.add(player.toLowerCase());
 		
 		return scanned.size();
 	}

@@ -1,7 +1,8 @@
 package me.smc.sb.discordcommands;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import me.smc.sb.perm.Permissions;
@@ -10,6 +11,7 @@ import net.dv8tion.jda.Permission;
 import net.dv8tion.jda.entities.Guild;
 import net.dv8tion.jda.entities.Message;
 import net.dv8tion.jda.entities.TextChannel;
+import net.dv8tion.jda.entities.User;
 import net.dv8tion.jda.events.message.MessageReceivedEvent;
 
 public class ListServersCommand extends GlobalCommand{
@@ -34,9 +36,12 @@ public class ListServersCommand extends GlobalCommand{
 		
 		List<String> guildPosts = new ArrayList<>();
 		
+		DateTimeFormatter dtf = DateTimeFormatter.ISO_DATE_TIME;
+		
 		for(Guild guild : e.getJDA().getGuilds()){
-			long lastMessageDate = 0;
+			OffsetDateTime lastMessageDate = null;
 			TextChannel lastMessageChannel = guild.getPublicChannel();
+			User poster = null;
 			
 			for(TextChannel channel : guild.getTextChannels()){
 				if(!channel.checkPermission(e.getJDA().getSelfInfo(), Permission.MESSAGE_HISTORY))
@@ -47,21 +52,25 @@ public class ListServersCommand extends GlobalCommand{
 				if(messages != null && messages.size() > 0){
 					Message msg = messages.get(0);
 					
-					if(msg.getTime().toEpochSecond() < lastMessageDate || lastMessageDate == 0){
-						lastMessageDate = msg.getTime().toEpochSecond();
+					if(lastMessageDate == null || msg.getTime().isAfter(lastMessageDate)){
+						lastMessageDate = msg.getTime();
 						lastMessageChannel = channel;
+						poster = msg.getAuthor();
 					}
 				}
 			}
 			
-			Calendar c = Calendar.getInstance();
-			c.setTimeInMillis(lastMessageDate);
+			String date = "**unavailable**";
 			
-			builder.append("- " + guild.getName().replaceAll("\\n", "") + " (" + guild.getUsers().size() + " users)\n")
+			if(lastMessageDate != null) 
+				date = lastMessageDate.format(dtf);
+			
+			builder.append("- " + guild.getName().replaceAll("\\n", "") + " (" + guild.getUsers().size() + " users, " + 
+						   StatsCommand.getOnlineUsers(guild) + " online)\n")
 				   .append("  " + guild.getId() + " | " + guild.getTextChannels().size() + " channels | " + 
 						   guild.getVoiceChannels().size() + " voice chats\n")
 				   .append("  Last message posted in " + lastMessageChannel.getName() + "(" + lastMessageChannel.getId() + ") " +
-						   "at " + c.getTime().toString() + "\n")
+						   "at " + date + (poster == null ? "" : " by " + poster.getUsername() + "#" + poster.getDiscriminator()) + "\n")
 				   .append("  Owned by " + guild.getOwner().getUsername() + "#" + guild.getOwner().getDiscriminator() + 
 						   " (" + guild.getOwnerId() + ")\n\n");
 			
@@ -76,7 +85,7 @@ public class ListServersCommand extends GlobalCommand{
 		for(String guildPost : guildPosts){
 			if(post.length() + guildPost.length() > 1995){
 				posts.add(post + "```");
-				post = "";
+				post = "```";
 			}
 			
 			post += guildPost;
