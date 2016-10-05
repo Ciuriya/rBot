@@ -138,9 +138,11 @@ public class OsuTrackCommand extends GlobalCommand{
 					
 					usersUpdating.clear();
 					
-					if(!allRunningThreads.isEmpty())
-						for(Thread t : allRunningThreads)
-							t.stop();
+					synchronized(this){
+						if(!allRunningThreads.isEmpty())
+							for(Thread t : new ArrayList<Thread>(allRunningThreads))
+								t.stop();
+					}
 					
 					allRunningThreads.clear();
 					
