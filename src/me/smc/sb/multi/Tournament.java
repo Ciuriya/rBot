@@ -77,8 +77,9 @@ public class Tournament{
 		rematchesAllowed = getConfig().getInt("rematchesAllowed");
 		
 		currentlyStreamed = null;
+
+		if(append) save(append);
 		
-		save(append);
 		//saveSQL(true);
 		tournaments.add(this);
 	}
@@ -535,22 +536,24 @@ public class Tournament{
 	public void save(boolean append){
 		if(append) new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", name, true);
 		
-		getConfig().writeValue("displayName", displayName);
-		getConfig().writeValue("twitchChannel", twitchChannel);
-		getConfig().writeValue("scoreV2", scoreV2);
-		getConfig().writeValue("pickWaitTime", pickWaitTime);
-		getConfig().writeValue("banWaitTime", banWaitTime);
-		getConfig().writeValue("readyWaitTime", readyWaitTime);
-		getConfig().writeValue("type", tournamentType);
-		getConfig().writeValue("mode", mode);
-		getConfig().writeValue("resultDiscord", resultDiscord);
-		getConfig().writeValue("alertDiscord", alertDiscord);
-		getConfig().writeValue("alertMessage", alertMessage);
-		getConfig().writeValue("lowerRankBound", lowerRankBound);
-		getConfig().writeValue("upperRankBound", upperRankBound);
-		getConfig().writeValue("skipWarmups", skipWarmups);
-		getConfig().writeValue("pickStrategy", PickStrategy.getStrategyName(pickStrategy));
-		getConfig().writeValue("rematchesAllowed", rematchesAllowed);
+		Configuration config = getConfig();
+		
+		config.writeValue("displayName", displayName);
+		config.writeValue("twitchChannel", twitchChannel);
+		config.writeValue("scoreV2", scoreV2);
+		config.writeValue("pickWaitTime", pickWaitTime);
+		config.writeValue("banWaitTime", banWaitTime);
+		config.writeValue("readyWaitTime", readyWaitTime);
+		config.writeValue("type", tournamentType);
+		config.writeValue("mode", mode);
+		config.writeValue("resultDiscord", resultDiscord);
+		config.writeValue("alertDiscord", alertDiscord);
+		config.writeValue("alertMessage", alertMessage);
+		config.writeValue("lowerRankBound", lowerRankBound);
+		config.writeValue("upperRankBound", upperRankBound);
+		config.writeValue("skipWarmups", skipWarmups);
+		config.writeValue("pickStrategy", PickStrategy.getStrategyName(pickStrategy));
+		config.writeValue("rematchesAllowed", rematchesAllowed);
 	}
 	
 	public void saveSQL(boolean add){
@@ -666,11 +669,11 @@ public class Tournament{
 	public static void loadTournaments(){
 		tournaments = new ArrayList<>();
 		List<String> savedTournaments = new Configuration(new File("tournaments.txt")).getStringList("tournaments");
-		
+
 		if(!savedTournaments.isEmpty())
 			for(String sTournament : savedTournaments){
 				Tournament tournament = new Tournament(sTournament, false);
-				
+
 				tournament.loadPools();
 				tournament.loadTeams();
 				tournament.loadMatches();
