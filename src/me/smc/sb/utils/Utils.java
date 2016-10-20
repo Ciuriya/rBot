@@ -281,6 +281,9 @@ public class Utils{
 			}
 		}
 		
+		Main.htmlScrapes++;
+		if(link.contains("osu.ppy.sh")) Main.osuHtmlScrapes++;
+		
 		return toReturn;
 	}
 	

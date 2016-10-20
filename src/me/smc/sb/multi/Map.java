@@ -56,9 +56,10 @@ public class Map{
 	
 	public static JSONObject getMapInfo(int id, boolean priority){
 		String post = "";
-		if(priority)
+		if(priority){
 			post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
-		else post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
+			Main.requestsSent++;
+		}else post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + "&b=" + id + "&limit=1");
 		
 		if(post == "" || !post.contains("{")) return null;
 		return new JSONArray("[" + post + "]").getJSONObject(0);

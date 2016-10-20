@@ -63,11 +63,6 @@
     	<version>1.16</version>
 	</dependency>
 	<dependency>
-		<groupId>com.google.code.gson</groupId>
-		<artifactId>gson</artifactId>
-		<version>2.5</version>
-	</dependency>
-	<dependency>
         <groupId>org.pircbotx</groupId>
         <artifactId>pircbotx</artifactId>
         <version>2.0.1</version>
@@ -92,6 +87,13 @@
 		<artifactId>mysql-connector-java</artifactId>
 		<version>5.1.38</version>
 	</dependency>
+	<!--<dependency>
+  		<groupId>rBot-IRC</groupId>
+  		<artifactId>rBot-IRC</artifactId>
+  		<version>1.0.0</version>
+    	<scope>system</scope>
+    	<systemPath>E://EclipseWS/PersonalWorkspace/rBot-IRC/target/rBot-IRC-1.0.0.jar</systemPath>
+	</dependency>-->
   </dependencies>
   <repositories>
 	<repository>

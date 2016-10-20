@@ -5,11 +5,13 @@ import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import me.smc.sb.main.Main;
+
 public class OsuAPIRegulator{
 
 	private static HashMap<Integer, APIRequest> requests;
 	private static int requestNumber = 0;
-	private static int requestsPerMinute = 45;
+	private static int requestsPerMinute = 60;
 	private Timer requestTimer;
 	
 	public OsuAPIRegulator(){
@@ -21,7 +23,7 @@ public class OsuAPIRegulator{
 		if(requestTimer != null) requestTimer.cancel();
 		
 		requestTimer = new Timer();
-		long delay = (long) (60000 / requestsPerMinute);
+		long delay = (long) (60000.0 / (double) requestsPerMinute);
 		
 		requestTimer.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
@@ -88,6 +90,7 @@ public class OsuAPIRegulator{
 		
 		public void send(){
 			answer = Utils.sendPost(urlString, urlParameters);
+			Main.requestsSent++;
 		}
 	}
 }

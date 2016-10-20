@@ -39,12 +39,15 @@ public class Main{
 	public static PircBotX twitchBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
+	public static int requestsSent = 0, highestBurstRequestsSent = 0;
+	public static int htmlScrapes = 0, osuHtmlScrapes = 0;
 	public static long bootTime = 0;
 	public static List<Server> servers;
 	public static Connection tourneySQL, rpgSQL;
 	public static OsuAPIRegulator osuRequestManager;
 	public static TwitchRegulator twitchRegulator;
 	public static String defaultPrefix = "~/";
+	private int lastRequestCount = 0;
 	
 	public static void main(String[] args){
 		new Main();
@@ -91,6 +94,18 @@ public class Main{
 		IRCCommand.registerCommands();
 		
 		osuRequestManager = new OsuAPIRegulator();
+		
+		Timer burstUpdate = new Timer();
+		burstUpdate.scheduleAtFixedRate(new TimerTask(){
+			public void run(){
+				int requests = requestsSent - lastRequestCount;
+				
+				lastRequestCount = requestsSent;
+				
+				if(requests > highestBurstRequestsSent)
+					highestBurstRequestsSent = requests;
+			}
+		}, 60000, 60000);
 		
 		twitchRegulator = new TwitchRegulator();
 		
@@ -155,7 +170,7 @@ public class Main{
 			Log.logger.log(Level.SEVERE, "Could not start bot!");
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
-	}
+}
 	
 	private void setupSQL(){
 		String tUrl = "jdbc:mysql://localhost/Tournament_DB";

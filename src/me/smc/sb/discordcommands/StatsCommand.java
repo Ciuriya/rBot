@@ -1,7 +1,12 @@
 package me.smc.sb.discordcommands;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.OnlineStatus;
 import net.dv8tion.jda.entities.Guild;
@@ -36,12 +41,34 @@ public class StatsCommand extends GlobalCommand{
 		StringBuilder builder = new StringBuilder();
 		
 		long uptime = System.currentTimeMillis() - Main.bootTime;
+		float averageRequestsPerMinute = Main.requestsSent == 0 ? 0 : (Main.requestsSent / ((float) uptime / 60000f));
+		float averageHtmlScrapesPerMinute = Main.htmlScrapes == 0 ? 0 : (Main.htmlScrapes / ((float) uptime / 60000f));
+		float averageOsuHtmlScrapesPerMinute = Main.osuHtmlScrapes == 0 ? 0 : (Main.osuHtmlScrapes / ((float) uptime / 60000f));
+		int tracked = 0;
+		List<String> trackedPlayers = new ArrayList<>();
+		
+    	for(Guild guild : Main.api.getGuilds()){
+    		Configuration sCfg = new Configuration(new File("Guilds/" + guild.getId() + ".txt"));
+    		ArrayList<String> list = sCfg.getStringList("tracked-players");
+    		
+    		for(String player : list){
+    			if(trackedPlayers.contains(player))
+    				tracked++;
+    			else trackedPlayers.add(player);
+    		}
+    	}
+		
 		builder.append("```Connected to " + servers + " servers!\n") 
 			   .append("There are " + users + " total users (" + connected + " connected) in those servers!\n")
 			   .append("Uptime: " + Utils.toDuration(uptime) + "\n")
-			   .append("Messages received since startup: " + Main.messagesReceivedThisSession + "\n")
-			   .append("Messages sent since startup: " + Main.messagesSentThisSession + "\n")
-			   .append("Commands used since startup: " + Main.commandsUsedThisSession + "```");
+			   .append("Messages received: " + Main.messagesReceivedThisSession + "\n")
+			   .append("Messages sent: " + Main.messagesSentThisSession + "\n")
+			   .append("Commands used: " + Main.commandsUsedThisSession + "\n")
+			   .append("osu!api requests: " + Main.requestsSent + " (" + averageRequestsPerMinute + " average/min, " + Main.highestBurstRequestsSent + " burst/min)\n")
+			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
+					   (tracked + trackedPlayers.size()) + " tracked, " + trackedPlayers.size() + " without duplicates)\n")
+			   .append("HTML pages scraped: " + Main.htmlScrapes + " (" + Main.osuHtmlScrapes + " from osu!)\n")
+			   .append("HTML pages scraped/min average: " + averageHtmlScrapesPerMinute + " (" + averageOsuHtmlScrapesPerMinute + " for osu!)```");
 		
 		Utils.infoBypass(e.getChannel(), builder.toString());
 	}
