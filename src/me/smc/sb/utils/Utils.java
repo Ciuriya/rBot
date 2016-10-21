@@ -234,10 +234,16 @@ public class Utils{
 			if(query.length() > 0) connection.getOutputStream().write(query.getBytes("UTF8"));
 			
 			BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			String inputLine;
 			StringBuffer response = new StringBuffer();
+			char[] buffer = new char[1024];
+			int charsRead = 0;
 			
-			while((inputLine = inputStream.readLine()) != null) response.append(inputLine);
+			while((charsRead  = inputStream.read(buffer, 0, 1024)) != -1)
+				response.append(buffer, 0, charsRead);
+			
+			/*String inputLine;
+			
+			while((inputLine = inputStream.readLine()) != null) response.append(inputLine);*/
 			
 			inputStream.close();
 			
@@ -310,6 +316,7 @@ public class Utils{
 	}
 	
 	public static String veryLongNumberDisplay(long number){
+		if(String.valueOf(number).length() == 3) return String.valueOf(number);
 		String toDisplay = "";
 		int remainder = String.valueOf(number).length() % 3;
 		int untilSplit = 3;
@@ -323,6 +330,11 @@ public class Utils{
 		}
 		if(toDisplay.endsWith(",")) toDisplay = toDisplay.substring(0, toDisplay.length() - 1);
 		return toDisplay;	
+	}
+	
+	public static String veryLongNumberDisplay(double number){
+		String[] splitNumber = String.valueOf(number).split("\\.");
+		return veryLongNumberDisplay(Utils.stringToInt(splitNumber[0])) + "." + splitNumber[1];
 	}
 	
 	public static String toDuration(long time){
@@ -396,7 +408,9 @@ public class Utils{
 			for(int i = 0; i < decimals; i++)
 				format += "#";
 		}
+		
 		DecimalFormat df = new DecimalFormat(format, new DecimalFormatSymbols(Locale.US));
+		df.setNegativePrefix("-");
 		return df.format(num);
 	}
 	
@@ -489,6 +503,16 @@ public class Utils{
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 			return url;
 		}
+	}
+	
+	public static String getOsuPlayerPPAndRank(String id, int mode){
+		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
+				  	  "&u=" + id + "&m=" + mode + "&type=id&event_days=1");
+		
+		if(post == "" || !post.contains("{")) return "-1&r=-1&cr=-1";
+		
+		JSONObject jsonResponse = new JSONObject(post);
+		return jsonResponse.getDouble("pp_raw") + "&r=" + jsonResponse.getInt("pp_rank") + "&cr=" + jsonResponse.getInt("pp_country_rank");
 	}
 	
 	public static int getOsuPlayerRank(String name, int mode){
