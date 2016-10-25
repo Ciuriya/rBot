@@ -114,7 +114,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 				String date = getMostRecentDate(mostRecentPlays.keySet());
 				JSONObject obj = mostRecentPlays.get(date);
 				String play = "";
-				JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), false);
+				JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), Utils.stringToInt(mode), false);
 				
 				mostRecentPlays.remove(date);
 				

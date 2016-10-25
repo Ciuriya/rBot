@@ -45,11 +45,14 @@ public class OsuTrackCommand extends GlobalCommand{
 	private static HashMap<String, String> lastUpdateMessageSent;
 	private static HashMap<String, Thread> usersUpdating;
 	private static HashMap<String, HashMap<String, String>> lastPlayerUpdates;
+	private static HashMap<String, String> lastPlayerPosted;
 	private static ArrayList<Thread> allRunningThreads;
 	private static HashMap<String, String> playerStatUpdates;
+	private static ArrayList<String> debugServers;
 	private static int requestsPerMinute = 90;
 	public static double currentRefreshRate = 0;
-	private static Timer update, refresh;
+	private static Timer refresh;
+	private static Thread update;
 	
 	public OsuTrackCommand(){
 		super(null, 
@@ -67,6 +70,8 @@ public class OsuTrackCommand extends GlobalCommand{
 		lastPlayerUpdates = new HashMap<>();
 		allRunningThreads = new ArrayList<>();
 		playerStatUpdates = new HashMap<>();
+		lastPlayerPosted = new HashMap<>();
+		debugServers = new ArrayList<>();
 		
 		loadTrackedPlayers();
 		calculateRefreshRate();
@@ -81,13 +86,58 @@ public class OsuTrackCommand extends GlobalCommand{
 		String mode = "0";
 		boolean ext = false;
 		boolean checkStoredInfo = false;
+		boolean scanServer = false;
+		boolean addToDebug = false;
+		boolean changeToBestPlayTracking = false;
 		
 		for(int i = 0; i < args.length; i++)
 			if(args[i].contains("{mode="))
 				mode = args[i].split("\\{mode=")[1].split("}")[0];
 			else if(args[i].contains("{ext}")) ext = true;
 			else if(args[i].contains("{check}")) checkStoredInfo = true;
+			else if(args[i].contains("{scan}")) scanServer = true;
+			else if(args[i].contains("{debug}")) addToDebug = true;
+			else if(args[i].contains("{best}")) changeToBestPlayTracking = true;
 			else user += " " + args[i];
+		
+		if(changeToBestPlayTracking){
+			boolean wasTracking = false;
+			
+			if(Main.serverConfigs.get(e.getGuild().getId()).getBoolean("track-best-only"))
+				wasTracking = true;
+			
+			Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-best-only", !wasTracking);
+			
+			Utils.info(e.getChannel(), !wasTracking ? "Only personal bests will be tracked!" :
+									   "All plays (except failed plays) will be tracked!");
+			return;
+		}
+		
+		if(addToDebug){
+			if(debugServers.contains(e.getGuild().getId()))
+				debugServers.remove(e.getGuild().getId());
+			else debugServers.add(e.getGuild().getId());
+			
+			Utils.info(e.getChannel(), (debugServers.contains(e.getGuild().getId()) ? "Now" : "Stopped") + 
+										" debugging the " + e.getGuild().getName() + " guild's tracking.");
+			return;
+		}
+		
+		if(scanServer){
+			String trackingId = Main.serverConfigs.get(e.getGuild().getId()).getValue("track-update-group");
+			String info = "```Stored info for server " + e.getGuild().getName() + "\n" +
+						  "Tracking channel: " + e.getJDA().getTextChannelById(trackingId).getAsMention() + " (" + trackingId + ")\n" +
+						  "Tracked users";
+			
+			Configuration sCfg = new Configuration(new File("Guilds/" + e.getGuild().getId() + ".txt"));
+    		ArrayList<String> list = sCfg.getStringList("tracked-players");
+			
+    		for(String pl : list)
+    			info += "\n- " + pl;
+    		
+			Utils.info(e.getChannel(), info + "```");
+			return;
+		}
 		
 		user = user.substring(1);
 		mUser = user + "&m=" + mode;
@@ -119,17 +169,16 @@ public class OsuTrackCommand extends GlobalCommand{
     	for(Guild guild : Main.api.getGuilds()){
     		Configuration sCfg = new Configuration(new File("Guilds/" + guild.getId() + ".txt"));
     		ArrayList<String> list = sCfg.getStringList("tracked-players");
-    		trackedPlayers.put(guild.getId(), list);
+    		
+    		if(list.size() > 0) trackedPlayers.put(guild.getId(), list);
     	}
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void updateLoop(){
-		if(update != null) update.cancel();
+		if(update != null) update.stop();
 		
-		update = new Timer();
-		
-		update.scheduleAtFixedRate(new TimerTask(){
-			@SuppressWarnings("deprecation")
+		update = new Thread(new Runnable(){
 			public void run(){
 				loadTrackedPlayers();
 				
@@ -138,9 +187,9 @@ public class OsuTrackCommand extends GlobalCommand{
 					
 					refresh = new Timer();
 					double delay = Math.abs(currentRefreshRate / (double) trackedUsersWithoutDuplicates());
-
+		
 					final HashMap<String, ArrayList<String>> copied = new HashMap<>(trackedPlayers);
-
+		
 					usersUpdating.clear();
 					
 					synchronized(this){
@@ -155,6 +204,9 @@ public class OsuTrackCommand extends GlobalCommand{
 						public void run(){
 							for(String server : new HashMap<String, ArrayList<String>>(copied).keySet()){
 								final ArrayList<String> players = copied.get(server);
+								
+								if(debugServers.contains(server))
+									Log.logger.log(Level.INFO, "sId " + server + " | players " + players.size());
 								
 								if(players.isEmpty()) continue;
 								
@@ -189,11 +241,18 @@ public class OsuTrackCommand extends GlobalCommand{
 														fChannel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue(player + "-update-group"));
 													
 													String fMsg = spacing + msg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~");
-
+		
+													if(lastPlayerPosted.containsKey(server) && last != null && 
+													   last.getAuthor().getId().equalsIgnoreCase("120923487467470848"))
+														if(lastPlayerPosted.get(server).equalsIgnoreCase(player))
+															fMsg = fMsg.substring(fMsg.indexOf("__**"), fMsg.length() - 1);
+														
 													for(String splitMsg : fMsg.split("\\|\\|\\|")){
 														if(splitMsg.length() > 5)
 															Utils.info(fChannel, splitMsg);
 													}
+																		
+													lastPlayerPosted.put(server, player);
 												}	
 												
 												players.remove(player);
@@ -218,264 +277,295 @@ public class OsuTrackCommand extends GlobalCommand{
 								break;
 							}
 							
-							if(copied.isEmpty())
-								refresh.cancel();
+							if(copied.isEmpty())			
+								updateLoop();
 						}
 					}, (long) 0, (long) (delay * 1000));
 				}
 			}
-		}, 0, (int) (currentRefreshRate * 1000));
+		});
+		
+		update.start();
 	}
 	
 	@SuppressWarnings("deprecation")
 	private void updateUser(String server, String player){	
 		Thread t = new Thread(new Runnable(){
 			public void run(){
-				String mode = player.split("&m=")[1];
-				String user = player.split("&m=")[0];
-				String lastUpdate = "2000-01-01 00:00:01";
-				int limit = 10;
-				
-				if(lastUpdated.containsKey(player)) lastUpdate = lastUpdated.get(player);
-				else{
-					String id = Utils.getOsuPlayerId(user);
+				try{
+					String mode = player.split("&m=")[1];
+					String user = player.split("&m=")[0];
+					String lastUpdate = "2000-01-01 00:00:01";
+					int limit = 10;
 					
-					playerStatUpdates.put(player.toLowerCase(), Utils.getOsuPlayerPPAndRank(id, Utils.stringToInt(mode)));
+					if(lastUpdated.containsKey(player)) lastUpdate = lastUpdated.get(player);
+					else{
+						String id = Utils.getOsuPlayerId(user);
+						
+						playerStatUpdates.put(player.toLowerCase(), Utils.getOsuPlayerPPAndRank(id, Utils.stringToInt(mode)));
+						
+						lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
+						usersUpdating.remove(player);
+						allRunningThreads.remove(Thread.currentThread());
+						Thread.currentThread().stop();
+						return;
+					}
 					
+					String playerId = Utils.getOsuPlayerId(user);
+					
+					String[] pageHistory = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-history.php?u=" + playerId + "&m=" + mode);
+					
+					if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):")){
+						usersUpdating.remove(player);
+						allRunningThreads.remove(Thread.currentThread());
+						Thread.currentThread().stop();
+						return;
+					}
+					
+					String[] splitTime = pageHistory[0].split("<\\/time>");
+					
+					boolean valid = false;
+					
+					for(int i = 0; i < splitTime.length - 1; i++){
+						String date = splitTime[i].split("time class=")[1].split(">")[1].replace(" UTC", "");
+						
+						if(!dateGreaterThanDate(lastUpdate, date)){
+							valid = true;
+							break;
+						}
+					}
+					
+					if(!valid){
+						usersUpdating.remove(player);
+						allRunningThreads.remove(Thread.currentThread());
+						Thread.currentThread().stop();
+						return;
+					}
+					
+					String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
+							                                         "&u=" + user + "&m=" + mode + "&limit=" + limit + "&type=string&event_days=1");
+					
+					if(post == "" || !post.contains("{")){
+						usersUpdating.remove(player);
+						allRunningThreads.remove(Thread.currentThread());
+						Thread.currentThread().stop();
+						return;
+					}
+					
+					StringBuilder builder = new StringBuilder();
+					
+					post = "[" + post + "]";
+					
+					JSONArray jsonResponse = new JSONArray(post);
+					
+					boolean completeMessage = false;
+					
+					String[] pageGeneral = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + playerId + "&m=" + mode);
+					List<RecentPlay> recentPlays = new ArrayList<>();
+					
+					List<String> userLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&find=");
+					
+					String fixedUser = user;
+					
+					if(userLine.size() > 0){
+						fixedUser = userLine.get(0).split("&find=")[1].split("&")[0];
+					}
+					
+					builder.append("—————————————————\nMost recent plays for **" + fixedUser + "** in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
+					
+					if(Utils.getNextLineCodeFromLink(pageGeneral, 0, "This user hasn't done anything notable recently!").size() == 0){
+						List<String> list = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<div class='profileStatHeader'>Recent Activity</div>");
+						
+						if(list.size() != 0){
+							String line = list.get(0);
+							String[] plays = line.split("<tr>");
+							
+							for(int i = 1; i < plays.length; i++){
+								if(plays[i].contains("achieved") && plays[i].contains("rank #")){
+									String date = plays[i].split("UTC")[0].split("Z'>")[1];
+									int rank = Utils.stringToInt(plays[i].split("rank #")[1].split(" on")[0].replace("</b>", ""));
+									int beatmapId = Utils.stringToInt(plays[i].split("href='\\/b\\/")[1].split("\\?m=")[0]);
+									
+									RecentPlay play = new RecentPlay(beatmapId, date, rank);
+									
+									boolean equal = false;
+									
+									if(recentPlays.size() > 0)
+										for(RecentPlay r : recentPlays)
+											if(r.eq(play))
+												equal = true;
+									
+									if(equal) continue;
+									
+									if(dateGreaterThanDate(date, lastUpdate))
+										recentPlays.add(play);
+								}
+							}
+						}
+					}
+					
+					String ppAndRank = Utils.getOsuPlayerPPAndRank(playerId, Utils.stringToInt(mode));
+					double ppp = Utils.stringToDouble(ppAndRank.split("&r=")[0]);
+					int rank = Utils.stringToInt(ppAndRank.split("&r=")[1].split("&cr=")[0]);
+					int countryRank = Utils.stringToInt(ppAndRank.split("&cr=")[1]);
+					boolean allowedToPost = !Main.serverConfigs.get(server).getBoolean("track-best-only");
+					
+					if(limit != 1){ 
+						for(int i = jsonResponse.length() - 1; i >= 0; i--){
+							JSONObject obj = jsonResponse.getJSONObject(i);
+							String play = "";
+							String osuDate = osuDateToCurrentDate(obj.getString("date"));
+							
+							if(!dateGreaterThanDate(lastUpdate, osuDate)){
+								if(obj.getString("rank").equalsIgnoreCase("F")) continue;
+								
+								Utils.sleep(2500);
+								
+								JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), Utils.stringToInt(mode), false);
+								
+								String pp = "";
+								
+								if(mode.equals("0")){
+									int combo = 0;
+									if(obj.getInt("perfect") == 0) combo = obj.getInt("maxcombo");
+									
+									pp = fetchPPFromOppai(obj.getInt("beatmap_id"), 
+														  map.getInt("beatmapset_id"), 
+														  Utils.df(getAccuracy(obj, Utils.stringToInt(mode))),
+														  combo, 
+														  Mods.getMods(obj.getInt("enabled_mods")).replaceAll("\\*", ""), 
+														  obj.getInt("countmiss"),
+														  obj.getInt("count50"),
+														  obj.getInt("count100"));
+								}
+								
+								String hits = fetchHitText(Utils.stringToInt(mode), obj);
+								
+								int mapRank = 0;
+								RecentPlay recent = null;
+								
+								for(RecentPlay rPlay : recentPlays)
+									if(rPlay.getBeatmapId() == obj.getInt("beatmap_id") && rPlay.dateValid(osuDate, 5)){
+										mapRank = rPlay.getRank();
+										recent = rPlay;
+										break;
+									}
+								
+								if(recent != null) recentPlays.remove(recent);
+								
+								// this is not accurate if there's more than 1 play queued, please look into verifying if they are all in tops
+								// and how much they are weighted to give an appropriate estimate.
+								double ppDiff = ppp - Utils.stringToDouble(playerStatUpdates.get(player.toLowerCase()).split("&r=")[0]);
+								String ppDifference = Utils.df(ppDiff, 2) + "pp";
+								
+								int rankDiff = rank - Utils.stringToInt(playerStatUpdates.get(player.toLowerCase()).split("&r=")[1].split("&cr=")[0]);
+								String rankDifference = Utils.veryLongNumberDisplay(rankDiff);
+								
+								int countryDiff = countryRank - Utils.stringToInt(playerStatUpdates.get(player.toLowerCase()).split("&cr=")[1]);
+								String countryDifference = Utils.veryLongNumberDisplay(countryDiff);
+								
+								int personalBest = 0;
+								String country = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&c=").get(0).split("&c=")[1].split("&find=")[0];
+								
+								if(ppDiff > 0){
+									ppDifference = "+" + ppDifference;
+								}
+								
+								if(Math.abs(ppDiff) > 0){
+									String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
+	                              		  "&u=" + user + "&m=" + mode + "&limit=100&type=string");
+							
+									if(topPlays.length() > 0 && topPlays.contains("{")){
+										topPlays = "[" + topPlays + "]";
+										
+										JSONArray tpJsonResponse = new JSONArray(topPlays);
+										
+										for(int j = 0; j < tpJsonResponse.length(); j++){
+											JSONObject topPlay = tpJsonResponse.getJSONObject(j);
+											
+											if(topPlay.getInt("beatmap_id") == obj.getInt("beatmap_id")){
+												personalBest = j + 1;
+												
+												if(!mode.equals("0") || !pp.contains("FC")) pp = "**" + Utils.df(topPlay.getDouble("pp"), 2) + "pp**";
+												else if(pp.contains("FC")) pp = "**" + Utils.df(topPlay.getDouble("pp"), 2) + "pp**" + pp.replace(pp.split(" ")[0], "");
+												
+												if(!allowedToPost) allowedToPost = true;
+												
+												break;
+											}		
+										}
+									}
+								}
+								
+								if(rankDiff < 0){
+									if(rankDifference.startsWith("-"))
+										rankDifference = rankDifference.substring(1);
+									
+									rankDifference = "+" + rankDifference;
+								}else rankDifference = "-" + rankDifference;
+								
+								if(countryDiff < 0){
+									if(countryDifference.startsWith("-"))
+										countryDifference = countryDifference.substring(1);
+									
+									countryDifference = "+" + countryDifference;
+								}else if(countryDiff == 0){
+									countryDifference = "0";
+								}else countryDifference = "-" + countryDifference;
+								
+								if(ppp == -1.0){
+									ppDiff = 0;
+									rankDiff = 0;
+								}
+								
+								play += "\n\n__**" + osuDate + " UTC**__\n\n";
+								play += escapeStar(map.getString("artist")) + " - " + escapeStar(map.getString("title")) + " [" +
+										escapeStar(map.getString("version")) + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
+								        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " • " + hits : "") + "\n" + 
+								        Utils.veryLongNumberDisplay(obj.getInt("score")) + " • " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
+								        (map.isNull("max_combo") ? "x" : "/" + map.get("max_combo").toString()) : "FC (" + map.get("max_combo").toString() + "x)") +
+								        " • " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " • **#" + mapRank + "** on map" : "") + 
+								        (!pp.equals("") ? "\n" + pp : "") + "\n\n" + 
+								        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " • **#" + personalBest + "** personal best\n" : "\n") : "") + 
+								        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) • #" + 
+								        Utils.veryLongNumberDisplay(countryRank) + " " + country + " (**" + countryDifference + "**)\n\n" : 
+								        (Math.abs(ppDiff) >= 0.01 ? "\n" : "")) +
+								        "Map • <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> • " + analyzeMapStatus(map.getInt("approved")) + 
+								        "\n" + fixedUser + " • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
+								
+								completeMessage = true;
+								builder.append(play + "|||");
+							}
+						}
+					}
+					
+					builder.append("\n");
+					
+					if(completeMessage && allowedToPost) lastUpdateMessageSent.put(player, builder.toString());
+					
+					if(ppp != -1.0) playerStatUpdates.put(player.toLowerCase(), ppAndRank);
 					lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
 					usersUpdating.remove(player);
 					allRunningThreads.remove(Thread.currentThread());
 					Thread.currentThread().stop();
-					return;
-				}
-				
-				String playerId = Utils.getOsuPlayerId(user);
-				
-				String[] pageHistory = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-history.php?u=" + playerId + "&m=" + mode);
-				
-				if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):")){
-					usersUpdating.remove(player);
-					allRunningThreads.remove(Thread.currentThread());
-					Thread.currentThread().stop();
-					return;
-				}
-				
-				String[] splitTime = pageHistory[0].split("<\\/time>");
-				
-				boolean valid = false;
-				
-				for(int i = 0; i < splitTime.length - 1; i++){
-					String date = splitTime[i].split("time class=")[1].split(">")[1].replace(" UTC", "");
+				}catch(Exception e){
+					// getting errors so I'm adding this gigantic try and catch to log them
+					Log.logger.log(Level.SEVERE, "TRACKING ERROR - " + e.getMessage(), e);
 					
-					if(!dateGreaterThanDate(lastUpdate, date)){
-						valid = true;
-						break;
-					}
-				}
-				
-				if(!valid){
 					usersUpdating.remove(player);
 					allRunningThreads.remove(Thread.currentThread());
 					Thread.currentThread().stop();
-					return;
 				}
-				
-				String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
-						                                         "&u=" + user + "&m=" + mode + "&limit=" + limit + "&type=string&event_days=1");
-				
-				if(post == "" || !post.contains("{")){
-					usersUpdating.remove(player);
-					allRunningThreads.remove(Thread.currentThread());
-					Thread.currentThread().stop();
-					return;
-				}
-				
-				StringBuilder builder = new StringBuilder();
-				
-				builder.append("—————————————————\nMost recent plays for **" + user + "** in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
-				
-				post = "[" + post + "]";
-				
-				JSONArray jsonResponse = new JSONArray(post);
-				
-				boolean completeMessage = false;
-				
-				String[] pageGeneral = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + playerId + "&m=" + mode);
-				List<RecentPlay> recentPlays = new ArrayList<>();
-				
-				if(Utils.getNextLineCodeFromLink(pageGeneral, 0, "This user hasn't done anything notable recently!").size() == 0){
-					List<String> list = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<div class='profileStatHeader'>Recent Activity</div>");
-					
-					if(list.size() != 0){
-						String line = list.get(0);
-						String[] plays = line.split("<tr>");
-						
-						for(int i = 1; i < plays.length; i++){
-							if(plays[i].contains("achieved") && plays[i].contains("rank #")){
-								String date = plays[i].split("UTC")[0].split("Z'>")[1];
-								int rank = Utils.stringToInt(plays[i].split("rank #")[1].split(" on")[0].replace("</b>", ""));
-								int beatmapId = Utils.stringToInt(plays[i].split("href='\\/b\\/")[1].split("\\?m=")[0]);
-								
-								RecentPlay play = new RecentPlay(beatmapId, date, rank);
-								
-								boolean equal = false;
-								
-								if(recentPlays.size() > 0)
-									for(RecentPlay r : recentPlays)
-										if(r.eq(play))
-											equal = true;
-								
-								if(equal) continue;
-								
-								if(dateGreaterThanDate(date, lastUpdate))
-									recentPlays.add(play);
-							}
-						}
-					}
-				}
-				
-				String ppAndRank = Utils.getOsuPlayerPPAndRank(playerId, Utils.stringToInt(mode));
-				double ppp = Utils.stringToDouble(ppAndRank.split("&r=")[0]);
-				int rank = Utils.stringToInt(ppAndRank.split("&r=")[1].split("&cr=")[0]);
-				int countryRank = Utils.stringToInt(ppAndRank.split("&cr=")[1]);
-				
-				if(limit != 1){ 
-					for(int i = jsonResponse.length() - 1; i >= 0; i--){
-						JSONObject obj = jsonResponse.getJSONObject(i);
-						String play = "";
-						String osuDate = osuDateToCurrentDate(obj.getString("date"));
-						
-						if(!dateGreaterThanDate(lastUpdate, osuDate)){
-							if(obj.getString("rank").equalsIgnoreCase("F")) continue;
-							
-							Utils.sleep(2500);
-							
-							JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), false);
-							
-							String pp = "";
-							
-							if(mode.equals("0")){
-								int combo = 0;
-								if(obj.getInt("perfect") == 0) combo = obj.getInt("maxcombo");
-								
-								pp = fetchPPFromOppai(obj.getInt("beatmap_id"), 
-													  map.getInt("beatmapset_id"), 
-													  Utils.df(getAccuracy(obj, Utils.stringToInt(mode))),
-													  combo, 
-													  Mods.getMods(obj.getInt("enabled_mods")).replaceAll("\\*", ""), 
-													  obj.getInt("countmiss"),
-													  obj.getInt("count50"),
-													  obj.getInt("count100"));
-							}
-							
-							String hits = fetchHitText(Utils.stringToInt(mode), obj);
-							
-							int mapRank = 0;
-							RecentPlay recent = null;
-							
-							for(RecentPlay rPlay : recentPlays)
-								if(rPlay.getBeatmapId() == obj.getInt("beatmap_id") && rPlay.dateValid(osuDate, 5)){
-									mapRank = rPlay.getRank();
-									recent = rPlay;
-									break;
-								}
-							
-							if(recent != null) recentPlays.remove(recent);
-							
-							// this is not accurate if there's more than 1 play queued, please look into verifying if they are all in tops
-							// and how much they are weighted to give an appropriate estimate.
-							double ppDiff = ppp - Utils.stringToDouble(playerStatUpdates.get(player.toLowerCase()).split("&r=")[0]);
-							String ppDifference = Utils.df(ppDiff, 2) + "pp";
-							
-							int rankDiff = rank - Utils.stringToInt(playerStatUpdates.get(player.toLowerCase()).split("&r=")[1].split("&cr=")[0]);
-							String rankDifference = Utils.veryLongNumberDisplay(rankDiff);
-							
-							int countryDiff = countryRank - Utils.stringToInt(playerStatUpdates.get(player.toLowerCase()).split("&cr=")[1]);
-							String countryDifference = Utils.veryLongNumberDisplay(countryDiff);
-							
-							int personalBest = 0;
-							String country = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&c=").get(0).split("&c=")[1].split("&find=")[0];
-							
-							if(ppDiff > 0){
-								ppDifference = "+" + ppDifference;
-							}
-							
-							if(Math.abs(ppDiff) > 0){
-								String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
-                              		  "&u=" + user + "&m=" + mode + "&limit=100&type=string");
-						
-								if(topPlays.length() > 0 && topPlays.contains("{")){
-									topPlays = "[" + topPlays + "]";
-									
-									JSONArray tpJsonResponse = new JSONArray(topPlays);
-									
-									for(int j = 0; j < tpJsonResponse.length(); j++){
-										JSONObject topPlay = tpJsonResponse.getJSONObject(j);
-										
-										if(topPlay.getInt("beatmap_id") == obj.getInt("beatmap_id")){
-											personalBest = j + 1;
-											
-											if(!mode.equals("0") || !pp.contains("FC")) pp = "**" + Utils.df(topPlay.getDouble("pp"), 2) + "pp**";
-											else if(pp.contains("FC")) pp = "**" + Utils.df(topPlay.getDouble("pp"), 2) + "pp**" + pp.replace(pp.split(" ")[0], "");
-											
-											break;
-										}		
-									}
-								}
-							}
-							
-							if(rankDiff < 0){
-								if(rankDifference.startsWith("-"))
-									rankDifference = rankDifference.substring(1);
-								
-								rankDifference = "+" + rankDifference;
-							}else rankDifference = "-" + rankDifference;
-							
-							if(countryDiff < 0){
-								if(countryDifference.startsWith("-"))
-									countryDifference = countryDifference.substring(1);
-								
-								countryDifference = "+" + countryDifference;
-							}else if(countryDiff == 0){
-								countryDifference = "0";
-							}else countryDifference = "-" + countryDifference;
-							
-							play += "\n\n__**" + osuDate + " UTC**__\n\n";
-							play += map.getString("artist") + " - " + map.getString("title") + " [" +
-							        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-							        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " • " + hits : "") + "\n" + 
-							        Utils.veryLongNumberDisplay(obj.getInt("score")) + " • " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + 
-							        (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC (" + map.getInt("max_combo") + "x)") +
-							        " • " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " • **#" + mapRank + "** on map" : "") + 
-							        (!pp.equals("") ? "\n" + pp : "") + "\n\n" + 
-							        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " • **#" + personalBest + "** personal best\n" : "\n") : "") + 
-							        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) • #" + 
-							        Utils.veryLongNumberDisplay(countryRank) + " " + country + " (**" + countryDifference + "**)\n\n" : 
-							        (Math.abs(ppDiff) >= 0.01 ? "\n" : "")) +
-							        "Map • <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> • " + analyzeMapStatus(map.getInt("approved")) + 
-							        "\nPlayer • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
-							
-							completeMessage = true;
-							builder.append(play + "|||");
-						}
-					}
-				}
-				
-				builder.append("\n");
-				
-				if(completeMessage) lastUpdateMessageSent.put(player, builder.toString());
-				
-				playerStatUpdates.put(player.toLowerCase(), ppAndRank);
-				lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
-				usersUpdating.remove(player);
-				allRunningThreads.remove(Thread.currentThread());
-				Thread.currentThread().stop();
 			}
 		});
 		
 		allRunningThreads.add(t);
 		usersUpdating.put(player, t);
 		t.start();
+	}
+	
+	public static String escapeStar(String str){
+		return str.replaceAll("\\*", "\\*");
 	}
 	
 	public static String fetchHitText(int mode, JSONObject obj){
@@ -819,6 +909,7 @@ public class OsuTrackCommand extends GlobalCommand{
 				currentRefreshRate = i;
 				break;
 			}
+		
 		updateLoop();
 	}
 	
@@ -850,6 +941,8 @@ public class OsuTrackCommand extends GlobalCommand{
 	private boolean isTracked(String server, String player){
 		loadTrackedPlayers();
 		
+		if(!trackedPlayers.containsKey(server)) return false;
+		
 		for(String pl : trackedPlayers.get(server))
 			if(pl.equalsIgnoreCase(player))
 				return true;
@@ -864,9 +957,10 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		boolean contained = false;
 		
-		for(String pl : list)
-			if(pl.equalsIgnoreCase(player))
-				contained = true;
+		if(list != null && list.size() > 0)
+			for(String pl : list)
+				if(pl.equalsIgnoreCase(player))
+					contained = true;
 		
 		if(!contained) list.add(player);
 		

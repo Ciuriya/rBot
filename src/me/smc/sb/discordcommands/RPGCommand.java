@@ -12,7 +12,7 @@ import net.dv8tion.jda.events.message.MessageReceivedEvent;
 public class RPGCommand extends GlobalCommand{
 
 	public RPGCommand(){
-		super(null, 
+		super(Permissions.BOT_ADMIN, 
 			  " - The home of the discord RPG", 
 			  "{prefix}rpg\nThis command handles everything RPG related\n\n" +
 			  "----------\nUsage\n----------\n{prefix}rpg {subcommand} - Handles every aspect of the RPG\n" +

@@ -316,18 +316,23 @@ public class Utils{
 	}
 	
 	public static String veryLongNumberDisplay(long number){
-		if(String.valueOf(number).length() == 3) return String.valueOf(number);
+		if(number < 1000 && number > -1000) return String.valueOf(number);
+		
 		String toDisplay = "";
 		int remainder = String.valueOf(number).length() % 3;
 		int untilSplit = 3;
+		
 		if(remainder > 0) untilSplit = remainder;
+		
 		for(char c : String.valueOf(number).toCharArray()){
 			toDisplay += String.valueOf(c);
+			
 			if(untilSplit == 1){
 				toDisplay += ",";
 				untilSplit = 3;
 			}else untilSplit--;
 		}
+		
 		if(toDisplay.endsWith(",")) toDisplay = toDisplay.substring(0, toDisplay.length() - 1);
 		return toDisplay;	
 	}

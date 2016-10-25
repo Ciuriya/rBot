@@ -861,7 +861,7 @@ public abstract class Game{
 			
 			this.map = match.getMapPool().findMap(link);
 			
-			JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), match.getTournament().getMode(), true);
 			
 			updateTwitch(getMod(map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
@@ -872,7 +872,7 @@ public abstract class Game{
 		}else if(mapSelected){
 			this.map = match.getMapPool().findMap(link);
 			
-			JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), match.getTournament().getMode(), true);
 			
 			updateTwitch(getMod(map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 

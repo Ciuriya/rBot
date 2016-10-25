@@ -14,7 +14,7 @@ public class ModPickStrategy implements PickStrategy{
 		Map selected = null;
 		
 		if(game.warmupsLeft > 0 && select){
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), game.match.getTournament().getMode(), true);
 			if(jsMap == null){game.sendMessage("Could not find the selected map!"); return;}
 			
 			int length = jsMap.getInt("total_length");
@@ -87,7 +87,7 @@ public class ModPickStrategy implements PickStrategy{
 			game.map = selected;
 			game.mapSelectedTime = System.currentTimeMillis();
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
 			
 			game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
@@ -98,7 +98,7 @@ public class ModPickStrategy implements PickStrategy{
 		}else if(game.mapSelected && select && selected != null){
 			game.map = selected;
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), true);
+			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
 			
 			game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
