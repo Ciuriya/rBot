@@ -56,8 +56,8 @@ public class Listener implements EventListener{
 	    	String strippedMsg = msg;
 	    	
 	    	if(!cmdPrefix.equals(Main.defaultPrefix) && msg.startsWith(cmdPrefix))
-	    		strippedMsg = strippedMsg.replace(cmdPrefix, "");
-	    	else strippedMsg = strippedMsg.replace(Main.defaultPrefix, "");
+	    		strippedMsg = strippedMsg.replaceFirst(cmdPrefix, "");
+	    	else strippedMsg = strippedMsg.replaceFirst(Main.defaultPrefix, "");
 	    	
 	    	if(!strippedMsg.equals(msg)){
 	    		if(!dm && Main.serverConfigs.get(serverId).getStringList("rpg-enabled-channels").contains(e.getTextChannel().getId()))

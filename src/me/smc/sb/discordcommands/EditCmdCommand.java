@@ -48,7 +48,7 @@ public class EditCmdCommand extends GlobalCommand{
 				desc = args[i].split("\\{desc=")[1].split("}")[0];
 			else instructions += " " + args[i];
 		
-		instructions = instructions.substring(1);
+		if(delimiters == 0) instructions = instructions.substring(1);
 		Command cmd = new Command(e.getGuild().getId(), args[1], instructions, delimiters, desc);
 		cmd.save();
 		Utils.info(e.getChannel(), Main.getCommandPrefix(e.getGuild().getId()) + args[1] + " was added!");

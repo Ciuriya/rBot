@@ -89,6 +89,8 @@ public class OsuTrackCommand extends GlobalCommand{
 		boolean scanServer = false;
 		boolean addToDebug = false;
 		boolean changeToBestPlayTracking = false;
+		boolean ppCap = false;
+		int ppAmount = 0;
 		
 		for(int i = 0; i < args.length; i++)
 			if(args[i].contains("{mode="))
@@ -98,7 +100,17 @@ public class OsuTrackCommand extends GlobalCommand{
 			else if(args[i].contains("{scan}")) scanServer = true;
 			else if(args[i].contains("{debug}")) addToDebug = true;
 			else if(args[i].contains("{best}")) changeToBestPlayTracking = true;
-			else user += " " + args[i];
+			else if(args[i].contains("{pp=")){
+				ppCap = true;
+				ppAmount = Utils.stringToInt(args[i].split("pp=")[1].split("}")[0]);
+			}else user += " " + args[i];
+		
+		if(ppCap){
+			Main.serverConfigs.get(e.getGuild().getId()).writeValue("track-pp-minimum", ppAmount);
+			
+			Utils.info(e.getChannel(), "Only plays above " + ppAmount + "pp will be tracked!");
+			return;
+		}
 		
 		if(changeToBestPlayTracking){
 			boolean wasTracking = false;
@@ -229,6 +241,19 @@ public class OsuTrackCommand extends GlobalCommand{
 											
 											synchronized(server){
 												if(msg != "" && !getLastPlayerUpdate(player, server).equals(lastUpdated.get(player))){
+													String rebuiltMsg = "";
+													
+													for(String play : msg.split("\\|\\|\\|")){
+														if(!play.contains("~~~")) continue;
+														
+														boolean isPB = Boolean.parseBoolean(play.split("~~~&pb=")[1].split("&pp")[0]);
+														double ppAmount = Utils.stringToDouble(play.split("~~~&pb=" + isPB + "&pp=")[1]);
+														
+														if((Main.serverConfigs.get(server).getBoolean("track-best-plays") ? isPB : true) &&
+														   ppAmount >= Main.serverConfigs.get(server).getInt("track-pp-minimum"))
+															rebuiltMsg += play.split("~~~")[0] + "|||";
+													}
+													
 													String spacing = "\n\n\n\n\n";
 													MessageHistory history = new MessageHistory(channel);
 													Message last = history == null ? null : history.retrieve(1).get(0);
@@ -240,7 +265,7 @@ public class OsuTrackCommand extends GlobalCommand{
 													if(!Main.serverConfigs.get(server).getValue(player + "-update-group").equals(""))
 														fChannel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue(player + "-update-group"));
 													
-													String fMsg = spacing + msg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~");
+													String fMsg = spacing + rebuiltMsg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~");
 		
 													if(lastPlayerPosted.containsKey(server) && last != null && 
 													   last.getAuthor().getId().equalsIgnoreCase("120923487467470848"))
@@ -249,7 +274,7 @@ public class OsuTrackCommand extends GlobalCommand{
 														
 													for(String splitMsg : fMsg.split("\\|\\|\\|")){
 														if(splitMsg.length() > 5)
-															Utils.info(fChannel, splitMsg);
+															Utils.info(fChannel, splitMsg.split("jpg")[0] + "jpg");
 													}
 																		
 													lastPlayerPosted.put(server, player);
@@ -408,10 +433,9 @@ public class OsuTrackCommand extends GlobalCommand{
 					double ppp = Utils.stringToDouble(ppAndRank.split("&r=")[0]);
 					int rank = Utils.stringToInt(ppAndRank.split("&r=")[1].split("&cr=")[0]);
 					int countryRank = Utils.stringToInt(ppAndRank.split("&cr=")[1]);
-					boolean allowedToPost = !Main.serverConfigs.get(server).getBoolean("track-best-only");
 					
 					if(limit != 1){ 
-						for(int i = jsonResponse.length() - 1; i >= 0; i--){
+						for(int i = jsonResponse.length() - 1; i >= 0; i--){							
 							JSONObject obj = jsonResponse.getJSONObject(i);
 							String play = "";
 							String osuDate = osuDateToCurrentDate(obj.getString("date"));
@@ -424,6 +448,8 @@ public class OsuTrackCommand extends GlobalCommand{
 								JSONObject map = Map.getMapInfo(obj.getInt("beatmap_id"), Utils.stringToInt(mode), false);
 								
 								String pp = "";
+								boolean isPB = false;
+								double ppAmount = 0.0;
 								
 								if(mode.equals("0")){
 									int combo = 0;
@@ -437,6 +463,8 @@ public class OsuTrackCommand extends GlobalCommand{
 														  obj.getInt("countmiss"),
 														  obj.getInt("count50"),
 														  obj.getInt("count100"));
+									
+									ppAmount = Utils.stringToDouble(pp.split("~")[1].split("pp")[0]);
 								}
 								
 								String hits = fetchHitText(Utils.stringToInt(mode), obj);
@@ -486,10 +514,12 @@ public class OsuTrackCommand extends GlobalCommand{
 											if(topPlay.getInt("beatmap_id") == obj.getInt("beatmap_id")){
 												personalBest = j + 1;
 												
+												isPB = true;
+												
+												ppAmount = topPlay.getDouble("pp");
+												
 												if(!mode.equals("0") || !pp.contains("FC")) pp = "**" + Utils.df(topPlay.getDouble("pp"), 2) + "pp**";
 												else if(pp.contains("FC")) pp = "**" + Utils.df(topPlay.getDouble("pp"), 2) + "pp**" + pp.replace(pp.split(" ")[0], "");
-												
-												if(!allowedToPost) allowedToPost = true;
 												
 												break;
 											}		
@@ -534,14 +564,15 @@ public class OsuTrackCommand extends GlobalCommand{
 								        "\n" + fixedUser + " • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
 								
 								completeMessage = true;
-								builder.append(play + "|||");
+								builder.append(play + "~~~&pb=" + isPB + "&pp=" + ppAmount + "|||");
 							}
 						}
 					}
 					
 					builder.append("\n");
 					
-					if(completeMessage && allowedToPost) lastUpdateMessageSent.put(player, builder.toString());
+					if(completeMessage) 
+						lastUpdateMessageSent.put(player, builder.toString());
 					
 					if(ppp != -1.0) playerStatUpdates.put(player.toLowerCase(), ppAndRank);
 					lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
@@ -551,6 +582,7 @@ public class OsuTrackCommand extends GlobalCommand{
 				}catch(Exception e){
 					// getting errors so I'm adding this gigantic try and catch to log them
 					Log.logger.log(Level.SEVERE, "TRACKING ERROR - " + e.getMessage(), e);
+					e.printStackTrace();
 					
 					usersUpdating.remove(player);
 					allRunningThreads.remove(Thread.currentThread());
