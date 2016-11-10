@@ -50,8 +50,12 @@ public class SoloGame extends Game{
 			if(rSlot != -1) hijackedSlots.remove(rSlot);
 		}
 		
-		if(state.eq(GameState.PLAYING) && rematchesLeft > 0){
-			rematchesLeft--;
+		boolean team = teamToBoolean(findTeam(player));
+		
+		if(state.eq(GameState.PLAYING) && (team ? rematchesLeftFTeam : rematchesLeftSTeam) > 0 && warmupsLeft == 0){
+			if(team) rematchesLeftFTeam--;
+			else rematchesLeftSTeam--;
+			
 			
 			state = GameState.WAITING;
 			mapSelected = true;

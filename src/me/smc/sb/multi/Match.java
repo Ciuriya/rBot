@@ -114,6 +114,7 @@ public class Match{
 	public void start(){
 		if(scheduledTime != null) scheduledTime.cancel();
 		
+		Tournament.matchesRunning++;
 		Game.createGame(this);
 	}
 	
@@ -126,6 +127,9 @@ public class Match{
 	
 	public void setGame(Game game){
 		this.game = game;
+		
+		if(game == null)
+			Tournament.matchesRunning--;
 	}
 	
 	public void setTeams(Team fTeam, Team sTeam){

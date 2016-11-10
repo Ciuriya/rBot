@@ -22,6 +22,7 @@ import me.smc.sb.irccommands.PassTurnCommand;
 import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
 import me.smc.sb.irccommands.SkipRematchCommand;
+import me.smc.sb.irccommands.SkipWarmupCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
@@ -42,6 +43,7 @@ public abstract class Game{
 	protected int roomSize = 0;
 	protected int skipRematchState = 0; //0 = none, 1 = f skipped, 2 = s skipped, 3 = both skip
 	protected int contestState = 0; //^
+	protected int skipWarmupState = 0; //^
 	protected int expectedPlayers = 0;
 	protected long lastPickTime = 0;
 	protected long mapSelectedTime = 0;
@@ -49,8 +51,10 @@ public abstract class Game{
 	protected boolean fTeamFirst = true;
 	protected boolean validMods = true;
 	protected boolean streamed = false;
+	protected boolean lastRematchFTeam = false;
 	protected GameState state;
-	protected int rematchesLeft = 0;
+	protected int rematchesLeftFTeam = 0;
+	protected int rematchesLeftSTeam = 0;
 	protected List<String> invitesSent;
 	protected List<String> playersInRoom;
 	protected List<String> captains;
@@ -98,7 +102,8 @@ public abstract class Game{
 		this.playersRankChecked = new ArrayList<>();
 		this.state = GameState.WAITING;
 		this.match.setGame(this);
-		this.rematchesLeft = match.getTournament().getRematchesAllowed();
+		this.rematchesLeftFTeam = match.getTournament().getRematchesAllowed();
+		this.rematchesLeftSTeam = match.getTournament().getRematchesAllowed();
 		
 		setupLobby();
 	}
@@ -226,6 +231,9 @@ public abstract class Game{
 				if(!ChangeWarmupModCommand.gamesAllowedToChangeMod.contains(this))
 					ChangeWarmupModCommand.gamesAllowedToChangeMod.add(this);
 				
+				if(!SkipWarmupCommand.gamesAllowedToSkip.contains(this))
+					SkipWarmupCommand.gamesAllowedToSkip.add(this);
+				
 				startMapUpdater();
 				
 				pickTimer(false);
@@ -240,8 +248,8 @@ public abstract class Game{
 				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
 				clearPickTimers();
 				
-				if(ChangeWarmupModCommand.gamesAllowedToChangeMod.contains(this))
-					ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+				SkipWarmupCommand.gamesAllowedToSkip.remove(this);
 				
 				banningTeam = findNextTeamToBan();
 				
@@ -264,6 +272,10 @@ public abstract class Game{
 			case 4:
 				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
 				if(banningTeam != null) BanMapCommand.banningTeams.remove(banningTeam);
+				
+				ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+				SkipWarmupCommand.gamesAllowedToSkip.remove(this);
+				
 				clearPickTimers();
 				
 				banningTeam = null;
@@ -487,6 +499,7 @@ public abstract class Game{
 		BanMapCommand.banningTeams.remove(match.getFirstTeam());
 		BanMapCommand.banningTeams.remove(match.getSecondTeam());
 		SkipRematchCommand.gamesAllowedToSkip.remove(this);
+		SkipWarmupCommand.gamesAllowedToSkip.remove(this);
 		ContestCommand.gamesAllowedToContest.remove(this);
 		AlertStaffCommand.gamesAllowedToAlert.remove(this);
 		
@@ -526,21 +539,29 @@ public abstract class Game{
 
 		Log.logger.log(Level.INFO, shortGameEndMsg);
 		
-		if(messageUpdater != null) messageUpdater.cancel();
+		if(messageUpdater != null){
+			messageUpdater.cancel();
+			messageUpdater = null;
+		}
 		
-		invitesSent.clear();
-		playersInRoom.clear();
-		banchoFeedback.clear();
-		bans.clear();
-		bansWithNames.clear();
-		mapsPicked.clear();
-		captains.clear();
-		joinQueue.clear();
-		playersSwapped.clear();
-		hijackedSlots.clear();
-		verifyingSlots.clear();
-		pickTimers.clear();
-		playersRankChecked.clear();
+		if(mapUpdater != null){
+			mapUpdater.cancel();
+			mapUpdater = null;
+		}
+		
+		invitesSent.clear(); invitesSent = null;
+		playersInRoom.clear(); playersInRoom = null;
+		banchoFeedback.clear(); banchoFeedback = null;
+		bans.clear(); bans = null;
+		bansWithNames.clear(); bansWithNames = null;
+		mapsPicked.clear(); mapsPicked = null;
+		captains.clear(); captains = null;
+		joinQueue.clear(); joinQueue = null;
+		playersSwapped.clear(); playersSwapped = null;
+		hijackedSlots.clear(); hijackedSlots = null;
+		verifyingSlots.clear(); verifyingSlots = null;
+		pickTimers.clear(); pickTimers = null;
+		playersRankChecked.clear(); playersRankChecked = null;
 		banningTeam = null;
 		fTeamFirst = false;
 		fTeamPoints = 0;
@@ -552,7 +573,8 @@ public abstract class Game{
 		playersChecked = 0;
 		previousMap = null;
 		previousRoll = 0;
-		rematchesLeft = 0;
+		rematchesLeftFTeam = 0;
+		rematchesLeftSTeam = 0;
 		expectedPlayers = 0;
 		rollsLeft = 0;
 		roomSize = 0;
@@ -563,6 +585,12 @@ public abstract class Game{
 		streamed = false;
 		waitingForCaptains = 0;
 		warmupsLeft = 0;
+		contestState = 0;
+		skipRematchState = 0;
+		skipWarmupState = 0;
+		lastPickTime = 0;
+		lastWinner = null;
+		discordResultMessage = null;
 		match.setGame(null);
 		
 		match.getTournament().removeMatch(match.getMatchNum());
@@ -773,7 +801,9 @@ public abstract class Game{
 			sendMessage("The rematch has been skipped.");
 			
 			skipRematchState = 0;
-			rematchesLeft++;
+			
+			if(lastRematchFTeam) rematchesLeftFTeam++;
+			else rematchesLeftSTeam++;
 			
 			mapSelected = false;
 			
@@ -814,6 +844,35 @@ public abstract class Game{
 			}
 			
 			updateScores(false);
+		}
+	}
+	
+	public void acceptWarmupSkip(String player){
+		Team team = findTeam(player);
+		
+		switch(skipWarmupState){
+			case 0: skipWarmupState = teamToBoolean(team) ? 1 : 2;
+					sendMessage(team.getTeamName() + " has voted to skip their warmup!");
+					break;
+			case 1: if(teamToBoolean(team)) break;
+					else{skipWarmupState = 3; break;}
+			case 2: if(!teamToBoolean(team)) break;
+					else{skipWarmupState = 3; break;}
+			default: return;
+		}
+		
+		if(skipWarmupState == 3){		
+			SkipWarmupCommand.gamesAllowedToSkip.remove(this);
+			sendMessage("The warmup has been skipped!");
+			
+			skipWarmupState = 0;
+			
+			warmupsLeft--;
+			
+			updateResults(false);
+			
+			if(warmupsLeft == 0) mapSelection(3);
+			else mapSelection(2);
 		}
 	}
 	
@@ -1173,13 +1232,13 @@ public abstract class Game{
 		
 		if(timer == -1) return;
 		
+		state = GameState.PLAYING;
+		
 		if(timer != 0) sendMessage("!mp start " + timer);
 		else sendMessage("!mp start");
 		
 		updateResults(false);
 		updateTwitch("The match has begun!");
-		
-		state = GameState.PLAYING;
 	}
 	
 	protected void switchPlaying(boolean playing, boolean full){
@@ -1335,8 +1394,11 @@ public abstract class Game{
 									break rematch;
 							}
 							
-							if(rematchesLeft > 0){
-								rematchesLeft--;
+							if((fTeamDC ? rematchesLeftFTeam : rematchesLeftSTeam) > 0){
+								if(fTeamDC) rematchesLeftFTeam--;
+								else rematchesLeftSTeam--;
+								
+								lastRematchFTeam = fTeamDC;
 								
 								lastWinner = fTeamScore > sTeamScore ? match.getFirstTeam() : match.getSecondTeam();
 								
@@ -1363,7 +1425,6 @@ public abstract class Game{
 						mapSelected = true;
 						banchoFeedback.clear();
 						
-						rematchesLeft--;
 						switchPlaying(false, true);
 						
 						updateTwitch("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");

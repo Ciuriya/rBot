@@ -104,6 +104,13 @@ public class Main{
 				
 				if(requests > highestBurstRequestsSent)
 					highestBurstRequestsSent = requests;
+				
+				long uptime = System.currentTimeMillis() - Main.bootTime;
+				
+				if(htmlScrapes == 0 && uptime >= 60000 && Tournament.matchesRunning == 0){
+					Utils.info(api.getUserById("91302128328392704").getPrivateChannel(), "I am restarting due to the lack of html scrapes.");
+					stop(2);
+				}
 			}
 		}, 60000, 60000);
 		

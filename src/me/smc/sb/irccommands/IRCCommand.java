@@ -147,6 +147,7 @@ public abstract class IRCCommand{
 		commands.add(new BanMapCommand());
 		commands.add(new PassTurnCommand());
 		commands.add(new SkipRematchCommand());
+		commands.add(new SkipWarmupCommand());
 		commands.add(new ContestCommand());
 		commands.add(new ChangeWarmupModCommand());
 		commands.add(new AlertStaffCommand());

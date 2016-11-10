@@ -6,7 +6,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import me.smc.sb.irccommands.InvitePlayerCommand;
-import me.smc.sb.utils.Utils;
 
 public class TeamGame extends Game{
 
@@ -80,8 +79,13 @@ public class TeamGame extends Game{
 			if(rSlot != -1) hijackedSlots.remove(rSlot);
 		}
 		
-		if(state.eq(GameState.PLAYING) && rematchesLeft > 0){
-			rematchesLeft--;
+		boolean team = teamToBoolean(findTeam(player));
+		
+		if(state.eq(GameState.PLAYING) && (team ? rematchesLeftFTeam : rematchesLeftSTeam) > 0 && warmupsLeft == 0){
+			if(team) rematchesLeftFTeam--;
+			else rematchesLeftSTeam--;
+			
+			lastRematchFTeam = team;
 			
 			state = GameState.WAITING;
 			mapSelected = true;
@@ -175,7 +179,7 @@ public class TeamGame extends Game{
 								freeSlots.remove((Integer) slot);
 								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
 								toMove.remove(p);
-							}else sendMessage("!mp kick " + p.getName().replaceAll(" ", "_"));
+							}else kickPlayer(p.getName().replaceAll(" ", "_"));
 						}				
 					}else{
 						ArrayList<Integer> freeSlots = new ArrayList<>();
@@ -196,7 +200,7 @@ public class TeamGame extends Game{
 								freeSlots.remove((Integer) slot);
 								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
 								toMove.remove(p);
-							}else sendMessage("!mp kick " + p.getName().replaceAll(" ", "_"));
+							}else kickPlayer(p.getName().replaceAll(" ", "_"));
 						}				
 						
 						freeSlots.clear();
@@ -217,7 +221,7 @@ public class TeamGame extends Game{
 								freeSlots.remove((Integer) slot);
 								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
 								toMove.remove(p);
-							}else sendMessage("!mp kick " + p.getName().replaceAll(" ", "_"));
+							}else kickPlayer(p.getName().replaceAll(" ", "_"));
 						}
 						
 						sendMessage("!mp size " + match.getPlayers());
@@ -227,59 +231,12 @@ public class TeamGame extends Game{
 					state = GameState.WAITING;
 				}
 			}, 2500);
-		}else{
-			int slot = Utils.stringToInt(message.split(" ")[1]);
-			message = Utils.removeExcessiveSpaces(message);
-			String[] spaceSplit = message.split(" ");
-			
-			int count = 0;
-			for(String arg : spaceSplit){
-				if(arg.contains("osu.ppy.sh")) break;
-				count++;
-			}
-			
-			String player = "";
-
-			for(int i = count + 1; i < spaceSplit.length; i++){
-				if(spaceSplit[i].equalsIgnoreCase("[Team")){
-					count = i;
-					break;
-				}
-				if(spaceSplit[i].equalsIgnoreCase("[Host")){
-					count = i + 2;
-					break;
-				}
-				
-				player += spaceSplit[i] + "_";
-			}
-			
-			player = player.substring(0, player.length() - 1);
-			
-			Team team = findTeam(player);
-			
-			if(team == null){
-				sendMessage("!mp kick " + player);
-				sendMessage(player + " is not on a team!");
-				return;
-			}
-			
-			Player p = findPlayer(player);
-
-			if(p != null) p.setSlot(slot);
-			
-			if(teamToBoolean(team)){
-				if(fTeamPlayers.size() >= match.getPlayers() / 2){
-					sendMessage("!mp kick " + player);
-					return;
-				}
-				
-				fTeamPlayers.add(p);
-			}else{
-				if(sTeamPlayers.size() >= match.getPlayers() / 2)
-					sendMessage("!mp kick " + player);
-				
-				sTeamPlayers.add(p);
-			}
 		}
+	}
+	
+	private void kickPlayer(String player){
+		sendMessage("!mp kick " + player);
+		joinQueue.remove(player);
+		playersInRoom.remove(player);
 	}
 }

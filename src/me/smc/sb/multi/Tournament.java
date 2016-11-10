@@ -28,6 +28,7 @@ public class Tournament{
 	private Game currentlyStreamed; //game switching from twitch channel? idk
 	private static java.util.Map<String, LinkedList<Game>> twitchQueue = new HashMap<>();
 	public static List<Tournament> tournaments;
+	public static int matchesRunning = 0;
 	public java.util.Map<String, Match> conditionalTeams = new HashMap<>();
 	private List<Team> teams;
 	private List<Match> matches;
