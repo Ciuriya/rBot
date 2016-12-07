@@ -1,8 +1,6 @@
 package me.smc.sb.irccommands;
 
-import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -18,9 +16,9 @@ import com.jcabi.jdbc.JdbcSession;
 import com.jcabi.jdbc.Outcome;
 
 import me.smc.sb.multi.Tournament;
-import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.FinalInt;
 import me.smc.sb.utils.Log;
+import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
 public class ConfirmTeamCommand extends IRCCommand{
@@ -53,40 +51,18 @@ public class ConfirmTeamCommand extends IRCCommand{
 		int teamID = Utils.stringToInt(args[args.length - 1]);
 		if(teamID == -1) return "Invalid team ID!";
 		
-		Configuration login = new Configuration(new File("login.txt"));
-		
 		try{
-			Class.forName("com.mysql.jdbc.Driver");
-			Connection tourneyCheckSQL = DriverManager.getConnection(login.getValue("WTURL"), 
-                    					 							 login.getValue("WTUser"),
-                    					 							 login.getValue("WTPass"));
-			final FinalInt tourneyId = new FinalInt(0);
+			int tourneyId = RemotePatyServerUtils.fetchTournamentId(t.getName());
+			if(tourneyId == 0) return "This tournament doesn't exist!";
 			
-			new JdbcSession(tourneyCheckSQL)
-			.sql("SELECT id FROM tournaments " + 
-				 "WHERE tourney_name=?")
-			.set(tournamentName)
-			.select(new Outcome<List<String>>(){
-				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
-					if(rset.next()) tourneyId.set(rset.getInt(1));
-					
-					return new ArrayList<String>();
-				}
-			});
-			
-			if(tourneyId.get() == 0) return "This tournament doesn't exist!";
-			tourneyCheckSQL.close();
-			
-			Connection teamSignupCheckSQL = DriverManager.getConnection(login.getValue("WTURL"), 
-					 													login.getValue("WTUser"),
-					 													login.getValue("WTPass"));
+			Connection teamSignupCheckSQL = RemotePatyServerUtils.connect();
 			
 			final FinalInt teamValid = new FinalInt(1);
 			
 			new JdbcSession(teamSignupCheckSQL)
 			.sql("SELECT teamname FROM teams " +
 				 "WHERE tournaments_id=? AND id=?")
-			.set(tourneyId.get())
+			.set(tourneyId)
 			.set(teamID)
 			.select(new Outcome<List<String>>(){
 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -98,9 +74,7 @@ public class ConfirmTeamCommand extends IRCCommand{
 			
 			if(teamValid.get() == 0) return "This team is not signed up for " + tournamentName + "!";
 			
-			Connection upSQL = DriverManager.getConnection(login.getValue("WTURL"), 
-                                                           login.getValue("WTUser"),
-                                                           login.getValue("WTPass"));
+			Connection upSQL = RemotePatyServerUtils.connect();
 			
 			int rowsChanged = new JdbcSession(upSQL)
 			.sql("UPDATE teammembers SET confirmed=1 " +
@@ -114,9 +88,7 @@ public class ConfirmTeamCommand extends IRCCommand{
 			
 			upSQL.close();
 			
-			Connection delSQL = DriverManager.getConnection(login.getValue("WTURL"), 
-                                                            login.getValue("WTUser"),
-                                                            login.getValue("WTPass"));
+			Connection delSQL = RemotePatyServerUtils.connect();
 			
 			new JdbcSession(delSQL)
 			.sql("DELETE FROM teammembers " +

@@ -26,6 +26,7 @@ import me.smc.sb.irccommands.SkipWarmupCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
+import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.entities.Message;
 
@@ -45,6 +46,8 @@ public abstract class Game{
 	protected int contestState = 0; //^
 	protected int skipWarmupState = 0; //^
 	protected int expectedPlayers = 0;
+	protected int lastModPickedFTeam = 0;
+	protected int lastModPickedSTeam = 0;
 	protected long lastPickTime = 0;
 	protected long mapSelectedTime = 0;
 	protected boolean mapSelected = false;
@@ -134,18 +137,23 @@ public abstract class Game{
 	}
 	
 	public void setupGame(){
-		sendMessage("!mp lock");
-		sendMessage("!mp size " + match.getPlayers());
-		sendMessage("!mp set 2 " + (match.getTournament().isScoreV2() ? "4" : "0"));
+		sendPriorityMessage("!mp lock");
+		sendPriorityMessage("!mp size " + match.getPlayers());
+		sendPriorityMessage("!mp set 2 " + (match.getTournament().isScoreV2() ? "4" : "0"));
 		
 		String admins = "";
 		
 		if(!match.getMatchAdmins().isEmpty()){
 			for(String admin : match.getMatchAdmins())
 				admins += admin.replaceAll(" ", "_") + ", ";
+			
+			if(!match.getTournament().getMatchAdmins().isEmpty())
+				for(String admin : match.getTournament().getMatchAdmins())
+					admins += admin.replaceAll(" ", "_") + ", ";
+			
 			admins = admins.substring(0, admins.length() - 2);
 			
-			sendMessage("!mp addref " + admins);
+			sendPriorityMessage("!mp addref " + admins);
 		}
 		
 		roomSize = match.getPlayers();
@@ -198,6 +206,8 @@ public abstract class Game{
 	public void setScores(int fTeamScore, int sTeamScore){
 		this.fTeamPoints = fTeamScore;
 		this.sTeamPoints = sTeamScore;
+		
+		updateScores(false);
 	}
 	
 	public abstract void allowTeamInvites();
@@ -237,7 +247,8 @@ public abstract class Game{
 				startMapUpdater();
 				
 				pickTimer(false);
-				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>");
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>", 
+							  "If the lobby order is not correct, do not worry about it, it will be fixed.");
 				break;
 			case 3: 		
 				if(getPickStrategy() instanceof ModPickStrategy){
@@ -294,7 +305,8 @@ public abstract class Game{
 				
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using " + selectUsage +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
-						   " You can find the maps here]" : ""));
+						   " You can find the maps here]" : ""), 
+						   "If the lobby order is not correct, do not worry about it, it will be fixed.");
 				break;
 			default: break;
 		}
@@ -319,7 +331,8 @@ public abstract class Game{
 				
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a map using " + selectUsage +
 						   (match.getMapPool().getSheetUrl().length() > 0 ? " [" + match.getMapPool().getSheetUrl() + 
-						   " You can find the maps here]" : ""));
+						   " You can find the maps here]" : ""), 
+						   "If the lobby order is not correct, do not worry about it, it will be fixed.");
 			}
 		}
 		
@@ -401,6 +414,7 @@ public abstract class Game{
 		sendMessage("!mp mods " + getMod(map));
 		
 		this.map = map;
+		this.previousMap = map;
 	}
 	
 	protected String getMod(Map map){
@@ -575,6 +589,8 @@ public abstract class Game{
 		previousRoll = 0;
 		rematchesLeftFTeam = 0;
 		rematchesLeftSTeam = 0;
+		lastModPickedFTeam = 0;
+		lastModPickedSTeam = 0;
 		expectedPlayers = 0;
 		rollsLeft = 0;
 		roomSize = 0;
@@ -600,7 +616,8 @@ public abstract class Game{
 	}
 	
 	private String buildDiscordResultMessage(boolean finished){
-		String message = mpLink + " ```\n" + match.getFirstTeam().getTeamName() + " - " +
+		String message = "**Match #" + match.getMatchNum() + " in " + match.getTournament().getName() + 
+						 "**\n" + mpLink + " ```\n" + match.getFirstTeam().getTeamName() + " - " +
 						 match.getSecondTeam().getTeamName() + "\n";
 		
 		for(int i = 0; i < match.getFirstTeam().getTeamName().length() - 1; i++)
@@ -729,7 +746,7 @@ public abstract class Game{
 			Log.logger.log(Level.INFO, "Could not talk to " + user + "!");
 		}
 		
-		Main.ircBot.sendIRC().message(user, message);
+		Main.banchoRegulator.sendMessage(user, message);
 	}
 	
 	private void setupLobby(){
@@ -739,7 +756,7 @@ public abstract class Game{
 			Log.logger.log(Level.INFO, "Could not talk to BanchoBot!");
 		}
 		
-		Main.ircBot.sendIRC().message("BanchoBot", "!mp make " + match.getLobbyName());
+		Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make " + match.getLobbyName());
 		
 		Timer check = new Timer();
 		check.schedule(new TimerTask(){
@@ -776,8 +793,69 @@ public abstract class Game{
 		return Utils.stringToInt(multiChannel.replace("#mp_", ""));
 	}
 	
+	public GameState getState(){
+		return state;
+	}
+	
 	public void handleMapSelect(String map, boolean select, String mod){
+		if(state.eq(GameState.PAUSED)) return;
+		
 		getPickStrategy().handleMapSelect(this, map, select, mod);
+	}
+	
+	public void handlePause(boolean pause){
+		if(pause){
+			clearPickTimers();
+			
+			SkipRematchCommand.gamesAllowedToSkip.remove(this);
+			ContestCommand.gamesAllowedToContest.remove(this);
+			skipRematchState = 0;
+			contestState = 0;
+			mapSelectedTime = 0;
+			
+			if(messageUpdater != null) messageUpdater.cancel();
+			
+			if(state.eq(GameState.PLAYING)){
+				sendMessage("!mp abort");
+				sendMessage("!mp aborttimer");
+			}
+			
+			state = GameState.PAUSED;
+			
+			banchoFeedback.clear();
+			
+			switchPlaying(false, true);
+		}else{
+			state = GameState.WAITING;
+			
+			if(mapSelected) prepareReadyCheck();
+			else if(warmupsLeft > 0) mapSelection(2);
+			else if(bans.size() < 4) mapSelection(3);
+			else mapSelection(4);
+		}
+	}
+	
+	public void forceSelect(boolean revertScore, Map newMap){
+		if(revertScore){
+			int fTeamScore = fTeamPoints;
+			int sTeamScore = sTeamPoints;
+			
+			if(teamToBoolean(lastWinner)) fTeamPoints--;
+			else sTeamPoints--;
+			
+			setScores(fTeamScore, sTeamScore);
+		}
+		
+		if(newMap != null) changeMap(newMap);
+		
+		skipRematchState = 0;
+		
+		if(mapUpdater != null) mapUpdater.cancel();
+		mapSelected = true;
+		banchoFeedback.clear();
+		switchPlaying(false, true);
+		
+		prepareReadyCheck();
 	}
 	
 	public void acceptSkipRematch(String player){
@@ -901,6 +979,7 @@ public abstract class Game{
 		if(message.contains("All players are ready") && state.eq(GameState.WAITING)) readyCheck(true);
 		else if(message.contains("left the game.")) playerLeft(message);
 		else if(message.contains("The match has finished!")) playEnded();
+		else if(message.contains("The match has started!") && !state.eq(GameState.PLAYING)) unexpectedMatchStart();
 		else if(message.contains("joined in")) acceptExternalInvite(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.FIXING)) fixLobby(message);
 		else if(message.startsWith("Slot ") && state.eq(GameState.VERIFYING)) verifyLobby(message);
@@ -911,8 +990,22 @@ public abstract class Game{
 		else banchoFeedback.add(message);
 	}
 	
+	private void unexpectedMatchStart(){
+		state = GameState.PLAYING;
+		sendMessage("!mp settings");
+	}
+	
 	private void updateMap(String link){
 		if(map != null && map.getURL().equalsIgnoreCase(link)) return;
+		
+		if(state.eq(GameState.PLAYING)){
+			mapSelected = true;
+			
+			this.map = match.getMapPool().findMap(link);
+			mapsPicked.add(map);
+			
+			return;
+		}
 		
 		if(!mapSelected){
 			state = GameState.WAITING;
@@ -942,7 +1035,7 @@ public abstract class Game{
 	}
 	
 	private void readyCheck(boolean bancho){
-		if(state.eq(GameState.CONFIRMING) || state.eq(GameState.PLAYING)) return;
+		if(state.eq(GameState.CONFIRMING) || state.eq(GameState.PLAYING) || state.eq(GameState.PAUSED)) return;
 		
 		if(playersInRoom.size() == match.getPlayers() && mapSelected && state.eq(GameState.WAITING)){ 
 			if((map.getCategory() != 5 && previousMap == null) || (previousMap != null && map.getCategory() != 5 
@@ -977,13 +1070,13 @@ public abstract class Game{
 			
 			verifyMods();
 			
-			sendMessage("!mp settings");
+			sendPriorityMessage("!mp settings");
 			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
 					if(state.eq(GameState.VERIFYING) && playersSwapped.isEmpty())
-						sendMessage("!mp settings");
+						sendPriorityMessage("!mp settings");
 				}
 			}, 2500);
 			return;
@@ -1001,14 +1094,14 @@ public abstract class Game{
 			
 			verifyMods();
 			
-			sendMessage("!mp settings");
+			sendPriorityMessage("!mp settings");
 			playersInRoom.clear();
 			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
 					if(state.eq(GameState.FIXING) && playersSwapped.isEmpty())
-						sendMessage("!mp settings");
+						sendPriorityMessage("!mp settings");
 				}
 			}, 2500);
 			return;
@@ -1198,6 +1291,8 @@ public abstract class Game{
 	}
 	
 	private void startMatch(int timer, boolean backupCall){	
+		if(state.eq(GameState.PAUSED)) return;
+		
 		clearPickTimers();
 		
 		if(!backupCall){
@@ -1224,6 +1319,12 @@ public abstract class Game{
 		}
 		
 		mapsPicked.add(map);
+		
+		if(warmupsLeft == 0 && bans.size() == 4){
+			if(teamToBoolean(selectingTeam)) 
+				lastModPickedFTeam = map.getCategory();
+			else lastModPickedSTeam = map.getCategory();
+		}
 		
 		banchoFeedback.clear();
 		
@@ -1537,9 +1638,12 @@ public abstract class Game{
 		}
 	}
 	
+	protected void sendPriorityMessage(String command){
+		Main.banchoRegulator.sendPriorityMessage(multiChannel, command);
+	}
+	
 	protected void sendMessage(String command){
-		Main.ircBot.sendIRC().message(multiChannel, command);
-		Log.logger.log(Level.INFO, "IRC/Sent in " + multiChannel + ": " + command);
+		Main.banchoRegulator.sendMessage(multiChannel, command);
 	}
 	
 	public void invitePlayer(String player){
@@ -1715,6 +1819,19 @@ public abstract class Game{
 			}
 			
 			if(!usedSlots.contains(i)){
+				if(match.getTournament().isUsingConfirms()){
+					try{
+						if(!RemotePatyServerUtils.isConfirmed(Utils.stringToInt(Utils.getOsuPlayerId(pl.getName())), 
+								RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName()))){
+							sendMessage(pl.getName() + " is not confirmed, to join the lobby he needs to confirm via SmtBot!");
+							playersInRoom.remove(player);
+							return false;
+						}
+					}catch(Exception e){
+						Log.logger.log(Level.SEVERE, e.getMessage(), e);
+					}
+				}
+				
 				pl.setSlot(i);
 				sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
 				sendMessage("!mp team " + player.replaceAll(" ", "_") + " " + color);
@@ -1736,6 +1853,7 @@ public abstract class Game{
 						sendMessage(pl.getName() + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
 								   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
 						sendMessage("!mp kick " + player.replaceAll(" ", "_"));
+						playersInRoom.remove(player);
 						
 						pmUser(player, "You were kicked because your rank is out of range. You are #" + Utils.veryLongNumberDisplay(rank) +
 									   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");

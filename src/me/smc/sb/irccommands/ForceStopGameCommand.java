@@ -24,9 +24,37 @@ public class ForceStopGameCommand extends IRCCommand{
 		String argCheck = Utils.checkArguments(args, 1);
 		if(argCheck.length() > 0) return argCheck;
 		
-		if(Utils.stringToInt(args[0]) == -1) return "Invalid mp #!";
+		String tournamentName = "";
+		Tournament t = null;
+		
+		if(args.length > 1){
+			for(int i = 0; i < args.length - 2; i++)
+				tournamentName += args[i] + " ";
+			
+			t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));	
+		}
+		
+		if(t == null && Utils.stringToInt(args[0]) == -1) return "Invalid mp #!";
+		if(t != null && Utils.stringToInt(args[args.length - 1]) == -1) return "Invalid match number!";
 		
 		String user = Utils.toUser(e, pe);
+		
+		if(t != null){
+			int matchNumber = Utils.stringToInt(args[args.length - 1]);
+			
+			Match match = t.getMatch(matchNumber);
+			
+			if(match == null) return "Match does not exist!";
+			
+			if(match.isMatchAdmin(user)){
+				if(match.getGame() == null) return "Game is already stopped!";
+				
+				match.getGame().stop();
+				return "Game #" + Utils.stringToInt(args[0]) + " was force stopped!";
+			}
+			
+			return "";
+		}
 		
 		for(Tournament tournament : Tournament.tournaments)
 			for(Match match : new ArrayList<Match>(tournament.getMatches()))

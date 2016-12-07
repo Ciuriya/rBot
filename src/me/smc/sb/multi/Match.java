@@ -215,7 +215,7 @@ public class Match{
 		if(pool != null) config.writeValue("match-" + matchNum + "-pool", pool.getPoolNum());
 		
 		if(bestOf != 5) config.writeValue("match-" + matchNum + "-bestof", bestOf);
-		if(!matchAdmins.isEmpty()) config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
+		config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
 	}
 	
 }

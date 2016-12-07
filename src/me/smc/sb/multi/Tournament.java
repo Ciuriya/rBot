@@ -33,6 +33,7 @@ public class Tournament{
 	private List<Team> teams;
 	private List<Match> matches;
 	private List<MapPool> pools;
+	private ArrayList<String> matchAdmins;
 	public static List<Long> matchDates = new ArrayList<>();
 	private boolean scoreV2;
 	private int pickWaitTime;
@@ -43,6 +44,9 @@ public class Tournament{
 	private int lowerRankBound;
 	private int upperRankBound;
 	private boolean skipWarmups;
+	private boolean usingTourneyServer;
+	private boolean usingConfirms;
+	private boolean usingMapStats;
 	private String resultDiscord;
 	private String alertDiscord;
 	private String alertMessage;
@@ -59,6 +63,7 @@ public class Tournament{
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
+		matchAdmins = new ArrayList<>();
 		
 		displayName = getConfig().getValue("displayName");
 		twitchChannel = getConfig().getValue("twitchChannel");
@@ -76,6 +81,9 @@ public class Tournament{
 		skipWarmups = getConfig().getBoolean("skipWarmups");
 		pickStrategy = PickStrategy.findStrategy(getConfig().getValue("pickStrategy"));
 		rematchesAllowed = getConfig().getInt("rematchesAllowed");
+		usingTourneyServer = getConfig().getBoolean("usingTourneyServer");
+		usingConfirms = getConfig().getBoolean("usingConfirms");
+		usingMapStats = getConfig().getBoolean("usingMapStats");
 		
 		currentlyStreamed = null;
 
@@ -87,7 +95,8 @@ public class Tournament{
 	
 	public Tournament(String name, String displayName, String twitchChannel, boolean scoreV2, int pickWaitTime, int banWaitTime, 
 					  int readyWaitTime, int type, int mode, String resultDiscord, String alertDiscord, String alertMessage,
-					  int lowerRankBound, int upperRankBound, boolean skipWarmups, String pickStrategy, int rematchesAllowed){
+					  int lowerRankBound, int upperRankBound, boolean skipWarmups, String pickStrategy, int rematchesAllowed,
+					  boolean usingTourneyServer, boolean usingConfirms, boolean usingMapStats){
 		this.name = name;
 		this.displayName = displayName;
 		this.twitchChannel = twitchChannel;
@@ -105,12 +114,16 @@ public class Tournament{
 		this.skipWarmups = skipWarmups;
 		this.pickStrategy = PickStrategy.findStrategy(pickStrategy);
 		this.rematchesAllowed = rematchesAllowed;
+		this.usingTourneyServer = usingTourneyServer;
+		this.usingConfirms = usingConfirms;
+		this.usingMapStats = usingMapStats;
 		
 		currentlyStreamed = null;
 		
 		teams = new ArrayList<>();
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
+		matchAdmins = new ArrayList<>();
 		
 		tournaments.add(this);
 	}
@@ -168,6 +181,14 @@ public class Tournament{
 		return matchDates;
 	}
 	
+	public List<String> getMatchAdmins(){
+		return matchAdmins;
+	}
+	
+	public void setMatchAdmins(ArrayList<String> admins){
+		this.matchAdmins = admins;
+	}
+	
 	public int getPickWaitTime(){
 		return pickWaitTime;
 	}
@@ -218,6 +239,18 @@ public class Tournament{
 	
 	public void setRematchesAllowed(int rematches){
 		this.rematchesAllowed = rematches;
+	}
+	
+	public boolean isUsingTourneyServer(){
+		return usingTourneyServer;
+	}
+	
+	public boolean isUsingConfirms(){
+		return usingConfirms;
+	}
+	
+	public boolean isUsingMapStats(){
+		return usingMapStats;
 	}
 	
 	public boolean isSkippingWarmups(){
@@ -555,6 +588,10 @@ public class Tournament{
 		config.writeValue("skipWarmups", skipWarmups);
 		config.writeValue("pickStrategy", PickStrategy.getStrategyName(pickStrategy));
 		config.writeValue("rematchesAllowed", rematchesAllowed);
+		config.writeValue("usingTourneyServer", usingTourneyServer);
+		config.writeValue("usingConfirms", usingConfirms);
+		config.writeValue("usingMapStats", usingMapStats);
+		config.writeStringList("tournament-admins", matchAdmins, true);
 	}
 	
 	public void saveSQL(boolean add){
@@ -562,8 +599,9 @@ public class Tournament{
 			if(add){
 				new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO Tournament (name, display_name, twitch_channel, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
-					 "type, mode, result_discord, alert_discord, alert_message, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed) " +
-				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+					 "type, mode, result_discord, alert_discord, alert_message, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed, "
+					 + "using_tourney_server, using_confirms, using_map_stats) " +
+				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(displayName)
 				.set(twitchChannel)
@@ -581,13 +619,16 @@ public class Tournament{
 				.set(skipWarmups)
 				.set(PickStrategy.getStrategyName(pickStrategy))
 				.set(rematchesAllowed)
+				.set(usingTourneyServer)
+				.set(usingConfirms)
+				.set(usingMapStats)
 				.insert(Outcome.VOID);
 			}else{
 				new JdbcSession(Main.tourneySQL)
 				.sql("UPDATE Tournament " +
 					 "SET display_name='?', twitch_channel='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
 					 "type='?', mode='?', result_discord='?', alert_discord='?', alert_message='?', lower_rank_bound='?', upper_rank_bound='?', " +
-					 "skip_warmups='?', pick_strategy='?', rematches_allowed='?' WHERE name='?'")
+					 "skip_warmups='?', pick_strategy='?', rematches_allowed='?', using_tourney_server='?', using_confirms='?', using_map_stats='?' WHERE name='?'")
 				.set(displayName)
 				.set(twitchChannel)
 				.set(scoreV2 ? 1 : 0)
@@ -604,6 +645,9 @@ public class Tournament{
 				.set(skipWarmups)
 				.set(PickStrategy.getStrategyName(pickStrategy))
 				.set(rematchesAllowed)
+				.set(usingTourneyServer)
+				.set(usingConfirms)
+				.set(usingMapStats)
 				.set(name)
 				.update(Outcome.VOID);
 			}
@@ -678,6 +722,9 @@ public class Tournament{
 				tournament.loadPools();
 				tournament.loadTeams();
 				tournament.loadMatches();
+				
+				if(!tournament.getConfig().getStringList("tournament-admins").isEmpty())
+					tournament.setMatchAdmins(tournament.getConfig().getStringList("tournament-admins"));
 			}	
 	}
 	
@@ -694,7 +741,8 @@ public class Tournament{
 				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getString(4), rset.getBoolean(5), 
 				    					 					   rset.getInt(6), rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getInt(10), 
 				    					 					   rset.getString(11), rset.getString(12), rset.getString(13), rset.getInt(14), 
-				    					 					   rset.getInt(15), rset.getBoolean(16), rset.getString(17), rset.getInt(18));
+				    					 					   rset.getInt(15), rset.getBoolean(16), rset.getString(17), rset.getInt(18),
+				    					 					   rset.getBoolean(19), rset.getBoolean(20), rset.getBoolean(21));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

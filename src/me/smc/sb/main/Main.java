@@ -23,6 +23,7 @@ import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.utils.BanchoRegulator;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.OsuAPIRegulator;
@@ -46,6 +47,7 @@ public class Main{
 	public static Connection tourneySQL, rpgSQL;
 	public static OsuAPIRegulator osuRequestManager;
 	public static TwitchRegulator twitchRegulator;
+	public static BanchoRegulator banchoRegulator;
 	public static String defaultPrefix = "~/";
 	private int lastRequestCount = 0;
 	
@@ -115,6 +117,7 @@ public class Main{
 		}, 60000, 60000);
 		
 		twitchRegulator = new TwitchRegulator();
+		banchoRegulator = new BanchoRegulator();
 		
 		new Thread(new Runnable(){ //osu irc
 			public void run(){

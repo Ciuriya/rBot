@@ -4,17 +4,18 @@ import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
+import me.smc.sb.multi.GameState;
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.utils.Utils;
 
-public class ForceStartGameCommand extends IRCCommand{
+public class ResumeCommand extends IRCCommand{
 
-	public ForceStartGameCommand(){
-		super("Force starts the tournament match.",
+	public ResumeCommand(){
+		super("Resumes the tournament match",
 			  "<tournament name> <match number> ",
 			  null,
-			  "fstart");
+			  "resume");
 	}
 
 	@Override
@@ -32,13 +33,19 @@ public class ForceStartGameCommand extends IRCCommand{
 		
 		Match match = t.getMatch(Utils.stringToInt(args[args.length - 1]));
 		
+		if(match.getGame() == null) return "The game is not started!";
+		
 		String user = Utils.toUser(e, pe);
 		
 		if(match.isMatchAdmin(user)){
-			match.start();
-			return "Game force started!";
+			if(!match.getGame().getState().eq(GameState.PAUSED))
+				return "The game is not paused!";
+			
+			match.getGame().handlePause(false);
+			return "Game resumed!";
 		}
 		
 		return "";
 	}
+	
 }

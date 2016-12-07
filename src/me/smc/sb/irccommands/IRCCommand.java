@@ -124,6 +124,9 @@ public abstract class IRCCommand{
 		commands.add(new SeedTeamsCommand());
 		commands.add(new ForceStopGameCommand());
 		commands.add(new ForceStartGameCommand());
+		commands.add(new ForceSelectCommand());
+		commands.add(new PauseCommand());
+		commands.add(new ResumeCommand());
 		commands.add(new SetGameScoreCommand());
 		commands.add(new SetResultDiscordCommand());
 		commands.add(new SetAlertDiscordCommand());
