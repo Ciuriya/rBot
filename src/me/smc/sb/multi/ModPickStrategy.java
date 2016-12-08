@@ -95,16 +95,6 @@ public class ModPickStrategy implements PickStrategy{
 			
 			game.prepareReadyCheck();
 			return;
-		}else if(game.mapSelected && select && selected != null){
-			game.map = selected;
-			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
-			
-			game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-		    	  	 	game.selectingTeam.getTeamName() + "!");
-			
-			return;
 		}
 		
 		if(selected == null) game.sendMessage("Invalid selection!");

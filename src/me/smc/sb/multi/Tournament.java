@@ -43,6 +43,8 @@ public class Tournament{
 	private int mode;
 	private int lowerRankBound;
 	private int upperRankBound;
+	private int targetRankLowerBound;
+	private int targetRankUpperBound;
 	private boolean skipWarmups;
 	private boolean usingTourneyServer;
 	private boolean usingConfirms;
@@ -84,6 +86,8 @@ public class Tournament{
 		usingTourneyServer = getConfig().getBoolean("usingTourneyServer");
 		usingConfirms = getConfig().getBoolean("usingConfirms");
 		usingMapStats = getConfig().getBoolean("usingMapStats");
+		targetRankLowerBound = getConfig().getInt("targetRankLowerBound");
+		targetRankUpperBound = getConfig().getInt("targetRankUpperBound");
 		
 		currentlyStreamed = null;
 
@@ -96,7 +100,8 @@ public class Tournament{
 	public Tournament(String name, String displayName, String twitchChannel, boolean scoreV2, int pickWaitTime, int banWaitTime, 
 					  int readyWaitTime, int type, int mode, String resultDiscord, String alertDiscord, String alertMessage,
 					  int lowerRankBound, int upperRankBound, boolean skipWarmups, String pickStrategy, int rematchesAllowed,
-					  boolean usingTourneyServer, boolean usingConfirms, boolean usingMapStats){
+					  boolean usingTourneyServer, boolean usingConfirms, boolean usingMapStats, int targetRankLowerBound,
+					  int targetRankUpperBound){
 		this.name = name;
 		this.displayName = displayName;
 		this.twitchChannel = twitchChannel;
@@ -117,6 +122,8 @@ public class Tournament{
 		this.usingTourneyServer = usingTourneyServer;
 		this.usingConfirms = usingConfirms;
 		this.usingMapStats = usingMapStats;
+		this.targetRankLowerBound = targetRankLowerBound;
+		this.targetRankUpperBound = targetRankUpperBound;
 		
 		currentlyStreamed = null;
 		
@@ -223,6 +230,18 @@ public class Tournament{
 	
 	public int getUpperRankBound(){
 		return upperRankBound;
+	}
+	
+	public int getTargetRankLowerBound(){
+		return targetRankLowerBound;
+	}
+	
+	public int getTargetRankUpperBound(){
+		return targetRankUpperBound;
+	}
+	
+	public boolean isWithinTargetBounds(int rank){
+		return rank >= targetRankLowerBound && rank <= targetRankUpperBound;
 	}
 	
 	public PickStrategy getPickStrategy(){
@@ -490,6 +509,14 @@ public class Tournament{
 		this.upperRankBound = upperRankBound;
 	}
 	
+	public void setTargetRankLowerBound(int targetRankLowerBound){
+		this.targetRankLowerBound = targetRankLowerBound;
+	}
+	
+	public void setTargetRankUpperBound(int targetRankUpperBound){
+		this.targetRankUpperBound = targetRankUpperBound;
+	}
+	
 	public void addPool(MapPool pool){
 		pools.add(pool);
 	}
@@ -518,6 +545,14 @@ public class Tournament{
 		if(!teams.isEmpty())
 			for(Team team : teams)
 				if(team.getTeamName().equalsIgnoreCase(teamName))
+					return team;
+		return null;
+	}
+	
+	public Team getTeam(int serverTeamId){
+		if(!teams.isEmpty())
+			for(Team team : teams)
+				if(team.getServerTeamID() == serverTeamId)
 					return team;
 		return null;
 	}
@@ -591,6 +626,8 @@ public class Tournament{
 		config.writeValue("usingTourneyServer", usingTourneyServer);
 		config.writeValue("usingConfirms", usingConfirms);
 		config.writeValue("usingMapStats", usingMapStats);
+		config.writeValue("targetRankLowerBound", targetRankLowerBound);
+		config.writeValue("targetRankUpperBound", targetRankUpperBound);
 		config.writeStringList("tournament-admins", matchAdmins, true);
 	}
 	
@@ -600,8 +637,8 @@ public class Tournament{
 				new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO Tournament (name, display_name, twitch_channel, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
 					 "type, mode, result_discord, alert_discord, alert_message, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed, "
-					 + "using_tourney_server, using_confirms, using_map_stats) " +
-				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+					 + "using_tourney_server, using_confirms, using_map_stats, target_rank_lower_bound, target_rank_upper_bound) " +
+				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(displayName)
 				.set(twitchChannel)
@@ -622,13 +659,16 @@ public class Tournament{
 				.set(usingTourneyServer)
 				.set(usingConfirms)
 				.set(usingMapStats)
+				.set(targetRankLowerBound)
+				.set(targetRankUpperBound)
 				.insert(Outcome.VOID);
 			}else{
 				new JdbcSession(Main.tourneySQL)
 				.sql("UPDATE Tournament " +
 					 "SET display_name='?', twitch_channel='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
 					 "type='?', mode='?', result_discord='?', alert_discord='?', alert_message='?', lower_rank_bound='?', upper_rank_bound='?', " +
-					 "skip_warmups='?', pick_strategy='?', rematches_allowed='?', using_tourney_server='?', using_confirms='?', using_map_stats='?' WHERE name='?'")
+					 "skip_warmups='?', pick_strategy='?', rematches_allowed='?', using_tourney_server='?', using_confirms='?', using_map_stats='?', " +
+					 "target_rank_lower_bound='?', target_rank_upper_bound='?' WHERE name='?'")
 				.set(displayName)
 				.set(twitchChannel)
 				.set(scoreV2 ? 1 : 0)
@@ -648,6 +688,8 @@ public class Tournament{
 				.set(usingTourneyServer)
 				.set(usingConfirms)
 				.set(usingMapStats)
+				.set(targetRankLowerBound)
+				.set(targetRankUpperBound)
 				.set(name)
 				.update(Outcome.VOID);
 			}
@@ -734,7 +776,7 @@ public class Tournament{
 			new JdbcSession(Main.tourneySQL)
 				     .sql("SELECT id_tournament, name, display_name, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
 				     	  "type, mode, result_discord, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed " +
-				    	  "FROM Tournament")
+				    	  "using_tourney_server, using_confirms, using_map_stats FROM Tournament")
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
@@ -742,7 +784,8 @@ public class Tournament{
 				    					 					   rset.getInt(6), rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getInt(10), 
 				    					 					   rset.getString(11), rset.getString(12), rset.getString(13), rset.getInt(14), 
 				    					 					   rset.getInt(15), rset.getBoolean(16), rset.getString(17), rset.getInt(18),
-				    					 					   rset.getBoolean(19), rset.getBoolean(20), rset.getBoolean(21));
+				    					 					   rset.getBoolean(19), rset.getBoolean(20), rset.getBoolean(21), rset.getInt(22),
+				    					 					   rset.getInt(23));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 

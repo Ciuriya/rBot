@@ -134,6 +134,10 @@ public abstract class Game{
 		updateTwitch("Waiting for players to join the lobby...");
 		
 		AlertStaffCommand.gamesAllowedToAlert.add(this);
+		
+		if(match.getTournament().isUsingTourneyServer() && match.getServerID().length() > 0){
+			RemotePatyServerUtils.setMPLink(mpLink, match.getServerID(), match.getTournament().getName());
+		}
 	}
 	
 	public void setupGame(){
@@ -1318,12 +1322,14 @@ public abstract class Game{
 			sendMessage("!mp size " + roomSize);
 		}
 		
-		mapsPicked.add(map);
-		
-		if(warmupsLeft == 0 && bans.size() == 4){
-			if(teamToBoolean(selectingTeam)) 
-				lastModPickedFTeam = map.getCategory();
-			else lastModPickedSTeam = map.getCategory();
+		if(!mapsPicked.contains(map)){
+			mapsPicked.add(map);
+			
+			if(warmupsLeft == 0 && bans.size() == 4){
+				if(teamToBoolean(selectingTeam)) 
+					lastModPickedFTeam = map.getCategory();
+				else lastModPickedSTeam = map.getCategory();
+			}
 		}
 		
 		banchoFeedback.clear();
@@ -1437,6 +1443,9 @@ public abstract class Game{
 				float fTeamScore = 0, sTeamScore = 0;
 				List<String> fTeamPlayers = new ArrayList<>();
 				List<String> sTeamPlayers = new ArrayList<>();
+				long totalScore = 0, targetRangeScore = 0;
+				long totalPasses = 0, targetRangePasses = 0;
+				long totalSubmits = 0;
 				
 				for(String feedback : banchoFeedback){
 					if(feedback.contains("finished playing")){
@@ -1449,7 +1458,10 @@ public abstract class Game{
 						if(fTeam) fTeamPlayers.add(player);
 						else sTeamPlayers.add(player);
 						
-						findPlayer(player).setVerified(true);
+						Player pl = findPlayer(player);
+						pl.setVerified(true);
+						
+						totalSubmits++;
 						
 						if(feedback.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
 							int score = Utils.stringToInt(feedback.split("Score: ")[1].split(",")[0]);
@@ -1461,6 +1473,15 @@ public abstract class Game{
 							
 							if(fTeam) fTeamScore += score;
 							else sTeamScore += score;
+							
+							totalScore += score;
+							
+							totalPasses++;
+							
+							if(pl.getRank() > 0 && match.getTournament().isWithinTargetBounds(pl.getRank())){
+								targetRangeScore += score;
+								targetRangePasses++;
+							}
 						}
 					}
 				}
@@ -1531,6 +1552,19 @@ public abstract class Game{
 						updateTwitch("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
 						
 						return;
+					}
+					
+					if(match.getTournament().isUsingMapStats()){
+						int mapId = match.getMapPool().getMapId(map);
+						
+						if(mapId != 0){
+							RemotePatyServerUtils.incrementMapValue(mapId, "pickcount", 1);
+							RemotePatyServerUtils.incrementMapValue(mapId, "total_score", totalScore);
+							RemotePatyServerUtils.incrementMapValue(mapId, "target_range_score", targetRangeScore);
+							RemotePatyServerUtils.incrementMapValue(mapId, "plays_submitted", totalSubmits);
+							RemotePatyServerUtils.incrementMapValue(mapId, "players_passed", totalPasses);
+							RemotePatyServerUtils.incrementMapValue(mapId, "target_range_passed", targetRangePasses);
+						}
 					}
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
@@ -1821,7 +1855,7 @@ public abstract class Game{
 			if(!usedSlots.contains(i)){
 				if(match.getTournament().isUsingConfirms()){
 					try{
-						if(!RemotePatyServerUtils.isConfirmed(Utils.stringToInt(Utils.getOsuPlayerId(pl.getName())), 
+						if(!RemotePatyServerUtils.isConfirmed(pl.getName(), 
 								RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName()))){
 							sendMessage(pl.getName() + " is not confirmed, to join the lobby he needs to confirm via SmtBot!");
 							playersInRoom.remove(player);
@@ -1846,8 +1880,10 @@ public abstract class Game{
 					lower = temp;
 				}
 				
+				int rank = -1;
+				
 				if(lower != upper && lower >= 1 && upper >= 1 && !playersRankChecked.contains(pl)){			
-					int rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
+					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
 					
 					if(rank != -1 && (rank < lower || rank > upper)){
 						sendMessage(pl.getName() + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
@@ -1864,6 +1900,12 @@ public abstract class Game{
 					}
 					
 					playersRankChecked.add(pl);
+				}else if(match.getTournament().isUsingMapStats()){
+					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
+				}
+				
+				if(rank > 0){
+					pl.setRank(rank);
 				}
 				
 				if(isCaptain(player.replaceAll(" ", "_")))

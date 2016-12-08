@@ -3,6 +3,7 @@ package me.smc.sb.multi;
 import org.json.JSONObject;
 
 import me.smc.sb.irccommands.BanMapCommand;
+import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
 public class NoBackToBackPickStrategy implements PickStrategy{
@@ -82,6 +83,12 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + game.banningTeam.getTeamName() + ")");
 			
 			game.updateTwitch(name + " was banned by " + game.banningTeam.getTeamName() + "!");
+			
+			if(game.match.getTournament().isUsingMapStats()){
+				int mapId = game.match.getMapPool().getMapId(selected);
+				
+				if(mapId != 0) RemotePatyServerUtils.incrementMapValue(mapId, "bancount", 1);
+			}
 			
 			game.mapSelection(3);
 			return;

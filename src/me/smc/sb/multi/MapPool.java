@@ -43,6 +43,20 @@ public class MapPool{
 		return maps;
 	}
 	
+	public int getMapId(Map map){
+		int id = 1;
+		
+		for(Map m : maps){
+			if(m.equals(map)){
+				return id;
+			}
+			
+			id++;
+		}
+		
+		return 0;
+	}
+	
 	public String getSheetUrl(){
 		return sheetUrl;
 	}

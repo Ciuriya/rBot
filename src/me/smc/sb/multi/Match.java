@@ -10,6 +10,7 @@ import me.smc.sb.utils.Utils;
 public class Match{
 
 	private int players, matchNum, bestOf, streamPriority;
+	private String serverID;
 	private Team fTeam, sTeam;
 	private Tournament tournament;
 	private long scheduledDate;
@@ -28,6 +29,7 @@ public class Match{
 		this.tournament = t;
 		this.scheduledDate = 0;
 		this.bestOf = 5;
+		this.serverID = "";
 		this.fTeam = null;
 		this.sTeam = null;
 		this.pool = null;
@@ -84,6 +86,10 @@ public class Match{
 		return streamPriority;
 	}
 	
+	public String getServerID(){
+		return serverID;
+	}
+	
 	public void setStreamPriority(int priority){
 		streamPriority = priority;
 	}
@@ -109,6 +115,10 @@ public class Match{
 	
 	public ArrayList<String> getMatchAdmins(){
 		return matchAdmins;
+	}
+	
+	public void setServerID(String serverID){
+		this.serverID = serverID;
 	}
 	
 	public void start(){
@@ -189,6 +199,7 @@ public class Match{
 		config.deleteKey("match-" + matchNum + "-pool");
 		config.deleteKey("match-" + matchNum + "-bestof");
 		config.deleteKey("match-" + matchNum + "-admins");
+		config.deleteKey("match-" + matchNum + "-serverid");
 		
 		this.fTeam = null;
 		this.sTeam = null;
@@ -214,8 +225,12 @@ public class Match{
 		
 		if(pool != null) config.writeValue("match-" + matchNum + "-pool", pool.getPoolNum());
 		
+		if(serverID != null) config.writeValue("match-" + matchNum + "-serverid", serverID);
+		
 		if(bestOf != 5) config.writeValue("match-" + matchNum + "-bestof", bestOf);
-		config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
+		if(matchAdmins.size() > 0){
+			config.writeStringList("match-" + matchNum + "-admins", matchAdmins, true);
+		}
 	}
 	
 }

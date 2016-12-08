@@ -8,6 +8,7 @@ public class Player{
 	private double modMultiplier;
 	private boolean isPlaying;
 	private boolean verified;
+	private int rank;
 	
 	public Player(String name){
 		this.name = name;
@@ -16,6 +17,7 @@ public class Player{
 		this.modMultiplier = 1;
 		this.isPlaying = false;
 		this.verified = false;
+		this.rank = -1;
 	}
 	
 	public String getName(){
@@ -42,6 +44,10 @@ public class Player{
 		return verified;
 	}
 	
+	public int getRank(){
+		return rank;
+	}
+	
 	public void setSlot(int slot){
 		this.slot = slot;
 	}
@@ -60,6 +66,10 @@ public class Player{
 	
 	public void setVerified(boolean verified){
 		this.verified = verified;
+	}
+	
+	public void setRank(int rank){
+		this.rank = rank;
 	}
 	
 	public boolean eq(Player player){

@@ -10,6 +10,7 @@ public class Team{
 	private String teamName;
 	private LinkedList<Player> players;
 	private Tournament tournament;
+	private int serverTeamID;
 	
 	public Team(Tournament t, String teamName){
 		this(t, teamName, true);
@@ -30,6 +31,14 @@ public class Team{
 	
 	public LinkedList<Player> getPlayers(){
 		return players;
+	}
+	
+	public int getServerTeamID(){
+		return serverTeamID;
+	}
+	
+	public void setServerTeamID(int serverTeamID){
+		this.serverTeamID = serverTeamID;
 	}
 	
 	public void setPlayers(LinkedList<Player> players){
