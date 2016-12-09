@@ -50,7 +50,9 @@ public class AlertStaffCommand extends IRCCommand{
 					String mention = channel.getGuild().getRolesByName(t.getAlertMessage()).get(0).getAsMention();
 					
 					if(Main.api.getTextChannelById(t.getAlertDiscord()) != null)
-						Utils.infoBypass(channel, mention + " Game #" + game.getMpNum() + ": " + msg);
+						Utils.infoBypass(channel, mention + 
+												  "\nGame #" + game.getMpNum() + " (match #" + game.match.getMatchNum() + ")\n" + 
+												  userName + "\n" + msg);
 						
 					return "";
 				}

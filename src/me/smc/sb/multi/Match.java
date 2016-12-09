@@ -110,7 +110,20 @@ public class Match{
 	
 	public boolean isMatchAdmin(String admin){
 		if(admin == null) return true;
-		return matchAdmins.contains(admin);
+		
+		if(matchAdmins.size() > 0)
+			for(String matchAdmin : matchAdmins){
+				if(matchAdmin.replaceAll(" ", "_").equalsIgnoreCase(admin))
+					return true;
+			}
+		
+		if(tournament.getMatchAdmins().size() > 0)
+			for(String matchAdmin : tournament.getMatchAdmins()){
+				if(matchAdmin.replaceAll(" ", "_").equalsIgnoreCase(admin))
+					return true;
+			}
+		
+		return false;
 	}
 	
 	public ArrayList<String> getMatchAdmins(){
@@ -225,7 +238,7 @@ public class Match{
 		
 		if(pool != null) config.writeValue("match-" + matchNum + "-pool", pool.getPoolNum());
 		
-		if(serverID != null) config.writeValue("match-" + matchNum + "-serverid", serverID);
+		if(serverID != null && serverID.length() > 0) config.writeValue("match-" + matchNum + "-serverid", serverID);
 		
 		if(bestOf != 5) config.writeValue("match-" + matchNum + "-bestof", bestOf);
 		if(matchAdmins.size() > 0){

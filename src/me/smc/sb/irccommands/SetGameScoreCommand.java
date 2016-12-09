@@ -28,7 +28,7 @@ public class SetGameScoreCommand extends IRCCommand{
 		Tournament t = null;
 		
 		if(args.length > 3){
-			for(int i = 0; i < args.length - 4; i++)
+			for(int i = 0; i < args.length - 3; i++)
 				tournamentName += args[i] + " ";
 			
 			t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));	

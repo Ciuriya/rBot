@@ -29,8 +29,9 @@ public class ChangeWarmupModCommand extends IRCCommand{
 		String argCheck = Utils.checkArguments(args, 1);
 		if(argCheck.length() > 0) return argCheck;
 		
-		if(!args[0].equalsIgnoreCase("DT") && !args[0].equalsIgnoreCase("HT") && !args[0].equalsIgnoreCase("NM"))
-			return "You can only choose DT, NM, HT!";
+		if(!args[0].equalsIgnoreCase("DT") && !args[0].equalsIgnoreCase("HT") && !args[0].equalsIgnoreCase("NM") &&
+			!args[0].equalsIgnoreCase("NC"))
+			return "You can only choose DT, NC, NM or HT!";
 		
 		String userName = Utils.toUser(e, pe);
 		

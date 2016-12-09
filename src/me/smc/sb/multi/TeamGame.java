@@ -6,12 +6,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import me.smc.sb.irccommands.InvitePlayerCommand;
+import me.smc.sb.irccommands.SkipRematchCommand;
 
 public class TeamGame extends Game{
 
-	private ArrayList<Player> fTeamPlayers;
-	private ArrayList<Player> sTeamPlayers;
-	
 	public TeamGame(Match match){
 		super(match);
 	}
@@ -94,8 +92,12 @@ public class TeamGame extends Game{
 			sendMessage("!mp aborttimer");
 			
 			sendMessage("Someone has disconnected, there will be a rematch!");
+			sendMessage("If you do not wish to rematch, both teams need to use !skiprematch");
 			
 			updateTwitch("There was a disconnection, the match will be replayed!");
+			
+			skipRematchState = 0;
+			SkipRematchCommand.gamesAllowedToSkip.add(this);
 			
 			banchoFeedback.clear();
 			switchPlaying(false, true);
@@ -151,9 +153,6 @@ public class TeamGame extends Game{
 		if(message == null && !state.eq(GameState.RESIZING)){
 			state = GameState.RESIZING;
 			
-			fTeamPlayers = new ArrayList<>();
-			sTeamPlayers = new ArrayList<>();
-			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
@@ -167,10 +166,11 @@ public class TeamGame extends Game{
 						for(int i = match.getPlayers() / 2 + 1; i <= match.getPlayers(); i++)
 							freeSlots.add(i);
 
-						for(Player p : sTeamPlayers)
+						for(Player p : match.getSecondTeam().getPlayers()){
 							if(p.getSlot() > match.getPlayers() / 2)
 								freeSlots.remove((Integer) p.getSlot());
 							else toMove.add(p);
+						}
 						
 						for(Player p : new ArrayList<>(toMove)){
 							int slot = freeSlots.stream().findFirst().orElse(-1);
@@ -178,6 +178,7 @@ public class TeamGame extends Game{
 							if(slot != -1){
 								freeSlots.remove((Integer) slot);
 								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								p.setSlot(slot);
 								toMove.remove(p);
 							}else kickPlayer(p.getName().replaceAll(" ", "_"));
 						}				
@@ -188,10 +189,11 @@ public class TeamGame extends Game{
 						for(int i = 1; i <= match.getPlayers() / 2; i++)
 							freeSlots.add(i);
 
-						for(Player p : fTeamPlayers)
+						for(Player p : match.getFirstTeam().getPlayers()){
 							if(p.getSlot() <= match.getPlayers() / 2)
 								freeSlots.remove((Integer) p.getSlot());
 							else toMove.add(p);
+						}
 						
 						for(Player p : new ArrayList<>(toMove)){
 							int slot = freeSlots.stream().findFirst().orElse(-1);
@@ -199,6 +201,7 @@ public class TeamGame extends Game{
 							if(slot != -1){
 								freeSlots.remove((Integer) slot);
 								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								p.setSlot(slot);
 								toMove.remove(p);
 							}else kickPlayer(p.getName().replaceAll(" ", "_"));
 						}				
@@ -209,10 +212,11 @@ public class TeamGame extends Game{
 						for(int i = match.getPlayers() / 2 + 1; i <= match.getPlayers(); i++)
 							freeSlots.add(i);
 
-						for(Player p : sTeamPlayers)
+						for(Player p : match.getSecondTeam().getPlayers()){
 							if(p.getSlot() > match.getPlayers() / 2 && p.getSlot() <= match.getPlayers())
 								freeSlots.remove((Integer) p.getSlot());
 							else toMove.add(p);
+						}
 						
 						for(Player p : new ArrayList<>(toMove)){
 							int slot = freeSlots.stream().findFirst().orElse(-1);
@@ -220,6 +224,7 @@ public class TeamGame extends Game{
 							if(slot != -1){
 								freeSlots.remove((Integer) slot);
 								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								p.setSlot(slot);
 								toMove.remove(p);
 							}else kickPlayer(p.getName().replaceAll(" ", "_"));
 						}

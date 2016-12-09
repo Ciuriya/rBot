@@ -35,6 +35,7 @@ public abstract class Game{
 	public Match match;
 	protected String multiChannel;
 	protected String mpLink;
+	protected String mapMod = "";
 	protected int waitingForCaptains = 2;
 	protected int fTeamPoints = 0, sTeamPoints = 0;
 	protected int warmupsLeft = 2;
@@ -48,6 +49,7 @@ public abstract class Game{
 	protected int expectedPlayers = 0;
 	protected int lastModPickedFTeam = 0;
 	protected int lastModPickedSTeam = 0;
+	protected int mapLength = 0;
 	protected long lastPickTime = 0;
 	protected long mapSelectedTime = 0;
 	protected boolean mapSelected = false;
@@ -150,15 +152,16 @@ public abstract class Game{
 		if(!match.getMatchAdmins().isEmpty()){
 			for(String admin : match.getMatchAdmins())
 				admins += admin.replaceAll(" ", "_") + ", ";
-			
-			if(!match.getTournament().getMatchAdmins().isEmpty())
-				for(String admin : match.getTournament().getMatchAdmins())
-					admins += admin.replaceAll(" ", "_") + ", ";
-			
-			admins = admins.substring(0, admins.length() - 2);
-			
-			sendPriorityMessage("!mp addref " + admins);
 		}
+		
+		if(!match.getTournament().getMatchAdmins().isEmpty())
+			for(String admin : match.getTournament().getMatchAdmins())
+				admins += admin.replaceAll(" ", "_") + ", ";
+		
+		admins = admins.substring(0, admins.length() - 2);
+		
+		if(admins.length() > 0)
+			sendPriorityMessage("!mp addref " + admins);
 		
 		roomSize = match.getPlayers();
 	}
@@ -218,6 +221,8 @@ public abstract class Game{
 	
 	protected void mapSelection(int part){
 		mapSelectedTime = 0;
+		mapMod = "";
+		mapLength = 0;
 		
 		switch(part){
 			case 1:
@@ -227,6 +232,8 @@ public abstract class Game{
 				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				break;
 			case 2:
+				if(state.eq(GameState.PAUSED)) return;
+				
 				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
 				
 				PassTurnCommand.passingTeams.remove(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam());
@@ -251,10 +258,13 @@ public abstract class Game{
 				startMapUpdater();
 				
 				pickTimer(false);
-				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url>", 
-							  "If the lobby order is not correct, do not worry about it, it will be fixed.");
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url> +MOD, the mod is optional.", 
+							  "If the lobby order is not correct, do not worry about it, it will be fixed.",
+							  "To skip this warmup, both teams please use !warmupskip");
 				break;
-			case 3: 		
+			case 3: 
+				if(state.eq(GameState.PAUSED)) return;
+				
 				if(getPickStrategy() instanceof ModPickStrategy){
 					mapSelection(4);
 					return;
@@ -285,6 +295,8 @@ public abstract class Game{
 				
 				break;
 			case 4:
+				if(state.eq(GameState.PAUSED)) return;
+				
 				if(selectingTeam != null) SelectMapCommand.pickingTeams.remove(selectingTeam);
 				if(banningTeam != null) BanMapCommand.banningTeams.remove(banningTeam);
 				
@@ -415,7 +427,9 @@ public abstract class Game{
 	
 	private void changeMap(Map map){
 		sendMessage("!mp map " + map.getBeatmapID() + " " + match.getTournament().getMode());
-		sendMessage("!mp mods " + getMod(map));
+		
+		if(mapMod.length() == 0 || warmupsLeft == 0)
+			sendMessage("!mp mods " + getMod(map));
 		
 		this.map = map;
 		this.previousMap = map;
@@ -588,6 +602,8 @@ public abstract class Game{
 		mapSelectedTime = 0;
 		mpLink = null;
 		multiChannel = null;
+		mapMod = null;
+		mapLength = 0;
 		playersChecked = 0;
 		previousMap = null;
 		previousRoll = 0;
@@ -809,6 +825,8 @@ public abstract class Game{
 	
 	public void handlePause(boolean pause){
 		if(pause){
+			if(state.eq(GameState.PAUSED)) return;
+			
 			clearPickTimers();
 			
 			SkipRematchCommand.gamesAllowedToSkip.remove(this);
@@ -818,6 +836,7 @@ public abstract class Game{
 			mapSelectedTime = 0;
 			
 			if(messageUpdater != null) messageUpdater.cancel();
+			if(mapUpdater != null) mapUpdater.cancel();
 			
 			if(state.eq(GameState.PLAYING)){
 				sendMessage("!mp abort");
@@ -830,17 +849,31 @@ public abstract class Game{
 			
 			switchPlaying(false, true);
 		}else{
+			if(!state.eq(GameState.PAUSED)) return;
+			
 			state = GameState.WAITING;
 			
-			if(mapSelected) prepareReadyCheck();
+			if(rollsLeft > 0) mapSelection(1);
+			else if(mapSelected) prepareReadyCheck();
 			else if(warmupsLeft > 0) mapSelection(2);
 			else if(bans.size() < 4) mapSelection(3);
 			else mapSelection(4);
 		}
 	}
 	
-	public void forceSelect(boolean revertScore, Map newMap){
-		if(revertScore){
+	public boolean forceSelect(boolean revertScore, Map newMap){
+		if(rollsLeft > 0){
+			sendMessage("You cannot force select whilst " + (isTeamGame() ? "teams" : "players") + " have not rolled yet!");
+			return false;
+		}else if(warmupsLeft != 0){
+			sendMessage("You cannot force select whilst " + (isTeamGame() ? "teams" : "players") + " have not finished warmups yet!");
+			return false;
+		}else if(bans.size() < 4){
+			sendMessage("You cannot force select whilst " + (isTeamGame() ? "teams" : "players") + " have not banned yet!");
+			return false;
+		}
+		
+		if(revertScore && lastWinner != null){
 			int fTeamScore = fTeamPoints;
 			int sTeamScore = sTeamPoints;
 			
@@ -858,8 +891,10 @@ public abstract class Game{
 		mapSelected = true;
 		banchoFeedback.clear();
 		switchPlaying(false, true);
-		
+
 		prepareReadyCheck();
+		
+		return true;
 	}
 	
 	public void acceptSkipRematch(String player){
@@ -959,8 +994,23 @@ public abstract class Game{
 	}
 	
 	public void acceptWarmupModChange(String player, String mod){
-		if(warmupsLeft > 0 && findTeam(player).getTeamName().equalsIgnoreCase(selectingTeam.getTeamName())) 
+		if(warmupsLeft > 0 && findTeam(player).getTeamName().equalsIgnoreCase(selectingTeam.getTeamName())){
+			double modMultiplier = 1;
+			
+			if(mod.length() > 0){
+				if(mod.equalsIgnoreCase("DT") || mod.equalsIgnoreCase("NC"))
+					modMultiplier = 1.5;
+				else if(mod.equalsIgnoreCase("HT"))
+					modMultiplier = 0.75;
+			}
+			
+			if(mapLength / modMultiplier > 270){
+				sendMessage("This would make the warmup too long! The maximum length is 4m30s.");
+				return;
+			}
+			
 			sendMessage("!mp mods " + (mod.toUpperCase().equals("NM") ? "" : mod.toUpperCase() + " ") + "Freemod");
+		}
 	}
 	
 	protected void prepareReadyCheck(){

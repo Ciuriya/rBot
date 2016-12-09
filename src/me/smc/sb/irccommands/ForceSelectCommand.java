@@ -43,10 +43,10 @@ public class ForceSelectCommand extends IRCCommand {
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null) return "Invalid tournament!";
-		if(Utils.stringToInt(args[args.length - 1 - mapArgMod]) == -1) 
+		if(Utils.stringToInt(args[args.length - 2 - mapArgMod]) == -1) 
 			return "Match number needs to be a number!";
 		
-		Match match = t.getMatch(Utils.stringToInt(args[args.length - 1 - mapArgMod]));
+		Match match = t.getMatch(Utils.stringToInt(args[args.length - 2 - mapArgMod]));
 		
 		boolean revertScore = false;
 		
@@ -76,13 +76,15 @@ public class ForceSelectCommand extends IRCCommand {
 			mapNum++;
 		}
 		
+		if(newMap == null && mapLink.length() > 0) newMap = new Map(mapLink, 1);
+		
 		String user = Utils.toUser(e, pe);
 		
 		if(match.getGame() == null) return "The game is not started!";
 		
 		if(match.isMatchAdmin(user)){
-			match.getGame().forceSelect(revertScore, newMap);
-			return "Force select successful!";
+			boolean success = match.getGame().forceSelect(revertScore, newMap);
+			return success ? "Force select successful!" : "";
 		}
 		
 		return "";

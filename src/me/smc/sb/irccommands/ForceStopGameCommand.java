@@ -28,7 +28,7 @@ public class ForceStopGameCommand extends IRCCommand{
 		Tournament t = null;
 		
 		if(args.length > 1){
-			for(int i = 0; i < args.length - 2; i++)
+			for(int i = 0; i < args.length - 1; i++)
 				tournamentName += args[i] + " ";
 			
 			t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));	

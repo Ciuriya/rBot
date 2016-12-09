@@ -17,10 +17,12 @@ public class RegularPickStrategy implements PickStrategy{
 			if(jsMap == null){game.sendMessage("Could not find the selected map!"); return;}
 			
 			int length = jsMap.getInt("total_length");
+			game.mapLength = length;
+			
 			double modMultiplier = 1;
 			
 			if(mod.length() > 0){
-				if(mod.equalsIgnoreCase("DT"))
+				if(mod.equalsIgnoreCase("DT") || mod.equalsIgnoreCase("NC"))
 					modMultiplier = 1.5;
 				else if(mod.equalsIgnoreCase("HT"))
 					modMultiplier = 0.75;
@@ -34,6 +36,7 @@ public class RegularPickStrategy implements PickStrategy{
 			game.map = new Map(map, 1);
 			game.mapSelected = true;
 			game.mapSelectedTime = System.currentTimeMillis();
+			game.mapMod = mod;
 			
 			if(mod.length() > 0)
 				game.sendMessage("!mp mods " + mod.toUpperCase() + " Freemod");

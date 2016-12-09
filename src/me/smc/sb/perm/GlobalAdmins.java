@@ -6,7 +6,7 @@ public enum GlobalAdmins{
 
 	SMC("91302128328392704", false, "Smc"),
 	AUTO("91184384442384384", false, "-_Auto_-"),
-	ST("77631618088435712", true, "Sexual_Tentacle");
+	ST("77631618088435712", true, "_Tyler");
 	
 	String id, osuUser;
 	boolean onlyIRC;

@@ -765,8 +765,9 @@ public class Tournament{
 				tournament.loadTeams();
 				tournament.loadMatches();
 				
-				if(!tournament.getConfig().getStringList("tournament-admins").isEmpty())
+				if(!tournament.getConfig().getStringList("tournament-admins").isEmpty()){
 					tournament.setMatchAdmins(tournament.getConfig().getStringList("tournament-admins"));
+				}
 			}	
 	}
 	

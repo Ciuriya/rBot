@@ -37,11 +37,17 @@ public class ResizeMatchCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Player amount must be a number!";
 		if(Utils.stringToInt(args[args.length - 1]) < 2) return "Player amount must be greater or equal to 2!";
 		
-		match.resize(Utils.stringToInt(args[args.length - 1]));
-		match.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set match #" + args[args.length - 2] + "'s player size to " + 
-				Utils.stringToInt(args[args.length - 1]);
+		if(match.isMatchAdmin(user)){
+			match.resize(Utils.stringToInt(args[args.length - 1]));
+			match.save(false);
+			
+			return "Set match #" + args[args.length - 2] + "'s player size to " + 
+					Utils.stringToInt(args[args.length - 1]);
+		}
+		
+		return "";
 	}
 	
 }

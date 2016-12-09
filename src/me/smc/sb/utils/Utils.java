@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -464,9 +466,14 @@ public class Utils{
 	}
 	
 	public static void deleteMessage(MessageChannel channel, Message m){
-		if(channel instanceof TextChannel)
-			if(((TextChannel) channel).checkPermission(Main.api.getSelfInfo(), Permission.MESSAGE_MANAGE))
-				m.deleteMessage();
+		Timer t = new Timer();
+		t.schedule(new TimerTask() {	
+			@Override public void run() {
+				if(channel instanceof TextChannel)
+					if(((TextChannel) channel).checkPermission(Main.api.getSelfInfo(), Permission.MESSAGE_MANAGE))
+						m.deleteMessage();
+			}
+		}, 1000);
 	}
 	
 	public static int fetchRandom(int min, int max){
