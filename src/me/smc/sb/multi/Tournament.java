@@ -842,6 +842,9 @@ public class Tournament{
 				if(!config.getStringList("match-" + matchNum + "-admins").isEmpty())
 					match.setMatchAdmins(config.getStringList("match-" + matchNum + "-admins"));
 				
+				if(config.getValue("match-" + matchNum + "-serverid") != "")
+					match.setServerID(config.getValue("match-" + matchNum + "-serverid"));
+				
 				match.setStreamPriority(config.getInt("match-" + matchNum + "-priority"));
 			}
 	}

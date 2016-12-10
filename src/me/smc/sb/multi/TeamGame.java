@@ -6,7 +6,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import me.smc.sb.irccommands.InvitePlayerCommand;
-import me.smc.sb.irccommands.SkipRematchCommand;
 
 public class TeamGame extends Game{
 
@@ -90,14 +89,11 @@ public class TeamGame extends Game{
 			
 			sendMessage("!mp abort");
 			sendMessage("!mp aborttimer");
+			sendMessage("!mp abort");
 			
 			sendMessage("Someone has disconnected, there will be a rematch!");
-			sendMessage("If you do not wish to rematch, both teams need to use !skiprematch");
 			
 			updateTwitch("There was a disconnection, the match will be replayed!");
-			
-			skipRematchState = 0;
-			SkipRematchCommand.gamesAllowedToSkip.add(this);
 			
 			banchoFeedback.clear();
 			switchPlaying(false, true);

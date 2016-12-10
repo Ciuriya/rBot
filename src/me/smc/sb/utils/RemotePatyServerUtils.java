@@ -80,15 +80,16 @@ public class RemotePatyServerUtils{
 		return confirmed.get() == 1;
 	}
 	
-	public static long fetchMapValue(int mapId, String value) throws Exception{
+	public static long fetchMapValue(int mapId, int tournamentId, String value) throws Exception{
 		Connection fetchSQL = connect();
 		
 		final FinalLong finalValue = new FinalLong(0);
 		
 		new JdbcSession(fetchSQL)
 		.sql("SELECT " + value + " FROM maps " + 
-			 "WHERE map_id=?")
+			 "WHERE map_id=? AND mappool_tournaments_id=?")
 		.set(mapId)
+		.set(tournamentId)
 		.select(new Outcome<List<String>>(){
 			@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				if(rset.next()) finalValue.set(rset.getLong(1));
@@ -108,7 +109,7 @@ public class RemotePatyServerUtils{
 		Connection mapSQL = null;
 		
 		try{
-			long remoteVal = fetchMapValue(mapId, value);
+			long remoteVal = fetchMapValue(mapId, tournamentId, value);
 			
 			mapSQL = connect();
 			
@@ -119,6 +120,8 @@ public class RemotePatyServerUtils{
 			.set(mapId)
 			.set(tournamentId)
 			.update(Outcome.VOID);
+			
+			Log.logger.log(Level.INFO, "Updating " + value + " by " + amount + "(now " + (remoteVal + amount) + ") for map #" + mapId + " in tourney " + tournamentId);
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not increment value " + value + " by " + amount + " for map #" + mapId, e);
 		}
@@ -133,12 +136,17 @@ public class RemotePatyServerUtils{
 	}
 	
 	public static void setMPLinkAndWinner(String mpLink, Team winner, String matchID, String tournamentName, int fTeamScore, int sTeamScore){
+		Log.logger.log(Level.INFO, "Inside MPLink and Winner thing");
 		Connection mpSQL = null;
 		
 		try{
 			int tourneyId = fetchTournamentId(tournamentName);
 			
+			Log.logger.log(Level.INFO, "tourneyId: " + tourneyId);
+			
 			mpSQL = connect();
+			
+			Log.logger.log(Level.INFO, "Connected: " + !mpSQL.isClosed());
 			
 			new JdbcSession(mpSQL)
 			.sql("UPDATE `schedule` SET mp_link=?, winner=?, " +
@@ -151,6 +159,8 @@ public class RemotePatyServerUtils{
 			.set(matchID)
 			.set(tourneyId)
 			.update(Outcome.VOID);
+			
+			Log.logger.log(Level.INFO, "looks fine lol");
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not set mp link!", e);
 		}

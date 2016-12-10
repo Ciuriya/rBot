@@ -556,7 +556,10 @@ public abstract class Game{
 			}
 		}
 		
+		Log.logger.log(Level.INFO, "right before.. " + match.getTournament().isUsingTourneyServer() + " " + 
+								   match.getServerID() + " " + winningTeam.getServerTeamID());
 		if(match.getTournament().isUsingTourneyServer() && match.getServerID().length() > 0 && winningTeam.getServerTeamID() != 0){
+			Log.logger.log(Level.INFO, "Inside condition");
 			RemotePatyServerUtils.setMPLinkAndWinner(mpLink, winningTeam, match.getServerID(), match.getTournament().getName(), fTeamPoints, sTeamPoints);
 		}
 			
@@ -949,11 +952,14 @@ public abstract class Game{
 			else rematchesLeftSTeam++;
 			
 			mapSelected = false;
+			clearPickTimers();
 			
 			if(teamToBoolean(lastWinner)) fTeamPoints++;
 			else sTeamPoints++;
 			
 			updateScores(true);
+			
+			mapSelection(4);
 		}
 	}
 	
@@ -1523,7 +1529,7 @@ public abstract class Game{
 				long totalScore = 0, targetRangeScore = 0;
 				long totalPasses = 0, targetRangePasses = 0;
 				long totalSubmits = 0;
-				
+
 				for(String feedback : banchoFeedback){
 					if(feedback.contains("finished playing")){
 						String player = feedback.substring(0, feedback.indexOf(" finished"));
@@ -1562,6 +1568,8 @@ public abstract class Game{
 						}
 					}
 				}
+				
+				Log.logger.log(Level.INFO, "total submits: " + totalSubmits + " total passes: " + totalPasses);
 				
 				if(warmupsLeft > 0){
 					String updateMessage = "";
