@@ -61,7 +61,7 @@ public class RemotePatyServerUtils{
 		final FinalInt confirmed = new FinalInt(0);
 		
 		new JdbcSession(confirmationSQL)
-		.sql("SELECT confirmed FROM `teammembers` tm " +
+		.sql("SELECT tm.`confirmed` FROM `teammembers` tm " +
 			 "JOIN `teams` t ON tm.`teams.id` = t.`id` " +
 			 "JOIN `player_data` pd ON tm.`player_data.user_id` = pd.`user_id` " +
 			 "WHERE t.`tournaments_id`=? AND username=?")
@@ -102,48 +102,73 @@ public class RemotePatyServerUtils{
 		return finalValue.get();
 	}
 	
-	public static void incrementMapValue(int mapId, String value, long amount){
+	public static void incrementMapValue(int mapId, int tournamentId, String value, long amount){
 		if(amount == 0) return;
+		
+		Connection mapSQL = null;
 		
 		try{
 			long remoteVal = fetchMapValue(mapId, value);
 			
-			Connection mapSQL = connect();
+			mapSQL = connect();
 			
 			new JdbcSession(mapSQL)
-			.sql("UPDATE maps SET " + value + "=? " +
-				 "WHERE map_id=?")
+			.sql("UPDATE `maps` SET " + value + "=? " +
+				 "WHERE map_id=? AND mappool_tournaments_id=?")
 			.set(remoteVal + amount)
 			.set(mapId)
+			.set(tournamentId)
 			.update(Outcome.VOID);
-			
-			mapSQL.close();
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not increment value " + value + " by " + amount + " for map #" + mapId, e);
 		}
+		
+		if(mapSQL != null){
+			try{
+				mapSQL.close();
+			}catch(SQLException e){
+				Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+			}
+		}
 	}
 	
-	public static void setMPLink(String mpLink, String matchID, String tournamentName){
+	public static void setMPLinkAndWinner(String mpLink, Team winner, String matchID, String tournamentName, int fTeamScore, int sTeamScore){
+		Connection mpSQL = null;
+		
 		try{
 			int tourneyId = fetchTournamentId(tournamentName);
 			
-			Connection mpSQL = connect();
+			mpSQL = connect();
 			
 			new JdbcSession(mpSQL)
-			.sql("UPDATE schedule SET mp_link=? " +
+			.sql("UPDATE `schedule` SET mp_link=?, winner=?, " +
+				 "team1_score=?, team2_score=? " +
 				 "WHERE id=? AND tournaments_id=?")
 			.set(mpLink)
+			.set(winner.getServerTeamID())
+			.set(fTeamScore)
+			.set(sTeamScore)
 			.set(matchID)
 			.set(tourneyId)
 			.update(Outcome.VOID);
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not set mp link!", e);
 		}
+		
+		if(mpSQL != null){
+			try{
+				mpSQL.close();
+			}catch(SQLException e){
+				Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+			}
+		}
 	}
 	
 	public static void syncTeams(String tournamentName){
+		Connection teamSQL = null;
+		
 		try{
-			Connection teamSQL = connect();
+			teamSQL = connect();
 			
 			Tournament t = Tournament.getTournament(tournamentName);
 			
@@ -164,6 +189,14 @@ public class RemotePatyServerUtils{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not sync teams! ex: " + e.getMessage(), e);
 		}
+		
+		if(teamSQL != null){
+			try{
+				teamSQL.close();
+			}catch(SQLException e){
+				Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+			}
+		}
 	}
 	
 	private static Team syncTeam(Tournament t, int teamId, String teamName){
@@ -171,8 +204,10 @@ public class RemotePatyServerUtils{
 		team.setServerTeamID(teamId);
 		LinkedList<Player> players = new LinkedList<>();
 		
+		Connection playersSQL = null;
+		
 		try{
-			Connection playersSQL = connect();
+			playersSQL = connect();
 			
 			new JdbcSession(playersSQL)
 			.sql("SELECT username FROM `teammembers` tm " +
@@ -193,6 +228,14 @@ public class RemotePatyServerUtils{
 			Log.logger.log(Level.SEVERE, "Could not sync teams! ex: " + e.getMessage(), e);
 		}
 		
+		if(playersSQL != null){
+			try{
+				playersSQL.close();
+			}catch(SQLException e){
+				Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+			}
+		}
+		
 		if(players.size() > 0){
 			team.setPlayers(players);
 			team.save(false);
@@ -202,8 +245,10 @@ public class RemotePatyServerUtils{
 	}
 	
 	public static void syncMatches(String tournamentName){
+		Connection matchesSQL = null;
+		
 		try{
-			Connection matchesSQL = connect();
+			matchesSQL = connect();
 			
 			Tournament t = Tournament.getTournament(tournamentName);
 			
@@ -239,6 +284,14 @@ public class RemotePatyServerUtils{
 			});
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, "Could not sync matches! ex: " + e.getMessage(), e);
+		}
+		
+		if(matchesSQL != null){
+			try{
+				matchesSQL.close();
+			}catch(SQLException e){
+				Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+			}
 		}
 	}
 }

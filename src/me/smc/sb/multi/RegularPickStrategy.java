@@ -1,8 +1,11 @@
 package me.smc.sb.multi;
 
+import java.util.logging.Level;
+
 import org.json.JSONObject;
 
 import me.smc.sb.irccommands.BanMapCommand;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
@@ -90,7 +93,19 @@ public class RegularPickStrategy implements PickStrategy{
 			if(game.match.getTournament().isUsingMapStats()){
 				int mapId = game.match.getMapPool().getMapId(selected);
 				
-				if(mapId != 0) RemotePatyServerUtils.incrementMapValue(mapId, "bancount", 1);
+				if(mapId != 0){
+					int tourneyId = 0;
+					
+					try{
+						tourneyId = RemotePatyServerUtils.fetchTournamentId(game.match.getTournament().getName());
+					}catch(Exception e){
+						Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
+					}
+					
+					if(tourneyId != 0){
+						RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "bancount", 1);
+					}
+				}
 			}
 			
 			game.mapSelection(3);

@@ -153,6 +153,17 @@ public class TeamGame extends Game{
 		if(message == null && !state.eq(GameState.RESIZING)){
 			state = GameState.RESIZING;
 			
+			ArrayList<Player> fTeamPlayers = new ArrayList<>();
+			ArrayList<Player> sTeamPlayers = new ArrayList<>();
+			
+			for(String playerName : playersInRoom){
+				Player player = findPlayer(playerName);
+				
+				if(teamToBoolean(findTeam(playerName)))
+					fTeamPlayers.add(player);
+				else sTeamPlayers.add(player);
+			}
+			
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
@@ -166,7 +177,7 @@ public class TeamGame extends Game{
 						for(int i = match.getPlayers() / 2 + 1; i <= match.getPlayers(); i++)
 							freeSlots.add(i);
 
-						for(Player p : match.getSecondTeam().getPlayers()){
+						for(Player p : sTeamPlayers){
 							if(p.getSlot() > match.getPlayers() / 2)
 								freeSlots.remove((Integer) p.getSlot());
 							else toMove.add(p);
@@ -189,7 +200,7 @@ public class TeamGame extends Game{
 						for(int i = 1; i <= match.getPlayers() / 2; i++)
 							freeSlots.add(i);
 
-						for(Player p : match.getFirstTeam().getPlayers()){
+						for(Player p : fTeamPlayers){
 							if(p.getSlot() <= match.getPlayers() / 2)
 								freeSlots.remove((Integer) p.getSlot());
 							else toMove.add(p);
@@ -212,7 +223,7 @@ public class TeamGame extends Game{
 						for(int i = match.getPlayers() / 2 + 1; i <= match.getPlayers(); i++)
 							freeSlots.add(i);
 
-						for(Player p : match.getSecondTeam().getPlayers()){
+						for(Player p : sTeamPlayers){
 							if(p.getSlot() > match.getPlayers() / 2 && p.getSlot() <= match.getPlayers())
 								freeSlots.remove((Integer) p.getSlot());
 							else toMove.add(p);

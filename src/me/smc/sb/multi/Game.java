@@ -77,6 +77,7 @@ public abstract class Game{
 	protected Team lastWinner;
 	protected Map map;
 	protected Map previousMap;
+	protected Map lastPlayedMap;
 	protected Timer mapUpdater;
 	protected Timer messageUpdater;
 	protected List<Timer> pickTimers;
@@ -136,10 +137,6 @@ public abstract class Game{
 		updateTwitch("Waiting for players to join the lobby...");
 		
 		AlertStaffCommand.gamesAllowedToAlert.add(this);
-		
-		if(match.getTournament().isUsingTourneyServer() && match.getServerID().length() > 0){
-			RemotePatyServerUtils.setMPLink(mpLink, match.getServerID(), match.getTournament().getName());
-		}
 	}
 	
 	public void setupGame(){
@@ -537,8 +534,9 @@ public abstract class Game{
 		
 		IRCChatListener.gamesListening.remove(multiChannel);
 		
+		Team winningTeam = fTeamPoints > sTeamPoints ? match.getFirstTeam() : match.getSecondTeam();
+		
 		if(fTeamPoints != sTeamPoints){
-			Team winningTeam = fTeamPoints > sTeamPoints ? match.getFirstTeam() : match.getSecondTeam();
 			Team losingTeam = winningTeam.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName()) ? match.getSecondTeam() : match.getFirstTeam();
 			
 			if(match.getTournament().getConditionalTeams().size() > 0){
@@ -556,6 +554,10 @@ public abstract class Game{
 					Log.logger.log(Level.INFO, "Set conditional team " + cTeam.getTeamName() + " to match #" + conditionalMatch.getMatchNum());
 				}
 			}
+		}
+		
+		if(match.getTournament().isUsingTourneyServer() && match.getServerID().length() > 0 && winningTeam.getServerTeamID() != 0){
+			RemotePatyServerUtils.setMPLinkAndWinner(mpLink, winningTeam, match.getServerID(), match.getTournament().getName(), fTeamPoints, sTeamPoints);
 		}
 			
 		sendMessage("!mp close");
@@ -606,6 +608,7 @@ public abstract class Game{
 		mapLength = 0;
 		playersChecked = 0;
 		previousMap = null;
+		lastPlayedMap = null;
 		previousRoll = 0;
 		rematchesLeftFTeam = 0;
 		rematchesLeftSTeam = 0;
@@ -873,25 +876,48 @@ public abstract class Game{
 			return false;
 		}
 		
-		if(revertScore && lastWinner != null){
-			int fTeamScore = fTeamPoints;
-			int sTeamScore = sTeamPoints;
-			
+		if(newMap != null) changeMap(newMap);
+		else{
+			map = lastPlayedMap;
+			previousMap = map;
+		}
+		
+		if(revertScore && lastWinner != null && map != null){
 			if(teamToBoolean(lastWinner)) fTeamPoints--;
 			else sTeamPoints--;
 			
-			setScores(fTeamScore, sTeamScore);
+			setScores(fTeamPoints, sTeamPoints);
+			
+			int mapId = match.getMapPool().getMapId(map);
+			
+			if(mapId != 0){
+				int tourneyId = 0;
+				
+				try{
+					tourneyId = RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName());
+				}catch(Exception e){
+					Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
+				}
+				
+				if(tourneyId != 0){
+					RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "pickcount", -1);
+				}
+			}
 		}
 		
-		if(newMap != null) changeMap(newMap);
-		
 		skipRematchState = 0;
+		SkipRematchCommand.gamesAllowedToSkip.remove(Game.this);
+		
+		SelectMapCommand.pickingTeams.remove(selectingTeam);
 		
 		if(mapUpdater != null) mapUpdater.cancel();
+		if(messageUpdater != null) messageUpdater.cancel();
 		mapSelected = true;
 		banchoFeedback.clear();
 		switchPlaying(false, true);
 
+		state = GameState.WAITING;
+		
 		prepareReadyCheck();
 		
 		return true;
@@ -1384,6 +1410,7 @@ public abstract class Game{
 		
 		banchoFeedback.clear();
 		
+		lastPlayedMap = map;
 		mapSelected = false;
 		switchPlaying(true, false);
 		
@@ -1608,12 +1635,26 @@ public abstract class Game{
 						int mapId = match.getMapPool().getMapId(map);
 						
 						if(mapId != 0){
-							RemotePatyServerUtils.incrementMapValue(mapId, "pickcount", 1);
-							RemotePatyServerUtils.incrementMapValue(mapId, "total_score", totalScore);
-							RemotePatyServerUtils.incrementMapValue(mapId, "target_range_score", targetRangeScore);
-							RemotePatyServerUtils.incrementMapValue(mapId, "plays_submitted", totalSubmits);
-							RemotePatyServerUtils.incrementMapValue(mapId, "players_passed", totalPasses);
-							RemotePatyServerUtils.incrementMapValue(mapId, "target_range_passed", targetRangePasses);
+							int tourneyId = 0;
+							
+							try{
+								tourneyId = RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName());
+							}catch(Exception e){
+								Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
+							}
+							
+							if(tourneyId != 0){
+								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "pickcount", 1);
+								
+								if(sTeamScore > 0 && fTeamScore > 0){
+									RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "total_score", totalScore);
+									RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "target_range_score", targetRangeScore);
+								}
+								
+								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "target_range_passed", targetRangePasses);
+								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "plays_submitted", totalSubmits);
+								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "plays_passed", totalPasses);
+							}
 						}
 					}
 					
@@ -1907,7 +1948,9 @@ public abstract class Game{
 					try{
 						if(!RemotePatyServerUtils.isConfirmed(pl.getName(), 
 								RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName()))){
-							sendMessage(pl.getName() + " is not confirmed, to join the lobby he needs to confirm via SmtBot!");
+							sendMessage(pl.getName() + " is not confirmed, to join the lobby he/she needs to confirm via SmtBot!");
+							pmUser(pl.getName(), "You are not confirmed! Please message SmtBot with !confirm " + match.getTournament().getName() +
+							" " + team.getServerTeamID() + "!");
 							playersInRoom.remove(player);
 							return false;
 						}

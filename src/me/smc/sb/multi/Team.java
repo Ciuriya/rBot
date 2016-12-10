@@ -19,6 +19,7 @@ public class Team{
 	public Team(Tournament t, String teamName, boolean append){
 		this.teamName = teamName;
 		this.tournament = t;
+		serverTeamID = 0;
 		this.players = new LinkedList<>();
 		
 		save(append);
@@ -57,6 +58,8 @@ public class Team{
 			
 			config.writeStringList("team-" + teamName, convertedPlayers, false);		
 		}
+		
+		if(serverTeamID != 0) config.writeValue("team-" + teamName + "-serverID", serverTeamID);
 	}
 	
 	public void delete(){

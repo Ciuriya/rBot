@@ -878,6 +878,9 @@ public class Tournament{
 					
 					team.setPlayers(lPlayers);
 				}
+				
+				if(config.getInt("team-" + teamName + "-serverID") != 0)
+					team.setServerTeamID(config.getInt("team-" + teamName + "-serverID"));
 			}
 	}
 	

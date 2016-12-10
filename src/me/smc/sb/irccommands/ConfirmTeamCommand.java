@@ -91,10 +91,12 @@ public class ConfirmTeamCommand extends IRCCommand{
 			Connection delSQL = RemotePatyServerUtils.connect();
 			
 			new JdbcSession(delSQL)
-			.sql("DELETE FROM teammembers " +
-				 "WHERE `player_data.user_id`=? AND " +
-				 "confirmed=0")
+			.sql("DELETE teammembers FROM teammembers " +
+				 "INNER JOIN teams " +
+				 "WHERE teammembers.`player_data.user_id`=? AND " +
+				 "teams.`tournaments_id`=? AND teammembers.`confirmed`=0")
 			.set(userID)
+			.set(RemotePatyServerUtils.fetchTournamentId(t.getName()))
 			.update(Outcome.VOID);
 			
 			delSQL.close();
