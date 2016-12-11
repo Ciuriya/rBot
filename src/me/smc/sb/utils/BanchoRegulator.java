@@ -1,7 +1,6 @@
 package me.smc.sb.utils;
 
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -36,10 +35,10 @@ public class BanchoRegulator {
 		requestTimer.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
 				if(!requests.isEmpty()){
-					Optional<Integer> optRequest = requests.keySet().stream().findFirst();
+					int request = requests.keySet().stream().min(Integer::compare).orElse(-1);
 					
-					if(optRequest.isPresent()){
-						int requestNum = optRequest.get();
+					if(request != -1){
+						int requestNum = request;
 						
 						new Thread(new Runnable(){
 							public void run(){
@@ -54,10 +53,10 @@ public class BanchoRegulator {
 		priorityTimer.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
 				if(!priorityRequests.isEmpty()){
-					Optional<Integer> optRequest = priorityRequests.keySet().stream().findFirst();
+					int request = priorityRequests.keySet().stream().min(Integer::compare).orElse(-1);
 					
-					if(optRequest.isPresent()){
-						int requestNum = optRequest.get();
+					if(request != -1){
+						int requestNum = request;
 						
 						new Thread(new Runnable(){
 							public void run(){

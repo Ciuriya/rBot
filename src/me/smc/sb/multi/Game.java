@@ -1952,7 +1952,7 @@ public abstract class Game{
 			}
 			
 			if(!usedSlots.contains(i)){
-				if(match.getTournament().isUsingConfirms()){
+				/*if(match.getTournament().isUsingConfirms()){
 					try{
 						if(!RemotePatyServerUtils.isConfirmed(pl.getName(), 
 								RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName()))){
@@ -1965,7 +1965,7 @@ public abstract class Game{
 					}catch(Exception e){
 						Log.logger.log(Level.SEVERE, e.getMessage(), e);
 					}
-				}
+				}*/
 				
 				pl.setSlot(i);
 				sendMessage("!mp move " + player.replaceAll(" ", "_") + " " + i);
