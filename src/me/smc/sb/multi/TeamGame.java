@@ -89,7 +89,6 @@ public class TeamGame extends Game{
 			
 			sendMessage("!mp abort");
 			sendMessage("!mp aborttimer");
-			sendMessage("!mp abort");
 			
 			sendMessage("Someone has disconnected, there will be a rematch!");
 			
@@ -184,10 +183,10 @@ public class TeamGame extends Game{
 							
 							if(slot != -1){
 								freeSlots.remove((Integer) slot);
-								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								sendMessage("!mp move " + p.getIRCTag() + " " + slot);
 								p.setSlot(slot);
 								toMove.remove(p);
-							}else kickPlayer(p.getName().replaceAll(" ", "_"));
+							}else kickPlayer(p.getIRCTag());
 						}				
 					}else{
 						ArrayList<Integer> freeSlots = new ArrayList<>();
@@ -207,10 +206,10 @@ public class TeamGame extends Game{
 							
 							if(slot != -1){
 								freeSlots.remove((Integer) slot);
-								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								sendMessage("!mp move " + p.getIRCTag() + " " + slot);
 								p.setSlot(slot);
 								toMove.remove(p);
-							}else kickPlayer(p.getName().replaceAll(" ", "_"));
+							}else kickPlayer(p.getIRCTag());
 						}				
 						
 						freeSlots.clear();
@@ -230,10 +229,10 @@ public class TeamGame extends Game{
 							
 							if(slot != -1){
 								freeSlots.remove((Integer) slot);
-								sendMessage("!mp move " + p.getName().replaceAll(" ", "_") + " " + slot);
+								sendMessage("!mp move " + p.getIRCTag() + " " + slot);
 								p.setSlot(slot);
 								toMove.remove(p);
-							}else kickPlayer(p.getName().replaceAll(" ", "_"));
+							}else kickPlayer(p.getIRCTag());
 						}
 						
 						sendMessage("!mp size " + match.getPlayers());

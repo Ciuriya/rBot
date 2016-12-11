@@ -3,6 +3,7 @@ package me.smc.sb.multi;
 public class Player{
 
 	private String name;
+	private String userID;
 	private int slot;
 	private boolean hasMod;
 	private double modMultiplier;
@@ -12,6 +13,7 @@ public class Player{
 	
 	public Player(String name){
 		this.name = name;
+		this.userID = "";
 		this.slot = -1;
 		this.hasMod = false;
 		this.modMultiplier = 1;
@@ -22,6 +24,14 @@ public class Player{
 	
 	public String getName(){
 		return name;
+	}
+	
+	public String getUserID(){
+		return userID;
+	}
+	
+	public String getIRCTag(){
+		return userID.length() > 0 ? "#" + userID : name.replaceAll(" ", "_");
 	}
 	
 	public int getSlot(){
@@ -46,6 +56,10 @@ public class Player{
 	
 	public int getRank(){
 		return rank;
+	}
+	
+	public void setUserID(String userID){
+		this.userID = userID;
 	}
 	
 	public void setSlot(int slot){
