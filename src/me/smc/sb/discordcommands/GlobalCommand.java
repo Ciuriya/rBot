@@ -5,10 +5,11 @@ import java.util.List;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
-import net.dv8tion.jda.entities.MessageChannel;
-import net.dv8tion.jda.entities.TextChannel;
-import net.dv8tion.jda.entities.User;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.entities.ChannelType;
+import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public abstract class GlobalCommand{
 
@@ -70,7 +71,7 @@ public abstract class GlobalCommand{
 		for(GlobalCommand gc : commands)
 			if(gc.isName(split[0]) && gc.canUse(e.getAuthor(), e.getChannel())){
 				
-				if(!gc.allowsDm() && e.isPrivate()) return true;
+				if(!gc.allowsDm() && e.isFromType(ChannelType.PRIVATE)) return true;
 				
 				Main.commandsUsedThisSession++;
 				
@@ -118,7 +119,7 @@ public abstract class GlobalCommand{
 		commands.add(new StopCommand());
 		commands.add(new SuggestCommand());
 		commands.add(new UserInfoCommand());
-		commands.add(new VoiceCommand());
+		//commands.add(new VoiceCommand());
 		commands.add(new YoutubeDownloadCommand());
 	}
 	

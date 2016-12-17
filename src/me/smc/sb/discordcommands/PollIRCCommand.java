@@ -6,7 +6,7 @@ import org.pircbotx.PircBotX;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class PollIRCCommand extends GlobalCommand{
 

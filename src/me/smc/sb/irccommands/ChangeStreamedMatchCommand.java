@@ -7,16 +7,15 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
-import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
-public class ListMatchAdminsCommand extends IRCCommand{
+public class ChangeStreamedMatchCommand extends IRCCommand{
 
-	public ListMatchAdminsCommand(){
-		super("Lists all admins in the match.",
+	public ChangeStreamedMatchCommand(){
+		super("Changes the currently streamed match.",
 			  "<tournament name> <match number> ",
-			  Permissions.IRC_BOT_ADMIN,
-			  "mplistadmins");
+			  null,
+			  "changestream");
 	}
 
 	@Override
@@ -34,17 +33,26 @@ public class ListMatchAdminsCommand extends IRCCommand{
 		
 		Match match = t.getMatch(Utils.stringToInt(args[args.length - 1]));
 		
-		String admins = "";
+		if(!match.isMatchAdmin(Utils.toUser(e, pe))) return "";
 		
-		if(!match.getMatchAdmins().isEmpty())
-			for(String admin : match.getMatchAdmins()){
-				if(admin.length() == 17) admins += admin + " (" + Main.api.getUserById(admin).getName() + "), ";
-				else admins += admin + " ";
+		if(match.getGame() != null && t.getCurrentlyStreamed() != match.getGame()){
+			if(t.getCurrentlyStreamed() != null){
+				t.getCurrentlyStreamed().streamed = false;
+				
+				if(t.getCurrentlyStreamed().match.getStreamPriority() == 0){
+					t.getCurrentlyStreamed().match.setStreamPriority(1);
+				}
 			}
-		
-		if(admins.length() > 0){
-			admins = admins.substring(0, admins.length() - 2);
-			return "Administrators for match #" + match.getMatchNum() + " in tournament " + tournamentName + ": " + admins;
+			
+			match.getGame().match.setStreamPriority(0);
+			match.getGame().streamed = true;
+			
+			t.setCurrentlyStreamed(match.getGame());
+			
+			Main.twitchRegulator.sendMessage(match.getTournament().getTwitchChannel(),
+					 						"Game switched to " + match.getLobbyName());
+			
+			return "Switched to " + match.getLobbyName() + "!";
 		}
 		
 		return "";

@@ -29,8 +29,9 @@ import me.smc.sb.utils.Log;
 import me.smc.sb.utils.OsuAPIRegulator;
 import me.smc.sb.utils.TwitchRegulator;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.JDA;
-import net.dv8tion.jda.JDABuilder;
+import net.dv8tion.jda.core.AccountType;
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.JDABuilder;
 
 public class Main{
 	
@@ -109,12 +110,12 @@ public class Main{
 				
 				long uptime = System.currentTimeMillis() - Main.bootTime;
 				
-				if(htmlScrapes == 0 && uptime >= 60000 && Tournament.matchesRunning == 0){
-					Utils.info(api.getUserById("91302128328392704").getPrivateChannel(), "I am restarting due to the lack of html scrapes.");
-					stop(2);
+				if(htmlScrapes == 0 && uptime >= 120000 && Tournament.matchesRunning == 0){
+					//Utils.info(api.getUserById("91302128328392704").getPrivateChannel(), "I am restarting due to the lack of html scrapes.");
+					//stop(2);
 				}
 			}
-		}, 60000, 60000);
+		}, 120000, 120000);
 		
 		twitchRegulator = new TwitchRegulator();
 		banchoRegulator = new BanchoRegulator();
@@ -150,7 +151,7 @@ public class Main{
 	private void login(){
 		try{
 			Listener l = new Listener();
-			api = new JDABuilder().setBotToken(discordToken).addListener(l).buildAsync();
+			api = new JDABuilder(AccountType.BOT).setToken(discordToken).addListener(l).buildAsync();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;

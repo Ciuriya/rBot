@@ -1,13 +1,13 @@
 package me.smc.sb.utils;
 
-import java.io.File;
+/*import java.io.File;
 import java.util.LinkedList;
 
 import me.smc.sb.discordcommands.GlobalCommand;
 import me.smc.sb.discordcommands.VoiceCommand;
 import net.dv8tion.jda.audio.player.FilePlayer;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class CustomFilePlayer extends FilePlayer{
 
@@ -101,4 +101,4 @@ public class CustomFilePlayer extends FilePlayer{
 		}
 	}
 	
-}
+}*/

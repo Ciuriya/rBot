@@ -10,15 +10,16 @@ import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.JDA;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.events.Event;
-import net.dv8tion.jda.events.ReadyEvent;
-import net.dv8tion.jda.events.ReconnectedEvent;
-import net.dv8tion.jda.events.guild.GuildJoinEvent;
-import net.dv8tion.jda.events.guild.GuildLeaveEvent;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.hooks.EventListener;
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.entities.ChannelType;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.events.Event;
+import net.dv8tion.jda.core.events.ReadyEvent;
+import net.dv8tion.jda.core.events.ReconnectedEvent;
+import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.hooks.EventListener;
 
 public class Listener implements EventListener{
 
@@ -38,7 +39,7 @@ public class Listener implements EventListener{
 	    	if(e.getAuthor().getId().equalsIgnoreCase("120923487467470848")) return; //if user is bot, no msg
 	    	Main.messagesReceivedThisSession++;
 	    	
-	    	boolean dm = e.isPrivate();
+	    	boolean dm = e.isFromType(ChannelType.PRIVATE);
 	    	
 	    	if(!dm && HaltCommand.stopCommands.containsKey(e.getGuild().getId()) && HaltCommand.stopCommands.get(e.getGuild().getId())) return;
 	    	
@@ -64,7 +65,7 @@ public class Listener implements EventListener{
 	    			strippedMsg = "rpg " + strippedMsg;
 	    		
 	        	Log.logger.log(Level.INFO, "{Command in " + Utils.getGroupLogString(e.getChannel())
-				 + " sent by " + e.getAuthor().getUsername() + " <" + e.getAuthor().getId() + ">}\n" + msg);
+				 + " sent by " + e.getAuthor().getName() + " <" + e.getAuthor().getId() + ">}\n" + msg);
 	        	
 	        	Command cmd = null;
 	        	cmd = Command.findCommand(serverId, strippedMsg.split(" ")[0]);
@@ -76,7 +77,7 @@ public class Listener implements EventListener{
 	        	return;
 	    	}else if(dm && !msg.startsWith(Main.defaultPrefix)){
 	        	Log.logger.log(Level.INFO, "{Prefixless command in " + Utils.getGroupLogString(e.getChannel())
-				 + " sent by " + e.getAuthor().getUsername() + " <" + e.getAuthor().getId() + ">}\n" + msg);
+				 + " sent by " + e.getAuthor().getName() + " <" + e.getAuthor().getId() + ">}\n" + msg);
 	        	
 	        	Command cmd = null;
 	        	cmd = Command.findCommand(serverId, msg.split(" ")[0]);

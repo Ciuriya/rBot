@@ -5,9 +5,8 @@ import java.io.File;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.OnlineStatus;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
 
 public class DiscordOnlineUsersRequest extends IncomingRequest{
 
@@ -23,12 +22,9 @@ public class DiscordOnlineUsersRequest extends IncomingRequest{
 		
 		String names = "REQUESTED_USERS:";
 		
-		for(User user : guild.getUsers())
-			if(user != null && 
-				user.getOnlineStatus() != null &&
-				!user.getOnlineStatus().equals(OnlineStatus.OFFLINE) &&
-				!user.getOnlineStatus().equals(OnlineStatus.UNKNOWN))
-				names += user.getUsername() + "`" + user.getId() + ":";
+		for(Member member : guild.getMembers())
+			if(member != null)
+				names += member.getUser().getName() + "`" + member.getUser().getId() + ":";
 		
 		Utils.info(null, null, null, names.substring(0, names.length() - 1));
 	}

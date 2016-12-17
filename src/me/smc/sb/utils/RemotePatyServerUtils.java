@@ -106,33 +106,37 @@ public class RemotePatyServerUtils{
 	public static void incrementMapValue(int mapId, int tournamentId, String value, long amount){
 		if(amount == 0) return;
 		
-		Connection mapSQL = null;
-		
-		try{
-			long remoteVal = fetchMapValue(mapId, tournamentId, value);
-			
-			mapSQL = connect();
-			
-			new JdbcSession(mapSQL)
-			.sql("UPDATE `maps` SET " + value + "=? " +
-				 "WHERE map_id=? AND mappool_tournaments_id=?")
-			.set(remoteVal + amount)
-			.set(mapId)
-			.set(tournamentId)
-			.update(Outcome.VOID);
-			
-			Log.logger.log(Level.INFO, "Updating " + value + " by " + amount + "(now " + (remoteVal + amount) + ") for map #" + mapId + " in tourney " + tournamentId);
-		}catch(Exception e){
-			Log.logger.log(Level.SEVERE, "Could not increment value " + value + " by " + amount + " for map #" + mapId, e);
-		}
-		
-		if(mapSQL != null){
-			try{
-				mapSQL.close();
-			}catch(SQLException e){
-				Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+		new Thread(new Runnable(){
+			public void run(){
+				Connection mapSQL = null;
+				
+				try{
+					long remoteVal = fetchMapValue(mapId, tournamentId, value);
+					
+					mapSQL = connect();
+					
+					new JdbcSession(mapSQL)
+					.sql("UPDATE `maps` SET " + value + "=? " +
+						 "WHERE map_id=? AND mappool_tournaments_id=?")
+					.set(remoteVal + amount)
+					.set(mapId)
+					.set(tournamentId)
+					.update(Outcome.VOID);
+					
+					Log.logger.log(Level.INFO, "Updating " + value + " by " + amount + "(now " + (remoteVal + amount) + ") for map #" + mapId + " in tourney " + tournamentId);
+				}catch(Exception e){
+					Log.logger.log(Level.SEVERE, "Could not increment value " + value + " by " + amount + " for map #" + mapId, e);
+				}
+				
+				if(mapSQL != null){
+					try{
+						mapSQL.close();
+					}catch(SQLException e){
+						Log.logger.log(Level.SEVERE, "Could not close connection to remote database!", e);
+					}
+				}
 			}
-		}
+		}).start();
 	}
 	
 	public static void setMPLinkAndWinner(String mpLink, Team winner, String matchID, String tournamentName, int fTeamScore, int sTeamScore){

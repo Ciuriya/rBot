@@ -4,7 +4,7 @@ import java.io.File;
 
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class SuggestCommand extends GlobalCommand{
 
@@ -29,7 +29,7 @@ public class SuggestCommand extends GlobalCommand{
 		for(String arg : args)
 			suggestion += " " + arg;
 		
-		cfg.appendToStringList("suggestions", Utils.getDate() + " Suggestion by " + e.getAuthor().getUsername() + " - " + suggestion.substring(1), true);
+		cfg.appendToStringList("suggestions", Utils.getDate() + " Suggestion by " + e.getAuthor().getName() + " - " + suggestion.substring(1), true);
 		Utils.info(e.getChannel(), "Your suggestion has been sent!");
 	}
 

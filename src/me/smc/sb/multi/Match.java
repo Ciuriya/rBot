@@ -169,7 +169,7 @@ public class Match{
 		scheduledDate = time;
 		
 		if(scheduledDate < Utils.getCurrentTimeUTC() && scheduledDate != 0){
-			delete();
+			tournament.removeMatch(matchNum);
 			return;
 		}
 		

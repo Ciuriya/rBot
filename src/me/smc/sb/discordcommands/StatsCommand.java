@@ -8,10 +8,10 @@ import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.OnlineStatus;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.entities.User;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.OnlineStatus;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class StatsCommand extends GlobalCommand{
 
@@ -33,7 +33,7 @@ public class StatsCommand extends GlobalCommand{
 		int users = 0, connected = 0;
 		
 		for(Guild guild : Main.api.getGuilds()){
-			users += guild.getUsers().size();
+			users += guild.getMembers().size();
 			
 			connected += getOnlineUsers(guild);
 		}
@@ -76,13 +76,13 @@ public class StatsCommand extends GlobalCommand{
 	public static int getOnlineUsers(Guild guild){
 		int connected = 0;
 		
-		for(User user : guild.getUsers()){
+		/*for(User user : guild.getMembers()){
 			OnlineStatus status = user.getOnlineStatus();
 			if(status == OnlineStatus.ONLINE || status == OnlineStatus.AWAY)
 				connected++;
-		}
+		}*/
 		
-		return connected;
+		return guild.getMembers().size();
 	}
 	
 }

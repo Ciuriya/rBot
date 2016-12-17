@@ -6,7 +6,8 @@ import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.entities.ChannelType;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class ReceivePMCommand extends GlobalCommand{
 
@@ -22,7 +23,7 @@ public class ReceivePMCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		if(!e.isPrivate()) return;
+		if(!e.isFromType(ChannelType.PRIVATE)) return;
 		Configuration cfg = new Configuration(new File("login.txt"));
 		
 		boolean toggled = true;

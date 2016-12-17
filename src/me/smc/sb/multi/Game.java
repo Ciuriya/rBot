@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import org.json.JSONObject;
@@ -28,7 +29,8 @@ import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.entities.Message;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageChannel;
 
 public abstract class Game{
 
@@ -55,7 +57,7 @@ public abstract class Game{
 	protected boolean mapSelected = false;
 	protected boolean fTeamFirst = true;
 	protected boolean validMods = true;
-	protected boolean streamed = false;
+	public boolean streamed = false;
 	protected boolean lastRematchFTeam = false;
 	protected GameState state;
 	protected int rematchesLeftFTeam = 0;
@@ -129,10 +131,24 @@ public abstract class Game{
 		
 		String gameMessage = buildDiscordResultMessage(false) + "```";
 		
-		if(resultDiscord != null)
+		if(resultDiscord != null){
+			MessageChannel channel = null;
+		
 			if(Main.api.getTextChannelById(resultDiscord) != null){
-				discordResultMessage = Utils.infoBypass(Main.api.getTextChannelById(resultDiscord), gameMessage);
-			}else discordResultMessage = Utils.infoBypass(Main.api.getPrivateChannelById(resultDiscord), gameMessage);
+				channel = Main.api.getTextChannelById(resultDiscord);
+			}else channel = Main.api.getPrivateChannelById(resultDiscord);
+			
+			if(channel != null){
+				Utils.fakeInfo(channel, gameMessage);
+				
+				channel.sendMessage(gameMessage).queue(new Consumer<Message>(){
+					@Override
+					public void accept(Message t){
+						discordResultMessage = t;
+					}
+				});
+			}
+		}
 		
 		updateTwitch("Waiting for players to join the lobby...");
 		
@@ -731,7 +747,12 @@ public abstract class Game{
 						localMessage += banned + "\n";
 				}
 				
-				discordResultMessage = discordResultMessage.updateMessage(localMessage + "```");
+				discordResultMessage.editMessage(localMessage + "```").queue(new Consumer<Message>(){
+					@Override
+					public void accept(Message t){
+						discordResultMessage = t;
+					}
+				});
 			}
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
@@ -982,6 +1003,12 @@ public abstract class Game{
 			
 			contestState = 0;
 			
+			boolean selectAfter = false;
+			
+			if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2))
+				selectAfter = true;
+			
+			
 			if(teamToBoolean(lastWinner)){
 				fTeamPoints--;
 				sTeamPoints++;
@@ -993,6 +1020,8 @@ public abstract class Game{
 			}
 			
 			updateScores(false);
+			
+			if(selectAfter) mapSelection(4);
 		}
 	}
 	
@@ -1569,8 +1598,6 @@ public abstract class Game{
 					}
 				}
 				
-				Log.logger.log(Level.INFO, "total submits: " + totalSubmits + " total passes: " + totalPasses);
-				
 				if(warmupsLeft > 0){
 					String updateMessage = "";
 					
@@ -1578,7 +1605,7 @@ public abstract class Game{
 					else
 						updateMessage = (fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
 										 match.getSecondTeam().getTeamName()) + " won by " + 
-										 Math.abs(fTeamScore - sTeamScore) + " points!";
+										 Utils.veryLongNumberDisplay((long) Math.abs(fTeamScore - sTeamScore)) + " points!";
 					
 					warmupsLeft--;
 					
@@ -1669,8 +1696,8 @@ public abstract class Game{
 					boolean fTeamWon = fTeamScore > sTeamScore;
 					
 					String updateMessage = (fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
-											match.getSecondTeam().getTeamName()) + " won by " + 
-											Math.abs(fTeamScore - sTeamScore) + " points!";
+						 					match.getSecondTeam().getTeamName()) + " won by " + 
+						 					Utils.veryLongNumberDisplay((long) Math.abs(fTeamScore - sTeamScore)) + " points!";
 					
 					sendMessage(updateMessage);
 					updateTwitch(updateMessage, 20);

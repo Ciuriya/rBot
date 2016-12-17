@@ -44,14 +44,15 @@ import me.smc.sb.communication.Server;
 import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Tournament;
-import net.dv8tion.jda.MessageBuilder;
-import net.dv8tion.jda.Permission;
-import net.dv8tion.jda.entities.Message;
-import net.dv8tion.jda.entities.MessageChannel;
-import net.dv8tion.jda.entities.PrivateChannel;
-import net.dv8tion.jda.entities.TextChannel;
-import net.dv8tion.jda.entities.User;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.MessageBuilder;
+import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.PrivateChannel;
+import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class Utils{
 
@@ -73,47 +74,44 @@ public class Utils{
     }
 	
 	public static void error(MessageChannel channel, User user, String message){
-		channel.sendMessage(new MessageBuilder().appendString(message).build());
+		channel.sendMessage(new MessageBuilder().append(message).build());
 		
-		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(channel) + " to " + user.getUsername() + " } " + message);
+		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(channel) + " to " + user.getName() + " } " + message);
 		Main.messagesSentThisSession++;
 	}
 	
-	public static Message infoBypass(MessageChannel channel, String message){
-		Message jdaMsg = channel.sendMessage(message);
+	public static void infoBypass(MessageChannel channel, String message){
+		channel.sendMessage(message).queue();
 		
 		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		Main.messagesSentThisSession++;
-		
-		return jdaMsg;
 	}
 	
-	public static Message info(MessageChannel channel, String message){
-		Message jdaMsg = null;
-		
+	public static void info(MessageChannel channel, String message){
 		if(channel instanceof TextChannel){
 			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
-				jdaMsg = channel.sendMessage(message);
+				channel.sendMessage(message).queue();
 				Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 			}else Log.logger.log(Level.INFO, "{Silent message sent in " + getGroupLogString(channel) + "} " + message);
 		}else{
-			jdaMsg = channel.sendMessage(message); 
+			channel.sendMessage(message).queue(); 
 			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		}
 		
 		Main.messagesSentThisSession++;
-		
-		return jdaMsg;
 	}
 	
-	public static Message info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
-		Message jdaMsg = null;
-		
-		if(message.length() == 0) return jdaMsg;
+	public static void fakeInfo(MessageChannel channel, String message){
+		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
+		Main.messagesSentThisSession++;
+	}
+	
+	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
+		if(message.length() == 0) return;
 		
 		if(isTwitch(e)){
 			Main.twitchRegulator.sendMessage(e.getChannel().getName().replace("#", ""), message);
-			return jdaMsg;
+			return;
 		}
 		
 		if(e != null && verifyChannel(e)){
@@ -124,16 +122,14 @@ public class Utils{
 			Log.logger.log(Level.INFO, "{IRC PM sent to user " + toUser(e, pe) + "} " + message);
 		}else if(discord != null)
 			if(Main.api.getPrivateChannelById(discord) != null)
-				jdaMsg = infoBypass(Main.api.getPrivateChannelById(discord), message);
-			else jdaMsg = infoBypass(Main.api.getTextChannelById(discord), message);
+				infoBypass(Main.api.getPrivateChannelById(discord), message);
+			else infoBypass(Main.api.getTextChannelById(discord), message);
 		else{
 			for(Server server : Main.servers)
 				server.sendMessage(message.replaceAll("\n", "|"));
 			
 			Log.logger.log(Level.INFO, "{Message sent to websites} " + message);
 		}
-		
-		return jdaMsg;
 	}
 	
 	public static boolean verifyChannel(MessageEvent<PircBotX> e){
@@ -163,12 +159,12 @@ public class Utils{
 	}
 	
 	public static Message toMessage(String str){
-		return new MessageBuilder().appendString(str).build();
+		return new MessageBuilder().append(str).build();
 	}
 	
 	public static String getGroupLogString(MessageChannel channel){
 		if(channel instanceof PrivateChannel)
-			return "Private/" + ((PrivateChannel) channel).getUser().getUsername();
+			return "Private/" + ((PrivateChannel) channel).getUser().getName();
 		
 		String serverName = ((TextChannel) channel).getGuild().getName() + "|||";
 		return serverName + ((TextChannel) channel).getName();
@@ -281,6 +277,7 @@ public class Utils{
 			
 			toReturn = page.toString().split("\n");
 		}catch(Exception e){
+			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}finally{
 			try{
 				if(in != null) in.close();
@@ -465,13 +462,16 @@ public class Utils{
 		}
 	}
 	
-	public static void deleteMessage(MessageChannel channel, Message m){
+	public static void deleteMessage(MessageChannel channel, Message msg){
 		Timer t = new Timer();
 		t.schedule(new TimerTask() {	
 			@Override public void run() {
-				if(channel instanceof TextChannel)
-					if(((TextChannel) channel).checkPermission(Main.api.getSelfInfo(), Permission.MESSAGE_MANAGE))
-						m.deleteMessage();
+				if(channel instanceof TextChannel){
+					Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
+					
+					if(member != null && member.hasPermission(((TextChannel) channel), Permission.MESSAGE_MANAGE))
+						msg.deleteMessage();
+				}
 			}
 		}, 1000);
 	}

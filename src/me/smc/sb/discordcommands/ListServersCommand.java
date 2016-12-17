@@ -4,15 +4,19 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.Permission;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.entities.Message;
-import net.dv8tion.jda.entities.TextChannel;
-import net.dv8tion.jda.entities.User;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class ListServersCommand extends GlobalCommand{
 
@@ -44,16 +48,26 @@ public class ListServersCommand extends GlobalCommand{
 			User poster = null;
 			
 			for(TextChannel channel : guild.getTextChannels()){
-				if(!channel.checkPermission(e.getJDA().getSelfInfo(), Permission.MESSAGE_HISTORY))
-					continue;
+				Member member = channel.getMembers().stream().filter(m -> m.getUser().getId().equals(e.getJDA().getSelfUser().getId())).findFirst().orElse(null);
 				
-				List<Message> messages = channel.getHistory().retrieve(1);
+				if(member != null)
+					if(member.hasPermission(channel, Permission.MESSAGE_HISTORY))
+						continue;
+				
+				List<Message> messages;
+				
+				try{
+					messages = channel.getHistory().retrievePast(1).block();
+				}catch(RateLimitedException e1){
+					Log.logger.log(Level.INFO, e1.getMessage(), e);
+					messages = null;
+				}
 				
 				if(messages != null && messages.size() > 0){
 					Message msg = messages.get(0);
 					
-					if(lastMessageDate == null || msg.getTime().isAfter(lastMessageDate)){
-						lastMessageDate = msg.getTime();
+					if(lastMessageDate == null || msg.getCreationTime().isAfter(lastMessageDate)){
+						lastMessageDate = msg.getCreationTime();
 						lastMessageChannel = channel;
 						poster = msg.getAuthor();
 					}
@@ -65,14 +79,14 @@ public class ListServersCommand extends GlobalCommand{
 			if(lastMessageDate != null) 
 				date = lastMessageDate.format(dtf);
 			
-			builder.append("- " + guild.getName().replaceAll("\\n", "") + " (" + guild.getUsers().size() + " users, " + 
+			builder.append("- " + guild.getName().replaceAll("\\n", "") + " (" + guild.getMembers().size() + " users, " + 
 						   StatsCommand.getOnlineUsers(guild) + " online)\n")
 				   .append("  " + guild.getId() + " | " + guild.getTextChannels().size() + " channels | " + 
 						   guild.getVoiceChannels().size() + " voice chats\n")
 				   .append("  Last message posted in " + lastMessageChannel.getName() + "(" + lastMessageChannel.getId() + ") " +
-						   "at " + date + (poster == null ? "" : " by " + poster.getUsername() + "#" + poster.getDiscriminator()) + "\n")
-				   .append("  Owned by " + guild.getOwner().getUsername() + "#" + guild.getOwner().getDiscriminator() + 
-						   " (" + guild.getOwnerId() + ")\n\n");
+						   "at " + date + (poster == null ? "" : " by " + poster.getName() + "#" + poster.getDiscriminator()) + "\n")
+				   .append("  Owned by " + guild.getOwner().getUser().getName() + "#" + guild.getOwner().getUser().getDiscriminator() + 
+						   " (" + guild.getOwner().getUser().getId() + ")\n\n");
 			
 			guildPosts.add(builder.toString());
 			builder = new StringBuilder();

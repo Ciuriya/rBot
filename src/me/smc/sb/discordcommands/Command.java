@@ -7,8 +7,8 @@ import java.util.Random;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.entities.User;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class Command{
 
@@ -160,9 +160,9 @@ public class Command{
 			int random = new Random().nextInt(Utils.stringToInt(tag.replace("random=", "")) + 1);
 			msg.append(random + "");
 		}else if(tag.startsWith("mention=")){
-			msg.append(e.getGuild().getUsers()
+			msg.append(e.getGuild().getMembers()
 			   .stream()
-			   .filter(x -> ((User) x).getUsername().equals(tag.replace("mention=", "")))
+			   .filter(x -> ((Member) x).getUser().getName().equals(tag.replace("mention=", "")))
 			   .findFirst().get().getAsMention());
 		}
 	}

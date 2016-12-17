@@ -2,14 +2,17 @@ package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageHistory;
-import net.dv8tion.jda.entities.Message;
-import net.dv8tion.jda.entities.PrivateChannel;
-import net.dv8tion.jda.entities.User;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.MessageHistory;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.PrivateChannel;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class CleanCommand extends GlobalCommand{
 
@@ -29,12 +32,12 @@ public class CleanCommand extends GlobalCommand{
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		int amount = Integer.valueOf(args[0]);
-		User cleanUser = null;
+		Member cleanUser = null;
 		
 		if(args.length >= 2 && args[1].contains("@") && e.getTextChannel() != null)
-			for(User u : e.getTextChannel().getUsers())
-				if(u.getUsername().equalsIgnoreCase(args[1].substring(1))){
-					cleanUser = u;
+			for(Member m : e.getTextChannel().getMembers())
+				if(m.getUser().getName().equalsIgnoreCase(args[1].substring(1))){
+					cleanUser = m;
 				}
 		
 		if(amount > 100) amount = 100;
@@ -48,7 +51,15 @@ public class CleanCommand extends GlobalCommand{
 		
 		int cleared = 0;
 		
-		List<Message> messageList = history.retrieve(100);	
+		List<Message> messageList;
+		
+		try{
+			messageList = history.retrievePast(100).block();
+		}catch(RateLimitedException e1){
+			Log.logger.log(Level.INFO, e1.getMessage(), e1);
+			messageList = new ArrayList<>();
+		}
+		
 		List<Message> toDelete = new ArrayList<>();
 		
 		while(cleared < amount && messageList.size() > 0){
@@ -56,7 +67,7 @@ public class CleanCommand extends GlobalCommand{
 			
 			messageList.remove(0);
 			
-			if((cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getId())) || cleanUser == null){
+			if((cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getUser().getId())) || cleanUser == null){
 				cleared++;
 				
 				if(e.getChannel() instanceof PrivateChannel){
@@ -66,7 +77,12 @@ public class CleanCommand extends GlobalCommand{
 			}
 			
 			if(messageList.size() == 0 && cleared < amount)
-				messageList = history.retrieve(100);
+				try{
+					messageList = history.retrievePast(100).block();
+				}catch(RateLimitedException e1){
+					Log.logger.log(Level.INFO, e1.getMessage(), e1);
+					messageList = new ArrayList<>();
+				}	
 		}
 		
 		if(!toDelete.isEmpty()) e.getTextChannel().deleteMessages(toDelete);

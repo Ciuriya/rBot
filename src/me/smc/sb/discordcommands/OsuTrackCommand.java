@@ -32,11 +32,12 @@ import me.smc.sb.multi.Map;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.MessageHistory;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.entities.Message;
-import net.dv8tion.jda.entities.TextChannel;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.MessageHistory;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class OsuTrackCommand extends GlobalCommand{
 
@@ -256,7 +257,14 @@ public class OsuTrackCommand extends GlobalCommand{
 													
 													String spacing = "\n\n\n\n\n";
 													MessageHistory history = new MessageHistory(channel);
-													Message last = history == null ? null : history.retrieve(1).get(0);
+													Message last;
+													
+													try{
+														last = history == null ? null : history.retrievePast(1).block().get(0);
+													}catch(RateLimitedException e){
+														Log.logger.log(Level.INFO, e.getMessage(), e);
+														last = null;
+													}
 													
 													if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
 													setLastPlayerUpdate(player, server);
@@ -395,7 +403,7 @@ public class OsuTrackCommand extends GlobalCommand{
 					fixedUser = userLine.get(0).split("&find=")[1].split("&")[0];
 				}
 				
-				builder.append("â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”\nMost recent plays for **" + fixedUser + "** in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
+				builder.append("—————————————————\nMost recent plays for **" + fixedUser + "** in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
 				
 				if(Utils.getNextLineCodeFromLink(pageGeneral, 0, "This user hasn't done anything notable recently!").size() == 0){
 					List<String> list = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<div class='profileStatHeader'>Recent Activity</div>");
@@ -550,17 +558,17 @@ public class OsuTrackCommand extends GlobalCommand{
 							play += "\n\n__**" + osuDate + " UTC**__\n\n";
 							play += escapeStar(map.getString("artist")) + " - " + escapeStar(map.getString("title")) + " [" +
 									escapeStar(map.getString("version")) + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-							        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " â€¢ " + hits : "") + "\n" + 
-							        Utils.veryLongNumberDisplay(obj.getInt("score")) + " â€¢ " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
+							        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " • " + hits : "") + "\n" + 
+							        Utils.veryLongNumberDisplay(obj.getInt("score")) + " • " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
 							        (map.isNull("max_combo") ? "x" : "/" + map.get("max_combo").toString()) : "FC (" + map.get("max_combo").toString() + "x)") +
-							        " â€¢ " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " â€¢ **#" + mapRank + "** on map" : "") + 
+							        " • " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " • **#" + mapRank + "** on map" : "") + 
 							        (!pp.equals("") ? "\n" + pp : "") + "\n\n" + 
-							        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " â€¢ **#" + personalBest + "** personal best\n" : "\n") : "") + 
-							        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) â€¢ #" + 
+							        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " • **#" + personalBest + "** personal best\n" : "\n") : "") + 
+							        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) • #" + 
 							        Utils.veryLongNumberDisplay(countryRank) + " " + country + " (**" + countryDifference + "**)\n\n" : 
 							        (Math.abs(ppDiff) >= 0.01 ? "\n" : "")) +
-							        "Map â€¢ <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> â€¢ " + analyzeMapStatus(map.getInt("approved")) + 
-							        "\n" + fixedUser + " â€¢ <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG â€¢ http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
+							        "Map • <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> • " + analyzeMapStatus(map.getInt("approved")) + 
+							        "\n" + fixedUser + " • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
 							
 							completeMessage = true;
 							builder.append(play + "~~~&pb=" + isPB + "&pp=" + ppAmount + "|||");

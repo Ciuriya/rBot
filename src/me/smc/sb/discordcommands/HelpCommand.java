@@ -2,7 +2,8 @@ package me.smc.sb.discordcommands;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.entities.ChannelType;
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class HelpCommand extends GlobalCommand{
 	
@@ -23,7 +24,7 @@ public class HelpCommand extends GlobalCommand{
 		StringBuilder msg = new StringBuilder();
 		
     	String serverId = "-1";
-    	if(!e.isPrivate()) serverId = e.getGuild().getId();
+    	if(!e.isFromType(ChannelType.PRIVATE)) serverId = e.getGuild().getId();
     	
     	if(args.length > 0){
     		msg.append("```");

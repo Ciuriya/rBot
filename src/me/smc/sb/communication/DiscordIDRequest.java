@@ -5,8 +5,9 @@ import java.io.File;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.entities.Guild;
-import net.dv8tion.jda.entities.User;
+import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.User;
 
 public class DiscordIDRequest extends IncomingRequest{
 	
@@ -23,9 +24,9 @@ public class DiscordIDRequest extends IncomingRequest{
 		String name = request.replace("REQUEST_ID:", "");
 		
 		User user = null;
-		for(User u : guild.getUsers())
-			if(u.getUsername().equalsIgnoreCase(name)){
-				user = u;
+		for(Member m : guild.getMembers())
+			if(m.getUser().getName().equalsIgnoreCase(name)){
+				user = m.getUser();
 				break;
 			}
 		
