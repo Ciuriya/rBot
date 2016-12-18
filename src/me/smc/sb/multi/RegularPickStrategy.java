@@ -78,35 +78,43 @@ public class RegularPickStrategy implements PickStrategy{
 			BanMapCommand.banningTeams.remove(game.banningTeam);
 			game.bans.add(selected);
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
+			final Map fSelected = selected;
 			
-			String name = game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-				    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
+			final Team banningTeam = game.banningTeam;
 			
-			game.sendMessage(name + " was banned!");
-			
-			game.bansWithNames.add("{" + game.getMod(selected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 
-			    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + game.banningTeam.getTeamName() + ")");
-			
-			game.updateTwitch(name + " was banned by " + game.banningTeam.getTeamName() + "!");
-			
-			if(game.match.getTournament().isUsingMapStats()){
-				int mapId = game.match.getMapPool().getMapId(selected);
-				
-				if(mapId != 0){
-					int tourneyId = 0;
+			new Thread(new Runnable(){
+				public void run(){
+					JSONObject jsMap = Map.getMapInfo(fSelected.getBeatmapID(), game.match.getTournament().getMode(), true);
 					
-					try{
-						tourneyId = RemotePatyServerUtils.fetchTournamentId(game.match.getTournament().getName());
-					}catch(Exception e){
-						Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
-					}
+					String name = game.getMod(fSelected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+						    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
 					
-					if(tourneyId != 0){
-						RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "bancount", 1);
+					game.sendMessage(name + " was banned!");
+					
+					game.bansWithNames.add("{" + game.getMod(fSelected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 
+					    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + banningTeam.getTeamName() + ")");
+					
+					game.updateTwitch(name + " was banned by " + banningTeam.getTeamName() + "!");
+					
+					if(game.match.getTournament().isUsingMapStats()){
+						int mapId = game.match.getMapPool().getMapId(fSelected);
+						
+						if(mapId != 0){
+							int tourneyId = 0;
+							
+							try{
+								tourneyId = RemotePatyServerUtils.fetchTournamentId(game.match.getTournament().getName());
+							}catch(Exception e){
+								Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
+							}
+							
+							if(tourneyId != 0){
+								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "bancount", 1);
+							}
+						}
 					}
 				}
-			}
+			}).start();
 			
 			game.mapSelection(3);
 			return;
@@ -117,22 +125,14 @@ public class RegularPickStrategy implements PickStrategy{
 			game.map = selected;
 			game.mapSelectedTime = System.currentTimeMillis();
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
-			
-			game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-		    	  	 	game.selectingTeam.getTeamName() + "!");
+			Utils.updateTwitch(game, selected);
 			
 			game.prepareReadyCheck();
 			return;
 		}else if(game.mapSelected && select && selected != null){
 			game.map = selected;
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
-			
-			game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-		    	  	 	game.selectingTeam.getTeamName() + "!");
+			Utils.updateTwitch(game, selected);
 			
 			return;
 		}

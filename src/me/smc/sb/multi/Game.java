@@ -448,7 +448,7 @@ public abstract class Game{
 		this.previousMap = map;
 	}
 	
-	protected String getMod(Map map){
+	public String getMod(Map map){
 		String mods = "";
 		
 		switch(map.getCategory()){
@@ -768,7 +768,7 @@ public abstract class Game{
 		}, delay * 1000);
 	}
 	
-	protected void updateTwitch(String message){
+	public void updateTwitch(String message){
 		new Thread(new Runnable(){
 			public void run(){
 				if(connectToStream()){

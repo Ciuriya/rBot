@@ -90,11 +90,7 @@ public class ModPickStrategy implements PickStrategy{
 			game.map = selected;
 			game.mapSelectedTime = System.currentTimeMillis();
 			
-			JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
-			
-			game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-		    	  	 	 jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-		    	  	 	game.selectingTeam.getTeamName() + "!");
+			Utils.updateTwitch(game, selected);
 			
 			game.prepareReadyCheck();
 			return;

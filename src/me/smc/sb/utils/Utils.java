@@ -43,6 +43,8 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import me.smc.sb.communication.Server;
 import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
+import me.smc.sb.multi.Game;
+import me.smc.sb.multi.Map;
 import me.smc.sb.multi.Tournament;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -236,7 +238,7 @@ public class Utils{
 			char[] buffer = new char[1024];
 			int charsRead = 0;
 			
-			while((charsRead  = inputStream.read(buffer, 0, 1024)) != -1)
+			while((charsRead = inputStream.read(buffer, 0, 1024)) != -1)
 				response.append(buffer, 0, charsRead);
 			
 			/*String inputLine;
@@ -250,7 +252,7 @@ public class Utils{
 			
 			answer = response.toString();
 		}catch(Exception e){
-			e.printStackTrace();
+			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}
 		
 		return answer;
@@ -263,7 +265,6 @@ public class Utils{
 		try{
 			URL url = new URL(link);
 			StringBuilder page = new StringBuilder();
-			String str = null;
 			
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
@@ -273,7 +274,11 @@ public class Utils{
 			
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 			
-			while((str = in.readLine()) != null) page.append(str + "\n");
+			char[] buffer = new char[1024];
+			int charsRead = 0;
+			
+			while((charsRead = in.read(buffer, 0, 1024)) != -1)
+				page.append(buffer, 0, charsRead).append("\n");
 			
 			toReturn = page.toString().split("\n");
 		}catch(Exception e){
@@ -577,6 +582,18 @@ public class Utils{
 			return true;
 		
 		return false;
+	}
+	
+	public static void updateTwitch(Game game, Map selected){
+		new Thread(new Runnable(){
+			public void run(){
+				JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
+				
+				game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+			    	  	 	 	  jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+			    	  	 	 	  game.getSelectingTeam().getTeamName() + "!");
+			}
+		}).start();
 	}
 	
 	public static class Login{
