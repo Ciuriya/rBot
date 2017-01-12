@@ -167,7 +167,7 @@ public class VoiceCommand extends GlobalCommand{
 			public void trackLoaded(AudioTrack track){
 				TrackScheduler scheduler = getGuildAudioPlayer(e.getChannel(), e.getGuild()).scheduler;
 				
-				Utils.info(e.getChannel(), track.getInfo().title + " added to queue!\n(" + scheduler.size() + " items queued)");
+				Utils.info(e.getChannel(), track.getInfo().title + " added to queue!\n(" + (scheduler.size() + 1) + " items queued)");
 				
 				scheduler.queue(track, args[1]);
 			}

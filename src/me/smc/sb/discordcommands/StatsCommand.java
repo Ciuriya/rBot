@@ -8,7 +8,9 @@ import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.core.OnlineStatus;
 import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class StatsCommand extends GlobalCommand{
@@ -83,13 +85,14 @@ public class StatsCommand extends GlobalCommand{
 	public static int getOnlineUsers(Guild guild){
 		int connected = 0;
 		
-		/*for(User user : guild.getMembers()){
-			OnlineStatus status = user.getOnlineStatus();
-			if(status == OnlineStatus.ONLINE || status == OnlineStatus.AWAY)
+		for(Member member : guild.getMembers()){
+			OnlineStatus status = member.getOnlineStatus();
+			
+			if(status != OnlineStatus.OFFLINE && status != OnlineStatus.UNKNOWN)
 				connected++;
-		}*/
+		}
 		
-		return guild.getMembers().size();
+		return connected;
 	}
 	
 }

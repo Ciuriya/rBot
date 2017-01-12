@@ -4,10 +4,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import me.smc.sb.perm.Permissions;
-import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Guild;
@@ -16,7 +14,6 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class ListServersCommand extends GlobalCommand{
 
@@ -51,16 +48,15 @@ public class ListServersCommand extends GlobalCommand{
 				Member member = channel.getMembers().stream().filter(m -> m.getUser().getId().equals(e.getJDA().getSelfUser().getId())).findFirst().orElse(null);
 				
 				if(member != null)
-					if(member.hasPermission(channel, Permission.MESSAGE_HISTORY))
+					if(!member.hasPermission(channel, Permission.MESSAGE_HISTORY))
 						continue;
 				
-				List<Message> messages;
+				List<Message> messages = null;
 				
 				try{
-					messages = channel.getHistory().retrievePast(1).block();
-				}catch(RateLimitedException e1){
-					Log.logger.log(Level.INFO, e1.getMessage(), e);
-					messages = null;
+					messages = channel.getHistory().retrievePast(1).complete();
+				}catch(Exception ex){
+					continue;
 				}
 				
 				if(messages != null && messages.size() > 0){
@@ -72,6 +68,8 @@ public class ListServersCommand extends GlobalCommand{
 						poster = msg.getAuthor();
 					}
 				}
+				
+				Utils.sleep(500);
 			}
 			
 			String date = "**unavailable**";

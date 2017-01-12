@@ -37,7 +37,6 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class OsuTrackCommand extends GlobalCommand{
 
@@ -223,7 +222,15 @@ public class OsuTrackCommand extends GlobalCommand{
 								
 								if(players.isEmpty()) continue;
 								
-								TextChannel channel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue("track-update-group"));
+								TextChannel channel = null;
+								
+								try{
+									channel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue("track-update-group"));
+								}catch(Exception ex){
+									continue;
+								}
+								
+								final TextChannel fChannel = channel;
 								
 								Thread t = new Thread(new Runnable(){
 									public void run(){
@@ -259,24 +266,18 @@ public class OsuTrackCommand extends GlobalCommand{
 													MessageHistory history = null;
 													
 													try{
-														history = new MessageHistory(channel);
+														history = new MessageHistory(fChannel);
 													}catch(Exception e){}
 													
-													Message last;
-													
-													try{
-														last = history == null ? null : history.retrievePast(1).block().get(0);
-													}catch(RateLimitedException e){
-														Log.logger.log(Level.INFO, e.getMessage(), e);
-														last = null;
-													}
+													Message last = history == null ? null : history.retrievePast(1).complete().get(0);;
 													
 													if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
 													setLastPlayerUpdate(player, server);
+
+													TextChannel channel = fChannel;
 													
-													TextChannel fChannel = channel;
 													if(!Main.serverConfigs.get(server).getValue(player + "-update-group").equals(""))
-														fChannel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue(player + "-update-group"));
+														channel = Main.api.getTextChannelById(Main.serverConfigs.get(server).getValue(player + "-update-group"));
 													
 													String fMsg = spacing + rebuiltMsg.replaceAll("\\*", "\\*").replaceAll("_", "\\_").replaceAll("~", "\\~");
 		
@@ -287,7 +288,7 @@ public class OsuTrackCommand extends GlobalCommand{
 														
 													for(String splitMsg : fMsg.split("\\|\\|\\|")){
 														if(splitMsg.length() > 5)
-															Utils.info(fChannel, splitMsg.split("jpg")[0] + "jpg");
+															Utils.info(channel, splitMsg.split("jpg")[0] + "jpg");
 													}
 																		
 													lastPlayerPosted.put(server, player);

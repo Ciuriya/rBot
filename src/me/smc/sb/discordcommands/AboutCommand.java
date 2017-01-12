@@ -16,7 +16,8 @@ public class AboutCommand extends GlobalCommand{
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		Utils.info(e.getChannel(), "Hello!\nI am a bot made by Smc.\nI am used to create commands for now, but there are future features planned.");
+		Utils.info(e.getChannel(), "Hello!\nI am a bot made by Smc.\nI am used to create commands, play music, report osu! plays/stats and more!\n" +
+								   "Use ~/help to see all available commands! (only those with message management permissions can see them all)");
 	}
 	
 }

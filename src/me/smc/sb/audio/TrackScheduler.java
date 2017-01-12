@@ -46,8 +46,6 @@ public class TrackScheduler extends AudioEventAdapter{
 		this.currentPlaylist = playlist;
 		this.randomizePlaylist = random;
 		this.playlistUrl = url;
-
-		nextPlaylistSong = new CustomAudioTrack(currentPlaylist.getSelectedTrack(), "");
 		
 		queueNextPlaylistSong();
 	}

@@ -1,6 +1,11 @@
 package me.smc.sb.discordcommands;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
@@ -23,23 +28,41 @@ public class UserInfoCommand extends GlobalCommand{
 		User user = e.getMessage().getMentionedUsers().get(0);
 		
 		if(user == null){
-			Utils.error(e.getChannel(), e.getAuthor(), " Invalid user!");
+			Utils.error(e.getChannel(), e.getAuthor(), "Invalid user!");
+			return;
+		}
+		
+		Member member = e.getGuild().getMember(user);
+		
+		if(member == null){
+			Utils.error(e.getChannel(), e.getAuthor(), "User is not in this guild!");
 			return;
 		}
 		
 		String roles = "";
-		/*for(Role r : getRolesForUser(user)) roles += " - " + r.getName();
-		roles = roles.substring(3);
+		
+		List<Role> userRoles = new ArrayList<Role>();
+		
+		for(Role role : e.getGuild().getRoles())
+			if(e.getGuild().getMembersWithRoles(role).contains(member))
+				userRoles.add(role);
+		
+		if(userRoles.size() > 0){
+			for(Role r : userRoles) roles += " - " + r.getName();
+			
+			roles = roles.substring(3);
+		}
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("```User info for " + user.getName() + "\n")
-			   .append("User status: " + user.getOnlineStatus().name().toLowerCase() + "\n")
-			   .append("Playing (" + user.getCurrentGame() + ")\n")
+			   .append("User status: " + member.getOnlineStatus().name().toLowerCase() + "\n")
+			   .append("Playing (" + member.getGame() + ")\n")
 		       .append("User id: " + user.getId() + "\n")
 		       .append("Discriminator: " + user.getDiscriminator() + "\n")
 		       .append("Roles: " + roles + "\n")
 		       .append("Avatar: " + user.getAvatarUrl() + "```");
-		Utils.infoBypass(e.getChannel(), builder.toString());*/
+		
+		Utils.infoBypass(e.getChannel(), builder.toString());
 	}
 
 }

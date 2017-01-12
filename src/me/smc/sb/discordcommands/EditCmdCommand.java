@@ -11,10 +11,10 @@ public class EditCmdCommand extends GlobalCommand{
 		super(Permissions.MANAGE_MESSAGES, 
 			  " - Lets you add, edit and delete commands",
 			  "{prefix}editcom\nThis command lets you create and administer custom commands.\n\n" +
-			  "----------\nUsage\n----------\n{prefix}editcom {add / setdel / del} {command} - Administer said command\n" + 
-			  "{prefix}editcom {add} {command} {instructions} ({desc={description}}) - Adds a command using the specified instructions\n" +
-			  "{prefix}editcom {add} {command} {{delimiters={number of delimiters}}} ({desc={description}}) - Adds a command using the specified delimiter count\n" +
-			  "{prefix}editcom {setdel} {command} {delimiters} {instructions} - Sets instructions into the specified delimiter combination\n\n" +
+			  "----------\nUsage\n----------\n{prefix}editcom {add / edit / setdel / del} {command} - Administer said command\n" + 
+			  "{prefix}editcom add {command} {instructions} ({desc={description}}) - Adds a command using the specified instructions\n" +
+			  "{prefix}editcom add {command} {{delimiters={number of delimiters}}} ({desc={description}}) - Adds a command using the specified delimiter count\n" +
+			  "{prefix}editcom setdel {command} {delimiters} {instructions} - Sets instructions into the specified delimiter combination\n\n" +
 			  "----------\nAliases\n----------\n{prefix}editcmd", 
 			  false, 
 			  "editcom", "editcmd");
