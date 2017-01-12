@@ -525,7 +525,9 @@ public abstract class Game{
 	@SuppressWarnings("deprecation")
 	public void stop(){
 		clearPickTimers();
-		match.getTournament().stopStreaming(this);
+		
+		if(multiChannel != null)
+			match.getTournament().stopStreaming(this);
 		
 		waitingForCaptains = 0;
 		
@@ -575,12 +577,12 @@ public abstract class Game{
 		if(match.getTournament().isUsingTourneyServer() && match.getServerID().length() > 0 && winningTeam.getServerTeamID() != 0){
 			RemotePatyServerUtils.setMPLinkAndWinner(mpLink, winningTeam, match.getServerID(), match.getTournament().getName(), fTeamPoints, sTeamPoints);
 		}
-			
-		sendMessage("!mp close");
 		
 		String shortGameEndMsg = match.getFirstTeam().getTeamName() + " (" + fTeamPoints + 
 				  				 ") vs (" + sTeamPoints + ") " + match.getSecondTeam().getTeamName() + 
 				  				 " - " + mpLink;
+		
+		sendMessage("!mp close");
 		
 		for(String admin : match.getMatchAdmins())
 			pmUser(admin, shortGameEndMsg);
@@ -600,6 +602,18 @@ public abstract class Game{
 		if(mapUpdater != null){
 			mapUpdater.cancel();
 			mapUpdater = null;
+		}
+		
+		if(System.currentTimeMillis() > match.getTournament().getTempLobbyDecayTime()){
+			match.getTournament().setTempLobbyDecayTime();
+			
+			try{
+				Main.ircBot.sendIRC().joinChannel("BanchoBot");
+			}catch(Exception ex){
+				Log.logger.log(Level.INFO, "Could not talk to BanchoBot!");
+			}
+			
+			Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make SMT Temporary Lobby");
 		}
 		
 		invitesSent.clear(); invitesSent = null;

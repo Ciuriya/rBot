@@ -119,7 +119,7 @@ public abstract class GlobalCommand{
 		commands.add(new StopCommand());
 		commands.add(new SuggestCommand());
 		commands.add(new UserInfoCommand());
-		//commands.add(new VoiceCommand());
+		commands.add(new VoiceCommand());
 		commands.add(new YoutubeDownloadCommand());
 	}
 	

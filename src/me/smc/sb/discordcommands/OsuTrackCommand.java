@@ -256,7 +256,12 @@ public class OsuTrackCommand extends GlobalCommand{
 													}
 													
 													String spacing = "\n\n\n\n\n";
-													MessageHistory history = new MessageHistory(channel);
+													MessageHistory history = null;
+													
+													try{
+														history = new MessageHistory(channel);
+													}catch(Exception e){}
+													
 													Message last;
 													
 													try{

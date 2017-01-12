@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import me.smc.sb.irccommands.InvitePlayerCommand;
+import me.smc.sb.utils.Log;
 
 public class TeamGame extends Game{
 
@@ -33,6 +35,8 @@ public class TeamGame extends Game{
 		Timer timeout = new Timer();
 		timeout.schedule(new TimerTask(){
 			public void run(){
+				Log.logger.log(Level.INFO, "timeout, wfc: " + waitingForCaptains);
+				
 				if(waitingForCaptains > 0){
 					if(!playersInRoom.isEmpty())
 						if(teamToBoolean(findTeam(playersInRoom.get(0)))){
@@ -139,9 +143,8 @@ public class TeamGame extends Game{
 				invitePlayer(pl.getName().replaceAll(" ", "_"));
 				return;
 			}
-
-		for(Player pl : team.getPlayers())
-			captains.remove(pl.getName().replaceAll(" ", "_"));
+		
+		return;
 	}
 	
 	public void resize(String message){

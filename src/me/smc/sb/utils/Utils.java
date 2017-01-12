@@ -51,6 +51,7 @@ import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
@@ -99,6 +100,15 @@ public class Utils{
 			channel.sendMessage(message).queue(); 
 			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		}
+		
+		Main.messagesSentThisSession++;
+	}
+	
+	public static void info(MessageChannel channel, MessageEmbed embed){
+		if(channel instanceof TextChannel){
+			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent"))
+				channel.sendMessage(embed).queue();
+		}else channel.sendMessage(embed).queue(); 
 		
 		Main.messagesSentThisSession++;
 	}
@@ -258,13 +268,14 @@ public class Utils{
 		return answer;
 	}
 
+
 	public static String[] getHTMLCode(String link){
 		BufferedReader in = null;
 		String[] toReturn = new String[]{};
 		
 		try{
-			URL url = new URL(link);
-			StringBuilder page = new StringBuilder();
+			URL url = new URL(link.replaceAll(" ", "%20"));
+			StringBuffer page = new StringBuffer();
 			
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
@@ -278,9 +289,11 @@ public class Utils{
 			int charsRead = 0;
 			
 			while((charsRead = in.read(buffer, 0, 1024)) != -1)
-				page.append(buffer, 0, charsRead).append("\n");
+				page.append(buffer, 0, charsRead);
 			
-			toReturn = page.toString().split("\n");
+			//while((str = in.readLine()) != null) page.append(str + "\n");
+			
+			toReturn = page.toString().split("\\n");
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}finally{
@@ -348,14 +361,26 @@ public class Utils{
 	
 	public static String toDuration(long time){
 		long millis = time;
+		
         long days = TimeUnit.MILLISECONDS.toDays(millis);
         millis -= TimeUnit.DAYS.toMillis(days);
+        
         long hours = TimeUnit.MILLISECONDS.toHours(millis);
         millis -= TimeUnit.HOURS.toMillis(hours);
+        
         long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
         millis -= TimeUnit.MINUTES.toMillis(minutes);
+        
         long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
-        return days + "d" + hours + "h" + minutes + "m" + seconds + "s";
+        
+        String display = "";
+        
+        if(days > 0) display += days + "d";
+        if(hours > 0) display += hours + "h";
+        if(minutes > 0) display += minutes + "m";
+        if(seconds > 0) display += seconds + "s";
+        
+        return display;
 	}
 	
 	public static long toTime(String date){
@@ -475,7 +500,7 @@ public class Utils{
 					Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
 					
 					if(member != null && member.hasPermission(((TextChannel) channel), Permission.MESSAGE_MANAGE))
-						msg.deleteMessage();
+						msg.deleteMessage().queue();
 				}
 			}
 		}, 1000);

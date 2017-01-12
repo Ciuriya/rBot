@@ -82,17 +82,17 @@ public class SearchCommand extends GlobalCommand{
 			ArrayList<String> highres = Utils.getNextLineCodeFromLink(imagePage, 0, "Click on the <a class=\"highres-show\" href=\"");
 			
 			if(highres.size() > 0)
-				Utils.infoBypass(e.getChannel(), highres.get(0).split("href=\"")[1].split("\">View larger version")[0]);
+				Utils.infoBypass(e.getChannel(), "https://" + highres.get(0).split("href=\"\\/\\/")[1].split("\">View larger version")[0]);
 			else{
 				ArrayList<String> line = Utils.getNextLineCodeFromLink(imagePage, 0, "property=\"og\\:image\"");
 				
 				if(line.size() > 0)
-					Utils.infoBypass(e.getChannel(), line.get(0).split("meta content=\"")[1].split("\" property=\"")[0]);
+					Utils.infoBypass(e.getChannel(), "https://" + line.get(0).split("meta content=\"\\/\\/")[1].split("\" property=\"")[0]);
 				else{
 					ArrayList<String> highresUncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged highres\" href=\"");
 					
 					if(highresUncensored.size() > 0)
-						Utils.infoBypass(e.getChannel(), highresUncensored.get(0).split("href=\"")[1].split("\" id=")[0]);
+						Utils.infoBypass(e.getChannel(), "https://" + highresUncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0]);
 					else{
 						ArrayList<String> uncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged\" href=\"");
 						
@@ -101,9 +101,9 @@ public class SearchCommand extends GlobalCommand{
 							return;
 						}
 						
-						String image = uncensored.get(0).split("href=\"")[1].split("\" id=")[0];
+						String image = uncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0];
 						
-						Utils.infoBypass(e.getChannel(), image);
+						Utils.infoBypass(e.getChannel(), "https://" + image);
 					}
 				}
 			}

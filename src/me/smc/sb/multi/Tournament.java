@@ -54,6 +54,7 @@ public class Tournament{
 	private String alertMessage;
 	private PickStrategy pickStrategy;
 	private int rematchesAllowed;
+	private long tempLobbyDecayTime;
 	public static String tournamentDB = "Tournament_DB";
 	
 	public Tournament(String name){
@@ -66,6 +67,8 @@ public class Tournament{
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
 		matchAdmins = new ArrayList<>();
+		
+		tempLobbyDecayTime = 0;
 		
 		displayName = getConfig().getValue("displayName");
 		twitchChannel = getConfig().getValue("twitchChannel");
@@ -131,6 +134,8 @@ public class Tournament{
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
 		matchAdmins = new ArrayList<>();
+		
+		tempLobbyDecayTime = 0;
 		
 		tournaments.add(this);
 	}
@@ -288,12 +293,20 @@ public class Tournament{
 		return currentlyStreamed;
 	}
 	
+	public long getTempLobbyDecayTime(){
+		return tempLobbyDecayTime;
+	}
+	
 	public java.util.Map<String, Match> getConditionalTeams(){
 		return conditionalTeams;
 	}
 	
 	public void removeConditionalTeam(String team){
 		conditionalTeams.remove(team);
+	}
+	
+	public void setTempLobbyDecayTime(){
+		tempLobbyDecayTime = System.currentTimeMillis() + 3600000; // 25 minutes
 	}
 	
 	public void setCurrentlyStreamed(Game game){
@@ -305,10 +318,14 @@ public class Tournament{
 	}
 	
 	public boolean isStreamed(Game game){
-		if(currentlyStreamed == null) return false;
+		if(currentlyStreamed == null || game.match == null) return false;
 		
-		if(game.getMpNum() == currentlyStreamed.getMpNum())
-			return true;
+		try{
+			if(game.match.getMatchNum() == currentlyStreamed.match.getMatchNum())
+				return true;
+		}catch(Exception e){
+			return false;
+		}
 		
 		return false;
 	}
@@ -319,11 +336,20 @@ public class Tournament{
 		if(isChannelInUse(twitchChannel)){
 			Game streamed = getStreamed(twitchChannel);
 			
-			if(game.match.getStreamPriority() >= streamed.match.getStreamPriority()){
-				addToTwitchQueue(game);
-				return false;
-			}else
-				streamed.match.getTournament().setCurrentlyStreamed(null);
+			if(streamed != null && streamed.match != null){
+				try{
+					if(game.match.getStreamPriority() >= streamed.match.getStreamPriority()){
+						addToTwitchQueue(game);
+						return false;
+					}else
+						streamed.match.getTournament().setCurrentlyStreamed(null);
+				}catch(Exception e){
+					Log.logger.log(Level.INFO, "game null? " + (game == null) + " game match null? " + (game.match == null) +
+											   " streamed null? " + (streamed == null) + " streamed match null? " + (streamed.match == null));
+					
+					return false;
+				}
+			}
 		}
 		
 		currentlyStreamed = game;
@@ -393,21 +419,23 @@ public class Tournament{
 	}
 	
 	private Game getNextFromTwitchQueue(int priority){
-		if(twitchQueue.containsKey(twitchChannel)){
-			Optional<Game> optGame = twitchQueue.get(twitchChannel).stream()
-									 .filter(g -> g.match.getStreamPriority() == priority)
-									 .findFirst();
-			
-			if(optGame.isPresent()){
-				removeFromTwitchQueue(optGame.get());
+		try{
+			if(twitchQueue.containsKey(twitchChannel)){
+				Optional<Game> optGame = twitchQueue.get(twitchChannel).stream()
+										 .filter(g -> g.match.getStreamPriority() == priority)
+										 .findFirst();
 				
-				return optGame.get();	
-			}else if(twitchQueue.get(twitchChannel).stream()
-					 .filter(g -> g.match.getStreamPriority() > priority)
-					 .count() > 0)
-				return getNextFromTwitchQueue(priority + 1);
-		}
-		
+				if(optGame.isPresent()){
+					removeFromTwitchQueue(optGame.get());
+					
+					return optGame.get();	
+				}else if(twitchQueue.get(twitchChannel).stream()
+						 .filter(g -> g.match.getStreamPriority() > priority)
+						 .count() > 0)
+					return getNextFromTwitchQueue(priority + 1);
+			}
+		}catch(Exception e){}
+
 		return null;
 	}
 	

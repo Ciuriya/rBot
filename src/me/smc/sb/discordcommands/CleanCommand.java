@@ -2,17 +2,14 @@ package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import me.smc.sb.perm.Permissions;
-import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.MessageHistory;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
 public class CleanCommand extends GlobalCommand{
 
@@ -28,7 +25,7 @@ public class CleanCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		e.getMessage().deleteMessage().complete();
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		int amount = Integer.valueOf(args[0]);
@@ -53,12 +50,7 @@ public class CleanCommand extends GlobalCommand{
 		
 		List<Message> messageList;
 		
-		try{
-			messageList = history.retrievePast(100).block();
-		}catch(RateLimitedException e1){
-			Log.logger.log(Level.INFO, e1.getMessage(), e1);
-			messageList = new ArrayList<>();
-		}
+		messageList = history.retrievePast(100).complete();
 		
 		List<Message> toDelete = new ArrayList<>();
 		
@@ -71,21 +63,19 @@ public class CleanCommand extends GlobalCommand{
 				cleared++;
 				
 				if(e.getChannel() instanceof PrivateChannel){
-					message.deleteMessage();
+					message.deleteMessage().complete();
 					Utils.sleep(350);
 				}else toDelete.add(message);
 			}
 			
 			if(messageList.size() == 0 && cleared < amount)
-				try{
-					messageList = history.retrievePast(100).block();
-				}catch(RateLimitedException e1){
-					Log.logger.log(Level.INFO, e1.getMessage(), e1);
-					messageList = new ArrayList<>();
-				}	
+				messageList = history.retrievePast(100).complete();
 		}
 		
-		if(!toDelete.isEmpty()) e.getTextChannel().deleteMessages(toDelete);
+		if(toDelete.size() == 1) 
+			toDelete.get(0).deleteMessage().complete();
+		else if(!toDelete.isEmpty()) 
+			e.getTextChannel().deleteMessages(toDelete).complete();
 		
 		Utils.info(e.getChannel(), "Cleared " + cleared + " messages!");
 	}

@@ -8,9 +8,7 @@ import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.OnlineStatus;
 import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class StatsCommand extends GlobalCommand{
@@ -45,11 +43,19 @@ public class StatsCommand extends GlobalCommand{
 		float averageHtmlScrapesPerMinute = Main.htmlScrapes == 0 ? 0 : (Main.htmlScrapes / ((float) uptime / 60000f));
 		float averageOsuHtmlScrapesPerMinute = Main.osuHtmlScrapes == 0 ? 0 : (Main.osuHtmlScrapes / ((float) uptime / 60000f));
 		int tracked = 0;
+		int highestTrackAmount = 0;
+		Guild highestTrackGuild = null;
+		
 		List<String> trackedPlayers = new ArrayList<>();
 		
     	for(Guild guild : Main.api.getGuilds()){
     		Configuration sCfg = new Configuration(new File("Guilds/" + guild.getId() + ".txt"));
     		ArrayList<String> list = sCfg.getStringList("tracked-players");
+    		
+    		if(list.size() > highestTrackAmount){
+    			highestTrackAmount = list.size();
+    			highestTrackGuild = guild;
+    		}
     		
     		for(String player : list){
     			if(trackedPlayers.contains(player))
@@ -67,6 +73,7 @@ public class StatsCommand extends GlobalCommand{
 			   .append("osu!api requests: " + Main.requestsSent + " (" + averageRequestsPerMinute + " average/min, " + Main.highestBurstRequestsSent + " burst/min)\n")
 			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
 					   (tracked + trackedPlayers.size()) + " tracked, " + trackedPlayers.size() + " without duplicates)\n")
+			   .append("Most tracked users in a single server: " + highestTrackAmount + " players (" + highestTrackGuild.getName() + ")\n")
 			   .append("HTML pages scraped: " + Main.htmlScrapes + " (" + Main.osuHtmlScrapes + " from osu!)\n")
 			   .append("HTML pages scraped/min average: " + averageHtmlScrapesPerMinute + " (" + averageOsuHtmlScrapesPerMinute + " for osu!)```");
 		
