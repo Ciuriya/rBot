@@ -19,6 +19,7 @@ import org.pircbotx.cap.EnableCapHandler;
 
 import me.smc.sb.communication.IncomingRequest;
 import me.smc.sb.communication.Server;
+import me.smc.sb.discordcommands.VoiceCommand;
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
@@ -198,6 +199,8 @@ public class Main{
 	}
 	
 	public static void stop(int code){
+		VoiceCommand.saveAllRadios();
+		
 		if(!servers.isEmpty())
 			for(Server server : servers)
 				if(server != null)

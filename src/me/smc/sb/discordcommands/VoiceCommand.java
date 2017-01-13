@@ -2,26 +2,27 @@ package me.smc.sb.discordcommands;
 
 import java.util.HashMap;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import me.smc.sb.audio.CustomAudioLoadResultHandler;
 import me.smc.sb.audio.GuildMusicManager;
-import me.smc.sb.audio.TrackScheduler;
+import me.smc.sb.main.Main;
+import me.smc.sb.perm.Permissions;
+import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.Role;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.managers.AudioManager;
 
 public class VoiceCommand extends GlobalCommand{
 
-	private final AudioPlayerManager playerManager;
+	public final AudioPlayerManager playerManager;
 	private static HashMap<String, GuildMusicManager> players;
 	
 	public VoiceCommand(){
@@ -35,7 +36,8 @@ public class VoiceCommand extends GlobalCommand{
 			  "{prefix}voice queue {link} (true) - Queues up a song or playlist in the player, if true is specified, it randomizes the playlist" +
 			  " (if it's a playlist)\nNote that if a playlist is playing, it will simply stop going through the playlist after current song" +
 			  "\n{prefix}voice clear - Clears the player's queue\n{prefix}voice skip - Skips the currently playing song (does not skip the playlist)" +
-			  "\n\n----------\nAliases\n----------\n{prefix}v\n{prefix}music",  
+			  "\n{prefix}voice perm-lock {@roles} - Only allows usage of voice commands to the mentioned roles." +
+			  "\n\n----------\nAliases\n----------\n{prefix}v\n{prefix}music",
 			  false, 
 			  "voice", "v", "music");
 		
@@ -49,6 +51,21 @@ public class VoiceCommand extends GlobalCommand{
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
+		
+		String permLock = Main.serverConfigs.get(e.getGuild().getId()).getValue("voice-perm-lock");
+		
+		if(permLock.length() > 0 && !Permissions.check(e.getAuthor(), Permissions.BOT_ADMIN)){
+			boolean allowed = false;
+			
+			for(String role : permLock.split(","))
+				if(e.getGuild().getMembersWithRoles(e.getGuild().getRolesByName(role, true)).contains(e.getMember())){
+					allowed = true;
+					break;
+				}
+			
+			if(!allowed) return;
+		}
+		
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		switch(args[0]){
@@ -63,14 +80,24 @@ public class VoiceCommand extends GlobalCommand{
 					Utils.info(e.getChannel(), "Player resumed!");
 				}else music.scheduler.nextTrack();
 				
+				Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-state", "playing");
+				
 				break;
 			case "pause": 
 				getGuildAudioPlayer(e.getChannel(), e.getGuild()).player.setPaused(true);
 				
+				Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-state", "paused");
+				
 				Utils.info(e.getChannel(), "Player paused!");
 				break;
 			case "stop": 
-				getGuildAudioPlayer(e.getChannel(), e.getGuild()).player.stopTrack();
+				GuildMusicManager gmm = getGuildAudioPlayer(e.getChannel(), e.getGuild());
+				
+				gmm.player.stopTrack();
+				
+				gmm.scheduler.updateNP(null);
+				
+				Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-state", "stopped");
 				
 				Utils.info(e.getChannel(), "Player stopped!");
 				break;
@@ -79,6 +106,8 @@ public class VoiceCommand extends GlobalCommand{
 				
 				if(volume != -1){
 					getGuildAudioPlayer(e.getChannel(), e.getGuild()).player.setVolume(volume);
+					
+					Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-volume", volume);
 					
 					Utils.info(e.getChannel(), "Player set to " + volume + "% volume!");
 				}
@@ -91,18 +120,37 @@ public class VoiceCommand extends GlobalCommand{
 				Utils.info(e.getChannel(), "Player queue cleared!");
 				break;
 			case "skip": skipSong(e, args); break;
+			case "np":
+				if(args.length < 2){
+					Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-np-ip", "");
+					return;
+				}
+				
+				Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-np-ip", args[1]);
+				break;
+			case "perm-lock":			
+				String roles = "";
+				
+				for(Role role : e.getMessage().getMentionedRoles())
+					roles += "," + role.getName();
+					
+				Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-perm-lock", roles.substring(1));
+				
+				Utils.info(e.getChannel(), "The voice commands are now only available to the mentioned roles!");
+				break;
 		}
 	}
 	
-	private synchronized GuildMusicManager getGuildAudioPlayer(MessageChannel channel, Guild guild){
+	public synchronized GuildMusicManager getGuildAudioPlayer(MessageChannel channel, Guild guild){
 		GuildMusicManager musicManager = players.get(guild.getId());
 
 		if(musicManager == null){
 			musicManager = new GuildMusicManager(playerManager);
+			musicManager.player.setVolume(35);
 			players.put(guild.getId(), musicManager);
 		}
 
-		musicManager.scheduler.setMessageChannel(channel);
+		musicManager.scheduler.setMessageChannel(channel instanceof TextChannel ? (TextChannel) channel : null);
 		guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
 
 		return musicManager;
@@ -111,29 +159,33 @@ public class VoiceCommand extends GlobalCommand{
 	private void joinVoiceChannel(MessageReceivedEvent e, String[] args){
 		if(!Utils.checkArguments(e, args, 2)) return;
 		
-		VoiceChannel vChannel = null;
-		
 		String cName = "";
 		
 		for(int i = 1; i < args.length; i++)
 			cName += args[i] + " ";
 		
-		for(VoiceChannel voice : e.getGuild().getVoiceChannels())
-			if(voice.getName().equalsIgnoreCase(cName.substring(0, cName.length() - 1)))
+		joinVoiceChannel(e.getGuild(), e.getTextChannel(), cName.substring(0, cName.length() - 1));
+	}
+	
+	public void joinVoiceChannel(Guild guild, TextChannel channel, String name){
+		VoiceChannel vChannel = null;
+		
+		for(VoiceChannel voice : guild.getVoiceChannels())
+			if(voice.getName().equalsIgnoreCase(name))
 				vChannel = voice;
 		
 		if(vChannel == null){
-			Utils.info(e.getChannel(), "This voice channel does not exist!"); 
+			Utils.info(channel, "This voice channel does not exist!"); 
 			return;
 		}
 		
-		AudioManager audioManager = e.getGuild().getAudioManager();
+		AudioManager audioManager = guild.getAudioManager();
 		
 		if(audioManager.isConnected() && audioManager.getConnectedChannel().getId().equalsIgnoreCase(vChannel.getId())){
-			Utils.info(e.getChannel(), "Already connected to this channel!");
+			Utils.info(channel, "Already connected to this channel!");
 			return;
 		}else if(audioManager.isConnected()){
-			GuildMusicManager music = getGuildAudioPlayer(e.getChannel(), e.getGuild());
+			GuildMusicManager music = getGuildAudioPlayer(channel, guild);
 			music.player.setPaused(true);
 			
 			audioManager.closeAudioConnection();
@@ -144,13 +196,20 @@ public class VoiceCommand extends GlobalCommand{
 			audioManager.closeAudioConnection();
 			audioManager.openAudioConnection(vChannel);
 		}else audioManager.openAudioConnection(vChannel);
+		
+		Main.serverConfigs.get(guild.getId()).writeValue("voice-channel", vChannel.getName());
+		
+		if(players.containsKey(guild.getId()))
+			if(players.get(guild.getId()).player.isPaused())
+				players.get(guild.getId()).player.setPaused(false);
 	}
 	
 	private void leaveVoiceChannel(MessageReceivedEvent e, String[] args){
-		if(players.containsKey(e.getGuild().getId())){
-			players.get(e.getGuild().getId()).player.destroy();
-			players.remove(e.getGuild().getId());
-		}
+		if(players.containsKey(e.getGuild().getId()))
+			players.get(e.getGuild().getId()).player.setPaused(true);
+
+		Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-state", "");
+		Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-channel", "");
 		
 		e.getGuild().getAudioManager().closeAudioConnection();
 	}
@@ -162,36 +221,7 @@ public class VoiceCommand extends GlobalCommand{
 		
 		boolean random = args.length >= 3 && args[2].equalsIgnoreCase("true") ? true : false;
 		
-		playerManager.loadItemOrdered(music, args[1], new AudioLoadResultHandler(){
-			@Override
-			public void trackLoaded(AudioTrack track){
-				TrackScheduler scheduler = getGuildAudioPlayer(e.getChannel(), e.getGuild()).scheduler;
-				
-				Utils.info(e.getChannel(), track.getInfo().title + " added to queue!\n(" + (scheduler.size() + 1) + " items queued)");
-				
-				scheduler.queue(track, args[1]);
-			}
-
-			@Override
-			public void playlistLoaded(AudioPlaylist playlist){
-				TrackScheduler scheduler = getGuildAudioPlayer(e.getChannel(), e.getGuild()).scheduler;
-				
-				Utils.info(e.getChannel(), playlist.getName() + " playlist added to queue! (" + playlist.getTracks().size() + " songs)" +
-										   "\n(" + (scheduler.size() + 1) + " items in queue)");
-				
-				scheduler.queue(playlist, args[1], random);
-			}
-
-			@Override
-			public void noMatches(){
-				Utils.info(e.getChannel(), "Nothing found by the name of " + args[1]);
-			}
-
-			@Override
-			public void loadFailed(FriendlyException exception){
-				Utils.info(e.getChannel(), "Could not play: " + exception.getMessage());
-			}
-		});
+		playerManager.loadItemOrdered(music, args[1], new CustomAudioLoadResultHandler(e.getChannel(), e.getGuild(), args[1], random, false, this));
 	}
 	
 	private void skipSong(MessageReceivedEvent e, String[] args){
@@ -209,5 +239,42 @@ public class VoiceCommand extends GlobalCommand{
 		}
 		
 		return true;
+	}
+	
+	public static void loadRadio(Guild guild, Configuration config){
+		if(config.getStringList("voice-queue").size() > 0 ||
+		   config.getValue("voice-current").length() > 0 ||
+		   config.getValue("voice-state").length() > 0){
+			VoiceCommand voice = null;
+			
+			for(GlobalCommand gc : GlobalCommand.commands)
+				if(gc instanceof VoiceCommand){
+					voice = (VoiceCommand) gc;
+					break;
+				}
+			
+			if(voice != null){
+				String textChannel = config.getValue("voice-text-channel");
+				
+				if(textChannel.length() == 0) return;
+				
+				GuildMusicManager music = voice.getGuildAudioPlayer(guild.getTextChannelById(textChannel), guild);
+				
+				int volume = Utils.stringToInt(config.getValue("voice-volume"));
+				
+				if(volume == -1) volume = 35;
+				
+				music.player.setVolume(volume);
+				
+				music.scheduler.loadScheduling(voice, music, guild.getTextChannelById(textChannel), config);
+			}
+		}
+	}
+	
+	public static void saveAllRadios(){
+		for(String server : players.keySet()){
+			players.get(server).scheduler.saveScheduling(Main.serverConfigs.get(server));
+			players.get(server).player.setPaused(true);
+		}
 	}
 }

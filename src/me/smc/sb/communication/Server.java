@@ -98,6 +98,10 @@ public class Server{
 	}
 	
 	public void sendMessage(String message){
+		sendMessage(ip, portSend, message);
+	}
+	
+	public static void sendMessage(String ip, int portSend, String message){
 		Socket clientSocket = null;
 		OutputStream os = null;
 		OutputStreamWriter osw = null;

@@ -257,7 +257,7 @@ public class OsuTrackCommand extends GlobalCommand{
 														boolean isPB = Boolean.parseBoolean(play.split("~~~&pb=")[1].split("&pp")[0]);
 														double ppAmount = Utils.stringToDouble(play.split("~~~&pb=" + isPB + "&pp=")[1]);
 														
-														if((Main.serverConfigs.get(server).getBoolean("track-best-plays") ? isPB : true) &&
+														if((Main.serverConfigs.get(server).getBoolean("track-best-only") ? isPB : true) &&
 														   ppAmount >= Main.serverConfigs.get(server).getInt("track-pp-minimum"))
 															rebuiltMsg += play.split("~~~")[0] + "|||";
 													}
