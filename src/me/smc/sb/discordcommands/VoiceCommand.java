@@ -200,8 +200,10 @@ public class VoiceCommand extends GlobalCommand{
 		Main.serverConfigs.get(guild.getId()).writeValue("voice-channel", vChannel.getName());
 		
 		if(players.containsKey(guild.getId()))
-			if(players.get(guild.getId()).player.isPaused())
+			if(players.get(guild.getId()).player.isPaused()){
 				players.get(guild.getId()).player.setPaused(false);
+				Main.serverConfigs.get(guild.getId()).writeValue("voice-state", "playing");
+			}
 	}
 	
 	private void leaveVoiceChannel(MessageReceivedEvent e, String[] args){

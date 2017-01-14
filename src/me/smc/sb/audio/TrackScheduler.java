@@ -219,6 +219,8 @@ public class TrackScheduler extends AudioEventAdapter{
 	}
 	
 	public void loadScheduling(VoiceCommand voice, GuildMusicManager music, TextChannel channel, Configuration config){
+		String state = config.getValue("voice-state");
+		
 		loading = true;
 		
 		this.channel = channel;
@@ -298,9 +300,7 @@ public class TrackScheduler extends AudioEventAdapter{
 		}
 		
 		loading = false;
-	
-		String state = config.getValue("voice-state");
-		
+
 		if(state.length() == 0) return;
 		
 		String voiceChannel = config.getValue("voice-channel");
@@ -310,7 +310,9 @@ public class TrackScheduler extends AudioEventAdapter{
 		
 		if(currentSong != null){
 			player.startTrack(currentSong.getTrack(), false);
-			player.getPlayingTrack().setPosition(currentPosition);
+			
+			if(!currentSong.getURL().contains("www.twitch.tv/"))
+				player.getPlayingTrack().setPosition(currentPosition);
 		}
 		
 		if(state.equalsIgnoreCase("paused"))
@@ -339,7 +341,7 @@ public class TrackScheduler extends AudioEventAdapter{
 			if(currentInfo.length() == 0)
 				currentInfo = "|" + currentSong.getTrack().getInfo().title;
 			
-			if(player.getPlayingTrack() != null)
+			if(player.getPlayingTrack() != null && !currentInfo.contains("www.twitch.tv/"))
 				currentInfo += "||" + player.getPlayingTrack().getPosition();
 			else currentInfo += "||0";
 		}

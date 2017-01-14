@@ -873,7 +873,9 @@ public class Tournament{
 				if(config.getValue("match-" + matchNum + "-serverid") != "")
 					match.setServerID(config.getValue("match-" + matchNum + "-serverid"));
 				
-				match.setStreamPriority(config.getInt("match-" + matchNum + "-priority"));
+				if(config.getInt("match-" + matchNum + "-priority") == 0)
+					match.setStreamPriority(1);
+				else match.setStreamPriority(config.getInt("match-" + matchNum + "-priority"));
 			}
 	}
 	

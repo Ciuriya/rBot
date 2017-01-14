@@ -109,7 +109,7 @@ public class RegularPickStrategy implements PickStrategy{
 							}
 							
 							if(tourneyId != 0){
-								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "bancount", 1);
+								RemotePatyServerUtils.incrementMapValue(mapId, game.match.getMapPool().getPoolNum(), tourneyId, "bancount", 1);
 							}
 						}
 					}

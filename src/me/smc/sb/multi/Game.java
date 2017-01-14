@@ -47,7 +47,6 @@ public abstract class Game{
 	protected int roomSize = 0;
 	protected int skipRematchState = 0; //0 = none, 1 = f skipped, 2 = s skipped, 3 = both skip
 	protected int contestState = 0; //^
-	protected int skipWarmupState = 0; //^
 	protected int expectedPlayers = 0;
 	protected int lastModPickedFTeam = 0;
 	protected int lastModPickedSTeam = 0;
@@ -273,7 +272,7 @@ public abstract class Game{
 				pickTimer(false);
 				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url> +MOD, the mod is optional.", 
 							  "If the lobby order is not correct, do not worry about it, it will be fixed.",
-							  "To skip this warmup, both teams please use !warmupskip");
+							  "To skip this warmup, please use !warmupskip");
 				break;
 			case 3: 
 				if(state.eq(GameState.PAUSED)) return;
@@ -659,7 +658,6 @@ public abstract class Game{
 		warmupsLeft = 0;
 		contestState = 0;
 		skipRematchState = 0;
-		skipWarmupState = 0;
 		lastPickTime = 0;
 		lastWinner = null;
 		discordResultMessage = null;
@@ -938,7 +936,7 @@ public abstract class Game{
 				}
 				
 				if(tourneyId != 0){
-					RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "pickcount", -1);
+					RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "pickcount", -1);
 				}
 			}
 		}
@@ -1042,23 +1040,10 @@ public abstract class Game{
 	public void acceptWarmupSkip(String player){
 		Team team = findTeam(player);
 		
-		switch(skipWarmupState){
-			case 0: skipWarmupState = teamToBoolean(team) ? 1 : 2;
-					sendMessage(team.getTeamName() + " has voted to skip their warmup!");
-					break;
-			case 1: if(teamToBoolean(team)) break;
-					else{skipWarmupState = 3; break;}
-			case 2: if(!teamToBoolean(team)) break;
-					else{skipWarmupState = 3; break;}
-			default: return;
-		}
-		
-		if(skipWarmupState == 3){		
+		if(selectingTeam.getTeamName().equalsIgnoreCase(team.getTeamName())){		
 			SkipWarmupCommand.gamesAllowedToSkip.remove(this);
 			sendMessage("The warmup has been skipped!");
-			
-			skipWarmupState = 0;
-			
+
 			warmupsLeft--;
 			
 			updateResults(false);
@@ -1693,16 +1678,16 @@ public abstract class Game{
 							}
 							
 							if(tourneyId != 0){
-								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "pickcount", 1);
+								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "pickcount", 1);
 								
 								if(sTeamScore > 0 && fTeamScore > 0){
-									RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "total_score", totalScore);
-									RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "target_range_score", targetRangeScore);
+									RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "total_score", totalScore);
+									RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "target_range_score", targetRangeScore);
 								}
 								
-								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "target_range_passed", targetRangePasses);
-								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "plays_submitted", totalSubmits);
-								RemotePatyServerUtils.incrementMapValue(mapId, tourneyId, "plays_passed", totalPasses);
+								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "target_range_passed", targetRangePasses);
+								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "plays_submitted", totalSubmits);
+								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "plays_passed", totalPasses);
 							}
 						}
 					}

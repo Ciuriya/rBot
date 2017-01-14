@@ -80,15 +80,16 @@ public class RemotePatyServerUtils{
 		return confirmed.get() == 1;
 	}
 	
-	public static long fetchMapValue(int mapId, int tournamentId, String value) throws Exception{
+	public static long fetchMapValue(int mapId, int mappoolId, int tournamentId, String value) throws Exception{
 		Connection fetchSQL = connect();
 		
 		final FinalLong finalValue = new FinalLong(0);
 		
 		new JdbcSession(fetchSQL)
 		.sql("SELECT " + value + " FROM maps " + 
-			 "WHERE map_id=? AND mappool_tournaments_id=?")
+			 "WHERE map_id=? AND mappool_id=? AND mappool_tournaments_id=?")
 		.set(mapId)
+		.set(mappoolId)
 		.set(tournamentId)
 		.select(new Outcome<List<String>>(){
 			@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -103,7 +104,7 @@ public class RemotePatyServerUtils{
 		return finalValue.get();
 	}
 	
-	public static void incrementMapValue(int mapId, int tournamentId, String value, long amount){
+	public static void incrementMapValue(int mapId, int mappoolId, int tournamentId, String value, long amount){
 		if(amount == 0) return;
 		
 		new Thread(new Runnable(){
@@ -111,15 +112,16 @@ public class RemotePatyServerUtils{
 				Connection mapSQL = null;
 				
 				try{
-					long remoteVal = fetchMapValue(mapId, tournamentId, value);
+					long remoteVal = fetchMapValue(mapId, mappoolId, tournamentId, value);
 					
 					mapSQL = connect();
 					
 					new JdbcSession(mapSQL)
 					.sql("UPDATE `maps` SET " + value + "=? " +
-						 "WHERE map_id=? AND mappool_tournaments_id=?")
+						 "WHERE map_id=? AND mappool_id=? AND mappool_tournaments_id=?")
 					.set(remoteVal + amount)
 					.set(mapId)
+					.set(mappoolId)
 					.set(tournamentId)
 					.update(Outcome.VOID);
 				}catch(Exception e){

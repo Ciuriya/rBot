@@ -262,7 +262,7 @@ public class Utils{
 			
 			answer = response.toString();
 		}catch(Exception e){
-			Log.logger.log(Level.INFO, e.getMessage(), e);
+			Log.logger.log(Level.INFO, "sendPost Exception: " + e.getMessage());
 		}
 		
 		return answer;
@@ -295,7 +295,7 @@ public class Utils{
 			
 			toReturn = page.toString().split("\\n");
 		}catch(Exception e){
-			Log.logger.log(Level.INFO, e.getMessage(), e);
+			Log.logger.log(Level.INFO, "getHTML Exception: " + e.getMessage());
 		}finally{
 			try{
 				if(in != null) in.close();
@@ -496,12 +496,14 @@ public class Utils{
 		Timer t = new Timer();
 		t.schedule(new TimerTask() {	
 			@Override public void run() {
-				if(channel instanceof TextChannel){
-					Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
-					
-					if(member != null && member.hasPermission(((TextChannel) channel), Permission.MESSAGE_MANAGE))
-						msg.deleteMessage().queue();
-				}
+				try{
+					if(channel instanceof TextChannel){
+						Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
+						
+						if(member != null && member.hasPermission(((TextChannel) channel), Permission.MESSAGE_MANAGE))
+							msg.deleteMessage().queue();
+					}
+				}catch(Exception e){}
 			}
 		}, 1000);
 	}

@@ -448,7 +448,7 @@ public class OsuTrackCommand extends GlobalCommand{
 				int countryRank = Utils.stringToInt(ppAndRank.split("&cr=")[1]);
 				
 				if(limit != 1){ 
-					for(int i = jsonResponse.length() - 1; i >= 0; i--){							
+					for(int i = jsonResponse.length() - 1; i >= 0; i--){		
 						JSONObject obj = jsonResponse.getJSONObject(i);
 						String play = "";
 						String osuDate = osuDateToCurrentDate(obj.getString("date"));
@@ -524,7 +524,8 @@ public class OsuTrackCommand extends GlobalCommand{
 									for(int j = 0; j < tpJsonResponse.length(); j++){
 										JSONObject topPlay = tpJsonResponse.getJSONObject(j);
 										
-										if(topPlay.getInt("beatmap_id") == obj.getInt("beatmap_id")){
+										if(topPlay.getInt("beatmap_id") == obj.getInt("beatmap_id") &&
+										   topPlay.getInt("enabled_mods") == obj.getInt("enabled_mods")){
 											personalBest = j + 1;
 											
 											isPB = true;
@@ -561,23 +562,27 @@ public class OsuTrackCommand extends GlobalCommand{
 								rankDiff = 0;
 							}
 							
-							play += "\n\n__**" + osuDate + " UTC**__\n\n";
-							play += escapeStar(map.getString("artist")) + " - " + escapeStar(map.getString("title")) + " [" +
-									escapeStar(map.getString("version")) + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-							        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " • " + hits : "") + "\n" + 
-							        Utils.veryLongNumberDisplay(obj.getInt("score")) + " • " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
-							        (map.isNull("max_combo") ? "x" : "/" + map.get("max_combo").toString()) : "FC (" + map.get("max_combo").toString() + "x)") +
-							        " • " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " • **#" + mapRank + "** on map" : "") + 
-							        (!pp.equals("") ? "\n" + pp : "") + "\n\n" + 
-							        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " • **#" + personalBest + "** personal best\n" : "\n") : "") + 
-							        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) • #" + 
-							        Utils.veryLongNumberDisplay(countryRank) + " " + country + " (**" + countryDifference + "**)\n\n" : 
-							        (Math.abs(ppDiff) >= 0.01 ? "\n" : "")) +
-							        "Map • <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> • " + analyzeMapStatus(map.getInt("approved")) + 
-							        "\n" + fixedUser + " • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
-							
-							completeMessage = true;
-							builder.append(play + "~~~&pb=" + isPB + "&pp=" + ppAmount + "|||");
+							try{
+								play += "\n\n__**" + osuDate + " UTC**__\n\n";
+								play += escapeStar(map.getString("artist")) + " - " + escapeStar(map.getString("title")) + " [" +
+										escapeStar(map.getString("version")) + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
+								        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " • " + hits : "") + "\n" + 
+								        Utils.veryLongNumberDisplay(obj.getInt("score")) + " • " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
+								        (map.isNull("max_combo") ? "x" : "/" + map.get("max_combo").toString()) : "FC (" + map.get("max_combo").toString() + "x)") +
+								        " • " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " • **#" + mapRank + "** on map" : "") + 
+								        (!pp.equals("") ? "\n" + pp : "") + "\n\n" + 
+								        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " • **#" + personalBest + "** personal best\n" : "\n") : "") + 
+								        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) • #" + 
+								        Utils.veryLongNumberDisplay(countryRank) + " " + country + " (**" + countryDifference + "**)\n\n" : 
+								        (Math.abs(ppDiff) >= 0.01 ? "\n" : "")) +
+								        "Map • <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> • " + analyzeMapStatus(map.getInt("approved")) + 
+								        "\n" + fixedUser + " • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
+								
+								completeMessage = true;
+								builder.append(play + "~~~&pb=" + isPB + "&pp=" + ppAmount + "|||");
+							}catch(Exception ex){
+								Log.logger.log(Level.SEVERE, "osu!track exception: " + ex.getMessage());
+							}
 						}
 					}
 				}

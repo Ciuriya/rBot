@@ -35,7 +35,7 @@ public class Match{
 		this.pool = null;
 		this.game = null;
 		this.matchAdmins = new ArrayList<>();
-		streamPriority = 1;
+		streamPriority = 0;
 		
 		save(append);
 		t.addMatch(this);
@@ -229,7 +229,7 @@ public class Match{
 		if(append) config.appendToStringList("matches", String.valueOf(matchNum), true);
 		config.writeValue("match-" + matchNum + "-players", players);
 		
-		config.writeValue("match-" + matchNum + "-priority", streamPriority);
+		if(streamPriority != 0) config.writeValue("match-" + matchNum + "-priority", streamPriority);
 		
 		if(fTeam != null) config.writeValue("match-" + matchNum + "-team1", fTeam.getTeamName());
 		if(sTeam != null) config.writeValue("match-" + matchNum + "-team2", sTeam.getTeamName());
