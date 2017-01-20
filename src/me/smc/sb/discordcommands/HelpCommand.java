@@ -27,8 +27,6 @@ public class HelpCommand extends GlobalCommand{
     	if(!e.isFromType(ChannelType.PRIVATE)) serverId = e.getGuild().getId();
     	
     	if(args.length > 0){
-    		msg.append("```");
-    		
     		boolean added = false;
     		
     		for(GlobalCommand gc : GlobalCommand.commands)
@@ -62,6 +60,8 @@ public class HelpCommand extends GlobalCommand{
     	}
     	
     	String rest = msg.toString();
+    	
+    	e.getAuthor().openPrivateChannel().complete();
     	
     	while(rest.length() > 1992){
     		String toSend = rest.substring(0, 1992);

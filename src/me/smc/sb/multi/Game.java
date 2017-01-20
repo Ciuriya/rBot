@@ -270,7 +270,7 @@ public abstract class Game{
 				startMapUpdater();
 				
 				pickTimer(false);
-				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url> +MOD, the mod is optional.", 
+				messageUpdater(0, true, selectingTeam.getTeamName() + ", please pick a warmup map using !select <map url> +MOD, the mod is optional and only takes DT/HT", 
 							  "If the lobby order is not correct, do not worry about it, it will be fixed.",
 							  "To skip this warmup, please use !warmupskip");
 				break;
@@ -612,7 +612,7 @@ public abstract class Game{
 				Log.logger.log(Level.INFO, "Could not talk to BanchoBot!");
 			}
 			
-			Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make SMT Temporary Lobby");
+			Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make " + match.getTournament().getName() + ": TEMP LOBBY");
 		}
 		
 		invitesSent.clear(); invitesSent = null;
@@ -1040,7 +1040,9 @@ public abstract class Game{
 	public void acceptWarmupSkip(String player){
 		Team team = findTeam(player);
 		
-		if(selectingTeam.getTeamName().equalsIgnoreCase(team.getTeamName())){		
+		if(selectingTeam.getTeamName().equalsIgnoreCase(team.getTeamName())){
+			clearPickTimers();
+			
 			SkipWarmupCommand.gamesAllowedToSkip.remove(this);
 			sendMessage("The warmup has been skipped!");
 

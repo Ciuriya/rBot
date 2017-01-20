@@ -69,7 +69,7 @@ public class ListServersCommand extends GlobalCommand{
 					}
 				}
 				
-				Utils.sleep(500);
+				Utils.sleep(300);
 			}
 			
 			String date = "**unavailable**";
@@ -79,6 +79,7 @@ public class ListServersCommand extends GlobalCommand{
 			
 			builder.append("- " + guild.getName().replaceAll("\\n", "") + " (" + guild.getMembers().size() + " users, " + 
 						   StatsCommand.getOnlineUsers(guild) + " online)\n")
+				   .append("  Image URL: " + guild.getIconUrl() + "\n")
 				   .append("  " + guild.getId() + " | " + guild.getTextChannels().size() + " channels | " + 
 						   guild.getVoiceChannels().size() + " voice chats\n")
 				   .append("  Last message posted in " + lastMessageChannel.getName() + "(" + lastMessageChannel.getId() + ") " +

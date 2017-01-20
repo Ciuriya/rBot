@@ -18,7 +18,7 @@ public class SkipWarmupCommand extends IRCCommand{
 		super("Allows teams to skip their warmups.",
 			  " ",
 			  null,
-			  "skipwarmup");
+			  "warmupskip");
 		gamesAllowedToSkip = new ArrayList<>();
 	}
 	

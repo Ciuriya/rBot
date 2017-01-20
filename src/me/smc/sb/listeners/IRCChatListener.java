@@ -106,13 +106,29 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 				gameName += trimSplit[i] + " ";
 			
 			gameName = gameName.substring(0, gameName.length() - 1);
-
+			
 			tournamentName = gameName.split(":")[0];
 
 			gameCreatePMs.add(mpLink.split("mp\\/")[1] + "|" + gameName);
 			
 			Tournament t = Tournament.getTournament(tournamentName);
 			if(t == null) return false;
+			
+			if(gameName.endsWith("TEMP LOBBY")){
+				gameCreatePMs.remove(mpLink.split("mp\\/")[1] + "|" + gameName);
+				
+				long delay = t.getTempLobbyDecayTime() - System.currentTimeMillis();
+				
+				if(delay > 0){
+					new Timer().schedule(new TimerTask(){
+						public void run(){
+							Main.banchoRegulator.sendPriorityMessage("#mp_" + mpLink.split("mp\\/")[1], "!mp close");
+						}
+					}, delay);
+				}
+				
+				return true;
+			}
 			
 			int next = 0;
 			

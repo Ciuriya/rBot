@@ -306,7 +306,7 @@ public class Tournament{
 	}
 	
 	public void setTempLobbyDecayTime(){
-		tempLobbyDecayTime = System.currentTimeMillis() + 3600000; // 25 minutes
+		tempLobbyDecayTime = System.currentTimeMillis() + 300000; // 5 minutes
 	}
 	
 	public void setCurrentlyStreamed(Game game){
