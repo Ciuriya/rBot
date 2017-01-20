@@ -375,7 +375,7 @@ public abstract class Game{
 					messageUpdater.cancel();
 					
 					if(banningTeam != null){
-						bans.add(new Map("https://osu.ppy.sh/b/1", 1));
+						bans.add(new Map("https://osu.ppy.sh/b/1", 1, null));
 						
 						BanMapCommand.banningTeams.remove(banningTeam);
 						
@@ -443,6 +443,11 @@ public abstract class Game{
 		if(mapMod.length() == 0 || warmupsLeft == 0)
 			sendMessage("!mp mods " + getMod(map));
 		
+		String bloodcat = map.getBloodcatLink();
+		
+		if(bloodcat.length() > 0)
+			sendMessage("[" + bloodcat + " A bloodcat download link is available for this map here.]");
+		
 		this.map = map;
 		this.previousMap = map;
 	}
@@ -509,7 +514,7 @@ public abstract class Game{
 					if(ffTeam != fTeamFirst) return;
 					
 					updateResults(false);
-					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord group] or to Smc. Thank you!");
+					sendMessage("This match is reffed by a bot! If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord server] or to Smc. Thank you!");
 					mapSelection(2);
 				}
 			}, 20000);

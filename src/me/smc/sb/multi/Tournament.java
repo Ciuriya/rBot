@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 
 import com.jcabi.jdbc.JdbcSession;
@@ -928,10 +930,16 @@ public class Tournament{
 				List<String> maps = config.getStringList("pool-" + poolNum + "-maps");
 				if(maps.size() != 0)
 					for(String map : maps)
-						pool.addMap(new Map(map));
+						pool.addMap(new Map(map, pool));
 				
 				if(config.getValue("pool-" + poolNum + "-sheet") != "") 
 					pool.setSheetUrl(config.getValue("pool-" + poolNum + "-sheet"));
+				
+				new Timer().schedule(new TimerTask(){
+					public void run(){
+						pool.save(false);
+					}
+				}, 45000);
 			}
 	}
 	

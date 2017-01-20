@@ -5,6 +5,7 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Map;
+import me.smc.sb.multi.MapPool;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
@@ -41,9 +42,11 @@ public class AddMapToPoolCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 1]) < 0 || Utils.stringToInt(args[args.length - 1]) > 5)
 			return "The map category needs to be within 0 to 5! (0 = NM, 1 = FM, 2 = HD, 3 = HR, 4 = DT, 5 = TB)";
 		
-		Map map = new Map(url, Utils.stringToInt(args[args.length - 1]));
-		t.getPool(Utils.stringToInt(args[args.length - 3])).addMap(map);
-		t.getPool(Utils.stringToInt(args[args.length - 3])).save(false);
+		MapPool pool = t.getPool(Utils.stringToInt(args[args.length - 3]));
+		
+		Map map = new Map(url, Utils.stringToInt(args[args.length - 1]), pool);
+		pool.addMap(map);
+		pool.save(false);
 		
 		return "Added beatmap #" + map.getBeatmapID() + " to the pool!";
 	}

@@ -16,7 +16,7 @@ public class RegularPickStrategy implements PickStrategy{
 		Map selected = null;
 		
 		if(game.warmupsLeft > 0 && select){
-			JSONObject jsMap = Map.getMapInfo(new Map(map, 1).getBeatmapID(), game.match.getTournament().getMode(), true);
+			JSONObject jsMap = Map.getMapInfo(new Map(map, 1, null).getBeatmapID(), game.match.getTournament().getMode(), true);
 			if(jsMap == null){game.sendMessage("Could not find the selected map!"); return;}
 			
 			int length = jsMap.getInt("total_length");
@@ -36,7 +36,7 @@ public class RegularPickStrategy implements PickStrategy{
 				return;
 			}
 			
-			game.map = new Map(map, 1);
+			game.map = new Map(map, 1, null);
 			game.mapSelected = true;
 			game.mapSelectedTime = System.currentTimeMillis();
 			game.mapMod = mod;

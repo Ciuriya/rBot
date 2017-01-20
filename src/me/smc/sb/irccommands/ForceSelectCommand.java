@@ -76,7 +76,7 @@ public class ForceSelectCommand extends IRCCommand {
 			mapNum++;
 		}
 		
-		if(newMap == null && mapLink.length() > 0) newMap = new Map(mapLink, 1);
+		if(newMap == null && mapLink.length() > 0) newMap = new Map(mapLink, 1, null);
 		
 		String user = Utils.toUser(e, pe);
 		
