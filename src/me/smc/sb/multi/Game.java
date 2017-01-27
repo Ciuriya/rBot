@@ -56,6 +56,7 @@ public abstract class Game{
 	protected boolean mapSelected = false;
 	protected boolean fTeamFirst = true;
 	protected boolean validMods = true;
+	protected boolean allowedToStart = true;
 	public boolean streamed = false;
 	protected boolean lastRematchFTeam = false;
 	protected GameState state;
@@ -443,13 +444,15 @@ public abstract class Game{
 		if(mapMod.length() == 0 || warmupsLeft == 0)
 			sendMessage("!mp mods " + getMod(map));
 		
-		String bloodcat = map.getBloodcatLink();
-		
-		if(bloodcat.length() > 0)
-			sendMessage("[" + bloodcat + " A bloodcat download link is available for this map here.]");
-		
 		this.map = map;
 		this.previousMap = map;
+		
+		try{
+			String bloodcat = map.getBloodcatLink();
+			
+			if(bloodcat.length() > 0)
+				sendMessage("[" + bloodcat + " A bloodcat download link is available for this map here.]");
+		}catch(Exception e){}
 	}
 	
 	public String getMod(Map map){
@@ -563,7 +566,8 @@ public abstract class Game{
 			
 			if(match.getTournament().getConditionalTeams().size() > 0){
 				for(String conditional : new HashMap<String, Match>(match.getTournament().getConditionalTeams()).keySet()){
-					if(match.getMatchNum() != Utils.stringToInt(conditional.split(" ")[1])) continue;
+					int conditionalNum = Utils.stringToInt(conditional.split(" ")[1]);
+					if(match.getMatchNum() != conditionalNum && match.getServerID() != conditional.split(" ")[1]) continue;
 					
 					Team cTeam = conditional.split(" ")[0].equalsIgnoreCase("winner") ? winningTeam : losingTeam;
 					Match conditionalMatch = match.getTournament().getConditionalTeams().get(conditional);
@@ -617,7 +621,7 @@ public abstract class Game{
 				Log.logger.log(Level.INFO, "Could not talk to BanchoBot!");
 			}
 			
-			Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make " + match.getTournament().getName() + ": TEMP LOBBY");
+			Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make " + match.getTournament().getDisplayName() + ": TEMP LOBBY");
 		}
 		
 		invitesSent.clear(); invitesSent = null;
@@ -1196,7 +1200,7 @@ public abstract class Game{
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(state.eq(GameState.VERIFYING) && playersSwapped.isEmpty())
+					if(state.eq(GameState.VERIFYING) && playersSwapped.isEmpty()) //playersChecked?
 						sendPriorityMessage("!mp settings");
 				}
 			}, 2500);
@@ -1267,11 +1271,19 @@ public abstract class Game{
 		
 		String[] spaceSplit = message.split(" ");
 		
+		String beforeLink = "";
+		
 		int count = 0;
 		for(String arg : spaceSplit){
 			if(arg.contains("osu.ppy.sh")) break;
+			
+			beforeLink += arg + " ";
+			
 			count++;
 		}
+		
+		if(beforeLink.toLowerCase().contains("no map"))
+			allowedToStart = false;
 		
 		String player = "";
 		String teamColor = "";
@@ -1298,6 +1310,8 @@ public abstract class Game{
 		if(team == null){
 			sendMessage("!mp kick " + player);
 			sendMessage(player + " is not on a team!");
+			
+			allowedToStart = false;
 			return;
 		}
 		
@@ -1512,7 +1526,7 @@ public abstract class Game{
 	}
 	
 	private void finalModCheck(){
-		if(playersChecked >= match.getPlayers() && validMods && map.getCategory() == 1 && warmupsLeft <= 0){
+		if(playersChecked >= match.getPlayers() && validMods && map.getCategory() == 1 && warmupsLeft <= 0 && allowedToStart){
 			playersChecked = 0;
 			int fTeamModCount = 0, sTeamModCount = 0;
 			
@@ -1532,8 +1546,9 @@ public abstract class Game{
 				
 				prepareReadyCheck();
 			}else startMatch(0, false);
-		}else if(!validMods){
+		}else if(!validMods || !allowedToStart){
 			validMods = true;
+			allowedToStart = true;
 			state = GameState.WAITING;
 			prepareReadyCheck();
 		}else startMatch(5, false);

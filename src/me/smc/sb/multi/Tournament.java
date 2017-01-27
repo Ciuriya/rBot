@@ -881,7 +881,7 @@ public class Tournament{
 			}
 	}
 	
-	protected boolean isMatchConditional(String conditionalStr){
+	public boolean isMatchConditional(String conditionalStr){
 		if(conditionalStr.split(" ")[0].equalsIgnoreCase("loser") || conditionalStr.split(" ")[0].equalsIgnoreCase("winner")){
 			if(Utils.stringToInt(conditionalStr.split(" ")[1]) != -1 && conditionalStr.split(" ").length == 2)
 				return true;

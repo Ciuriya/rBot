@@ -268,8 +268,26 @@ public class RemotePatyServerUtils{
 					while(rset.next()){
 						Match match = new Match(t, 8);
 						match.setServerID(rset.getString(1));
-						match.setTeams(t.getTeam(rset.getInt(2)), t.getTeam(rset.getInt(3)));
+						
+						String fTeamString = rset.getString(2);
+						String sTeamString = rset.getString(3);
+						
+						Team fTeam = null;
+						Team sTeam = null;
+						
+						if(Utils.stringToInt(fTeamString) != -1){
+							fTeam = t.getTeam(Utils.stringToInt(fTeamString));
+						}
+						
+						if(Utils.stringToInt(sTeamString) != -1){
+							sTeam = t.getTeam(Utils.stringToInt(sTeamString));
+						}
+						
+						match.setTeams(fTeam, sTeam);
+						
 						match.setMapPool(t.getPool(Utils.stringToInt(rset.getString(4))));
+						
+						boolean invalidTime = false;
 						
 						try{
 							Timestamp ts = rset.getTimestamp(5);
@@ -278,9 +296,32 @@ public class RemotePatyServerUtils{
 							int timezoneOffset = ts.getTimezoneOffset();
 							long time = ts.getTime() - TimeUnit.MINUTES.toMillis(timezoneOffset);
 							
+							if(time < Utils.getCurrentTimeUTC()){
+								invalidTime = true;
+							}
+							
 							match.setTime(time);
 						}catch(Exception e){
 							Log.logger.log(Level.SEVERE, "Could not sync time! ex: " + e.getMessage(), e);
+							
+							invalidTime = true;
+						}
+						
+						if(invalidTime)
+							continue;
+						
+						if(fTeamString != null && t.isMatchConditional(fTeamString)){
+							t.conditionalTeams.put(fTeamString + " 1", match);
+							t.getConfig().writeValue("match-" + match.getMatchNum() + "-team1", fTeamString);
+							
+							Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + fTeamString + " 1");
+						}
+						
+						if(sTeamString != null && t.isMatchConditional(sTeamString)){
+							t.conditionalTeams.put(sTeamString + " 2", match);
+							t.getConfig().writeValue("match-" + match.getMatchNum() + "-team2", sTeamString);
+							
+							Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + sTeamString + " 2");
 						}
 
 						match.save(false);
