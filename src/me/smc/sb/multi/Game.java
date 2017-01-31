@@ -567,7 +567,11 @@ public abstract class Game{
 			if(match.getTournament().getConditionalTeams().size() > 0){
 				for(String conditional : new HashMap<String, Match>(match.getTournament().getConditionalTeams()).keySet()){
 					int conditionalNum = Utils.stringToInt(conditional.split(" ")[1]);
-					if(match.getMatchNum() != conditionalNum && match.getServerID() != conditional.split(" ")[1]) continue;
+					
+					Log.logger.log(Level.INFO, "Checking conditional match... (" + conditional + ")");
+					if(match.getMatchNum() != conditionalNum && !match.getServerID().equalsIgnoreCase(conditional.split(" ")[1])) continue;
+					
+					Log.logger.log(Level.INFO, "Winning team: " + winningTeam.getTeamName() + " | Losing team: " + losingTeam.getTeamName());
 					
 					Team cTeam = conditional.split(" ")[0].equalsIgnoreCase("winner") ? winningTeam : losingTeam;
 					Match conditionalMatch = match.getTournament().getConditionalTeams().get(conditional);

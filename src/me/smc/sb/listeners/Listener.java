@@ -114,7 +114,7 @@ public class Listener implements EventListener{
     	for(Guild guild : api.getGuilds()){
     		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
     		Command.loadCommands(guild.getId());
-    		VoiceCommand.loadRadio(guild, Main.serverConfigs.get(guild.getId()));
+    		VoiceCommand.loadRadio(guild, Main.serverConfigs.get(guild.getId()), false);
     	}
     }
 	

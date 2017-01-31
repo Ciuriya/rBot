@@ -1,6 +1,8 @@
 package me.smc.sb.discordcommands;
 
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
@@ -182,7 +184,6 @@ public class VoiceCommand extends GlobalCommand{
 		AudioManager audioManager = guild.getAudioManager();
 		
 		if(audioManager.isConnected() && audioManager.getConnectedChannel().getId().equalsIgnoreCase(vChannel.getId())){
-			Utils.info(channel, "Already connected to this channel!");
 			return;
 		}else if(audioManager.isConnected()){
 			GuildMusicManager music = getGuildAudioPlayer(channel, guild);
@@ -243,14 +244,14 @@ public class VoiceCommand extends GlobalCommand{
 		return true;
 	}
 	
-	public static void loadRadio(Guild guild, Configuration config){
+	public static void loadRadio(Guild guild, Configuration config, boolean retry){
 		if(config.getStringList("voice-queue").size() > 0 ||
 		   config.getValue("voice-current").length() > 0 ||
 		   config.getValue("voice-state").length() > 0){
 			VoiceCommand voice = null;
 			
 			for(GlobalCommand gc : GlobalCommand.commands)
-				if(gc instanceof VoiceCommand){
+				if(gc != null && gc instanceof VoiceCommand){
 					voice = (VoiceCommand) gc;
 					break;
 				}
@@ -269,6 +270,12 @@ public class VoiceCommand extends GlobalCommand{
 				music.player.setVolume(volume);
 				
 				music.scheduler.loadScheduling(voice, music, guild.getTextChannelById(textChannel), config);
+			}else if(!retry){
+				new Timer().schedule(new TimerTask(){
+					public void run(){
+						loadRadio(guild, config, true);
+					}
+				}, 1500);
 			}
 		}
 	}

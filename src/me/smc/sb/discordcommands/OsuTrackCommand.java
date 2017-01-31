@@ -269,7 +269,14 @@ public class OsuTrackCommand extends GlobalCommand{
 														history = new MessageHistory(fChannel);
 													}catch(Exception e){}
 													
-													Message last = history == null ? null : history.retrievePast(1).complete().get(0);;
+													Message last = null;
+													
+													if(history != null){
+														List<Message> pulledHistory = history.retrievePast(1).complete();
+														
+														if(pulledHistory.size() != 0) last = pulledHistory.get(0);
+													}
+													
 													
 													if(last == null || !last.getAuthor().getId().equalsIgnoreCase("120923487467470848")) spacing = "";
 													setLastPlayerUpdate(player, server);
@@ -283,13 +290,14 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 													if(lastPlayerPosted.containsKey(server) && last != null && 
 													   last.getAuthor().getId().equalsIgnoreCase("120923487467470848"))
-														if(lastPlayerPosted.get(server).equalsIgnoreCase(player))
+														if(lastPlayerPosted.get(server).equalsIgnoreCase(player) && fMsg.length() > 0)
 															fMsg = fMsg.substring(fMsg.indexOf("__**"), fMsg.length() - 1);
 														
-													for(String splitMsg : fMsg.split("\\|\\|\\|")){
-														if(splitMsg.length() > 5)
-															Utils.info(channel, splitMsg.split("jpg")[0] + "jpg");
-													}
+													if(fMsg.length() > 0)
+														for(String splitMsg : fMsg.split("\\|\\|\\|")){
+															if(splitMsg.length() > 5)
+																Utils.info(channel, splitMsg.split("jpg")[0] + "jpg");
+														}
 																		
 													lastPlayerPosted.put(server, player);
 												}	
