@@ -5,7 +5,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Timer;
@@ -36,7 +35,6 @@ public class Server{
 				ServerSocket serverSocket = null;
 				Socket workerSocket = null;
 				DataInputStream socketInputStream;
-				PrintWriter out = null;
 				String message = "";
 				
 				try{
@@ -58,9 +56,7 @@ public class Server{
 					Log.logger.log(Level.INFO, "Received message: " + message);
 				}catch(Exception e){
 					Log.logger.log(Level.SEVERE, e.getMessage(), e);
-				}finally{
-					if(out != null) out.close();
-					
+				}finally{		
 					try{
 						serverSocket.close();
 						workerSocket.close();

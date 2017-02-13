@@ -58,7 +58,10 @@ public class OsuTrackCommand extends GlobalCommand{
 		super(null, 
 			  " - Lets you track osu! players", 
 			  "{prefix}osutrack\nThis command lets you track osu! players' recent performance\n\n" +
-		      "----------\nUsage\n----------\n{prefix}osutrack {player} ({mode={0/1/2/3}}) - Tracks or untracks the player's recent statistics for this mode\n\n" + 
+		      "----------\nUsage\n----------\n{prefix}osutrack {player} ({mode={0/1/2/3}}) - Tracks or untracks the player's recent statistics for this mode\n" + 
+			  "{prefix}osutrack {player} ({ext}) - Tracks or untracks the player in a separate channel\n" +
+		      "{prefix}osutrack ({best}) - Tracks only players' best plays in this server\n" +
+			  "{prefix}osutrack ({pp=XXX}) - Tracks every play above XXX pp\n\n" +
 		      "----------\nAliases\n----------\nThere are no aliases.", 
 			  false, 
 			  "osutrack");

@@ -604,6 +604,23 @@ public class Utils{
 		}
 	}
 	
+	public static String getOsuPlayerName(int userId){
+		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId);
+		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "<a href='\\/p\\/pp");
+		
+		if(!line.isEmpty()){
+			String username = "";
+			
+			try{
+				username = line.get(0).split("&find=")[1].split("&m=")[0];
+			}catch(Exception e){}
+			
+			return username;
+		}
+		
+		return "";
+	}
+	
 	public static boolean isTwitch(Event<PircBotX> e){
 		if(e != null && e.getBot().getBotId() == Main.twitchBot.getBotId())
 			return true;
