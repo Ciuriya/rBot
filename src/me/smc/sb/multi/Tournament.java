@@ -47,6 +47,7 @@ public class Tournament{
 	private int upperRankBound;
 	private int targetRankLowerBound;
 	private int targetRankUpperBound;
+	private int matchSize; //players in a match
 	private boolean skipWarmups;
 	private boolean usingTourneyServer;
 	private boolean usingConfirms;
@@ -93,6 +94,7 @@ public class Tournament{
 		usingMapStats = getConfig().getBoolean("usingMapStats");
 		targetRankLowerBound = getConfig().getInt("targetRankLowerBound");
 		targetRankUpperBound = getConfig().getInt("targetRankUpperBound");
+		matchSize = getConfig().getInt("matchSize");
 		
 		currentlyStreamed = null;
 
@@ -106,7 +108,7 @@ public class Tournament{
 					  int readyWaitTime, int type, int mode, String resultDiscord, String alertDiscord, String alertMessage,
 					  int lowerRankBound, int upperRankBound, boolean skipWarmups, String pickStrategy, int rematchesAllowed,
 					  boolean usingTourneyServer, boolean usingConfirms, boolean usingMapStats, int targetRankLowerBound,
-					  int targetRankUpperBound){
+					  int targetRankUpperBound, int matchSize){
 		this.name = name;
 		this.displayName = displayName;
 		this.twitchChannel = twitchChannel;
@@ -129,6 +131,7 @@ public class Tournament{
 		this.usingMapStats = usingMapStats;
 		this.targetRankLowerBound = targetRankLowerBound;
 		this.targetRankUpperBound = targetRankUpperBound;
+		this.matchSize = matchSize;
 		
 		currentlyStreamed = null;
 		
@@ -249,6 +252,10 @@ public class Tournament{
 	
 	public boolean isWithinTargetBounds(int rank){
 		return rank >= targetRankLowerBound && rank <= targetRankUpperBound;
+	}
+	
+	public int getMatchSize(){
+		return matchSize;
 	}
 	
 	public PickStrategy getPickStrategy(){
@@ -566,7 +573,7 @@ public class Tournament{
 	public Match getMatch(int matchNum){
 		if(!matches.isEmpty())
 			for(Match match : matches)
-				if(match.getMatchNum() == matchNum)
+				if(match.getMatchNum() == matchNum || match.getServerID() == String.valueOf(matchNum))
 					return match;
 		return null;
 	}
@@ -596,17 +603,18 @@ public class Tournament{
 	}
 	
 	public boolean removeMatch(int matchNum){
-		if(!matches.isEmpty())
-			for(Match match : new ArrayList<Match>(matches))
-				if(match.getMatchNum() == matchNum){
-					matches.remove(match);
-					
-					if(match.getTime() != 0)
-						matchDates.remove(match.getTime());
-					
-					match.delete();
-					return true;
-				}
+		Match match = getMatch(matchNum);
+		
+		if(match != null){
+			matches.remove(match);
+			
+			if(match.getTime() != 0)
+				matchDates.remove(match.getTime());
+			
+			match.delete();
+			return true;
+		}
+		
 		return false;
 	}
 	
@@ -658,6 +666,7 @@ public class Tournament{
 		config.writeValue("usingMapStats", usingMapStats);
 		config.writeValue("targetRankLowerBound", targetRankLowerBound);
 		config.writeValue("targetRankUpperBound", targetRankUpperBound);
+		config.writeValue("matchSize", matchSize);
 		config.writeStringList("tournament-admins", matchAdmins, true);
 	}
 	
@@ -667,8 +676,8 @@ public class Tournament{
 				new JdbcSession(Main.tourneySQL)
 				.sql("INSERT INTO Tournament (name, display_name, twitch_channel, scoreV2, pick_wait_time, ban_wait_time, ready_wait_time, " +
 					 "type, mode, result_discord, alert_discord, alert_message, lower_rank_bound, upper_rank_bound, skip_warmups, pick_strategy, rematches_allowed, "
-					 + "using_tourney_server, using_confirms, using_map_stats, target_rank_lower_bound, target_rank_upper_bound) " +
-				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+					 + "using_tourney_server, using_confirms, using_map_stats, target_rank_lower_bound, target_rank_upper_bound, match_size) " +
+				     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 				.set(name)
 				.set(displayName)
 				.set(twitchChannel)
@@ -691,6 +700,7 @@ public class Tournament{
 				.set(usingMapStats)
 				.set(targetRankLowerBound)
 				.set(targetRankUpperBound)
+				.set(matchSize)
 				.insert(Outcome.VOID);
 			}else{
 				new JdbcSession(Main.tourneySQL)
@@ -698,7 +708,7 @@ public class Tournament{
 					 "SET display_name='?', twitch_channel='?', scoreV2='?', pick_wait_time='?', ban_wait_time='?', ready_wait_time='?', " +
 					 "type='?', mode='?', result_discord='?', alert_discord='?', alert_message='?', lower_rank_bound='?', upper_rank_bound='?', " +
 					 "skip_warmups='?', pick_strategy='?', rematches_allowed='?', using_tourney_server='?', using_confirms='?', using_map_stats='?', " +
-					 "target_rank_lower_bound='?', target_rank_upper_bound='?' WHERE name='?'")
+					 "target_rank_lower_bound='?', target_rank_upper_bound='?', match_size='?' WHERE name='?'")
 				.set(displayName)
 				.set(twitchChannel)
 				.set(scoreV2 ? 1 : 0)
@@ -720,6 +730,7 @@ public class Tournament{
 				.set(usingMapStats)
 				.set(targetRankLowerBound)
 				.set(targetRankUpperBound)
+				.set(matchSize)
 				.set(name)
 				.update(Outcome.VOID);
 			}
@@ -770,8 +781,7 @@ public class Tournament{
 					}
 					
 					return t;
-				}
-				else if(t.getDisplayName().equalsIgnoreCase(name)){
+				}else if(t.getDisplayName().equalsIgnoreCase(name)){
 					if(nextSelected > 0){
 						nextSelected--;
 						continue;
@@ -816,7 +826,7 @@ public class Tournament{
 				    					 					   rset.getString(11), rset.getString(12), rset.getString(13), rset.getInt(14), 
 				    					 					   rset.getInt(15), rset.getBoolean(16), rset.getString(17), rset.getInt(18),
 				    					 					   rset.getBoolean(19), rset.getBoolean(20), rset.getBoolean(21), rset.getInt(22),
-				    					 					   rset.getInt(23));
+				    					 					   rset.getInt(23), rset.getInt(24));
 				    			 
 				    			 t.setTournamentId(rset.getInt(1));
 				    			 
@@ -839,7 +849,11 @@ public class Tournament{
 		
 		if(!savedMatches.isEmpty())
 			for(String matchNum : savedMatches){
-				Match match = new Match(this, Utils.stringToInt(matchNum), config.getInt("match-" + matchNum + "-players"), false);
+				Match match = new Match(this, Utils.stringToInt(matchNum), false);
+				
+				if(config.getInt("match-" + matchNum + "-players") != matchSize){
+					match.setPlayers(config.getInt("match-" + matchNum + "-players"));
+				}
 				
 				if(config.getValue("match-" + matchNum + "-team1") != "" || config.getValue("match-" + matchNum + "-team2") != ""){
 					Team team1 = getTeam(config.getValue("match-" + matchNum + "-team1"));

@@ -2087,7 +2087,7 @@ public abstract class Game{
 				
 				if(waitingForCaptains == 0 && playersInRoom.size() < 2)
 					waitingForCaptains++;
-				else if(waitingForCaptains == 0){
+				else if(waitingForCaptains <= 0){
 					advanceQueue(player.replaceAll(" ", "_"), hijackers);
 					mapSelection(1);
 					return true;

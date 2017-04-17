@@ -501,7 +501,7 @@ public class Utils{
 						Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
 						
 						if(member != null && member.hasPermission(((TextChannel) channel), Permission.MESSAGE_MANAGE))
-							msg.deleteMessage().queue();
+							msg.delete().queue();
 					}
 				}catch(Exception e){}
 			}
@@ -556,7 +556,29 @@ public class Utils{
 		if(post == "" || !post.contains("{")) return "-1&r=-1&cr=-1";
 		
 		JSONObject jsonResponse = new JSONObject(post);
-		return jsonResponse.getDouble("pp_raw") + "&r=" + jsonResponse.getInt("pp_rank") + "&cr=" + jsonResponse.getInt("pp_country_rank");
+		double rawPP = 0.0;
+		int rank = 0;
+		int countryRank = 0;
+		
+		try{
+			rawPP = jsonResponse.getDouble("pp_raw");
+		}catch(Exception e){
+			rawPP = 0.0;
+		}
+		
+		try{
+			rank = jsonResponse.getInt("pp_rank");
+		}catch(Exception e){
+			rank = 0;
+		}
+		
+		try{
+			countryRank = jsonResponse.getInt("pp_country_rank");
+		}catch(Exception e){
+			countryRank = 0;
+		}
+		
+		return rawPP + "&r=" + rank + "&cr=" + countryRank;
 	}
 	
 	public static int getOsuPlayerRank(String name, int mode){

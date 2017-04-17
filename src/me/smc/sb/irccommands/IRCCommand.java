@@ -144,6 +144,7 @@ public abstract class IRCCommand{
 		commands.add(new SetMatchPriorityCommand());
 		commands.add(new ChangeStreamedMatchCommand());
 		commands.add(new ResizeMatchCommand());
+		commands.add(new ResyncMatchCommand());
 		commands.add(new ConfirmTeamCommand());
 		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());

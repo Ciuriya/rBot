@@ -32,9 +32,9 @@ import me.smc.sb.multi.Map;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.MessageHistory;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
@@ -293,8 +293,13 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 													if(lastPlayerPosted.containsKey(server) && last != null && 
 													   last.getAuthor().getId().equalsIgnoreCase("120923487467470848"))
-														if(lastPlayerPosted.get(server).equalsIgnoreCase(player) && fMsg.length() > 0)
-															fMsg = fMsg.substring(fMsg.indexOf("__**"), fMsg.length() - 1);
+														if(lastPlayerPosted.get(server).equalsIgnoreCase(player) && fMsg.length() > 0){
+															try{
+																fMsg = fMsg.substring(fMsg.indexOf("__**"), fMsg.length() - 1);
+															}catch(Exception e){
+																Log.logger.log(Level.SEVERE, "fMsg error: " + e.getMessage() + " | fMsg: " + fMsg, e);
+															}
+														}
 														
 													if(fMsg.length() > 0)
 														for(String splitMsg : fMsg.split("\\|\\|\\|")){

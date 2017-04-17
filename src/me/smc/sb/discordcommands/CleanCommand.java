@@ -5,9 +5,9 @@ import java.util.List;
 
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.MessageHistory;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
@@ -25,7 +25,7 @@ public class CleanCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		e.getMessage().deleteMessage().complete();
+		e.getMessage().delete().complete();
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		int amount = Integer.valueOf(args[0]);
@@ -63,7 +63,7 @@ public class CleanCommand extends GlobalCommand{
 				cleared++;
 				
 				if(e.getChannel() instanceof PrivateChannel){
-					message.deleteMessage().complete();
+					message.delete().complete();
 					Utils.sleep(350);
 				}else toDelete.add(message);
 			}
@@ -73,7 +73,7 @@ public class CleanCommand extends GlobalCommand{
 		}
 		
 		if(toDelete.size() == 1) 
-			toDelete.get(0).deleteMessage().complete();
+			toDelete.get(0).delete().complete();
 		else if(!toDelete.isEmpty()) 
 			e.getTextChannel().deleteMessages(toDelete).complete();
 		

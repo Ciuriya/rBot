@@ -224,6 +224,11 @@ public class VoiceCommand extends GlobalCommand{
 		
 		boolean random = args.length >= 3 && args[2].equalsIgnoreCase("true") ? true : false;
 		
+		if(music.scheduler.size() >= 10){
+			Utils.infoBypass(e.getChannel(), "Cannot queue more than 10 elements at once!");
+			return;
+		}
+		
 		playerManager.loadItemOrdered(music, args[1], new CustomAudioLoadResultHandler(e.getChannel(), e.getGuild(), args[1], random, false, this));
 	}
 	
@@ -260,15 +265,12 @@ public class VoiceCommand extends GlobalCommand{
 				String textChannel = config.getValue("voice-text-channel");
 				
 				if(textChannel.length() == 0) return;
-				
+
 				GuildMusicManager music = voice.getGuildAudioPlayer(guild.getTextChannelById(textChannel), guild);
-				
 				int volume = Utils.stringToInt(config.getValue("voice-volume"));
 				
 				if(volume == -1) volume = 35;
-				
 				music.player.setVolume(volume);
-				
 				music.scheduler.loadScheduling(voice, music, guild.getTextChannelById(textChannel), config);
 			}else if(!retry){
 				new Timer().schedule(new TimerTask(){

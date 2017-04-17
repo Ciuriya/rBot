@@ -19,12 +19,12 @@ public class Match{
 	private ArrayList<String> matchAdmins;
 	private Timer scheduledTime;
 	
-	public Match(Tournament t, int players){
-		this(t, t.incrementMatchCount(), players, true);
+	public Match(Tournament t){
+		this(t, t.incrementMatchCount(), true);
 	}
 	
-	public Match(Tournament t, int matchNum, int players, boolean append){
-		this.players = players;
+	public Match(Tournament t, int matchNum, boolean append){
+		players = t.getMatchSize();
 		this.matchNum = matchNum;
 		this.tournament = t;
 		this.scheduledDate = 0;
@@ -88,6 +88,10 @@ public class Match{
 	
 	public String getServerID(){
 		return serverID;
+	}
+	
+	public void setPlayers(int players){
+		this.players = players;
 	}
 	
 	public void setStreamPriority(int priority){

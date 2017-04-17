@@ -68,18 +68,23 @@ public class SeedTeamsCommand extends IRCCommand{
 						Utils.sleep(150);
 					}
 					
+					int quantity = 0;
 					float average = 0;
 					
 					Collections.sort(ranks);
 					
 					try{
-						for(int i = 0; i < 4; i++)
-							average += ranks.get(i);
+						for(int i = 0; i < 3; i++)
+							if(i == ranks.size()) break;
+							else{
+								average += ranks.get(i);
+								quantity++;
+							}
 					}catch(Exception e){
 						Log.logger.log(Level.SEVERE, e.getMessage() + " (team: " + team.getTeamName() + ")", e);
 					}
 					
-					average /= 4f;
+					average /= (float) quantity;
 					
 					teams.put(average, team);
 				}
@@ -96,7 +101,15 @@ public class SeedTeamsCommand extends IRCCommand{
 						}
 					}).orElse(0f);
 					
-					msg += "\n" + lastSign + " " + teams.get(avg).getTeamName() + " - #" + Utils.df(avg, 0);
+					String temp = "";
+					
+					try{
+						temp = "\n" + lastSign + " " + teams.get(avg).getTeamName() + " - #" + Utils.df(avg, 0);
+					}catch(Exception e){
+						temp = "\n" + lastSign + " | An error occured! | - #" + Utils.df(avg, 0);
+					}
+					
+					msg += temp;
 					
 					if(lastSign.equals("+")) lastSign = "-";
 					else lastSign = "+";
