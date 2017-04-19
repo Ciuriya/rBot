@@ -96,9 +96,12 @@ public class Listener implements EventListener{
 	    									     "\nContact: PM, server: https://discord.gg/0phGqtqLYwSzCdwn");
 		}else if(event instanceof ReadyEvent){
 			GlobalCommand.registerCommands();
+			
 			api = event.getJDA();
 			api.setAutoReconnect(true);
+			
 			loadGuilds(api);
+			
 			Utils.infoBypass(api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
 			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");
 		}else if(event instanceof ReconnectedEvent)
@@ -107,14 +110,13 @@ public class Listener implements EventListener{
 			loadGuilds(event.getJDA());
     }
     
-    public static void loadGuilds(JDA api){
-    	Main.serverConfigs.clear();
-    	Command.commands.clear();
-    	
+    public static void loadGuilds(JDA api){    	
     	for(Guild guild : api.getGuilds()){
-    		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
-    		Command.loadCommands(guild.getId());
-    		VoiceCommand.loadRadio(guild, Main.serverConfigs.get(guild.getId()), false);
+    		if(!Main.serverConfigs.containsKey(guild.getId())){
+        		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
+        		Command.loadCommands(guild.getId());
+        		VoiceCommand.loadRadio(guild, Main.serverConfigs.get(guild.getId()), false);
+    		}
     	}
     }
 	

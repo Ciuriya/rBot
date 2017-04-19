@@ -64,7 +64,7 @@ public enum Mods{
 		for(Mods mod : mods)
 			display = mod.getShortName() + display;
 		
-		return "+" + display;
+		return display.length() == 0 ? "" : "+" + display;
 	}
 	
 	public static Mods getMod(int bit){

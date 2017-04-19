@@ -32,7 +32,7 @@ public class TrackingUtils{
 		switch(mode){
 			case 0: return "Standard";
 			case 1: return "Taiko";
-			case 2: return "Catch the Beat";
+			case 2: return "CtB";
 			case 3: return "Mania";
 			default: return "Unknown";
 		}
@@ -52,7 +52,7 @@ public class TrackingUtils{
 	}
 	
 	public static String escapeCharacters(String toEscape){
-		return toEscape.replaceAll("\\*", "\\\\*");
+		return toEscape.replaceAll("\\*", "\\*");
 	}
 	
 	public static boolean playerHasRecentPlays(int userId, int mode, CustomDate lastUpdate){

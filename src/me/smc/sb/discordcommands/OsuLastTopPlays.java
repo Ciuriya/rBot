@@ -15,9 +15,10 @@ import java.util.logging.Level;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import me.smc.sb.discordcommands.OsuTrackCommand.Mods;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Map;
+import me.smc.sb.tracking.Mods;
+import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
@@ -64,7 +65,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 		List<String> seperatePosts = new ArrayList<String>();
 		
 		StringBuilder builder = new StringBuilder();
-		builder.append("**Latest " + plays + " top plays for " + player + " in the " + OsuTrackCommand.convertMode(Utils.stringToInt(mode)) + " mode**\n\n");
+		builder.append("**Latest " + plays + " top plays for " + player + " in the " + TrackingUtils.convertMode(Utils.stringToInt(mode)) + " mode**\n\n");
 		
 		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
 						                                "&u=" + player + "&m=" + mode + "&limit=100&type=string");
@@ -83,10 +84,10 @@ public class OsuLastTopPlays extends GlobalCommand{
 		
 		for(int i = jsonResponse.length() - 1; i >= 0; i--){
 			JSONObject obj = jsonResponse.getJSONObject(i);
-			String osuDate = OsuTrackCommand.osuDateToCurrentDate(obj.getString("date"));
+			String osuDate = LegacyOsuTrackCommand.osuDateToCurrentDate(obj.getString("date"));
 			
 			if(mostRecentPlays.size() >= plays){
-				if(OsuTrackCommand.dateGreaterThanDate(osuDate, oldest)){
+				if(LegacyOsuTrackCommand.dateGreaterThanDate(osuDate, oldest)){
 					mostRecentPlays.remove(oldest);
 					mostRecentPlays.put(osuDate, obj);
 					
@@ -94,7 +95,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 					
 					for(String date : mostRecentPlays.keySet())
 						if(oldest.equals("")) oldest = date;
-						else if(OsuTrackCommand.dateGreaterThanDate(oldest, date)) oldest = date;
+						else if(LegacyOsuTrackCommand.dateGreaterThanDate(oldest, date)) oldest = date;
 				}
 			}else{
 				mostRecentPlays.put(osuDate, obj);
@@ -103,7 +104,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 				
 				for(String date : mostRecentPlays.keySet())
 					if(oldest.equals("")) oldest = date;
-					else if(OsuTrackCommand.dateGreaterThanDate(oldest, date)) oldest = date;
+					else if(LegacyOsuTrackCommand.dateGreaterThanDate(oldest, date)) oldest = date;
 			}
 		}
 		
@@ -118,12 +119,12 @@ public class OsuLastTopPlays extends GlobalCommand{
 				
 				mostRecentPlays.remove(date);
 				
-				String hits = OsuTrackCommand.fetchHitText(Utils.stringToInt(mode), obj);
+				String hits = LegacyOsuTrackCommand.fetchHitText(Utils.stringToInt(mode), obj);
 				
 				play += "**" + getTimeDifference(date) + "** | **" + Utils.df(obj.getDouble("pp"), 2) + "pp**\n" + 
 						map.getString("artist") + " - " + map.getString("title") + " [" +
 				        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-				        "\n" + Utils.df(OsuTrackCommand.getAccuracy(obj, Utils.stringToInt(mode))) + "% | " + 
+				        "\n" + Utils.df(LegacyOsuTrackCommand.getAccuracy(obj, Utils.stringToInt(mode))) + "% | " + 
 				        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC") +
 				        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + hits + 
 				        "\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + ">\n\n";
@@ -148,7 +149,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 		
 		for(String date : dates) 
 			if(recent.equals("")) recent = date;
-			else if(OsuTrackCommand.dateGreaterThanDate(date, recent)) recent = date;
+			else if(LegacyOsuTrackCommand.dateGreaterThanDate(date, recent)) recent = date;
 		
 		return recent;
 	}

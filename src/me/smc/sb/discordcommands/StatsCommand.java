@@ -6,6 +6,7 @@ import java.util.List;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.OnlineStatus;
@@ -74,7 +75,7 @@ public class StatsCommand extends GlobalCommand{
 			   .append("Commands used: " + Main.commandsUsedThisSession + "\n")
 			   .append("osu!api requests: " + Main.requestsSent + " (" + averageRequestsPerMinute + " average/min, " + Main.highestBurstRequestsSent + " burst/min)\n")
 			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
-					   (tracked + trackedPlayers.size()) + " tracked, " + trackedPlayers.size() + " without duplicates)\n")
+					   (tracked + trackedPlayers.size()) + " tracked, " + TrackedPlayer.registeredPlayers.size() + " without duplicates)\n")
 			   .append("Most tracked users in a single server: " + highestTrackAmount + " players (" + highestTrackGuild.getName() + ")\n")
 			   .append("HTML pages scraped: " + Main.htmlScrapes + " (" + Main.osuHtmlScrapes + " from osu!)\n")
 			   .append("HTML pages scraped/min average: " + averageHtmlScrapesPerMinute + " (" + averageOsuHtmlScrapesPerMinute + " for osu!)```");

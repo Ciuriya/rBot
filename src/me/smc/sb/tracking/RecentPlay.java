@@ -2,9 +2,9 @@ package me.smc.sb.tracking;
 
 public class RecentPlay{
 	
-	int beatmapId;
-	CustomDate date;
-	int rank;
+	private int beatmapId;
+	private CustomDate date;
+	private int rank;
 	
 	public RecentPlay(int beatmapId, CustomDate date, int rank){
 		this.beatmapId = beatmapId;
@@ -12,7 +12,7 @@ public class RecentPlay{
 		this.rank = rank;
 	}
 	
-	boolean isDateValid(CustomDate otherDate, int secondsLeeway){
+	public boolean isDateValid(CustomDate otherDate, int secondsLeeway){
 		CustomDate beforeDate = new CustomDate(date.getDate());
 		CustomDate afterDate = new CustomDate(date.getDate());
 		

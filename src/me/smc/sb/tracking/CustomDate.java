@@ -97,7 +97,7 @@ public class CustomDate{
 		int localVal = getValue(index);
 		int otherVal = oDate.getValue(index);
 		
-		if(localVal > otherVal || index == 5)
+		if(localVal > otherVal || index == 6)
 			return true;
 		else if(localVal == otherVal)
 			return after(oDate, index + 1);

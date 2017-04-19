@@ -24,6 +24,7 @@ import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.utils.BanchoRegulator;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
@@ -93,8 +94,8 @@ public class Main{
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}
 		
+		PlayFormat.loadFormats();
 		Tournament.loadTournaments();
-		
 		IRCCommand.registerCommands();
 		
 		osuRequestManager = new OsuAPIRegulator();

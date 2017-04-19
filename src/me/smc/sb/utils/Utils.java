@@ -628,7 +628,7 @@ public class Utils{
 	
 	public static String getOsuPlayerName(int userId){
 		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId);
-		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "<a href='\\/p\\/pp");
+		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "&find=");
 		
 		if(!line.isEmpty()){
 			String username = "";

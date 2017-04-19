@@ -13,11 +13,21 @@ public class TrackedPlay{
 	private JSONObject map;
 	private PPInfo pp;
 	private int mode;
+	private int personalBestCount;
+	private int mapRank;
+	private double playerPPChange;
+	private int playerRankChange;
+	private int playerCountryRankChange;
+	private String country;
 	
 	public TrackedPlay(JSONObject play, int mode){
 		this.play = play;
 		this.mode = mode;
-		
+		personalBestCount = 0;
+		mapRank = 0;
+	}
+	
+	public void loadMap(){
 		map = Map.getMapInfo(play.getInt("beatmap_id"), mode, false);
 	}
 	
@@ -49,8 +59,12 @@ public class TrackedPlay{
 		return TrackingUtils.escapeCharacters(getArtist() + " - " + getTitle() + " [" + getDifficulty() + "]");
 	}
 	
-	public int getMode(){
+	public int getRawMode(){
 		return mode;
+	}
+	
+	public String getMode(){
+		return TrackingUtils.convertMode(mode);
 	}
 	
 	public double getCircleSize(){
@@ -75,6 +89,10 @@ public class TrackedPlay{
 	
 	public double getBPM(){
 		return map.getDouble("bpm");
+	}
+	
+	public boolean hasMapCombo(){
+		return !map.isNull("max_combo");
 	}
 	
 	public int getMaxCombo(){
@@ -109,12 +127,24 @@ public class TrackedPlay{
 		return map.getString("source");
 	}
 	
+	public String getBackground(){
+		return "http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
+	}
+	
 	/*
 	 * Play getters
 	 */
 	
-	public long getScore(){
+	public long getRawScore(){
 		return play.getLong("score");
+	}
+	
+	public String getScore(){
+		return Utils.veryLongNumberDisplay(getRawScore());
+	}
+	
+	public boolean hasCombo(){
+		return play.isNull("maxcombo");
 	}
 	
 	public int getCombo(){
@@ -150,12 +180,39 @@ public class TrackedPlay{
 		return play.getInt("countgeki");
 	}
 	
+	public String getFullHitText(){
+		switch(mode){
+			case 0:
+				return (getHundreds() > 0 ? getHundreds() + "x100 " : "") +
+		        	   (getFifties() > 0 ? getFifties() + "x50 " : "") + 
+		        	   (getMisses() > 0 ? getMisses() + "x miss " : "");
+			case 1:
+				return (getHundreds() > 0 ? getHundreds() + "x100 " : "") +
+	        	   	   (getMisses() > 0 ? getMisses() + "x miss " : "");
+			case 2:
+				return (getKatu() > 0 ? getKatu() + "x droplets " : "") +
+	    	   	   	   (getMisses() > 0 ? getMisses() + "x miss " : "");
+			case 3:
+				return (getGeki() > 0 ? getGeki() + "xMAX " : "") +
+					   (getThreeHundreds() > 0 ? getThreeHundreds() + "x300 " : "") +
+					   (getKatu() > 0 ? getKatu() + "x200 " : "") +
+	        	   	   (getHundreds() > 0 ? getHundreds() + "x100 " : "") + 
+	        	   	   (getFifties() > 0 ? getFifties() + "x50 " : "") + 
+	        	   	   (getMisses() > 0 ? getMisses() + "x miss " : "");
+			default: return "";
+		}
+	}
+	
 	public boolean isPerfect(){
 		return play.getInt("perfect") != 0;
 	}
 	
 	public List<Mods> getMods(){
 		return Mods.getMods(play.getInt("enabled_mods"));
+	}
+	
+	public int getRawMods(){
+		return play.getInt("enabled_mods");
 	}
 	
 	public String getModDisplay(){
@@ -170,6 +227,18 @@ public class TrackedPlay{
 		return play.getString("rank");
 	}
 	
+	public String getFormattedRank(){
+		return getRank().replace("X", "SS");
+	}
+	
+	public int getMapRank(){
+		return mapRank;
+	}
+	
+	public void setMapRank(int mapRank){
+		this.mapRank = mapRank;
+	}
+	
 	public void setPPInfo(PPInfo info){
 		pp = info;
 	}
@@ -180,6 +249,92 @@ public class TrackedPlay{
 	
 	public double getPPForFC(){
 		return pp.getPPForFC();
+	}
+	
+	/*
+	 * Player-related getters/setters
+	 */
+	
+	public double getPPChange(){
+		return playerPPChange;
+	}
+	
+	public String getFormattedPPChange(){
+		String formatted = Utils.df(getPPChange(), 2) + "pp";
+		
+		if(getPPChange() > 0){
+			formatted = "+" + formatted;
+		}
+		
+		return formatted;
+	}
+	
+	public void setPPChange(double ppChange){
+		playerPPChange = ppChange;
+	}
+	
+	public int getRankChange(){
+		return playerRankChange;
+	}
+	
+	public String getFormattedRankChange(){
+		String formatted = Utils.veryLongNumberDisplay(getRankChange());
+		
+		if(getRankChange() < 0){
+			if(formatted.startsWith("-"))
+				formatted = formatted.substring(1);
+			
+			formatted = "+" + formatted;
+		}else formatted = "-" + formatted;
+		
+		return formatted;
+	}
+	
+	public void setRankChange(int rankChange){
+		playerRankChange = rankChange;
+	}
+	
+	public int getCountryRankChange(){
+		return playerCountryRankChange;
+	}
+	
+	public String getFormattedCountryRankChange(){
+		String formatted = Utils.veryLongNumberDisplay(getCountryRankChange());
+		
+		if(getCountryRankChange() < 0){
+			if(formatted.startsWith("-"))
+				formatted = formatted.substring(1);
+			
+			formatted = "+" + formatted;
+		}else if(getCountryRankChange() == 0)
+			formatted = "0";
+		else formatted = "-" + formatted;
+		
+		return formatted;
+	}
+	
+	public void setCountryRankChange(int countryRankChange){
+		playerCountryRankChange = countryRankChange;
+	}
+	
+	public boolean isPersonalBest(){
+		return personalBestCount != 0;
+	}
+	
+	public int getPersonalBestCount(){
+		return personalBestCount;
+	}
+	
+	public void setPersonalBestCount(int personalBestCount){
+		this.personalBestCount = personalBestCount;
+	}
+	
+	public String getCountry(){
+		return country;
+	}
+	
+	public void setCountry(String country){
+		this.country = country;
 	}
 	
 }
