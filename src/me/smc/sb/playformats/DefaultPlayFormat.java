@@ -21,8 +21,9 @@ public class DefaultPlayFormat extends PlayFormat{
 		text += "\n\n**" + player.getUsername() + " | " + play.getMode() + " | **__**" + play.getDate().getDate() + " UTC**__\n\n";
 		
 		// Halozy - eliminate anthem [Demarcation]
+		String modHighlight = (play.getMods().size() > 0 ? "**" : "");
 		text += TrackingUtils.escapeCharacters(play.getArtist() + " - " + play.getTitle() + 
-				" [" + play.getDifficulty() + "] **" + play.getModDisplay() + "**\n");
+				" [" + play.getDifficulty() + "] " + modHighlight + play.getModDisplay() + modHighlight + "\n");
 		
 		// 99.6% • 9x100 
 		String fullHitText = play.getFullHitText();
