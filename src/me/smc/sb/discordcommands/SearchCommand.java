@@ -126,7 +126,7 @@ public class SearchCommand extends GlobalCommand{
 	}
 	
 	private void hentai(MessageReceivedEvent e, String query){	
-		String url = "http://g.e-hentai.org/";
+		String url = "http://e-hentai.org/";
 		String params = "";
 		String[] types = null;
 		
@@ -151,7 +151,7 @@ public class SearchCommand extends GlobalCommand{
 		String gallery = findHentai(url, params);
 		
 		Utils.infoBypass(e.getChannel(), gallery);
-		Utils.infoBypass(e.getChannel(), gallery.replace("g.e-", "ex"));
+		Utils.infoBypass(e.getChannel(), gallery.replace("e-", "ex"));
 	}
 	
 	private String findHentai(String url, String params){

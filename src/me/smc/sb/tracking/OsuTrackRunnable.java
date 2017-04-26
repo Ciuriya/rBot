@@ -55,26 +55,31 @@ public class OsuTrackRunnable extends TimerTask{
 		
 		player.setUpdating(true);
 		
-		try{
-			List<TrackedPlay> plays = player.fetchLatestPlays();
-			
-			if(plays.size() > 0){
-				for(TrackingGuild guild : player.getTrackers()){
-					boolean onlyBest = guild.onlyTrackingBestPlays();
-					int minimumPP = guild.getMinimumPPAmount();
+		new Thread(new Runnable(){
+			public void run(){
+				try{
+					List<TrackedPlay> plays = player.fetchLatestPlays();
 					
-					for(TrackedPlay play : plays){
-						if((onlyBest && play.isPersonalBest() || !onlyBest) && (play.getPP() >= minimumPP || minimumPP <= 0)){
-							guild.getPlayFormat().send(guild, play, player);
+					if(plays.size() > 0){
+						for(TrackingGuild guild : player.getTrackers()){
+							boolean onlyBest = guild.onlyTrackingBestPlays();
+							int minimumPP = guild.getMinimumPPAmount();
+							
+							for(TrackedPlay play : plays){
+								if((onlyBest && play.isPersonalBest() || !onlyBest) && (play.getPP() >= minimumPP || minimumPP <= 0)){
+									guild.getPlayFormat().send(guild, play, player);
+								}
+							}
 						}
 					}
+				}catch(Exception e){
+					Log.logger.log(Level.SEVERE, "osu!track exception: " + e.getMessage());
+					e.printStackTrace();
 				}
+				
+				player.setUpdating(false);
 			}
-		}catch(Exception e){
-			Log.logger.log(Level.SEVERE, "osu!track exception: " + e.getMessage(), e);
-		}
-		
-		player.setUpdating(false);
+		}).start();
 	}
 	
 	@SuppressWarnings("deprecation")

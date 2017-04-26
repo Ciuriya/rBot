@@ -75,7 +75,7 @@ public class TrackedPlayer{
 		if(TrackingUtils.playerHasRecentPlays(userId, mode, lastUpdate)){
 			// fetching plays straight away, otherwise we'd be wasting efficiency in scraping/api stuff
 			String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
-                    	  "&u=" + username + "&m=" + mode + "&limit=" + API_FETCH_PLAY_LIMIT + "&type=string&event_days=1");
+                    	  "&u=" + userId + "&m=" + mode + "&limit=" + API_FETCH_PLAY_LIMIT + "&type=id&event_days=1");
 			
 			if(post == "" || !post.contains("{")) return plays;
 			
@@ -122,7 +122,7 @@ public class TrackedPlayer{
 			countryRank = updatedCountryRank;
 			
 			String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
-            		  											 "&u=" + username + "&m=" + mode + "&limit=100&type=string");
+            		  											 "&u=" + userId + "&m=" + mode + "&limit=100&type=id");
 			JSONArray tpJsonResponse = null;
 			
 			if(topPlays.length() > 0 && topPlays.contains("{")){
@@ -137,6 +137,8 @@ public class TrackedPlayer{
 				
 				if(play.getDate().after(lastUpdate)){
 					if(jsonObj.getString("rank").equalsIgnoreCase("F")) continue;
+					
+					Utils.sleep(2500);
 					
 					play.loadMap();
 					play.setPPChange(ppDiff);

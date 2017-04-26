@@ -9,13 +9,14 @@ import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingGuild;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.FinalInt;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
 
-	private static int REQUESTS_PER_MINUTE = 90;
+	private static int REQUESTS_PER_MINUTE = 180;
 	private static Timer trackingTimer = null;
 	public static double currentRefreshRate = 0;
 	
@@ -132,8 +133,21 @@ public class OsuTrackCommand extends GlobalCommand{
 	public void load(){
 		new Thread(new Runnable(){
 			public void run(){
-				for(Guild guild : Main.api.getGuilds())
+				final FinalInt threadCount = new FinalInt(0);
+				
+				for(Guild guild : Main.api.getGuilds()){
+					//threadCount.add(1);
 					new TrackingGuild(guild.getId());
+					/*new Thread(new Runnable(){
+						public void run(){
+							
+							threadCount.sub(1);
+						}
+					}).start();*/
+				}
+				
+				while(threadCount.get() > 0)
+					Utils.sleep(100);
 				
 				TrackedPlayer.changeOccured = false;
 				Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "Tracking started!");

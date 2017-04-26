@@ -120,6 +120,7 @@ public abstract class IRCCommand{
 		commands.add(new SetMatchTeamsCommand());
 		commands.add(new SetBestOfCommand());
 		commands.add(new SetMatchScheduleCommand());
+		commands.add(new ScanCheatersCommand());
 		commands.add(new ScanPlayerRanksCommand());
 		commands.add(new SeedTeamsCommand());
 		commands.add(new SyncDataFromServerCommand());

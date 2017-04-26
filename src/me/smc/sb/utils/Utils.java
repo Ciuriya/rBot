@@ -328,8 +328,23 @@ public class Utils{
 					break;
 				}
 		
-		if(allLines.size() > 0) return allLines;
-		else return new ArrayList<String>();
+		return allLines;
+	}
+	
+	public static ArrayList<String> getAllLinesFromLink(String[] lines, int offsetLine, String... gets){
+		ArrayList<String> allLines = new ArrayList<String>();
+		
+		for(int i = 0; i < lines.length; i++)
+			for(String get : gets)
+				if(lines[i].contains(get)){
+					try{
+						allLines.add(lines[i + offsetLine]);
+					}catch(Exception e){
+						e.printStackTrace();
+					}
+				}
+		
+		return allLines;
 	}
 	
 	public static String veryLongNumberDisplay(long number){

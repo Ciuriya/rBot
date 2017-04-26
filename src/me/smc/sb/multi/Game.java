@@ -1345,12 +1345,12 @@ public abstract class Game{
 		
 		if(verifyingSlots.size() >= match.getPlayers() || 
 				(expectedPlayers > 0 && verifyingSlots.size() >= expectedPlayers)){
-			lobbySwapFixing();
-			readyCheck(false);
+			if(lobbySwapFixing()) readyCheck(false);
 		}
 	}
 	
-	private void lobbySwapFixing(){
+	private boolean lobbySwapFixing(){
+		boolean canStart = true;
 		List<Player> fTeamList = new ArrayList<Player>();
 		List<Player> sTeamList = new ArrayList<Player>();
 		
@@ -1367,6 +1367,8 @@ public abstract class Game{
 					sendMessage(pl.getName() + " was kicked to the team being full!");
 					fTeamList.remove(pl);
 					
+					canStart = false;
+					
 					continue;
 				}
 			}else if(!fTeam && !sTeamList.contains(pl)){
@@ -1376,6 +1378,8 @@ public abstract class Game{
 					sendMessage("!mp kick " + pl.getIRCTag());
 					sendMessage(pl.getName() + " was kicked to the team being full!");
 					sTeamList.remove(pl);
+					
+					canStart = false;
 					
 					continue;
 				}
@@ -1387,6 +1391,8 @@ public abstract class Game{
 			
 			swapPositions(fTeam, verifyingSlots.get(pl), pl, oppositeTeam);
 		}
+		
+		return canStart;
 	}
 	
 	private void swapPositions(boolean fTeam, int slot, Player p, Team oppositeTeam){
