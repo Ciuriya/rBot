@@ -23,6 +23,7 @@ import java.util.zip.ZipInputStream;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -58,7 +59,7 @@ public class TrackingUtils{
 	public static boolean playerHasRecentPlays(int userId, int mode, CustomDate lastUpdate){
 		// loading recent plays history from profile to see if the player has done anything recently
 		// this avoids spamming the api to check, note that this is called a LOT.
-		String[] pageHistory = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-history.php?u=" + userId + "&m=" + mode);
+		String[] pageHistory = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-history.php?u=" + userId + "&m=" + mode);
 		
 		// if no plays, go back
 		if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):"))

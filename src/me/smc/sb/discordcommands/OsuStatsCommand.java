@@ -1,5 +1,6 @@
 package me.smc.sb.discordcommands;
 
+import java.awt.Color;
 import java.io.File;
 
 import org.json.JSONObject;
@@ -7,6 +8,7 @@ import org.json.JSONObject;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class OsuStatsCommand extends GlobalCommand{
@@ -32,9 +34,19 @@ public class OsuStatsCommand extends GlobalCommand{
 		}catch(Exception e){}
 		return -1;
 	}
+	
+	private static int getPlayTime(int userId, String mode){
+		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
+		
+		try{
+			return Integer.parseInt(Utils.getNextLineCodeFromLink(pageProfile, 0, "Play Time").get(0).split(" hours")[0].split("<\\/b>: ")[1].replaceAll(",", ""));
+		}catch(Exception e){}
+		
+		return -1;
+	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent e, String[] args) {
+	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		
 		String user = "";
@@ -48,7 +60,7 @@ public class OsuStatsCommand extends GlobalCommand{
 		
 		Thread t = new Thread(new Runnable(){
 			public void run(){
-				StringBuilder builder = new StringBuilder();
+				EmbedBuilder builder = new EmbedBuilder();
 				String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + finalUser + 
 	                     																	"&m=" + finalMode + "&type=string&event_days=1");
 				if(post == "" || !post.contains("{")) return;
@@ -64,22 +76,25 @@ public class OsuStatsCommand extends GlobalCommand{
 						               			  jsonResponse.getInt("count50")) 
 						   						  * 300.0)) * 100.0;
 				
-				builder.append("```osu! user stats for " + jsonResponse.getString("username") + " (" + userId + ")")
-				       .append("\n\nFrom " + jsonResponse.getString("country"))
-				       .append("\nWorld #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + 
-				    		   		 " Country #" + Utils.veryLongNumberDisplay(getCountryRank(userId, finalMode)))
-				       .append("\n" + jsonResponse.getDouble("pp_raw") + "pp")
-				       .append("\nLevel " + jsonResponse.getDouble("level") + " Play Count: " + 
-				    		   		 Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")))
-				       .append("\nScore (Ranked): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + 
-				    		   		 " (Total): " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")))
-				       .append("\n" + jsonResponse.getDouble("accuracy") + "% accuracy")
-				       .append(finalMode.equals("2") ? "" : "\n" + totalAcc + "% total accuracy")
-				       .append("\n(" + jsonResponse.getInt("count_rank_ss") + " SS) (" + 
-				    		   		 jsonResponse.getInt("count_rank_s") + " S) (" + 
-				    		   		 jsonResponse.getInt("count_rank_a") + " A)")
-				       .append("```");
-				Utils.infoBypass(e.getChannel(), builder.toString());
+				builder.setColor(Utils.getRandomColor());
+				builder.addField("Player", jsonResponse.getString("username") + " (" + userId + ")", true);
+				builder.setThumbnail("https://a.ppy.sh/" + userId);
+				builder.addField("Rank", "World #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + "\n" + 
+										 jsonResponse.getString("country") + " #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_country_rank")) + "\n" +
+										 Utils.veryLongNumberDisplay(jsonResponse.getDouble("pp_raw")) + "pp", true);
+				builder.addField("Accuracy", "Weighted • " + Utils.df(jsonResponse.getDouble("accuracy"), 4) + "%" +
+										 	 (finalMode.equals("2") ? "" : "\nTotal • " + Utils.df(totalAcc, 4) + "%"), true);
+				builder.addField("Play Stats", "Level • " + jsonResponse.getDouble("level") + "\n" +
+										 	   "Play Count • " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")) + "\n" +
+										 	   "Play Time • " + Utils.veryLongNumberDisplay(getPlayTime(userId, finalMode)) + " hours", 
+										 	   true);
+				builder.addField("Score", "Ranked • " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + "\n" +
+										  "Total • " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")), true);
+				builder.addField("Ranks", Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_ss")) + " SS • " + 
+										  Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_s")) + " S • " + 
+										  Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_a")) + " A", true);
+
+				Utils.info(e.getChannel(), builder.build());
 			}
 		});
 		

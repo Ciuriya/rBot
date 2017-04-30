@@ -1,5 +1,6 @@
 package me.smc.sb.utils;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -222,10 +223,10 @@ public class Utils{
 	}
 	
 	public static String sendPost(String urlString, String urlParameters){
-		return sendPost(urlString, urlParameters, "");
+		return sendPost(urlString, urlParameters, "", 1);
 	}
 	
-	public static String sendPost(String urlString, String urlParameters, String query){
+	public static String sendPost(String urlString, String urlParameters, String query, int retries){
 		String answer = "";
 		
 		try{
@@ -263,15 +264,26 @@ public class Utils{
 			answer = response.toString();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, "sendPost Exception: " + e.getMessage());
+			
+			if(retries > 0){
+				Log.logger.log(Level.INFO, "Retrying sendPost on " + (urlString + urlParameters) + "...");
+				
+				return sendPost(urlString, urlParameters, query, retries - 1);
+			}
 		}
 		
 		return answer;
 	}
 
-
+	
 	public static String[] getHTMLCode(String link){
+		return getHTMLCode(link, 1);
+	}
+
+	public static String[] getHTMLCode(String link, int retries){
 		BufferedReader in = null;
 		String[] toReturn = new String[]{};
+		boolean error = false;
 		
 		try{
 			URL url = new URL(link.replaceAll(" ", "%20"));
@@ -296,6 +308,8 @@ public class Utils{
 			toReturn = page.toString().split("\\n");
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, "getHTML Exception: " + e.getMessage());
+			
+			error = true;
 		}finally{
 			try{
 				if(in != null) in.close();
@@ -306,6 +320,12 @@ public class Utils{
 		
 		Main.htmlScrapes++;
 		if(link.contains("osu.ppy.sh")) Main.osuHtmlScrapes++;
+		
+		if(error && retries > 0){
+			Log.logger.log(Level.INFO, "Retrying getHTML on " + link + "...");
+			
+			return getHTMLCode(link, retries - 1);
+		}
 		
 		return toReturn;
 	}
@@ -564,8 +584,30 @@ public class Utils{
 		}
 	}
 	
+	public static String getOsuPlayerPPAndRank(String[] html){
+		String toReturn = "";
+		
+		if(html.length > 0){
+			List<String> ppLine = getNextLineCodeFromLink(html, 0, "Performance<\\/a>:");
+			List<String> countryRankLine = getNextLineCodeFromLink(html, 2, "<img class='flag'");
+			
+			if(ppLine.size() > 0 && countryRankLine.size() > 0){
+				String ppStr = ppLine.get(0);
+				String crStr = countryRankLine.get(0);
+				
+				toReturn += ppStr.split("<\\a>: ")[1].split("pp")[0].replaceAll(",", "");
+				toReturn += "&r=" + ppStr.split("\\(#")[1].split("\\)")[0].replaceAll(",", "");
+				toReturn += "&cr=" + crStr.split("#")[1].replaceAll(",", "");
+				
+				return toReturn;
+			}
+		}
+		
+		return "-1&r=-1&cr=-1"; 
+	}
+	
 	public static String getOsuPlayerPPAndRank(String id, int mode){
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
+		String post = sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
 				  	  "&u=" + id + "&m=" + mode + "&type=id&event_days=1");
 		
 		if(post == "" || !post.contains("{")) return "-1&r=-1&cr=-1";
@@ -642,7 +684,7 @@ public class Utils{
 	}
 	
 	public static String getOsuPlayerName(int userId){
-		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId);
+		String[] pageProfile = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId);
 		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "&find=");
 		
 		if(!line.isEmpty()){
@@ -656,6 +698,23 @@ public class Utils{
 		}
 		
 		return "";
+	}
+	
+	public static Color getPercentageColor(int percentage){
+		int start = 0;
+		int end = 120;
+		int h = (end * (percentage / 100)) + start;
+		
+		return Color.getHSBColor(h, 100, 50);
+	}
+	
+	public static Color getRandomColor(){
+		Random random = new Random();
+		int r = random.nextInt(255);
+		int g = random.nextInt(255);
+		int b = random.nextInt(255);
+		
+		return new Color(r, g, b);
 	}
 	
 	public static boolean isTwitch(Event<PircBotX> e){

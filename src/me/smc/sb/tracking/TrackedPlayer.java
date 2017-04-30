@@ -83,7 +83,7 @@ public class TrackedPlayer{
 			
 			JSONArray jsonResponse = new JSONArray(post);
 			
-			String[] pageGeneral = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
+			String[] pageGeneral = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
 			
 			// this fixes the username if it changed
 			List<String> userLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&find=");

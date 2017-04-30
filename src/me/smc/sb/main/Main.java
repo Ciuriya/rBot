@@ -27,6 +27,7 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.utils.BanchoRegulator;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.HTMLRegulator;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.OsuAPIRegulator;
 import me.smc.sb.utils.TwitchRegulator;
@@ -51,6 +52,7 @@ public class Main{
 	public static OsuAPIRegulator osuRequestManager;
 	public static TwitchRegulator twitchRegulator;
 	public static BanchoRegulator banchoRegulator;
+	public static HTMLRegulator htmlRegulator;
 	public static String defaultPrefix = "~/";
 	private int lastRequestCount = 0;
 	
@@ -93,6 +95,8 @@ public class Main{
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}
+		
+		htmlRegulator = new HTMLRegulator();
 		
 		PlayFormat.loadFormats();
 		Tournament.loadTournaments();

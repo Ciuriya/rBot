@@ -135,6 +135,8 @@ public class VoiceCommand extends GlobalCommand{
 				
 				for(Role role : e.getMessage().getMentionedRoles())
 					roles += "," + role.getName();
+				
+				if(roles == "") roles = "a";
 					
 				Main.serverConfigs.get(e.getGuild().getId()).writeValue("voice-perm-lock", roles.substring(1));
 				
