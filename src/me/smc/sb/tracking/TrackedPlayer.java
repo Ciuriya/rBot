@@ -83,6 +83,8 @@ public class TrackedPlayer{
 			
 			JSONArray jsonResponse = new JSONArray(post);
 			
+			Utils.sleep(2500);
+			
 			String[] pageGeneral = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
 			
 			// this fixes the username if it changed
@@ -90,7 +92,7 @@ public class TrackedPlayer{
 			
 			if(userLine.size() > 0)
 				username = userLine.get(0).split("&find=")[1].split("&")[0];
-
+			
 			// to compare fetched plays with these to find out if it the fetched play got a map leaderboard spot
 			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(pageGeneral, lastUpdate);
 			
@@ -137,8 +139,6 @@ public class TrackedPlayer{
 				
 				if(play.getDate().after(lastUpdate)){
 					if(jsonObj.getString("rank").equalsIgnoreCase("F")) continue;
-					
-					Utils.sleep(2500);
 					
 					play.loadMap();
 					play.setPPChange(ppDiff);

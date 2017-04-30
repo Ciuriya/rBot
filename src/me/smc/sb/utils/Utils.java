@@ -107,9 +107,16 @@ public class Utils{
 	
 	public static void info(MessageChannel channel, MessageEmbed embed){
 		if(channel instanceof TextChannel){
-			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent"))
+			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
 				channel.sendMessage(embed).queue();
-		}else channel.sendMessage(embed).queue(); 
+				Log.logger.log(Level.INFO, "{Embed sent in " + getGroupLogString(channel) + "} " +
+											embed.getAuthor().getName() + "\n" + embed.getTitle());
+			}
+		}else{
+			channel.sendMessage(embed).queue(); 
+			Log.logger.log(Level.INFO, "{Silent Embed sent in " + getGroupLogString(channel) + "} " +
+										embed.getAuthor().getName() + "\n" + embed.getTitle());
+		}
 		
 		Main.messagesSentThisSession++;
 	}
@@ -478,6 +485,8 @@ public class Utils{
 				format += "#";
 		}
 		
+		if(num - (int) num == 0.0) format = "#";
+		
 		DecimalFormat df = new DecimalFormat(format, new DecimalFormatSymbols(Locale.US));
 		df.setNegativePrefix("-");
 		return df.format(num);
@@ -700,12 +709,10 @@ public class Utils{
 		return "";
 	}
 	
-	public static Color getPercentageColor(int percentage){
-		int start = 0;
-		int end = 120;
-		int h = (end * (percentage / 100)) + start;
+	public static Color getPercentageColor(double percentage){
+		double h = percentage * 0.3;
 		
-		return Color.getHSBColor(h, 100, 50);
+		return Color.getHSBColor((float) h, 0.9f, 0.9f);
 	}
 	
 	public static Color getRandomColor(){

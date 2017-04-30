@@ -3,6 +3,7 @@ package me.smc.sb.discordcommands;
 import java.net.InetAddress;
 import java.util.logging.Level;
 
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
@@ -10,7 +11,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 public class PingCommand extends GlobalCommand{
 
 	public PingCommand(){
-		super(null, 
+		super(Permissions.BOT_ADMIN, 
 			  " - Pings a website", 
 			  "{prefix}ping\nThis command pings the specified website\n\n" +
 			  "----------\nUsage\n----------\n{prefix}ping {site} - Pings the website and says how long it took\n\n" + 

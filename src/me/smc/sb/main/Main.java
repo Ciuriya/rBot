@@ -157,7 +157,7 @@ public class Main{
 	private void login(){
 		try{
 			Listener l = new Listener();
-			api = new JDABuilder(AccountType.BOT).setToken(discordToken).addListener(l).buildAsync();
+			api = new JDABuilder(AccountType.BOT).setToken(discordToken).addEventListener(l).buildAsync();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;
@@ -213,7 +213,12 @@ public class Main{
 		
 		writeCodes(code);
 		api.shutdown();
-		System.exit(0);
+		
+		new Timer().schedule(new TimerTask(){
+			public void run(){
+				System.exit(0);
+			}
+		}, 1000);
 	}
 	
 	public static String getCommandPrefix(String server){

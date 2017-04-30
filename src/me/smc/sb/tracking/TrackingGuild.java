@@ -70,6 +70,11 @@ public class TrackingGuild{
 		return playFormat;
 	}
 	
+	public void setPlayFormat(String name){
+		getConfig().writeValue("track-play-format", name);
+		playFormat = PlayFormat.get(name);
+	}
+	
 	public TextChannel getChannel(TrackedPlayer player){
 		if(specificUpdateChannels.containsKey(player.getUserId() + "&m=" + player.getMode()))
 			return specificUpdateChannels.get(player.getUserId() + "&m=" + player.getMode());
@@ -124,7 +129,10 @@ public class TrackingGuild{
 		Configuration config = getConfig();
 		ArrayList<String> trackedList = config.getStringList("tracked-players");
 		
-		trackUpdateChannel = Main.api.getTextChannelById(config.getValue("track-update-group"));
+		if(config.getValue("track-update-group").length() == 0)
+			trackUpdateChannel = Main.api.getGuildById(guildId).getPublicChannel();
+		else trackUpdateChannel = Main.api.getTextChannelById(config.getValue("track-update-group"));
+		
 		playFormat = PlayFormat.get(config.getValue("track-play-format"));
 		
 		Map<String, Integer> outdatedPlayers = new HashMap<>();

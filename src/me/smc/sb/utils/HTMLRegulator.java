@@ -12,7 +12,7 @@ public class HTMLRegulator{
 
 	private static HashMap<Integer, HTMLRequest> requests;
 	private static int requestNumber = 0;
-	private static int requestsPerMinute = 120;
+	private static int requestsPerMinute = 150;
 	private Timer requestTimer;
 	
 	public HTMLRegulator(){

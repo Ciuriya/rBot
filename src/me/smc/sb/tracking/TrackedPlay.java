@@ -72,7 +72,7 @@ public class TrackedPlay{
 	}
 	
 	public double getOverallDifficulty(){
-		return map.getInt("diff_overall");
+		return map.getDouble("diff_overall");
 	}
 	
 	public double getApproachRate(){
@@ -103,12 +103,19 @@ public class TrackedPlay{
 		return TrackingUtils.analyzeMapStatus(map.getInt("approved"));
 	}
 	
+	public CustomDate getLastUpdateDate(){
+		CustomDate date = new CustomDate(map.getString("last_update"));
+		date.convertFromOsuDate();
+		
+		return date;
+	}
+	
 	public int getTotalLength(){
 		return map.getInt("total_length");
 	}
 	
 	public String getFormattedTotalLength(){
-		return Utils.toDuration(getTotalLength());
+		return Utils.toDuration(getTotalLength() * 1000);
 	}
 	
 	public int getDrainLength(){
@@ -116,7 +123,7 @@ public class TrackedPlay{
 	}
 
 	public String getFormattedDrainLength(){
-		return Utils.toDuration(getDrainLength());
+		return Utils.toDuration(getDrainLength() * 1000);
 	}
 	
 	public String getCreator(){
@@ -144,7 +151,7 @@ public class TrackedPlay{
 	}
 	
 	public boolean hasCombo(){
-		return play.isNull("maxcombo");
+		return !play.isNull("maxcombo");
 	}
 	
 	public int getCombo(){

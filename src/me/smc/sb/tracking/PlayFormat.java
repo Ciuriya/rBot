@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.smc.sb.playformats.DefaultPlayFormat;
+import me.smc.sb.playformats.EmbedPlayFormat;
 
 public abstract class PlayFormat{
 
@@ -36,6 +37,7 @@ public abstract class PlayFormat{
 	
 	public static void loadFormats(){
 		new DefaultPlayFormat();
+		new EmbedPlayFormat();
 	}
 	
 }

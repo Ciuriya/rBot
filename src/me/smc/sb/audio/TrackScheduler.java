@@ -231,9 +231,11 @@ public class TrackScheduler extends AudioEventAdapter{
 		long currentPosition = 0;
 		
 		if(currentInfo.length() > 0){
-			String[] splitInfo = currentInfo.split("\\|\\|");
+			String[] splitInfo = currentInfo.split("\\|\\|[0-9]");
 			currentInfo = splitInfo[0];
-			currentPosition = Long.parseLong(splitInfo[1]);
+			
+			if(splitInfo.length > 1)
+				currentPosition = Long.parseLong(splitInfo[1]);
 			
 			if(!currentInfo.startsWith("|")){
 				final String cInfo = currentInfo;

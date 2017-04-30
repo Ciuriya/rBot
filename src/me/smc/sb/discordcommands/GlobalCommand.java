@@ -109,6 +109,7 @@ public abstract class GlobalCommand{
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
 		commands.add(new PingCommand());
+		commands.add(new PlayFormatCommand());
 		commands.add(new PollIRCCommand());
 		commands.add(new ReceivePMCommand());
 		commands.add(new RPGCommand());

@@ -27,25 +27,72 @@ public class DefaultPlayFormat extends PlayFormat{
 		
 		// 99.6% • 9x100 
 		String fullHitText = play.getFullHitText();
-		text += Utils.df(play.getAccuracy()) + "%" + (fullHitText.length() > 0 ? " • " + fullHitText : "") + "\n";
+		String accText = Utils.df(play.getAccuracy()) + "%";
+		
+		if(fullHitText.length() > 0)
+			accText += " • " + fullHitText;
+		
+		text += accText + "\n";
 		
 		// 94,441,230 • 2055/2056 • S rank • #9 on map
-		text += play.getScore() + " • " + (play.isPerfect() ? "FC (" + play.getCombo() + "x)" :
-										   play.getCombo() + (!play.hasMapCombo() ? "x" : "/" + play.getMaxCombo())) +
-				" • " + play.getFormattedRank() + " rank" + (play.getMapRank() > 0 ? " • **#" + play.getMapRank() + "** on map" : "");
+		String playInfoText = play.getScore() + " • ";
+		
+		if(play.isPerfect())
+			playInfoText += "FC (" + play.getCombo() + "x)";
+		else{
+			playInfoText += play.getCombo();
+			
+			if(play.hasMapCombo())
+				playInfoText += "/" + play.getMaxCombo();
+			else playInfoText += "x";
+		}
+		
+		playInfoText += " • " + play.getFormattedRank() + " rank";
+		
+		if(play.getMapRank() > 0)
+			playInfoText += " • **#" + play.getMapRank() + "** on map";
+		
+		text += playInfoText;
 		        
 		// 280.75pp (280.88pp for FC)
 		String pbUnderline = play.isPersonalBest() ? "__" : "";
-		text += play.getPP() > 0.0 ? "\n**" + (play.isPersonalBest() ? pbUnderline : "~") + Utils.df(play.getPP(), 2) + "pp" + pbUnderline + "**" + 
-				(play.getRawMode() == 0 && play.getPPForFC() > 0.0 ? " (" + Utils.df(play.getPPForFC(), 2) + "pp for FC)" : "") : "";
+		String ppText = "";
+		
+		if(play.getPP() > 0.0){
+			ppText += "\n**";
+			
+			if(play.isPersonalBest())
+				ppText += pbUnderline;
+			else ppText += "~";
+			
+			ppText += Utils.df(play.getPP(), 2) + "pp" + pbUnderline + "**";
+			
+			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0)
+				ppText += " (" + Utils.df(play.getPPForFC(), 2) + "pp for FC)";
+		}
+		
+		text += ppText;
 		        
 		// 6557.62pp (+0.28pp) • #30 personal best
 		// #1,834 (-1) • #77 CA (0)
-		text += "\n\n" + (Math.abs(play.getPPChange()) >= 0.01 ? player.getPP() + "pp (**" + play.getFormattedPPChange() + "**)" + 
-				(play.isPersonalBest() ? " • **#" + play.getPersonalBestCount() + "** personal best\n" : "\n") : "") + 
-				(Math.abs(play.getRankChange()) >= 1 ? "#" + Utils.veryLongNumberDisplay(player.getRank()) + " (**" + play.getFormattedRankChange() + "**) • #" +
-				Utils.veryLongNumberDisplay(player.getCountryRank()) + " " + play.getCountry() + " (**" + play.getFormattedCountryRankChange() + "**)\n\n" :
-				(Math.abs(play.getPPChange()) >= 0.01 && play.getPP() > 0.0 ? "\n" : ""));
+		String playerRankChangesText = "\n\n";
+		
+		if(Math.abs(play.getPPChange()) >= 0.01){
+			playerRankChangesText += player.getPP() + "pp (**" + play.getFormattedPPChange() + "**)";
+			
+			if(play.isPersonalBest())
+				playerRankChangesText += " • **#" + play.getPersonalBestCount() + "** personal best\n";
+			else playerRankChangesText += "\n";
+		}
+		
+		if(Math.abs(play.getRankChange()) >= 1){
+			playerRankChangesText += "#" + Utils.veryLongNumberDisplay(player.getRank()) + " (**" + play.getFormattedRankChange() + "**) • #" +
+									 Utils.veryLongNumberDisplay(player.getCountryRank()) + " " + play.getCountry() + 
+									 " (**" + play.getFormattedCountryRankChange() + "**)\n\n";
+		}else if(Math.abs(play.getPPChange()) >= 0.01 && play.getPP() > 0.0)
+			playerRankChangesText += "\n";
+		
+		text += playerRankChangesText;
 				
 		// Map • http://osu.ppy.sh/b/923985 • Ranked
 		text += "Map • <http://osu.ppy.sh/b/" + play.getBeatmapId() + "> • " + play.getRankedStatus() + "\n";
