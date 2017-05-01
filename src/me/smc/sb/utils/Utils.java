@@ -235,8 +235,6 @@ public class Utils{
 	
 	public static String sendPost(String urlString, String urlParameters, String query, int retries){
 		String answer = "";
-		//Debugging
-		Log.logger.log(Level.INFO, "sendPost: " + urlString + urlParameters);
 		
 		try{
 			URL url = new URL(urlString + urlParameters);

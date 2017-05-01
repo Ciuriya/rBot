@@ -44,7 +44,7 @@ public class Main{
 	public static PircBotX twitchBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
-	public static int requestsSent = 0, highestBurstRequestsSent = 0;
+	public static int requestsSent = 0, highestBurstRequestsSent = 0, requestHtmlSent = 0;
 	public static int htmlScrapes = 0, osuHtmlScrapes = 0;
 	public static long bootTime = 0;
 	public static List<Server> servers;

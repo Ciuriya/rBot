@@ -90,7 +90,7 @@ public class HTMLRegulator{
 		
 		public void send(){
 			answer = Utils.getHTMLCode(link);
-			Main.requestsSent++;
+			Main.requestHtmlSent++;
 		}
 	}
 }
