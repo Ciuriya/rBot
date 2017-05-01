@@ -31,10 +31,8 @@ public class EmbedPlayFormat extends PlayFormat{
 						  "https://osu.ppy.sh/u/" + player.getUserId(), 
 						  "https://a.ppy.sh/" + player.getUserId());
 		
-		String modHighlight = (play.getMods().size() > 0 ? "**" : "");
-		
 		builder.setTitle(TrackingUtils.escapeCharacters(play.getArtist() + " - " + play.getTitle() + 
-						 " [" + play.getDifficulty() + "] " + modHighlight + play.getModDisplay() + modHighlight + "\n"), 
+						 " [" + play.getDifficulty() + "] " + play.getModDisplay() + "\n"), 
 						 "http://osu.ppy.sh/b/" + play.getBeatmapId());
 		
 		builder.addField("Score", play.getScore(), true);
@@ -67,12 +65,10 @@ public class EmbedPlayFormat extends PlayFormat{
 		if(play.getPP() > 0.0){
 			String ppText = "**";
 			
-			if(play.isPersonalBest()) ppText += "__";
+			if(play.isPersonalBest()) ppText += "";
 			else ppText += "~";
 			
 			ppText += Utils.df(play.getPP(), 2) + "pp**";
-			
-			if(play.isPersonalBest()) ppText += "__";
 			
 			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0)
 				ppText += "\n" + Utils.df(play.getPPForFC(), 2) + "pp for FC";
