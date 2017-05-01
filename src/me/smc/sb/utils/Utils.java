@@ -235,6 +235,8 @@ public class Utils{
 	
 	public static String sendPost(String urlString, String urlParameters, String query, int retries){
 		String answer = "";
+		//Debugging
+		Log.logger.log(Level.INFO, "sendPost: " + urlString + urlParameters);
 		
 		try{
 			URL url = new URL(urlString + urlParameters);
@@ -616,7 +618,7 @@ public class Utils{
 	}
 	
 	public static String getOsuPlayerPPAndRank(String id, int mode){
-		String post = sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
+		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
 				  	  "&u=" + id + "&m=" + mode + "&type=id&event_days=1");
 		
 		if(post == "" || !post.contains("{")) return "-1&r=-1&cr=-1";
