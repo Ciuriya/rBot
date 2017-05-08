@@ -14,7 +14,7 @@ public class CreateTeamCommand extends IRCCommand{
 	public CreateTeamCommand(){
 		super("Creates a team for tournaments.",
 			  "<tournament name> {<name>} ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "teamcreate");
 	}
 
@@ -26,8 +26,16 @@ public class CreateTeamCommand extends IRCCommand{
 		String validation = Utils.validateTournamentAndTeam(e, pe, discord, args);
 		if(!validation.contains("|")) return validation;
 		
-		new Team(Tournament.getTournament(validation.split("\\|")[1]), validation.split("\\|")[0]);
-		return "Created the " + validation.split("\\|")[0] + " team!";
+		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
+		
+		String user = Utils.toUser(e, pe);
+		
+		if(t.isAdmin(user)){
+			new Team(t, validation.split("\\|")[0]);
+			return "Created the " + validation.split("\\|")[0] + " team!";
+		}
+		
+		return "";
 	}
 	
 }

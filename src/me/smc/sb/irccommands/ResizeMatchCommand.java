@@ -14,7 +14,7 @@ public class ResizeMatchCommand extends IRCCommand{
 	public ResizeMatchCommand(){
 		super("Resizes a match (currently running or not).",
 			  "<tournament name> <match num> <players> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "resizematch");
 	}
 	

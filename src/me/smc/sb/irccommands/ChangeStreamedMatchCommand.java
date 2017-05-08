@@ -7,6 +7,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class ChangeStreamedMatchCommand extends IRCCommand{
@@ -14,7 +15,7 @@ public class ChangeStreamedMatchCommand extends IRCCommand{
 	public ChangeStreamedMatchCommand(){
 		super("Changes the currently streamed match.",
 			  "<tournament name> <match number> ",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "changestream");
 	}
 

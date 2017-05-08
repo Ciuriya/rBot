@@ -13,7 +13,7 @@ public class SetBanWaitTimeCommand extends IRCCommand{
 	public SetBanWaitTimeCommand(){
 		super("Sets the time (in seconds) that players have to ban a map, if exceeded, the ban is skipped. 0 or less means unlimited.",
 			  "<tournament name> <time> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setbanwaittime");
 	}
 
@@ -29,10 +29,16 @@ public class SetBanWaitTimeCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setBanWaitTime(Utils.stringToInt(args[args.length - 1]));
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's ban wait time to " + t.getBanWaitTime() + "!";
+		if(t.isAdmin(user)){
+			t.setBanWaitTime(Utils.stringToInt(args[args.length - 1]));
+			t.save(false);
+			
+			return "Set the tournament's ban wait time to " + t.getBanWaitTime() + "!";
+		}
+		
+		return "";
 	}
 	
 }

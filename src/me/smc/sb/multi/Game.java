@@ -152,7 +152,7 @@ public abstract class Game{
 		
 		updateTwitch("Waiting for players to join the lobby...");
 		
-		AlertStaffCommand.gamesAllowedToAlert.add(this);
+		if(match.getTournament().getAlertDiscord().length() > 0) AlertStaffCommand.gamesAllowedToAlert.add(this);
 	}
 	
 	public void setupGame(){

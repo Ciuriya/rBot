@@ -8,6 +8,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class SetGameScoreCommand extends IRCCommand{
@@ -15,7 +16,7 @@ public class SetGameScoreCommand extends IRCCommand{
 	public SetGameScoreCommand(){
 		super("Sets the scores of both teams in the game.",
 			  "<mp number> <team 1 score> <team 2 score>",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "setscores");
 	}
 

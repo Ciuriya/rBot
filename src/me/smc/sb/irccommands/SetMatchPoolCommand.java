@@ -13,7 +13,7 @@ public class SetMatchPoolCommand extends IRCCommand{
 	public SetMatchPoolCommand(){
 		super("Sets a match's map pool.",
 			  "<tournament name> <match num> <map pool num>",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "mpsetpool");
 	}
 	
@@ -33,10 +33,16 @@ public class SetMatchPoolCommand extends IRCCommand{
 		if(t.getMatch(Utils.stringToInt(args[args.length - 2])) == null) return "The match is invalid!";
 		if(t.getPool(Utils.stringToInt(args[args.length - 1])) == null) return "The map pool is invalid!";
 		
-		t.getMatch(Utils.stringToInt(args[args.length - 2])).setMapPool(t.getPool(Utils.stringToInt(args[args.length - 1])));
-		t.getMatch(Utils.stringToInt(args[args.length - 2])).save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set match #" + args[args.length - 2] + "'s map pool to map pool #" + args[args.length - 1] + "!";
+		if(t.isAdmin(user)){
+			t.getMatch(Utils.stringToInt(args[args.length - 2])).setMapPool(t.getPool(Utils.stringToInt(args[args.length - 1])));
+			t.getMatch(Utils.stringToInt(args[args.length - 2])).save(false);
+			
+			return "Set match #" + args[args.length - 2] + "'s map pool to map pool #" + args[args.length - 1] + "!";
+		}
+		
+		return "";
 	}
 	
 }

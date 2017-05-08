@@ -6,6 +6,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class ForceStartGameCommand extends IRCCommand{
@@ -13,7 +14,7 @@ public class ForceStartGameCommand extends IRCCommand{
 	public ForceStartGameCommand(){
 		super("Force starts the tournament match.",
 			  "<tournament name> <match number> ",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "fstart");
 	}
 

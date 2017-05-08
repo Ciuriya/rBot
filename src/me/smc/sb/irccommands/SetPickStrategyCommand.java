@@ -14,7 +14,7 @@ public class SetPickStrategyCommand extends IRCCommand{
 	public SetPickStrategyCommand(){
 		super("Sets the tourney's picking strategy (any map, mod picking, etc.)",
 			  "<tournament name> <strategy name (regular, mod)> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setpickstrategy");
 	}
 
@@ -30,10 +30,16 @@ public class SetPickStrategyCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setPickStrategy(args[args.length - 1]);
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's pick strategy to " + PickStrategy.getStrategyName(t.getPickStrategy()) + "!";
+		if(t.isAdmin(user)){
+			t.setPickStrategy(args[args.length - 1]);
+			t.save(false);
+			
+			return "Set the tournament's pick strategy to " + PickStrategy.getStrategyName(t.getPickStrategy()) + "!";
+		}
+		
+		return "";
 	}
 	
 }

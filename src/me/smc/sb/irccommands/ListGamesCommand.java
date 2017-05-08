@@ -6,6 +6,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class ListGamesCommand extends IRCCommand{
@@ -13,7 +14,7 @@ public class ListGamesCommand extends IRCCommand{
 	public ListGamesCommand(){
 		super("Lists all running games.",
 			  "<tournament name> ",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "listgames");
 	}
 

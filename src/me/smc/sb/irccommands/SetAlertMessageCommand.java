@@ -13,7 +13,7 @@ public class SetAlertMessageCommand extends IRCCommand{
 	public SetAlertMessageCommand(){
 		super("Sets the mention message to alert staff with.",
 			  "{<tournament name>} <message> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setalertmessage");
 	}
 	
@@ -46,13 +46,19 @@ public class SetAlertMessageCommand extends IRCCommand{
 		tournamentName = tournamentName.substring(1);
 		tournamentName = tournamentName.substring(0, tournamentName.length() - 2);
 		
-		if(Tournament.getTournament(tournamentName) == null)
-			return "The tournament does not exist!";
+		Tournament t = Tournament.getTournament(tournamentName);
+		if(t == null) return "The tournament does not exist!";
 		
-		Tournament.getTournament(tournamentName).setAlertMessage(message);
-		Tournament.getTournament(tournamentName).save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "The alert message was set!";
+		if(t.isAdmin(user)){
+			t.setAlertMessage(message);
+			t.save(false);
+			
+			return "The alert message was set!";
+		}
+		
+		return "";
 	}
 	
 }

@@ -18,7 +18,7 @@ public class SyncDataFromServerCommand extends IRCCommand{
 	public SyncDataFromServerCommand(){
 		super("Syncs teams and matches for a tournament from the web server.",
 			  "<tournament name>",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "sync");
 	}
 	
@@ -34,22 +34,26 @@ public class SyncDataFromServerCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		for(Match match : new ArrayList<>(t.getMatches())){
-			t.removeMatch(match.getMatchNum());
-		}
+		String user = Utils.toUser(e, pe);
 		
-		for(Team team : new ArrayList<>(t.getTeams())){
-			t.removeTeam(team.getTeamName());
-		}
-		
-		new Thread(new Runnable(){
-			public void run(){
-				RemotePatyServerUtils.syncTeams(t.getName());
-				RemotePatyServerUtils.syncMatches(t.getName());
-				
-				Utils.info(e, pe, discord, t.getTeams().size() + " teams and " + t.getMatches().size() + " matches synced!");
+		if(t.isAdmin(user)){
+			for(Match match : new ArrayList<>(t.getMatches())){
+				t.removeMatch(match.getMatchNum());
 			}
-		}).start();
+			
+			for(Team team : new ArrayList<>(t.getTeams())){
+				t.removeTeam(team.getTeamName());
+			}
+			
+			new Thread(new Runnable(){
+				public void run(){
+					RemotePatyServerUtils.syncTeams(t.getName());
+					RemotePatyServerUtils.syncMatches(t.getName());
+					
+					Utils.info(e, pe, discord, t.getTeams().size() + " teams and " + t.getMatches().size() + " matches synced!");
+				}
+			}).start();
+		}
 		
 		return "";
 	}

@@ -13,7 +13,7 @@ public class DeleteMapPoolCommand extends IRCCommand{
 	public DeleteMapPoolCommand(){
 		super("Deletes a map pool.",
 			  "<tournament name> <map pool number> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "pooldelete");
 	}
 	
@@ -30,9 +30,15 @@ public class DeleteMapPoolCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Map pool number needs to be a number!";
 		
-		if(t.removePool(Utils.stringToInt(args[args.length - 1])))
-			return "Deleted map pool #" + args[args.length - 1] + "!";
-		else return "Map pool does not exist!";
+		String user = Utils.toUser(e, pe);
+		
+		if(t.isAdmin(user)){
+			if(t.removePool(Utils.stringToInt(args[args.length - 1])))
+				return "Deleted map pool #" + args[args.length - 1] + "!";
+			else return "Map pool does not exist!";
+		}
+		
+		return "";
 	}
 	
 }

@@ -15,7 +15,7 @@ public class AddMapToPoolCommand extends IRCCommand{
 	public AddMapToPoolCommand(){
 		super("Adds a map to the map pool.",
 			  "<tournament name> <map pool number> <map url> <map category (0 = NM -> 5 = TB)> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "pooladdmap");
 	}
 	
@@ -34,21 +34,27 @@ public class AddMapToPoolCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 3]) == -1) return "Map pool number needs to be a number!";
 		if(t.getPool(Utils.stringToInt(args[args.length - 3])) == null) return "The map pool is invalid!";
 		
-		String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
+		String user = Utils.toUser(e, pe);
 		
-		if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}"))
-			return "Invalid URL, example format: https://osu.ppy.sh/b/123456";
+		if(t.isAdmin(user)){
+			String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
+			
+			if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}"))
+				return "Invalid URL, example format: https://osu.ppy.sh/b/123456";
+			
+			if(Utils.stringToInt(args[args.length - 1]) < 0 || Utils.stringToInt(args[args.length - 1]) > 5)
+				return "The map category needs to be within 0 to 5! (0 = NM, 1 = FM, 2 = HD, 3 = HR, 4 = DT, 5 = TB)";
+			
+			MapPool pool = t.getPool(Utils.stringToInt(args[args.length - 3]));
+			
+			Map map = new Map(url, Utils.stringToInt(args[args.length - 1]), pool);
+			pool.addMap(map);
+			pool.save(false);
+			
+			return "Added beatmap #" + map.getBeatmapID() + " to the pool!";
+		}
 		
-		if(Utils.stringToInt(args[args.length - 1]) < 0 || Utils.stringToInt(args[args.length - 1]) > 5)
-			return "The map category needs to be within 0 to 5! (0 = NM, 1 = FM, 2 = HD, 3 = HR, 4 = DT, 5 = TB)";
-		
-		MapPool pool = t.getPool(Utils.stringToInt(args[args.length - 3]));
-		
-		Map map = new Map(url, Utils.stringToInt(args[args.length - 1]), pool);
-		pool.addMap(map);
-		pool.save(false);
-		
-		return "Added beatmap #" + map.getBeatmapID() + " to the pool!";
+		return "";
 	}
 	
 }

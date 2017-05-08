@@ -12,9 +12,9 @@ import me.smc.sb.utils.Utils;
 public class ResyncMatchCommand extends IRCCommand{
 
 	public ResyncMatchCommand(){
-		super("Resizes a match (currently running or not).",
+		super("Resyncs a match.",
 			  "<tournament name> <match num> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "resync");
 	}
 	
@@ -36,7 +36,8 @@ public class ResyncMatchCommand extends IRCCommand{
 		
 		String user = Utils.toUser(e, pe);
 		
-		if(user == null || t.getMatchAdmins().contains(user.replaceAll(" ", "_"))){
+		if(t.isAdmin(user)){
+			t.removeMatch(Integer.parseInt(matchId));
 			RemotePatyServerUtils.syncMatch(t.getName(), matchId);
 			
 			if(t.getMatch(Integer.parseInt(matchId)) != null){

@@ -13,7 +13,7 @@ public class SetRematchesAllowedCommand extends IRCCommand{
 	public SetRematchesAllowedCommand(){
 		super("Set rematches allowed per match per team.",
 			  "<tournament name> <amount> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setrematchesallowed");
 	}
 
@@ -28,12 +28,18 @@ public class SetRematchesAllowedCommand extends IRCCommand{
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null) return "Invalid tournament!";
-		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Invalid amount";		
+		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Invalid amount.";		
 		
-		t.setRematchesAllowed(Utils.stringToInt(args[args.length - 1]));
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's rematches allowed per match to " + t.getRematchesAllowed() + "!";
+		if(t.isAdmin(user)){
+			t.setRematchesAllowed(Utils.stringToInt(args[args.length - 1]));
+			t.save(false);
+			
+			return "Set the tournament's rematches allowed per match to " + t.getRematchesAllowed() + "!";
+		}
+		
+		return "";
 	}
 	
 }

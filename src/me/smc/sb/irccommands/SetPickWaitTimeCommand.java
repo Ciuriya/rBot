@@ -13,7 +13,7 @@ public class SetPickWaitTimeCommand extends IRCCommand{
 	public SetPickWaitTimeCommand(){
 		super("Sets the time (in seconds) that players have to pick a map, if exceeded, warmups are skipped, picks have the team lose their turn. 0 or less means unlimited.",
 			  "<tournament name> <time> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setpickwaittime");
 	}
 
@@ -29,10 +29,16 @@ public class SetPickWaitTimeCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setPickWaitTime(Utils.stringToInt(args[args.length - 1]));
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's pick wait time to " + t.getPickWaitTime() + "!";
+		if(t.isAdmin(user)){
+			t.setPickWaitTime(Utils.stringToInt(args[args.length - 1]));
+			t.save(false);
+			
+			return "Set the tournament's pick wait time to " + t.getPickWaitTime() + "!";
+		}
+		
+		return "";
 	}
 	
 }

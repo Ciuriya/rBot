@@ -14,7 +14,7 @@ public class DeleteTeamCommand extends IRCCommand{
 	public DeleteTeamCommand(){
 		super("Deletes a tournament team.",
 			  "<tournament name> {<team name>} ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "teamdelete");
 	}
 
@@ -26,14 +26,22 @@ public class DeleteTeamCommand extends IRCCommand{
 		String validation = Utils.validateTournamentAndTeam(e, pe, discord, args);
 		if(!validation.contains("|")) return validation;
 		
-		Team team = Tournament.getTournament(validation.split("\\|")[1]).getTeam(validation.split("\\|")[0]);
+		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
 		
-		if(team == null)
-			return "Could not find team!";
-		else{
-			Tournament.getTournament(validation.split("\\|")[1]).removeTeam(validation.split("\\|")[0]);
-			return "Deleted the " + validation.split("\\|")[0] + " team!";	
+		String user = Utils.toUser(e, pe);
+		
+		if(t.isAdmin(user)){
+			Team team = t.getTeam(validation.split("\\|")[0]);
+			
+			if(team == null)
+				return "Could not find team!";
+			else{
+				Tournament.getTournament(validation.split("\\|")[1]).removeTeam(validation.split("\\|")[0]);
+				return "Deleted the " + validation.split("\\|")[0] + " team!";	
+			}
 		}
+		
+		return "";
 	}
 	
 }

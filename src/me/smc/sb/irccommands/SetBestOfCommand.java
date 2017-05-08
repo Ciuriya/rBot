@@ -13,7 +13,7 @@ public class SetBestOfCommand extends IRCCommand{
 	public SetBestOfCommand(){
 		super("Sets a match's best of.",
 			  "<tournament name> <match num> <best of #>",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "mpsetbestof");
 	}
 
@@ -32,10 +32,16 @@ public class SetBestOfCommand extends IRCCommand{
 		if(t.getMatch(Utils.stringToInt(args[args.length - 2])) == null) return "The match is invalid!";
 		if(Utils.stringToInt(args[args.length - 1]) <= 0) return "The best of number is invalid!";
 		
-		t.getMatch(Utils.stringToInt(args[args.length - 2])).setBestOf(Utils.stringToInt(args[args.length - 1]));
-		t.getMatch(Utils.stringToInt(args[args.length - 2])).save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Match set to best of " + Utils.stringToInt(args[args.length - 1]) + "!";
+		if(t.isAdmin(user)){
+			t.getMatch(Utils.stringToInt(args[args.length - 2])).setBestOf(Utils.stringToInt(args[args.length - 1]));
+			t.getMatch(Utils.stringToInt(args[args.length - 2])).save(false);
+			
+			return "Match set to best of " + Utils.stringToInt(args[args.length - 1]) + "!";
+		}
+		
+		return "";
 	}
 	
 }

@@ -7,6 +7,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import me.smc.sb.multi.GameState;
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class ResumeCommand extends IRCCommand{
@@ -14,7 +15,7 @@ public class ResumeCommand extends IRCCommand{
 	public ResumeCommand(){
 		super("Resumes the tournament match",
 			  "<tournament name> <match number> ",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "resume");
 	}
 

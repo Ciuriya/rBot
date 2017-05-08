@@ -306,6 +306,18 @@ public class Tournament{
 		return tempLobbyDecayTime;
 	}
 	
+	public boolean isAdmin(String admin){
+		if(admin == null) return true;
+		
+		if(matchAdmins.size() > 0)
+			for(String matchAdmin : matchAdmins){
+				if(matchAdmin.replaceAll(" ", "_").equalsIgnoreCase(admin))
+					return true;
+			}
+		
+		return false;
+	}
+	
 	public java.util.Map<String, Match> getConditionalTeams(){
 		return conditionalTeams;
 	}

@@ -13,7 +13,7 @@ public class SetTwitchChannelCommand extends IRCCommand{
 	public SetTwitchChannelCommand(){
 		super("Sets the twitch channel to use for the tournament.",
 			  "<tournament name> <channel name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "settwitchchannel");
 	}
 
@@ -29,10 +29,16 @@ public class SetTwitchChannelCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setTwitchChannel(args[args.length - 1].toLowerCase());
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's twitch channel to " + t.getTwitchChannel() + "!";
+		if(t.isAdmin(user)){
+			t.setTwitchChannel(args[args.length - 1].toLowerCase());
+			t.save(false);
+			
+			return "Set the tournament's twitch channel to " + t.getTwitchChannel() + "!";
+		}
+		
+		return "";
 	}
 	
 }

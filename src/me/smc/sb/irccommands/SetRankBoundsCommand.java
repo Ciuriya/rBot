@@ -13,7 +13,7 @@ public class SetRankBoundsCommand extends IRCCommand{
 	public SetRankBoundsCommand(){
 		super("Sets the rank bounds used to verify player ranks.",
 			  "<tournament name> <lower bound (closest to 1)> <upper bound> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setrankbounds");
 	}
 	
@@ -26,20 +26,27 @@ public class SetRankBoundsCommand extends IRCCommand{
 		
 		for(int i = 0; i < args.length - 2; i++) tournamentName += args[i] + " ";
 		
-		if(Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)) == null)
-			return "The tournament does not exist!";
+		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		int lower = Utils.stringToInt(args[args.length - 2]);
-		int upper = Utils.stringToInt(args[args.length - 1]);
+		if(t == null) return "The tournament does not exist!";
 		
-		if(lower < 0) lower = 0;
-		if(upper < 0) upper = 0;
+		String user = Utils.toUser(e, pe);
 		
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).setLowerRankBound(lower);
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).setUpperRankBound(upper);
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).save(false);
+		if(t.isAdmin(user)){
+			int lower = Utils.stringToInt(args[args.length - 2]);
+			int upper = Utils.stringToInt(args[args.length - 1]);
+			
+			if(lower < 0) lower = 0;
+			if(upper < 0) upper = 0;
+			
+			t.setLowerRankBound(lower);
+			t.setUpperRankBound(upper);
+			t.save(false);
+			
+			return "The rank bounds are now " + lower + " to " + upper + "!";
+		}
 		
-		return "The rank bounds are now " + lower + " to " + upper + "!";
+		return "";
 	}
 	
 }

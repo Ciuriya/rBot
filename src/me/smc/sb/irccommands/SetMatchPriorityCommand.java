@@ -14,7 +14,7 @@ public class SetMatchPriorityCommand extends IRCCommand{
 	public SetMatchPriorityCommand(){
 		super("Changes a match's stream priority, highest is 1.",
 			  "<tournament name> <match num> <priority> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setmatchpriority");
 	}
 	
@@ -37,11 +37,17 @@ public class SetMatchPriorityCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Twitch stream priority needs to be a number!";
 		if(Utils.stringToInt(args[args.length - 1]) < 1) return "Twitch stream priority is at least 1!";
 		
-		match.setStreamPriority(Utils.stringToInt(args[args.length - 1]));
-		match.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set match #" + args[args.length - 2] + "'s stream priority to " + 
-				Utils.stringToInt(args[args.length - 1]);
+		if(t.isAdmin(user)){
+			match.setStreamPriority(Utils.stringToInt(args[args.length - 1]));
+			match.save(false);
+			
+			return "Set match #" + args[args.length - 2] + "'s stream priority to " + 
+					Utils.stringToInt(args[args.length - 1]);
+		}
+		
+		return "";
 	}
 	
 }

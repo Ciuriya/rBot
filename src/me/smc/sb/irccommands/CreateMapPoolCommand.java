@@ -14,7 +14,7 @@ public class CreateMapPoolCommand extends IRCCommand{
 	public CreateMapPoolCommand(){
 		super("Creates a map pool for use in a tournament.",
 			  "<tournament name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "poolcreate");
 	}
 	
@@ -30,8 +30,14 @@ public class CreateMapPoolCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		MapPool pool = new MapPool(t);
-		return "Created map pool #" + pool.getPoolNum() + "!";
+		String user = Utils.toUser(e, pe);
+		
+		if(t.isAdmin(user)){
+			MapPool pool = new MapPool(t);
+			return "Created map pool #" + pool.getPoolNum() + "!";
+		}
+		
+		return "";
 	}
 	
 }

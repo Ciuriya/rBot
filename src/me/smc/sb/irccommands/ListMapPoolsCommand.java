@@ -14,7 +14,7 @@ public class ListMapPoolsCommand extends IRCCommand{
 	public ListMapPoolsCommand(){
 		super("Lists all map pools.",
 			  "<tournament name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "poollist");
 	}
 	
@@ -30,26 +30,30 @@ public class ListMapPoolsCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		String msg = "Map Pools in " + t.getName();
-		if(discord != null) msg = "```" + msg + "\n";
-		else msg += "=";
+		String user = Utils.toUser(e, pe);
 		
-		for(MapPool pool : t.getMapPools()){
-			msg += "#" + pool.getPoolNum() + " - " + pool.getMaps().size() + " maps";
-			if(discord != null) msg += "\n";
+		if(t.isAdmin(user)){
+			String msg = "Map Pools in " + t.getName();
+			if(discord != null) msg = "```" + msg + "\n";
 			else msg += "=";
-		}
-		
-		if(discord == null){
-			String built = "";
-			for(String part : msg.split("=")){
-				if(part.isEmpty()) continue;
-				if(e == null && pe == null) built += part + "\n";
-				else Utils.info(e, pe, discord, part);
+			
+			for(MapPool pool : t.getMapPools()){
+				msg += "#" + pool.getPoolNum() + " - " + pool.getMaps().size() + " maps";
+				if(discord != null) msg += "\n";
+				else msg += "=";
 			}
 			
-			if(built.length() > 0) return built.substring(0, built.length() - 1);
-		}else return msg + "```";
+			if(discord == null){
+				String built = "";
+				for(String part : msg.split("=")){
+					if(part.isEmpty()) continue;
+					if(e == null && pe == null) built += part + "\n";
+					else Utils.info(e, pe, discord, part);
+				}
+				
+				if(built.length() > 0) return built.substring(0, built.length() - 1);
+			}else return msg + "```";
+		}
 		
 		return "";
 	}

@@ -13,7 +13,7 @@ public class SetScoreV2Command extends IRCCommand{
 	public SetScoreV2Command(){
 		super("Sets whether or not scoreV2 will be used.",
 			  "<tournament name> <true/false> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setscoring");
 	}
 
@@ -29,10 +29,16 @@ public class SetScoreV2Command extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setScoreV2(Boolean.parseBoolean(args[args.length - 1]));
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's scoring to scoreV" + (t.isScoreV2() ? "2" : "1") + "!";
+		if(t.isAdmin(user)){
+			t.setScoreV2(Boolean.parseBoolean(args[args.length - 1]));
+			t.save(false);
+			
+			return "Set the tournament's scoring to scoreV" + (t.isScoreV2() ? "2" : "1") + "!";
+		}
+		
+		return "";
 	}
 	
 }

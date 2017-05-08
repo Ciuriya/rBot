@@ -13,7 +13,7 @@ public class SetReadyWaitTimeCommand extends IRCCommand{
 	public SetReadyWaitTimeCommand(){
 		super("Sets the time (in seconds) that players have to ready up, if exceeded, the match will attempt to start. 0 or less means unlimited.",
 			  "<tournament name> <time> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setreadywaittime");
 	}
 
@@ -29,10 +29,16 @@ public class SetReadyWaitTimeCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setReadyWaitTime(Utils.stringToInt(args[args.length - 1]));
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the tournament's ready wait time to " + t.getReadyWaitTime() + "!";
+		if(t.isAdmin(user)){
+			t.setReadyWaitTime(Utils.stringToInt(args[args.length - 1]));
+			t.save(false);
+			
+			return "Set the tournament's ready wait time to " + t.getReadyWaitTime() + "!";
+		}
+		
+		return "";
 	}
 	
 }

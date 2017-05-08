@@ -15,7 +15,7 @@ public class ListTeamPlayersCommand extends IRCCommand{
 	public ListTeamPlayersCommand(){
 		super("Lists all players on a team.",
 			  "<tournament name> {team name} ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "teamplayerlist");
 	}
 	
@@ -27,31 +27,37 @@ public class ListTeamPlayersCommand extends IRCCommand{
 		String validation = Utils.validateTournamentAndTeam(e, pe, discord, args);
 		if(!validation.contains("|")) return validation;
 		
-		Team team = Tournament.getTournament(validation.split("\\|")[1]).getTeam(validation.split("\\|")[0]);
+		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
 		
-		if(team == null)
-			return "Could not find team!";
-		else{
-			String msg = "Team " + team.getTeamName() + " in " + Tournament.getTournament(validation.split("\\|")[1]).getName();
-			if(discord != null) msg = "```" + msg + "\n";
-			else msg += "=";
+		String user = Utils.toUser(e, pe);
+
+		if(t.isAdmin(user)){
+			Team team = t.getTeam(validation.split("\\|")[0]);
 			
-			for(Player player : team.getPlayers()){
-				msg += player.getName();
-				if(discord != null) msg += "\n";
+			if(team == null)
+				return "Could not find team!";
+			else{
+				String msg = "Team " + team.getTeamName() + " in " + Tournament.getTournament(validation.split("\\|")[1]).getName();
+				if(discord != null) msg = "```" + msg + "\n";
 				else msg += "=";
-			}
-			
-			if(discord == null){
-				String built = "";
-				for(String part : msg.split("=")){
-					if(part.isEmpty()) continue;
-					if(e == null && pe == null) built += part + "\n";
-					else Utils.info(e, pe, discord, part);
+				
+				for(Player player : team.getPlayers()){
+					msg += player.getName();
+					if(discord != null) msg += "\n";
+					else msg += "=";
 				}
 				
-				if(built.length() > 0) return built.substring(0, built.length() - 1);
-			}else return msg + "```";
+				if(discord == null){
+					String built = "";
+					for(String part : msg.split("=")){
+						if(part.isEmpty()) continue;
+						if(e == null && pe == null) built += part + "\n";
+						else Utils.info(e, pe, discord, part);
+					}
+					
+					if(built.length() > 0) return built.substring(0, built.length() - 1);
+				}else return msg + "```";
+			}
 		}
 		
 		return "";

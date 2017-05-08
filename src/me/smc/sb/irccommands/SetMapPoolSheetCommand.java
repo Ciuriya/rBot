@@ -13,7 +13,7 @@ public class SetMapPoolSheetCommand extends IRCCommand{
 	public SetMapPoolSheetCommand(){
 		super("Sets the sheet which lists the maps in the map pool.",
 			  "<tournament name> <map pool number> <sheet url> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "poolsetsheet");
 	}
 
@@ -32,10 +32,16 @@ public class SetMapPoolSheetCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Map pool number needs to be a number!";
 		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null) return "The map pool is invalid!";
 		
-		t.getPool(Utils.stringToInt(args[args.length - 2])).setSheetUrl(args[args.length - 1]);
-		t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "Set the map pool's sheet to " + args[args.length - 1] + "!";
+		if(t.isAdmin(user)){
+			t.getPool(Utils.stringToInt(args[args.length - 2])).setSheetUrl(args[args.length - 1]);
+			t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
+			
+			return "Set the map pool's sheet to " + args[args.length - 1] + "!";
+		}
+		
+		return "";
 	}
 	
 }

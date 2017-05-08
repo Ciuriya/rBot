@@ -19,7 +19,7 @@ public class ListMapsInPoolCommand extends IRCCommand{
 	public ListMapsInPoolCommand(){
 		super("Lists all maps in the map pool.",
 			  "<tournament name> <map pool num>",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "poolmaplist");
 	}
 	
@@ -40,47 +40,51 @@ public class ListMapsInPoolCommand extends IRCCommand{
 		
 		if(pool == null) return "Map pool does not exist!";
 		
-		String msg = "Maps in map pool #" + pool.getPoolNum() + " of " + t.getName();
-		msg = addNewLine(discord, msg, 2);
+		String user = Utils.toUser(e, pe);
 		
-		java.util.Map<Integer, List<Map>> maps = new HashMap<>();
-		
-		if(!pool.getMaps().isEmpty())
-			for(Map map : pool.getMaps()){
-				List<Map> list = new ArrayList<>();
-				
-				if(maps.containsKey(map.getCategory()))
-					list = maps.get(map.getCategory());
-				
-				list.add(map);
-				maps.put(map.getCategory(), list);
-			}
-			
-		for(int i = 0; i < 6; i++){
-			List<Map> list = maps.get(i);
-			msg += getCategoryString(i);
+		if(t.isAdmin(user)){
+			String msg = "Maps in map pool #" + pool.getPoolNum() + " of " + t.getName();
 			msg = addNewLine(discord, msg, 2);
 			
-			if(list != null && !list.isEmpty())
-				for(Map map : list){
-					msg += map.getURL();
-					msg = addNewLine(discord, msg, 1);
-				}
+			java.util.Map<Integer, List<Map>> maps = new HashMap<>();
 			
-			if(i != 5) msg = addNewLine(discord, msg, 1);
-			else msg = msg.substring(0, msg.lastIndexOf("\n"));
-		}
-		
-		if(discord == null){
-			String built = "";
-			for(String part : msg.split("=")){
-				if(part.isEmpty()) continue;
-				if(e == null && pe == null) built += part.substring(0, part.length() - 1) + "\n";
-				else Utils.info(e, pe, discord, part.substring(0, part.length() - 1));
+			if(!pool.getMaps().isEmpty())
+				for(Map map : pool.getMaps()){
+					List<Map> list = new ArrayList<>();
+					
+					if(maps.containsKey(map.getCategory()))
+						list = maps.get(map.getCategory());
+					
+					list.add(map);
+					maps.put(map.getCategory(), list);
+				}
+				
+			for(int i = 0; i < 6; i++){
+				List<Map> list = maps.get(i);
+				msg += getCategoryString(i);
+				msg = addNewLine(discord, msg, 2);
+				
+				if(list != null && !list.isEmpty())
+					for(Map map : list){
+						msg += map.getURL();
+						msg = addNewLine(discord, msg, 1);
+					}
+				
+				if(i != 5) msg = addNewLine(discord, msg, 1);
+				else msg = msg.substring(0, msg.lastIndexOf("\n"));
 			}
 			
-			if(built.length() > 0) return built.substring(0, built.length() - 1);
-		}else return msg;
+			if(discord == null){
+				String built = "";
+				for(String part : msg.split("=")){
+					if(part.isEmpty()) continue;
+					if(e == null && pe == null) built += part.substring(0, part.length() - 1) + "\n";
+					else Utils.info(e, pe, discord, part.substring(0, part.length() - 1));
+				}
+				
+				if(built.length() > 0) return built.substring(0, built.length() - 1);
+			}else return msg;
+		}
 		
 		return "";
 	}
@@ -100,8 +104,8 @@ public class ListMapsInPoolCommand extends IRCCommand{
 			case 0: return "No Mod";
 			case 1: return "Free Mod";
 			case 2: return "Hidden";
-			case 3: return "Hardrock";
-			case 4: return "Doubletime";
+			case 3: return "Hard Rock";
+			case 4: return "Double Time";
 			case 5: return "Tiebreaker";
 			default: return "Unknown";
 		}

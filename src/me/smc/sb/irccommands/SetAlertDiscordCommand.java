@@ -13,7 +13,7 @@ public class SetAlertDiscordCommand extends IRCCommand{
 	public SetAlertDiscordCommand(){
 		super("Sets the discord channel to send staff alerts in.",
 			  "<tournament name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setalertdiscord");
 	}
 	
@@ -26,15 +26,21 @@ public class SetAlertDiscordCommand extends IRCCommand{
 		
 		for(int i = 0; i < args.length; i++) tournamentName += args[i] + " ";
 		
-		if(Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)) == null)
-			return "The tournament does not exist!";
+		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
+		if(t == null) return "The tournament does not exist!";
 		
-		if(discord == null) return "You need to use this command in the discord channel you wish to receive alerts into!";
+		String user = Utils.toUser(e, pe);
 		
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).setAlertDiscord(discord);
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).save(false);
+		if(t.isAdmin(user)){
+			if(discord == null) return "You need to use this command in the discord channel you wish to receive alerts into!";
+			
+			t.setAlertDiscord(discord);
+			t.save(false);
+			
+			return "The alert discord was set!";
+		}
 		
-		return "The alert discord was set!";
+		return "";
 	}
 	
 }

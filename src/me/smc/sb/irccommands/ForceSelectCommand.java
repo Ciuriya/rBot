@@ -7,6 +7,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import me.smc.sb.multi.Map;
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class ForceSelectCommand extends IRCCommand {
@@ -14,7 +15,7 @@ public class ForceSelectCommand extends IRCCommand {
 	public ForceSelectCommand(){
 		super("Force selects a map in the tournament match.",
 			  "<tournament name> <match number> <revert last point?> (map link or #, if null, current)",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "fselect", "fsel");
 	}
 

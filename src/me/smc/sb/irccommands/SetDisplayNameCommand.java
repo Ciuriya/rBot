@@ -13,7 +13,7 @@ public class SetDisplayNameCommand extends IRCCommand{
 	public SetDisplayNameCommand(){
 		super("Sets the lobby display name of the tournament.",
 			  "<tournament name> {display name} ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setdisplayname");
 	}
 
@@ -33,19 +33,25 @@ public class SetDisplayNameCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		String displayName = "";
+		String user = Utils.toUser(e, pe);
 		
-		for(int i = o; i < args.length; i++) 
-			if(args[i].contains("}")){
-				displayName += args[i].replace("}", "").replace("}", "") + " ";
-				break;
-			}else displayName += args[i].replace("{", "") + " ";
+		if(t.isAdmin(user)){
+			String displayName = "";
+			
+			for(int i = o; i < args.length; i++) 
+				if(args[i].contains("}")){
+					displayName += args[i].replace("}", "").replace("}", "") + " ";
+					break;
+				}else displayName += args[i].replace("{", "") + " ";
+			
+			displayName = displayName.replace("{", "").substring(0, displayName.length() - 2);
+			t.setDisplayName(displayName);
+			t.save(false);
+			
+			return "Set the tournament's display name to " + displayName + "!";
+		}
 		
-		displayName = displayName.replace("{", "").substring(0, displayName.length() - 2);
-		t.setDisplayName(displayName);
-		t.save(false);
-		
-		return "Set the tournament's display name to " + displayName + "!";
+		return "";
 	}
 	
 }

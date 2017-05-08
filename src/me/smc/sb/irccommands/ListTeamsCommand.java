@@ -14,7 +14,7 @@ public class ListTeamsCommand extends IRCCommand{
 	public ListTeamsCommand(){
 		super("Lists all teams.",
 			  "<tournament name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "teamlist");
 	}
 	
@@ -30,26 +30,30 @@ public class ListTeamsCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		String msg = "Teams in " + t.getName();
-		if(discord != null) msg = "```" + msg + "\n";
-		else msg += "=";
-		
-		for(Team team : t.getTeams()){
-			msg += team.getTeamName();
-			if(discord != null) msg += "\n";
+		String user = Utils.toUser(e, pe);
+
+		if(t.isAdmin(user)){
+			String msg = "Teams in " + t.getName();
+			if(discord != null) msg = "```" + msg + "\n";
 			else msg += "=";
-		}
-		
-		if(discord == null){
-			String built = "";
-			for(String part : msg.split("=")){
-				if(part.isEmpty()) continue;
-				if(e == null && pe == null) built += part + "\n";
-				else Utils.info(e, pe, discord, part);
+			
+			for(Team team : t.getTeams()){
+				msg += team.getTeamName();
+				if(discord != null) msg += "\n";
+				else msg += "=";
 			}
 			
-			if(built.length() > 0) return built.substring(0, built.length() - 1);
-		}else return msg + "```";
+			if(discord == null){
+				String built = "";
+				for(String part : msg.split("=")){
+					if(part.isEmpty()) continue;
+					if(e == null && pe == null) built += part + "\n";
+					else Utils.info(e, pe, discord, part);
+				}
+				
+				if(built.length() > 0) return built.substring(0, built.length() - 1);
+			}else return msg + "```";
+		}
 		
 		return "";
 	}

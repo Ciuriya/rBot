@@ -13,7 +13,7 @@ public class SetMatchScheduleCommand extends IRCCommand{
 	public SetMatchScheduleCommand(){
 		super("Sets a match's scheduled time in UTC.",
 			  "<tournament name> <match num> <yyyy> <MM> <dd> <HH> <mm> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "mpsetschedule");
 	}
 
@@ -31,17 +31,23 @@ public class SetMatchScheduleCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 6]) == -1) return "Match number needs to be a number!";
 		if(t.getMatch(Utils.stringToInt(args[args.length - 6])) == null) return "The match is invalid!";
 		
-		String date = "";
-		for(int i = args.length - 5; i < args.length; i++)
-			date += args[i] + " ";
-		long time = Utils.toTime(date.substring(0, date.length() - 1));
+		String user = Utils.toUser(e, pe);
 		
-		if(time == -1 || time < Utils.getCurrentTimeUTC()) return "This time is either in the past or invalid!";
+		if(t.isAdmin(user)){
+			String date = "";
+			for(int i = args.length - 5; i < args.length; i++)
+				date += args[i] + " ";
+			long time = Utils.toTime(date.substring(0, date.length() - 1));
+			
+			if(time == -1 || time < Utils.getCurrentTimeUTC()) return "This time is either in the past or invalid!";
+			
+			t.getMatch(Utils.stringToInt(args[args.length - 6])).setTime(time);
+			t.getMatch(Utils.stringToInt(args[args.length - 6])).save(false);
+			
+			return "Set match #" + args[args.length - 6] + " to " + date;
+		}
 		
-		t.getMatch(Utils.stringToInt(args[args.length - 6])).setTime(time);
-		t.getMatch(Utils.stringToInt(args[args.length - 6])).save(false);
-		
-		return "Set match #" + args[args.length - 6] + " to " + date;
+		return "";
 	}
 	
 }

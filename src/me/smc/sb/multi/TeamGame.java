@@ -54,7 +54,8 @@ public class TeamGame extends Game{
 		if(InvitePlayerCommand.allowedInviters.containsKey(match.getFirstTeam())) return;
 		
 		messageUpdater("Use !invite <player name> to invite your teammates or invite them through osu!.",
-				       "Both captains, use !random to settle which team goes first. If you need help, use !alert <message>");
+				       "Both captains, use !random to settle which team goes first." + 
+				       (match.getTournament().getAlertDiscord().length() > 0 ? "If you need help, use !alert <message>" : ""));
 	
 		InvitePlayerCommand.allowedInviters.put(match.getFirstTeam(), this);
 		InvitePlayerCommand.allowedInviters.put(match.getSecondTeam(), this);

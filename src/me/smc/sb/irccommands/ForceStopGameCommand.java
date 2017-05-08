@@ -8,6 +8,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
 
 public class ForceStopGameCommand extends IRCCommand{
@@ -15,7 +16,7 @@ public class ForceStopGameCommand extends IRCCommand{
 	public ForceStopGameCommand(){
 		super("Force stops a running game.",
 			  "<mp #> ",
-			  null,
+			  Permissions.TOURNEY_ADMIN,
 			  "fstop");
 	}
 

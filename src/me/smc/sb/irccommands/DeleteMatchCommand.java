@@ -13,7 +13,7 @@ public class DeleteMatchCommand extends IRCCommand{
 	public DeleteMatchCommand(){
 		super("Deletes a multiplayer instance.",
 			  "<tournament name> <match number> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "mpdelete");
 	}
 
@@ -30,9 +30,15 @@ public class DeleteMatchCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Match number needs to be a number!";
 		
-		if(t.removeMatch(Utils.stringToInt(args[args.length - 1])))
-			return "Deleted match #" + args[args.length - 1] + "!";
-		else return "Match does not exist!";
+		String user = Utils.toUser(e, pe);
+		
+		if(t.isAdmin(user)){
+			if(t.removeMatch(Utils.stringToInt(args[args.length - 1])))
+				return "Deleted match #" + args[args.length - 1] + "!";
+			else return "Match does not exist!";
+		}
+		
+		return "";
 	}
 	
 }

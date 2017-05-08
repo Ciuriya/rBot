@@ -13,7 +13,7 @@ public class RemoveMapFromPoolCommand extends IRCCommand{
 	public RemoveMapFromPoolCommand(){
 		super("Removes a map from the map pool.",
 			  "<tournament name> <map pool number> <map url> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "pooldeletemap");
 	}
 	
@@ -32,16 +32,22 @@ public class RemoveMapFromPoolCommand extends IRCCommand{
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Map pool number needs to be a number!";
 		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null) return "The map pool is invalid!";
 		
-		String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
-		
-		if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
-			return "Invalid URL, example format: https://osu.ppy.sh/b/123456";
+		String user = Utils.toUser(e, pe);
+
+		if(t.isAdmin(user)){
+			String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
+			
+			if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
+				return "Invalid URL, example format: https://osu.ppy.sh/b/123456";
+			}
+			
+			t.getPool(Utils.stringToInt(args[args.length - 2])).removeMap(args[args.length - 1]);
+			t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
+			
+			return "Removed " + args[args.length - 1] + " from the map pool!";
 		}
 		
-		t.getPool(Utils.stringToInt(args[args.length - 2])).removeMap(args[args.length - 1]);
-		t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
-		
-		return "Removed " + args[args.length - 1] + " from the map pool!";
+		return "";
 	}
 	
 }

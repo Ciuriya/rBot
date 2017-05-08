@@ -13,7 +13,7 @@ public class SetResultDiscordCommand extends IRCCommand{
 	public SetResultDiscordCommand(){
 		super("Sets the discord channel to send match results in.",
 			  "<tournament name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setresultdiscord");
 	}
 	
@@ -26,15 +26,22 @@ public class SetResultDiscordCommand extends IRCCommand{
 		
 		for(int i = 0; i < args.length; i++) tournamentName += args[i] + " ";
 		
-		if(Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)) == null)
-			return "The tournament does not exist!";
+		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(discord == null) return "You need to use this command in the discord channel you wish to receive results into!";
+		if(t == null) return "The tournament does not exist!";
 		
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).setResultDiscord(discord);
-		Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1)).save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return "The result discord was set!";
+		if(t.isAdmin(user)){
+			if(discord == null) return "You need to use this command in the discord channel you wish to receive results into!";
+			
+			t.setResultDiscord(discord);
+			t.save(false);
+			
+			return "The result discord was set!";
+		}
+		
+		return "";
 	}
 	
 }

@@ -14,7 +14,7 @@ public class CreateMatchCommand extends IRCCommand{
 	public CreateMatchCommand(){
 		super("Creates a multiplayer instance for a tournament match.",
 			  "<tournament name> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "mpcreate");
 	}
 
@@ -29,11 +29,16 @@ public class CreateMatchCommand extends IRCCommand{
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null) return "Invalid tournament!";
-		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Player count needs to be a number!";
 		
-		Match match = new Match(t);
+		String user = Utils.toUser(e, pe);
 		
-		return "Created match #" + match.getMatchNum() + " for " + match.getPlayers() + " players!";
+		if(t.isAdmin(user)){
+			Match match = new Match(t);
+			
+			return "Created match #" + match.getMatchNum();
+		}
+		
+		return "";
 	}
 
 }

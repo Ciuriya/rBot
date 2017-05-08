@@ -13,7 +13,7 @@ public class SetWarmupSkipCommand extends IRCCommand{
 	public SetWarmupSkipCommand(){
 		super("Sets whether or not the warmups should be skipped.",
 			  "<tournament name> <true/false> ",
-			  Permissions.IRC_BOT_ADMIN,
+			  Permissions.TOURNEY_ADMIN,
 			  "setwarmupskip");
 	}
 
@@ -29,10 +29,16 @@ public class SetWarmupSkipCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		
-		t.setSkippingWarmups(Boolean.parseBoolean(args[args.length - 1]));
-		t.save(false);
+		String user = Utils.toUser(e, pe);
 		
-		return tournamentName + " is " + (t.isSkippingWarmups() ? "now" : "no longer") + " skipping warmups!";
+		if(t.isAdmin(user)){
+			t.setSkippingWarmups(Boolean.parseBoolean(args[args.length - 1]));
+			t.save(false);
+			
+			return tournamentName + " is " + (t.isSkippingWarmups() ? "now" : "no longer") + " skipping warmups!";
+		}
+		
+		return "";
 	}
 	
 }
