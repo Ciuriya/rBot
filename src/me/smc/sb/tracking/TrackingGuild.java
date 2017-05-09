@@ -58,6 +58,15 @@ public class TrackingGuild{
 		specificUpdateChannels.put(userId + "&m=" + mode, Main.api.getTextChannelById(channelId));
 	}
 	
+	public void setPlayerInfo(TrackedPlayer player){
+		Configuration config = getConfig();
+		String toSave = Utils.df(player.getPP()) + "&r=" + player.getRank() + "&cr=" + player.getCountryRank();
+		
+		toSave += "&d=" + player.getLastUpdate().getDate();
+		
+		config.writeValue(player.getUserId() + "&m=" + player.getMode() + "-info", toSave);
+	}
+	
 	public boolean onlyTrackingBestPlays(){
 		return getConfig().getBoolean("track-best-only");
 	}
@@ -156,6 +165,15 @@ public class TrackingGuild{
 			TrackedPlayer registered = TrackedPlayer.get(userId, mode);
 			
 			if(registered == null) registered = new TrackedPlayer(userId, mode);
+			
+			String playerInfo = config.getValue(userId + "&m=" + mode + "-info");
+			
+			if(playerInfo.contains("&r=")){
+				String sDate = playerInfo.split("&d=")[1];
+				
+				registered.setStats(playerInfo.replace("&d=" + sDate, ""));
+				registered.setLastUpdate(new CustomDate(sDate));
+			}
 			
 			registered.trackPlayer(this);
 		}

@@ -62,6 +62,8 @@ public class TrackedPlayer{
 	public List<TrackedPlay> fetchLatestPlays(){
 		List<TrackedPlay> plays = new ArrayList<>();
 		
+		boolean changed = false;
+		
 		if(pp == 0 && rank == 0 && countryRank == 0){
 			String stats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
 			
@@ -69,7 +71,7 @@ public class TrackedPlayer{
 			rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
 			countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
 			
-			return plays;
+			changed = true;
 		}
 		
 		if(TrackingUtils.playerHasRecentPlays(userId, mode, lastUpdate)){
@@ -83,7 +85,7 @@ public class TrackedPlayer{
 			
 			JSONArray jsonResponse = new JSONArray(post);
 			
-			Utils.sleep(2500);
+			Utils.sleep(5000);
 			
 			String[] pageGeneral = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
 			
@@ -98,7 +100,7 @@ public class TrackedPlayer{
 			
 			// the reason this is done without using the general page is to get decimals on the pp value
 			String updatedStats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
-			double updatedPP = Utils.stringToDouble(updatedStats.split("&r=")[0]);
+			double updatedPP = Utils.df(Utils.stringToDouble(updatedStats.split("&r=")[0]));
 			int updatedRank = Utils.stringToInt(updatedStats.split("&r=")[1].split("&cr=")[0]);
 			int updatedCountryRank = Utils.stringToInt(updatedStats.split("&cr=")[1]);
 			
@@ -119,9 +121,13 @@ public class TrackedPlayer{
 				rankDiff = 0;
 			}
 			
-			pp = updatedPP;
-			rank = updatedRank;
-			countryRank = updatedCountryRank;
+			if(pp != updatedPP || rank != updatedRank || countryRank != updatedCountryRank){
+				pp = updatedPP;
+				rank = updatedRank;
+				countryRank = updatedCountryRank;
+				
+				changed = true;
+			}
 			
 			String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
             		  											 "&u=" + userId + "&m=" + mode + "&limit=100&type=id");
@@ -206,6 +212,8 @@ public class TrackedPlayer{
 		
 		lastUpdate = new CustomDate();
 		
+		if(changed) saveInfo();
+		
 		return plays;
 	}
 	
@@ -240,7 +248,7 @@ public class TrackedPlayer{
 	}
 	
 	public void setStats(String statString){
-		double temp = Utils.stringToDouble(statString.split("&r=")[0]);
+		double temp = Utils.df(Utils.stringToDouble(statString.split("&r=")[0]));
 		if(temp != -1) pp = temp;
 		
 		temp = Utils.stringToInt(statString.split("&r=")[1].split("&cr=")[0]);
@@ -248,6 +256,12 @@ public class TrackedPlayer{
 		
 		temp = Utils.stringToInt(statString.split("&cr=")[1]);
 		if(temp != -1) countryRank = (int) temp;
+	}
+	
+	public void saveInfo(){
+		if(currentlyTracking.size() != 0)
+			for(TrackingGuild tracker : currentlyTracking)
+				tracker.setPlayerInfo(this);
 	}
 	
 	public String getUsername(){
@@ -276,6 +290,14 @@ public class TrackedPlayer{
 	
 	public String getLastUpdateMessage(){
 		return lastUpdateMessage;
+	}
+	
+	public CustomDate getLastUpdate(){
+		return lastUpdate;
+	}
+	
+	public void setLastUpdate(CustomDate lastUpdate){
+		this.lastUpdate = lastUpdate;
 	}
 	
 	public static TrackedPlayer get(int userId, int mode){
