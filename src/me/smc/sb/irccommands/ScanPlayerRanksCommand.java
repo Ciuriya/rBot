@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -28,7 +27,7 @@ public class ScanPlayerRanksCommand extends IRCCommand{
 	}
 
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		if(discord == null || e != null || pe != null) return "You can only use this command from discord!";
 		
 		String argCheck = Utils.checkArguments(args, 4);

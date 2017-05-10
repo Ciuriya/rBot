@@ -3,7 +3,6 @@ package me.smc.sb.irccommands;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -27,7 +26,7 @@ public class AlertStaffCommand extends IRCCommand{
 	}
 	
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){		
 		if(e == null || discord != null || pe != null) return "You cannot alert staff in here!";
 		
 		String argCheck = Utils.checkArguments(args, 1);

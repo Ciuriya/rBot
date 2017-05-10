@@ -36,7 +36,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.pircbotx.Channel;
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.Event;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
@@ -126,7 +125,7 @@ public class Utils{
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void info(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String message){
+	public static void info(MessageEvent e, PrivateMessageEvent pe, String discord, String message){
 		if(message.length() == 0) return;
 		
 		if(isTwitch(e)){
@@ -152,7 +151,7 @@ public class Utils{
 		}
 	}
 	
-	public static boolean verifyChannel(MessageEvent<PircBotX> e){
+	public static boolean verifyChannel(MessageEvent e){
 		if(!e.getChannel().getName().startsWith("#mp_")){
 			e.getChannel().send().part();
 			return false;
@@ -172,7 +171,7 @@ public class Utils{
 		return true;
 	}
 	
-	public static String toUser(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe){
+	public static String toUser(MessageEvent e, PrivateMessageEvent pe){
 		if(pe != null) return pe.getUser().getNick();
 		else if(e != null) return e.getUser().getNick();
 		else return null;
@@ -497,7 +496,7 @@ public class Utils{
 		return String.valueOf(num);
 	}
 	
-	public static String validateTournamentAndTeam(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public static String validateTournamentAndTeam(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		boolean valid = false;
 		for(String arg : args) 
 			if(arg.contains("{"))
@@ -724,7 +723,7 @@ public class Utils{
 		return new Color(r, g, b);
 	}
 	
-	public static boolean isTwitch(Event<PircBotX> e){
+	public static boolean isTwitch(Event e){
 		if(e != null && e.getBot().getBotId() == Main.twitchBot.getBotId())
 			return true;
 		

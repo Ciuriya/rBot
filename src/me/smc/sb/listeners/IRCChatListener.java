@@ -9,7 +9,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
@@ -22,7 +21,7 @@ import me.smc.sb.multi.Tournament;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
-public class IRCChatListener extends ListenerAdapter<PircBotX>{
+public class IRCChatListener extends ListenerAdapter{
 
 	public static List<String> pmList = new ArrayList<>();
 	public static LinkedList<String> pmsToSend = new LinkedList<>();
@@ -32,7 +31,7 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 	public static List<String> gameCreatePMs = new ArrayList<>();
 	
 	@Override
-	public void onPrivateMessage(PrivateMessageEvent<PircBotX> e){
+	public void onPrivateMessage(PrivateMessageEvent e){
 		if(Utils.isTwitch(e)) return;
 		
 		String message = e.getMessage();
@@ -67,7 +66,7 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 	}
 	
 	@Override
-	public void onMessage(MessageEvent<PircBotX> e){
+	public void onMessage(MessageEvent e){
 		boolean twitch = Utils.isTwitch(e);
 		
 		if(!Utils.verifyChannel(e) && !twitch) return;
@@ -82,7 +81,7 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 		if(message.startsWith("!")) Utils.info(e, null, null, IRCCommand.handleCommand(e, null, null, message.substring(1)));
 	}
 	
-	private boolean verifyBanchoFeedback(MessageEvent<PircBotX> e){
+	private boolean verifyBanchoFeedback(MessageEvent e){
 		if(e.getUser().getNick().equalsIgnoreCase("BanchoBot"))
 			for(String game : gamesListening.keySet())
 				if(e.getChannel().getName().equalsIgnoreCase(game)){
@@ -93,7 +92,7 @@ public class IRCChatListener extends ListenerAdapter<PircBotX>{
 		return false;
 	}
 
-	private boolean verifyGameCreationPM(PrivateMessageEvent<PircBotX> e){
+	private boolean verifyGameCreationPM(PrivateMessageEvent e){
 		if(e.getUser().getNick().equalsIgnoreCase("BanchoBot") &&
 		   e.getMessage().contains("Created the tournament match")){
 			String trim = e.getMessage().replace("Created the tournament match ", "");

@@ -15,7 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -36,7 +35,7 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 	}
 	
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		String argCheck = Utils.checkArguments(args, 2);
 		if(argCheck.length() > 0) return argCheck;
 		

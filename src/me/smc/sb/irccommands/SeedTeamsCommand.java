@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -29,7 +28,7 @@ public class SeedTeamsCommand extends IRCCommand{
 	}
 	
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		String argCheck = Utils.checkArguments(args, 1);
 		if(argCheck.length() > 0) return argCheck;
 		

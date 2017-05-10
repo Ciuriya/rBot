@@ -1,6 +1,5 @@
 package me.smc.sb.discordcommands;
 
-import java.awt.Color;
 import java.io.File;
 
 import org.json.JSONObject;
@@ -25,14 +24,6 @@ public class OsuStatsCommand extends GlobalCommand{
 			  true, 
 			  "osustats");
 		apiKey = new Configuration(new File("login.txt")).getValue("apiKey");
-	}
-	
-	private static int getCountryRank(int userId, String mode){
-		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
-		try{
-			return Integer.parseInt(Utils.getNextLineCodeFromLink(pageProfile, 2, "<img class='flag' title='' src=").get(0).replace("#", "").replace(",", ""));
-		}catch(Exception e){}
-		return -1;
 	}
 	
 	private static int getPlayTime(int userId, String mode){

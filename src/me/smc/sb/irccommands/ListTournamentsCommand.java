@@ -1,6 +1,5 @@
 package me.smc.sb.irccommands;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -18,7 +17,7 @@ public class ListTournamentsCommand extends IRCCommand{
 	}
 	
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		String msg = "Tournaments";
 		if(discord != null) msg = "```" + msg + "\n";
 		else msg += "=";

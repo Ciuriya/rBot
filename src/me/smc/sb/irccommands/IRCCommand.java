@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -61,7 +60,7 @@ public abstract class IRCCommand{
 		return false;
 	}
 	
-	public static String handleCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String msg){
+	public static String handleCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String msg){
 		if(pe != null)
 			try{
 				Main.ircBot.sendIRC().joinChannel(pe.getUser().getNick());
@@ -163,6 +162,6 @@ public abstract class IRCCommand{
 		commands.add(new CurrentMapCommand());
 	}
 	
-	public abstract String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args);
+	public abstract String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args);
 	
 }

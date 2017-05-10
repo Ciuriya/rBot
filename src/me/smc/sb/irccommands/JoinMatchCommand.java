@@ -3,7 +3,6 @@ package me.smc.sb.irccommands;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -22,7 +21,7 @@ public class JoinMatchCommand extends IRCCommand{
 	}
 	
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		if(pe == null || discord != null || e != null) return "You were not invited to any game!";
 		
 		if(!gameInvites.isEmpty())

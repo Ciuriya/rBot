@@ -1,6 +1,5 @@
 package me.smc.sb.irccommands;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -18,7 +17,7 @@ public class CurrentScoreCommand extends IRCCommand{
 	}
 
 	@Override
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		if(Utils.isTwitch(e))
 			Utils.info(e, pe, discord, Tournament.getCurrentScore(e.getChannel().getName().replace("#", "")));
 		

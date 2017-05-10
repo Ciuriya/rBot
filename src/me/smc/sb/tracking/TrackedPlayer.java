@@ -64,7 +64,7 @@ public class TrackedPlayer{
 		
 		boolean changed = false;
 		
-		if(pp == 0 && rank == 0 && countryRank == 0){
+		if(pp <= 0 && rank <= 0 && countryRank <= 0){
 			String stats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
 			
 			pp = Utils.stringToDouble(stats.split("&r=")[0]);
@@ -92,8 +92,12 @@ public class TrackedPlayer{
 			// this fixes the username if it changed
 			List<String> userLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&find=");
 			
-			if(userLine.size() > 0)
-				username = userLine.get(0).split("&find=")[1].split("&")[0];
+			if(userLine.size() > 0){
+				String username = userLine.get(0).split("&find=")[1].split("&")[0];
+				
+				if(!this.username.equals(username))
+					changed = true;
+			}
 			
 			// to compare fetched plays with these to find out if it the fetched play got a map leaderboard spot
 			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(pageGeneral, lastUpdate);

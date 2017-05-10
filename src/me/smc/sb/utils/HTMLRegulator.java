@@ -34,15 +34,16 @@ public class HTMLRegulator{
 					if(optRequest.isPresent()){
 						int requestNum = optRequest.get();
 						
-						new Thread(new Runnable(){
-							@SuppressWarnings("deprecation")
-							public void run(){
-								requests.get(requestNum).send();
-								requests.remove(requestNum);
-								
-								Thread.currentThread().stop();
-							}
-						}).start();
+						if(requests.containsKey(requestNum))
+							new Thread(new Runnable(){
+								@SuppressWarnings("deprecation")
+								public void run(){
+									requests.get(requestNum).send();
+									requests.remove(requestNum);
+									
+									Thread.currentThread().stop();
+								}
+							}).start();
 					}
 				}
 			}

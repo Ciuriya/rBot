@@ -1,6 +1,5 @@
 package me.smc.sb.irccommands;
 
-import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
@@ -17,7 +16,7 @@ public class HelpCommand extends IRCCommand{
 			  "help", "?");
 	}
 
-	public String onCommand(MessageEvent<PircBotX> e, PrivateMessageEvent<PircBotX> pe, String discord, String[] args){
+	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		String msg = "Commands";
 		
 		if(discord != null){

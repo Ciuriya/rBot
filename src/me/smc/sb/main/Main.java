@@ -128,9 +128,9 @@ public class Main{
 		
 		new Thread(new Runnable(){ //osu irc
 			public void run(){
-				loadBot(ircBot, new org.pircbotx.Configuration.Builder<PircBotX>()
+				loadBot(ircBot, new org.pircbotx.Configuration.Builder()
 					    .setName(osuUser)
-					    .setServer("irc.ppy.sh", 6667)
+					    .addServer("irc.ppy.sh", 6667)
 					    .setServerPassword(osuPassword)
 					    .addListener(new IRCChatListener())
 					    .setAutoReconnect(true)
@@ -140,9 +140,9 @@ public class Main{
 		
 		new Thread(new Runnable(){ //twitch irc
 			public void run(){
-				loadBot(twitchBot, new org.pircbotx.Configuration.Builder<PircBotX>()
+				loadBot(twitchBot, new org.pircbotx.Configuration.Builder()
 					    .setName(login.getValue("twitch-user"))
-					    .setServer("irc.chat.twitch.tv", 6667)
+					    .addServer("irc.chat.twitch.tv", 6667)
 					    .setServerPassword("oauth:" + login.getValue("twitch-oauth"))
 					    .addListener(new IRCChatListener())
 					    .setAutoReconnect(true)
@@ -164,7 +164,7 @@ public class Main{
 		}
 	}
 	
-	private void loadBot(PircBotX bot, org.pircbotx.Configuration<PircBotX> config, boolean twitch){
+	private void loadBot(PircBotX bot, org.pircbotx.Configuration config, boolean twitch){
 		if(bot != null){
 			bot.stopBotReconnect();
 			

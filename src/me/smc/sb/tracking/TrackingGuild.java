@@ -62,6 +62,7 @@ public class TrackingGuild{
 		Configuration config = getConfig();
 		String toSave = Utils.df(player.getPP()) + "&r=" + player.getRank() + "&cr=" + player.getCountryRank();
 		
+		toSave += "&u=" + player.getUsername();
 		toSave += "&d=" + player.getLastUpdate().getDate();
 		
 		config.writeValue(player.getUserId() + "&m=" + player.getMode() + "-info", toSave);
@@ -164,14 +165,24 @@ public class TrackingGuild{
 			
 			TrackedPlayer registered = TrackedPlayer.get(userId, mode);
 			
-			if(registered == null) registered = new TrackedPlayer(userId, mode);
-			
 			String playerInfo = config.getValue(userId + "&m=" + mode + "-info");
+			String stats = "";
+			String username = "";
+			String sDate = "";
 			
 			if(playerInfo.contains("&r=")){
-				String sDate = playerInfo.split("&d=")[1];
-				
-				registered.setStats(playerInfo.replace("&d=" + sDate, ""));
+				sDate = playerInfo.split("&d=")[1];
+				username = playerInfo.split("&u=")[1].split("&d=")[0];
+				stats = playerInfo.replace("&u=" + username + "&d=" + sDate, "");
+			}
+			
+			if(registered == null)
+				if(username.length() > 0)
+					registered = new TrackedPlayer(username, userId, mode);
+				else registered = new TrackedPlayer(userId, mode);
+			
+			if(playerInfo.contains("&r=")){
+				registered.setStats(stats);
 				registered.setLastUpdate(new CustomDate(sDate));
 			}
 			
