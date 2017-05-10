@@ -119,6 +119,7 @@ public abstract class IRCCommand{
 		commands.add(new SetMatchTeamsCommand());
 		commands.add(new SetBestOfCommand());
 		commands.add(new SetMatchScheduleCommand());
+		commands.add(new SetTournamentMatchSizeCommand());
 		commands.add(new ScanCheatersCommand());
 		commands.add(new ScanPlayerRanksCommand());
 		commands.add(new SeedTeamsCommand());
@@ -128,6 +129,7 @@ public abstract class IRCCommand{
 		commands.add(new ForceSelectCommand());
 		commands.add(new PauseCommand());
 		commands.add(new ResumeCommand());
+		commands.add(new RenameTeamPlayerCommand());
 		commands.add(new SetGameScoreCommand());
 		commands.add(new SetResultDiscordCommand());
 		commands.add(new SetAlertDiscordCommand());

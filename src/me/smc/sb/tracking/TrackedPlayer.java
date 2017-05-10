@@ -22,6 +22,7 @@ public class TrackedPlayer{
 	private double pp;
 	private int rank;
 	private int countryRank;
+	private String country;
 	private boolean updatingPlayer;
 	private String lastUpdateMessage;
 	private CustomDate lastUpdate;
@@ -41,6 +42,7 @@ public class TrackedPlayer{
 		lastUpdate = new CustomDate();
 		updatingPlayer = false;
 		currentlyTracking = new ArrayList<>();
+		country = "A2";
 		
 		registeredPlayers.add(this);
 		changeOccured = true;
@@ -62,16 +64,12 @@ public class TrackedPlayer{
 	public List<TrackedPlay> fetchLatestPlays(){
 		List<TrackedPlay> plays = new ArrayList<>();
 		
-		boolean changed = false;
-		
 		if(pp <= 0 && rank <= 0 && countryRank <= 0){
 			String stats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
 			
 			pp = Utils.stringToDouble(stats.split("&r=")[0]);
 			rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
 			countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
-			
-			changed = true;
 		}
 		
 		if(TrackingUtils.playerHasRecentPlays(userId, mode, lastUpdate)){
@@ -92,12 +90,8 @@ public class TrackedPlayer{
 			// this fixes the username if it changed
 			List<String> userLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&find=");
 			
-			if(userLine.size() > 0){
-				String username = userLine.get(0).split("&find=")[1].split("&")[0];
-				
-				if(!this.username.equals(username))
-					changed = true;
-			}
+			if(userLine.size() > 0)
+				username = userLine.get(0).split("&find=")[1].split("&")[0];
 			
 			// to compare fetched plays with these to find out if it the fetched play got a map leaderboard spot
 			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(pageGeneral, lastUpdate);
@@ -115,7 +109,6 @@ public class TrackedPlayer{
 			int countryDiff = updatedCountryRank - countryRank;
 			
 			List<String> countryLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&c=");
-			String country = "A2";
 			
 			if(countryLine.size() > 0)
 				country = countryLine.get(0).split("&c=")[1].split("&find=")[0];
@@ -129,8 +122,6 @@ public class TrackedPlayer{
 				pp = updatedPP;
 				rank = updatedRank;
 				countryRank = updatedCountryRank;
-				
-				changed = true;
 			}
 			
 			String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
@@ -216,7 +207,7 @@ public class TrackedPlayer{
 		
 		lastUpdate = new CustomDate();
 		
-		if(changed) saveInfo();
+		saveInfo();
 		
 		return plays;
 	}

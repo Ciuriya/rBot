@@ -42,6 +42,8 @@ public class ChangeStreamedMatchCommand extends IRCCommand{
 				if(t.getCurrentlyStreamed().match.getStreamPriority() == 0){
 					t.getCurrentlyStreamed().match.setStreamPriority(1);
 				}
+				
+				t.stopStreaming(t.getCurrentlyStreamed());
 			}
 			
 			match.getGame().match.setStreamPriority(0);

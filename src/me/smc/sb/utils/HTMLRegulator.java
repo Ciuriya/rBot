@@ -34,7 +34,6 @@ public class HTMLRegulator{
 					if(optRequest.isPresent()){
 						int requestNum = optRequest.get();
 						
-						if(requests.containsKey(requestNum))
 							new Thread(new Runnable(){
 								@SuppressWarnings("deprecation")
 								public void run(){

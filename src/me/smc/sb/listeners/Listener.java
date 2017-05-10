@@ -12,6 +12,7 @@ import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.OnlineStatus;
 import net.dv8tion.jda.core.entities.ChannelType;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.Event;
@@ -103,6 +104,7 @@ public class Listener implements EventListener{
 			loadGuilds(api);
 			
 			Utils.infoBypass(api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
+			api.getPresence().setStatus(OnlineStatus.ONLINE);
 			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");
 		}else if(event instanceof ReconnectedEvent)
 			Utils.infoBypass(api.getUserById("91302128328392704").getPrivateChannel(), "I have reconnected!");

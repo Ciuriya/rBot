@@ -29,8 +29,12 @@ public class SuggestCommand extends GlobalCommand{
 		for(String arg : args)
 			suggestion += " " + arg;
 		
-		cfg.appendToStringList("suggestions", Utils.getDate() + " Suggestion by " + e.getAuthor().getName() + " - " + suggestion.substring(1), true);
+		String suggestionStr = Utils.getDate() + " Suggestion by " + e.getAuthor().getName() + "#" + e.getAuthor().getDiscriminator() + 
+							   " (" + e.getAuthor().getId() + ") - " + suggestion.substring(1);
+		
+		cfg.appendToStringList("suggestions", suggestionStr, true);
 		Utils.info(e.getChannel(), "Your suggestion has been sent!");
+		Utils.infoBypass(e.getJDA().getUserById("91302128328392704").getPrivateChannel(), suggestionStr);
 	}
 
 }

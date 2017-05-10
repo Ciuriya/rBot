@@ -108,13 +108,17 @@ public class Utils{
 		if(channel instanceof TextChannel){
 			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
 				channel.sendMessage(embed).queue();
-				Log.logger.log(Level.INFO, "{Embed sent in " + getGroupLogString(channel) + "} " +
-											embed.getAuthor().getName() + "\n" + embed.getTitle());
+				
+				if(embed.getAuthor() != null && embed.getTitle() != null)
+					Log.logger.log(Level.INFO, "{Embed sent in " + getGroupLogString(channel) + "} " +
+												embed.getAuthor().getName() + "\n" + embed.getTitle());
 			}
 		}else{
 			channel.sendMessage(embed).queue(); 
-			Log.logger.log(Level.INFO, "{Silent Embed sent in " + getGroupLogString(channel) + "} " +
-										embed.getAuthor().getName() + "\n" + embed.getTitle());
+			
+			if(embed.getAuthor() != null && embed.getTitle() != null)
+				Log.logger.log(Level.INFO, "{Silent Embed sent in " + getGroupLogString(channel) + "} " +
+											embed.getAuthor().getName() + "\n" + embed.getTitle());
 		}
 		
 		Main.messagesSentThisSession++;

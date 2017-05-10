@@ -7,7 +7,8 @@ public enum Mods{
 	
 	None(0, "NoMod"), 
 	NoFail(1, "NF"), 
-	Easy(2, "EZ"), 
+	Easy(2, "EZ"),
+	NoVideo(4, "NV"),
 	Hidden(8, "HD"), 
 	HardRock(16, "HR"), 
 	SuddenDeath(32, "SD"), 
@@ -16,9 +17,23 @@ public enum Mods{
 	HalfTime(256, "HT"), 
 	Nightcore(512, "NC"), 
 	Flashlight(1024, "FL"), 
+	Autoplay(2048, "AU"),
 	SpunOut(4096, "SO"), 
 	Autopilot(8192, "AP"),
-	Perfect(16384, "PF");
+	Perfect(16384, "PF"),
+	Key4(32768, "4K"),
+	Key5(65536, "5K"),
+	Key6(131072, "6K"),
+	Key7(262144, "7K"),
+	Key8(524288, "8K"),
+	FadeIn(1048576, "FI"),
+	Random(2097152, "RA"),
+	LastMod(4194304, "LM"),
+	Key9(16777216, "9K"),
+	Key10(33554432, "10K"),
+	Key1(67108864, "1K"),
+	Key3(134217728, "3K"),
+	Key2(268435456, "2K");
 	
 	int bit;
 	String shortName;

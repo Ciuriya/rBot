@@ -258,6 +258,10 @@ public class Tournament{
 		return matchSize;
 	}
 	
+	public void setMatchSize(int matchSize){
+		this.matchSize = matchSize;
+	}
+	
 	public PickStrategy getPickStrategy(){
 		return pickStrategy;
 	}
@@ -331,6 +335,10 @@ public class Tournament{
 	}
 	
 	public void setCurrentlyStreamed(Game game){
+		for(Tournament t : tournaments)
+			if(t.getTwitchChannel().equalsIgnoreCase(twitchChannel))
+				t.setCurrentlyStreamed(null);
+		
 		this.currentlyStreamed = game;
 	}
 	

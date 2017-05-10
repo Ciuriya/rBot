@@ -58,6 +58,10 @@ public class Player{
 		return rank;
 	}
 	
+	public void setName(String name){
+		this.name = name;
+	}
+	
 	public void setUserID(String userID){
 		this.userID = userID;
 	}

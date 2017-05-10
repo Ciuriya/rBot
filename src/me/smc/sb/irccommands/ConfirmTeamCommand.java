@@ -24,20 +24,28 @@ public class ConfirmTeamCommand extends IRCCommand{
 	
 	public ConfirmTeamCommand(){
 		super("Confirms a player's inscription to a team.",
-			  "<tournament name> <team id> ",
+			  "<tournament name> (team id) ",
 			  null,
 			  "confirm");
 	}
 	
 	@Override
 	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){		
-		String argCheck = Utils.checkArguments(args, 2);
+		String argCheck = Utils.checkArguments(args, 1);
 		if(argCheck.length() > 0) return argCheck;
 		
 		String tournamentName = "";
 		
-		for(int i = 0; i < args.length - 1; i++) tournamentName += args[i] + " ";
+		for(int i = 0; i < args.length; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
+		
+		if(t == null){
+			tournamentName = "";
+			
+			for(int i = 0; i < args.length - 1; i++) tournamentName += args[i] + " ";
+			
+			t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
+		}
 		
 		if(t == null) return "Invalid tournament!";
 		
@@ -45,10 +53,14 @@ public class ConfirmTeamCommand extends IRCCommand{
 		if(user == null) return "Invalid user!";
 		
 		int userID = Utils.stringToInt(Utils.getOsuPlayerId(user));
-		if(userID == -1) return "Could not fetch user ID, please message a tournament administrator!";
+		if(userID == -1) return "Could not fetch your user ID, please message a tournament administrator!";
 		
-		int teamID = Utils.stringToInt(args[args.length - 1]);
-		if(teamID == -1) return "Invalid team ID!";
+		int teamID = -1;
+		
+		if(t.getTournamentType() == 0){
+			teamID = Utils.stringToInt(args[args.length - 1]);
+			if(teamID == -1) return "Invalid team ID!";
+		}
 		
 		try{
 			int tourneyId = RemotePatyServerUtils.fetchTournamentId(t.getName());

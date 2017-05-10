@@ -17,7 +17,7 @@ public class EditCmdCommand extends GlobalCommand{
 			  "{prefix}editcom setdel {command} {delimiters} {instructions} - Sets instructions into the specified delimiter combination\n\n" +
 			  "----------\nAliases\n----------\n{prefix}editcmd", 
 			  false, 
-			  "editcom", "editcmd");
+			  "editcom", "editcmd", "ec");
 	}
 
 	@Override

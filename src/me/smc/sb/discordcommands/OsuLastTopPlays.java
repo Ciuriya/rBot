@@ -123,13 +123,13 @@ public class OsuLastTopPlays extends GlobalCommand{
 				
 				play += "**" + getTimeDifference(date) + "** | **" + Utils.df(obj.getDouble("pp"), 2) + "pp**\n" + 
 						map.getString("artist") + " - " + map.getString("title") + " [" +
-				        map.getString("version") + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
+				        map.getString("version") + "] " + Mods.getModDisplay(Mods.getMods(obj.getInt("enabled_mods"))) +
 				        "\n" + Utils.df(LegacyOsuTrackCommand.getAccuracy(obj, Utils.stringToInt(mode))) + "% | " + 
 				        (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") + "/" + (map.isNull("max_combo") ? "null" : map.getInt("max_combo")) : "FC") +
 				        " | " + obj.getString("rank").replace("X", "SS") + " rank\n" + hits + 
 				        "\nMap: <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + ">\n\n";
 				
-				if(builder.toString().length() > 1998){
+				if(builder.toString().length() + play.length() > 1996){
 					seperatePosts.add(builder.toString());
 					builder = new StringBuilder();
 				}

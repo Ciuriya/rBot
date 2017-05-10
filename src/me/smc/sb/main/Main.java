@@ -24,9 +24,11 @@ import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.parsable.ParsableValue;
 import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.utils.BanchoRegulator;
 import me.smc.sb.utils.Configuration;
+import me.smc.sb.utils.DiscordPlayStatusManager;
 import me.smc.sb.utils.HTMLRegulator;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.OsuAPIRegulator;
@@ -35,6 +37,7 @@ import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.OnlineStatus;
 
 public class Main{
 	
@@ -83,6 +86,7 @@ public class Main{
 		
 		login();
 		
+		ParsableValue.init();
 		IncomingRequest.registerRequests();
 
 		try{
@@ -122,6 +126,8 @@ public class Main{
 				}
 			}
 		}, 120000, 120000);
+		
+		new DiscordPlayStatusManager();
 		
 		twitchRegulator = new TwitchRegulator();
 		banchoRegulator = new BanchoRegulator();
@@ -204,6 +210,7 @@ public class Main{
 	}
 	
 	public static void stop(int code){
+		api.getPresence().setStatus(OnlineStatus.OFFLINE);
 		VoiceCommand.saveAllRadios();
 		
 		if(!servers.isEmpty())
