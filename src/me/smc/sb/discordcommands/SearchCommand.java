@@ -117,10 +117,16 @@ public class SearchCommand extends GlobalCommand{
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "property=\"og:description\" />");
 		if(line.size() == 0) return false;
 		
-		String tags = line.get(0);
+		String ftags = line.get(0);
 		
-		for(String tag : query.split(" "))
-			if(!tags.contains(tag)) return false;
+		for(String tag : query.split(" ")){
+			
+			String[] tags = ftags.split("%20");
+			
+			for(String t : tags){
+				if(!t.equalsIgnoreCase(tag)); return false;
+			}
+		}
 		
 		return true;
 	}
