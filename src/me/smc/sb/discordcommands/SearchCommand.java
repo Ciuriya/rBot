@@ -75,39 +75,41 @@ public class SearchCommand extends GlobalCommand{
 		}
 
 		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
-		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/");
+		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/", 0);
 		
 		query = Utils.removeStartSpaces(query);
 		if(hasTags(imagePage, query)){
-			ArrayList<String> highres = Utils.getNextLineCodeFromLink(imagePage, 0, "Click on the <a class=\"highres-show\" href=\"");
-			
-			if(highres.size() > 0)
-				Utils.infoBypass(e.getChannel(), "https://" + highres.get(0).split("href=\"\\/\\/")[1].split("\">View larger version")[0]);
-			else{
-				ArrayList<String> line = Utils.getNextLineCodeFromLink(imagePage, 0, "property=\"og\\:image\"");
+			if(exists(imagePage)){
+				ArrayList<String> highres = Utils.getNextLineCodeFromLink(imagePage, 0, "Click on the <a class=\"highres-show\" href=\"");
 				
-				if(line.size() > 0)
-					Utils.infoBypass(e.getChannel(), "https://" + line.get(0).split("meta content=\"\\/\\/")[1].split("\" property=\"")[0]);
+				if(highres.size() > 0)
+					Utils.infoBypass(e.getChannel(), "https://" + highres.get(0).split("href=\"\\/\\/")[1].split("\">View larger version")[0]);
 				else{
-					ArrayList<String> highresUncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged highres\" href=\"");
+					ArrayList<String> line = Utils.getNextLineCodeFromLink(imagePage, 0, "property=\"og\\:image\"");
 					
-					if(highresUncensored.size() > 0)
-						Utils.infoBypass(e.getChannel(), "https://" + highresUncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0]);
+					if(line.size() > 0)
+						Utils.infoBypass(e.getChannel(), "https://" + line.get(0).split("meta content=\"\\/\\/")[1].split("\" property=\"")[0]);
 					else{
-						ArrayList<String> uncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged\" href=\"");
+						ArrayList<String> highresUncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged highres\" href=\"");
 						
-						if(uncensored.size() == 0){
-							checkRandomPost(e, maxId, domain, query, hops + 1);
-							return;
+						if(highresUncensored.size() > 0)
+							Utils.infoBypass(e.getChannel(), "https://" + highresUncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0]);
+						else{
+							ArrayList<String> uncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged\" href=\"");
+							
+							if(uncensored.size() == 0){
+								checkRandomPost(e, maxId, domain, query, hops + 1);
+								return;
+							}
+							
+							String image = uncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0];
+							
+							Utils.infoBypass(e.getChannel(), "https://" + image);
 						}
-						
-						String image = uncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0];
-						
-						Utils.infoBypass(e.getChannel(), "https://" + image);
 					}
 				}
-			}
-			return;
+				return;
+			}else checkRandomPost(e, maxId, domain, query, hops + 1);
 		}else checkRandomPost(e, maxId, domain, query, hops + 1);
 	}
 	
@@ -129,6 +131,12 @@ public class SearchCommand extends GlobalCommand{
 		}
 		
 		return true;
+	}
+	
+	private boolean exists(String[] html){
+		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "This post does not exist.");
+		
+		return !line.isEmpty();
 	}
 	
 	private void hentai(MessageReceivedEvent e, String query){	
