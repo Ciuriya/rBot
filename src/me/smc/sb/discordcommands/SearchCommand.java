@@ -134,12 +134,9 @@ public class SearchCommand extends GlobalCommand{
 	}
 	
 	private boolean exists(String[] html){
-		
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "This post does not exist.");
 		
-		if(!(line.isEmpty())) return false;
-		
-		return true;
+		return !line.isEmpty();
 	}
 	
 	private void hentai(MessageReceivedEvent e, String query){	
