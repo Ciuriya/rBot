@@ -75,7 +75,7 @@ public class SearchCommand extends GlobalCommand{
 		}
 
 		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
-		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/");
+		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/", 0);
 		
 		query = Utils.removeStartSpaces(query);
 		if(hasTags(imagePage, query)){
@@ -110,7 +110,7 @@ public class SearchCommand extends GlobalCommand{
 				}
 				return;
 			}else checkRandomPost(e, maxId, domain, query, hops + 1);
-		}
+		}else checkRandomPost(e, maxId, domain, query, hops + 1);
 	}
 	
 	private boolean hasTags(String[] html, String query){
@@ -137,7 +137,7 @@ public class SearchCommand extends GlobalCommand{
 		
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "This post does not exist.");
 		
-		if(line.isEmpty()) return false;
+		if(!(line.isEmpty())) return false;
 		
 		return true;
 	}
