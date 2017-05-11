@@ -75,8 +75,8 @@ public class SearchCommand extends GlobalCommand{
 		}
 
 		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
-		String[] imagePage = Utils.getHTMLCode("https://konachan." + domain + "/post/show/" + id + "/", 0);
-		
+		String[] imagePage = Utils.getHTMLCode("http://konachan." + domain + "/post/show/" + id + "/", 0);
+
 		query = Utils.removeStartSpaces(query);
 		if(hasTags(imagePage, query)){
 			if(exists(imagePage)){
@@ -119,15 +119,16 @@ public class SearchCommand extends GlobalCommand{
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "property=\"og:description\" />");
 		if(line.size() == 0) return false;
 		
-		String ftags = line.get(0);
+		String ftags = line.get(0).split("content=\"")[1].split("\"")[0];
 		
 		for(String tag : query.split(" ")){
-			
-			String[] tags = ftags.split("%20");
+			String[] tags = ftags.split(" ");
 			
 			for(String t : tags){
-				if(!t.equalsIgnoreCase(tag)); return false;
+				if(t.equalsIgnoreCase(tag)) return true;
 			}
+			
+			return false;
 		}
 		
 		return true;
