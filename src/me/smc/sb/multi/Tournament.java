@@ -36,6 +36,7 @@ public class Tournament{
 	private List<Match> matches;
 	private List<MapPool> pools;
 	private ArrayList<String> matchAdmins;
+	private ArrayList<String> allowedFreemodMods;
 	public static List<Long> matchDates = new ArrayList<>();
 	private boolean scoreV2;
 	private int pickWaitTime;
@@ -48,10 +49,17 @@ public class Tournament{
 	private int targetRankLowerBound;
 	private int targetRankUpperBound;
 	private int matchSize; //players in a match
+	private int dqTime;
+	private int banCount;
+	private int gracePeriodTime;
+	private int warmupLength;
+	private int warmupCount;
 	private boolean skipWarmups;
 	private boolean usingTourneyServer;
 	private boolean usingConfirms;
 	private boolean usingMapStats;
+	private boolean usingDQs;
+	private boolean usingBans;
 	private String resultDiscord;
 	private String alertDiscord;
 	private String alertMessage;
@@ -70,6 +78,7 @@ public class Tournament{
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
 		matchAdmins = new ArrayList<>();
+		allowedFreemodMods = new ArrayList<>();
 		
 		tempLobbyDecayTime = 0;
 		
@@ -95,6 +104,14 @@ public class Tournament{
 		targetRankLowerBound = getConfig().getInt("targetRankLowerBound");
 		targetRankUpperBound = getConfig().getInt("targetRankUpperBound");
 		matchSize = getConfig().getInt("matchSize");
+		usingDQs = getConfig().getBoolean("usingDQs");
+		dqTime = getConfig().getInt("dqTime");
+		usingBans = getConfig().getBoolean("usingBans");
+		banCount = getConfig().getInt("banCount");
+		gracePeriodTime = getConfig().getInt("gracePeriodTime");
+		allowedFreemodMods = getConfig().getStringList("allowedFreemodMods");
+		warmupLength = getConfig().getInt("warmupLength");
+		warmupCount = getConfig().getInt("warmupCount");
 		
 		currentlyStreamed = null;
 
@@ -108,7 +125,8 @@ public class Tournament{
 					  int readyWaitTime, int type, int mode, String resultDiscord, String alertDiscord, String alertMessage,
 					  int lowerRankBound, int upperRankBound, boolean skipWarmups, String pickStrategy, int rematchesAllowed,
 					  boolean usingTourneyServer, boolean usingConfirms, boolean usingMapStats, int targetRankLowerBound,
-					  int targetRankUpperBound, int matchSize){
+					  int targetRankUpperBound, int matchSize, boolean usingDQs, int dqTime, boolean usingBans, int banCount,
+					  int gracePeriodTime, int warmupLength, int warmupCount){
 		this.name = name;
 		this.displayName = displayName;
 		this.twitchChannel = twitchChannel;
@@ -132,6 +150,13 @@ public class Tournament{
 		this.targetRankLowerBound = targetRankLowerBound;
 		this.targetRankUpperBound = targetRankUpperBound;
 		this.matchSize = matchSize;
+		this.usingDQs = usingDQs;
+		this.dqTime = dqTime;
+		this.usingBans = usingBans;
+		this.banCount = banCount;
+		this.gracePeriodTime = gracePeriodTime;
+		this.warmupLength = warmupLength;
+		this.warmupCount = warmupCount;
 		
 		currentlyStreamed = null;
 		
@@ -139,6 +164,7 @@ public class Tournament{
 		matches = new ArrayList<>();
 		pools = new ArrayList<>();
 		matchAdmins = new ArrayList<>();
+		allowedFreemodMods = new ArrayList<>();
 		
 		tempLobbyDecayTime = 0;
 		
@@ -296,6 +322,70 @@ public class Tournament{
 	
 	public void setSkippingWarmups(boolean skipWarmups){
 		this.skipWarmups = skipWarmups;
+	}
+	
+	public boolean isUsingDQs(){
+		return usingDQs;
+	}
+	
+	public void setUsingDQs(boolean usingDQs){
+		this.usingDQs = usingDQs;
+	}
+	
+	public int getDQTime(){
+		return dqTime;
+	}
+	
+	public void setDQTime(int dqTime){
+		this.dqTime = dqTime;
+	}
+	
+	public boolean isUsingBans(){
+		return usingBans;
+	}
+	
+	public void setUsingBans(boolean usingBans){
+		this.usingBans = usingBans;
+	}
+	
+	public int getBanCount(){
+		return banCount;
+	}
+	
+	public void setBanCount(int banCount){
+		this.banCount = banCount;
+	}
+	
+	public int getGracePeriodTime(){
+		return gracePeriodTime;
+	}
+	
+	public void setGracePeriodTime(int gracePeriodTime){
+		this.gracePeriodTime = gracePeriodTime;
+	}
+	
+	public int getWarmupLength(){
+		return warmupLength;
+	}
+	
+	public void setWarmupLength(int warmupLength){
+		this.warmupLength = warmupLength;
+	}
+	
+	public int getWarmupCount(){
+		return warmupCount;
+	}
+	
+	public void setWarmupCount(int warmupCount){
+		this.warmupCount = warmupCount;
+	}
+	
+	public List<String> getAllowedFreemodMods(){
+		return allowedFreemodMods;
+	}
+	
+	public void setAllowedFreemodMods(ArrayList<String> allowedFreemodMods){
+		this.allowedFreemodMods = allowedFreemodMods;
 	}
 	
 	public String getTwitchChannel(){
@@ -688,9 +778,17 @@ public class Tournament{
 		config.writeValue("targetRankUpperBound", targetRankUpperBound);
 		config.writeValue("matchSize", matchSize);
 		config.writeStringList("tournament-admins", matchAdmins, true);
+		config.writeValue("usingDQs", usingDQs);
+		config.writeValue("dqTime", dqTime);
+		config.writeValue("usingBans", usingBans);
+		config.writeValue("banCount", banCount);
+		config.writeValue("gracePeriodTime", gracePeriodTime);
+		config.writeStringList("allowedFreemodMods", allowedFreemodMods, true);
+		config.writeValue("warmupLength", warmupLength);
+		config.writeValue("warmupCount", warmupCount);
 	}
 	
-	public void saveSQL(boolean add){
+	public void saveSQL(boolean add){ //I'm not gonna update this tbh lol
 		try{
 			if(add){
 				new JdbcSession(Main.tourneySQL)
@@ -841,7 +939,7 @@ public class Tournament{
 				     .select(new Outcome<List<String>>(){
 				    	 @Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
 				    		 while(rset.next()){
-				    			 Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getString(4), rset.getBoolean(5), 
+				    			 /*Tournament t = new Tournament(rset.getString(2), rset.getString(3), rset.getString(4), rset.getBoolean(5), 
 				    					 					   rset.getInt(6), rset.getInt(7), rset.getInt(8), rset.getInt(9), rset.getInt(10), 
 				    					 					   rset.getString(11), rset.getString(12), rset.getString(13), rset.getInt(14), 
 				    					 					   rset.getInt(15), rset.getBoolean(16), rset.getString(17), rset.getInt(18),
@@ -852,7 +950,7 @@ public class Tournament{
 				    			 
 				    			 t.loadPools(); //finish those 3
 				    			 t.loadTeams();
-				    			 t.loadMatches();
+				    			 t.loadMatches();*/
 				    		 }
 				    		 
 				    		 return new ArrayList<String>();

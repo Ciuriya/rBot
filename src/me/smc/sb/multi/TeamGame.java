@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
 
 import me.smc.sb.irccommands.InvitePlayerCommand;
-import me.smc.sb.utils.Log;
 
 public class TeamGame extends Game{
 
@@ -35,13 +33,19 @@ public class TeamGame extends Game{
 		Timer timeout = new Timer();
 		timeout.schedule(new TimerTask(){
 			public void run(){
-				Log.logger.log(Level.INFO, "timeout, wfc: " + waitingForCaptains);
-				
-				if(waitingForCaptains > 0){
-					if(!playersInRoom.isEmpty())
-						if(teamToBoolean(findTeam(playersInRoom.get(0)))){
-							fTeamPoints++;
-						}else sTeamPoints++;
+				if(waitingForCaptains > 0 && rollsLeft > 0){
+					if(!playersInRoom.isEmpty()){
+						int fPlayers = 0, sPlayers = 0;
+						
+						for(String playerInRoom : playersInRoom){
+							if(teamToBoolean(findTeam(playerInRoom)) && fPlayers < match.getPlayers() / 2)
+								fPlayers++;
+							else if(sPlayers < match.getPlayers() / 2) sPlayers++;
+						}
+						
+						if(fPlayers > sPlayers) fTeamPoints++;
+						else if(sPlayers > fPlayers) sTeamPoints++;
+					}
 					
 					stop();
 				}
@@ -66,6 +70,15 @@ public class TeamGame extends Game{
 		String player = message.replace(" left the game.", "").replaceAll(" ", "_");
 		joinQueue.remove(player);
 		playersInRoom.remove(player);
+		
+		int fCaptains = 0, sCaptains = 0;
+		for(String playerInRoom : playersInRoom){
+			if(teamToBoolean(findTeam(playerInRoom)) && fCaptains == 0)
+				fCaptains++;
+			else if(sCaptains == 0) sCaptains++;
+		}
+		
+		waitingForCaptains = fCaptains + sCaptains;
 		
 		for(Player pl : findTeam(player).getPlayers())
 			if(pl.eq(player)) pl.setSlot(-1);

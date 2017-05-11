@@ -48,8 +48,6 @@ public abstract class Game{
 	protected int skipRematchState = 0; //0 = none, 1 = f skipped, 2 = s skipped, 3 = both skip
 	protected int contestState = 0; //^
 	protected int expectedPlayers = 0;
-	protected int lastModPickedFTeam = 0;
-	protected int lastModPickedSTeam = 0;
 	protected int mapLength = 0;
 	protected long lastPickTime = 0;
 	protected long mapSelectedTime = 0;
@@ -69,7 +67,7 @@ public abstract class Game{
 	protected java.util.Map<Integer, String> hijackedSlots;
 	protected List<Map> bans;
 	protected List<String> bansWithNames;
-	protected List<Map> mapsPicked;
+	protected LinkedList<PickedMap> mapsPicked;
 	protected List<Player> playersSwapped;
 	protected java.util.Map<Player, Integer> verifyingSlots;
 	protected LinkedList<String> banchoFeedback;
@@ -79,7 +77,6 @@ public abstract class Game{
 	protected Team lastWinner;
 	protected Map map;
 	protected Map previousMap;
-	protected Map lastPlayedMap;
 	protected Timer mapUpdater;
 	protected Timer messageUpdater;
 	protected List<Timer> pickTimers;
@@ -100,7 +97,7 @@ public abstract class Game{
 		this.banchoFeedback = new LinkedList<>();
 		this.bans = new ArrayList<>();
 		this.bansWithNames = new ArrayList<>();
-		this.mapsPicked = new ArrayList<>();
+		this.mapsPicked = new LinkedList<>();
 		this.captains = new ArrayList<>();
 		this.joinQueue = new ArrayList<>();
 		this.playersSwapped = new ArrayList<>();
@@ -653,12 +650,9 @@ public abstract class Game{
 		mapLength = 0;
 		playersChecked = 0;
 		previousMap = null;
-		lastPlayedMap = null;
 		previousRoll = 0;
 		rematchesLeftFTeam = 0;
 		rematchesLeftSTeam = 0;
-		lastModPickedFTeam = 0;
-		lastModPickedSTeam = 0;
 		expectedPlayers = 0;
 		rollsLeft = 0;
 		roomSize = 0;
@@ -927,7 +921,7 @@ public abstract class Game{
 		
 		if(newMap != null) changeMap(newMap);
 		else{
-			map = lastPlayedMap;
+			map = mapsPicked.getLast().getMap();
 			previousMap = map;
 		}
 		
@@ -1131,7 +1125,7 @@ public abstract class Game{
 			mapSelected = true;
 			
 			this.map = match.getMapPool().findMap(link);
-			mapsPicked.add(map);
+			onMatchStart();
 			
 			return;
 		}
@@ -1450,34 +1444,12 @@ public abstract class Game{
 			}, timer * 1000 + 1000);	
 		}
 		
-		SkipRematchCommand.gamesAllowedToSkip.remove(this);
-		ContestCommand.gamesAllowedToContest.remove(this);
-		skipRematchState = 0;
-		contestState = 0;
-		mapSelectedTime = 0;
-		
-		if(messageUpdater != null) messageUpdater.cancel();
-		
 		if(roomSize > match.getPlayers()){
 			roomSize = match.getPlayers();
 			sendMessage("!mp size " + roomSize);
 		}
 		
-		if(!mapsPicked.contains(map)){
-			mapsPicked.add(map);
-			
-			if(warmupsLeft == 0 && bans.size() == 4){
-				if(teamToBoolean(selectingTeam)) 
-					lastModPickedFTeam = map.getCategory();
-				else lastModPickedSTeam = map.getCategory();
-			}
-		}
-		
-		banchoFeedback.clear();
-		
-		lastPlayedMap = map;
-		mapSelected = false;
-		switchPlaying(true, false);
+		onMatchStart();
 		
 		if(timer == -1) return;
 		
@@ -1488,6 +1460,28 @@ public abstract class Game{
 		
 		updateResults(false);
 		updateTwitch("The match has begun!");
+	}
+	
+	private void onMatchStart(){
+		clearPickTimers();
+		
+		SkipRematchCommand.gamesAllowedToSkip.remove(this);
+		ContestCommand.gamesAllowedToContest.remove(this);
+		skipRematchState = 0;
+		contestState = 0;
+		mapSelectedTime = 0;
+		
+		if(messageUpdater != null) messageUpdater.cancel();
+		
+		PickedMap picked = new PickedMap(map, selectingTeam, match, warmupsLeft == 0);
+		
+		if(!mapsPicked.stream().anyMatch(p -> p.getMap().export().equals(picked.getMap().export())))
+			mapsPicked.add(picked);
+		
+		banchoFeedback.clear();
+		
+		mapSelected = false;
+		switchPlaying(true, false);
 	}
 	
 	protected void switchPlaying(boolean playing, boolean full){

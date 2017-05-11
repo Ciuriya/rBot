@@ -1,7 +1,5 @@
 package me.smc.sb.multi;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.logging.Level;
 
 import org.json.JSONObject;
@@ -11,7 +9,7 @@ import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
-public class NoBackToBackPickStrategy implements PickStrategy{
+public class UniqueModPickStrategy implements PickStrategy{
 
 	@Override
 	public void handleMapSelect(Game game, String map, boolean select, String mod){
@@ -123,18 +121,12 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 		}
 		
 		if(selected != null && select){
-			LinkedList<PickedMap> reversed = new LinkedList<>(game.mapsPicked);
-			Collections.reverse(reversed);
+			final Map fSelected = selected;
+			
+			if(game.mapsPicked.stream().anyMatch(p -> p.getTeam().getTeamName().equals(game.selectingTeam.getTeamName()) && 
+													  p.getMap().getCategory() > 0 && p.getMap().getCategory() == fSelected.getCategory())) {
+				game.sendMessage("You cannot select a map within a mod pool twice!");
 				
-			PickedMap lastPick = null;
-			for(PickedMap picked : reversed)
-				if(picked.getTeam().getTeamName().equals(game.selectingTeam.getTeamName()))
-					lastPick = picked;
-			
-			int lastModPicked = lastPick == null ? 0 : lastPick.getMap().getCategory();
-			
-			if(lastModPicked != 0 && lastModPicked == selected.getCategory()){
-				game.sendMessage("You cannot select a map within this mod category twice in a row!");
 				return;
 			}
 		}

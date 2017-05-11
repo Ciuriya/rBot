@@ -77,44 +77,43 @@ public class SoloGame extends Game{
 			Timer t = new Timer();
 			t.scheduleAtFixedRate(new TimerTask(){
 				public void run(){
+					timeLeft.sub(10000);
+					
 					if(timeLeft.get() <= 0){
 						if(playersInRoom.size() == match.getPlayers()){
 							if(mapSelected) prepareReadyCheck();
 							t.cancel();
+							
 							return;
 						}
 						
-						timeLeft.sub(10000);
+						String winningTeam = (fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName());
 						
-						if(timeLeft.get() <= 0){
-							String winningTeam = (fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName());
-							
-							sendMessage(player + " has been disqualified!");
-							sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
-							sendMessage("!mp timer");
-							
-							if(mapUpdater != null) mapUpdater.cancel();
-							
-							updateTwitch(winningTeam + " has won this game! " + mpLink, 20);
-							
-							Timer twitchCloseDelay = new Timer();
-							twitchCloseDelay.schedule(new TimerTask(){
-								public void run(){
-									match.getTournament().stopStreaming(SoloGame.this);
-								}
-							}, 25500);
-							
-							Timer time = new Timer();
-							time.schedule(new TimerTask(){
-								public void run(){
-									stop();
-									t.cancel();
-								}
-							}, 30000);
-						}
+						sendMessage(player + " has been disqualified!");
+						sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
+						sendMessage("!mp timer");
+						
+						if(mapUpdater != null) mapUpdater.cancel();
+						
+						updateTwitch(winningTeam + " has won this game! " + mpLink, 20);
+						
+						Timer twitchCloseDelay = new Timer();
+						twitchCloseDelay.schedule(new TimerTask(){
+							public void run(){
+								match.getTournament().stopStreaming(SoloGame.this);
+							}
+						}, 25500);
+						
+						Timer time = new Timer();
+						time.schedule(new TimerTask(){
+							public void run(){
+								stop();
+								t.cancel();
+							}
+						}, 30000);
 					}
 				}
-			}, 0, 10000);
+			}, 10000, 10000);
 		}
 	}
 	

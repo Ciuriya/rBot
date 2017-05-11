@@ -7,6 +7,7 @@ public interface PickStrategy{
 			case "nbtb": case "nobacktoback": 
 				return new NoBackToBackPickStrategy();
 			case "mod": return new ModPickStrategy();
+			case "uniquemod": return new UniqueModPickStrategy();
 			case "default": case "regular":
 			default: return new RegularPickStrategy();
 		}
@@ -16,6 +17,7 @@ public interface PickStrategy{
 		switch(strategy.getClass().getSimpleName()){
 			case "NoBackToBackPickStrategy": return "nbtb";
 			case "ModPickStrategy": return "mod";
+			case "UniqueModPickStrategy": return "uniquemod";
 			case "RegularPickStrategy":
 			default: return "regular";
 		}

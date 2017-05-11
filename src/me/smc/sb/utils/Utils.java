@@ -232,11 +232,11 @@ public class Utils{
 		else return "" + num;
 	}
 	
-	public static String sendPost(String urlString, String urlParameters){
-		return sendPost(urlString, urlParameters, "", 1);
+	public static String sendPost(String urlString, String urlParameters) throws Exception{
+		return sendPost(urlString, urlParameters, "");
 	}
 	
-	public static String sendPost(String urlString, String urlParameters, String query, int retries){
+	public static String sendPost(String urlString, String urlParameters, String query) throws Exception{
 		String answer = "";
 		
 		try{
@@ -244,8 +244,8 @@ public class Utils{
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			connection.setRequestMethod("POST");	
-			connection.setConnectTimeout(30000);
-			connection.setReadTimeout(30000);
+			connection.setConnectTimeout(5000);
+			connection.setReadTimeout(5000);
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("charset", "utf-8");
@@ -275,11 +275,7 @@ public class Utils{
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, "sendPost Exception: " + e.getMessage());
 			
-			if(retries > 0){
-				Log.logger.log(Level.INFO, "Retrying sendPost on " + (urlString + urlParameters) + "...");
-				
-				return sendPost(urlString, urlParameters, query, retries - 1);
-			}
+			throw e;
 		}
 		
 		return answer;
@@ -620,7 +616,7 @@ public class Utils{
 	
 	public static String getOsuPlayerPPAndRank(String id, int mode){
 		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-				  	  "&u=" + id + "&m=" + mode + "&type=id&event_days=1");
+				  	  									 "&u=" + id + "&m=" + mode + "&type=id&event_days=1");
 		
 		if(post == "" || !post.contains("{")) return "-1&r=-1&cr=-1";
 		
@@ -674,8 +670,8 @@ public class Utils{
 	}
 	
 	private static int getOsuPlayerRankByAPI(String name, String id, int mode){
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-					  "&u=" + name.replaceAll(" ", "%20") + "&m=" + mode + "&type=string&event_days=1");
+		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
+					  									 "&u=" + name.replaceAll(" ", "%20") + "&m=" + mode + "&type=string&event_days=1");
 		
 		if(post == "" || !post.contains("{")) return -1;
 		
