@@ -14,10 +14,11 @@ public class EditCmdCommand extends GlobalCommand{
 			  "----------\nUsage\n----------\n{prefix}editcom {add / edit / setdel / del} {command} - Administer said command\n" + 
 			  "{prefix}editcom add {command} {instructions} ({desc={description}}) - Adds a command using the specified instructions\n" +
 			  "{prefix}editcom add {command} {{delimiters={number of delimiters}}} ({desc={description}}) - Adds a command using the specified delimiter count\n" +
+			  "{prefix}editcom set {command} {instructions} ({desc={description}}) - Sets the command's instructions\n" +
 			  "{prefix}editcom setdel {command} {delimiters} {instructions} - Sets instructions into the specified delimiter combination\n\n" +
-			  "----------\nAliases\n----------\n{prefix}editcmd", 
+			  "----------\nAliases\n----------\n{prefix}editcmd\n{prefix}ec\n{prefix}command\n{prefix}cmd", 
 			  false, 
-			  "editcom", "editcmd", "ec");
+			  "editcom", "editcmd", "ec", "command", "cmd");
 	}
 
 	@Override
@@ -26,6 +27,8 @@ public class EditCmdCommand extends GlobalCommand{
 		if(!Utils.checkArguments(e, args, 2)) return;
 		switch(args[0].toLowerCase()){
 			case "add": addCommand(e, args); break;
+			case "edit":
+			case "set": setCommand(e, args); break;
 			case "setdel": setDelimiters(e, args); break;
 			case "del": deleteCommand(e, args); break;
 			default: break;
@@ -34,7 +37,7 @@ public class EditCmdCommand extends GlobalCommand{
 
 	private void addCommand(MessageReceivedEvent e, String[] args){
 		if(Command.findCommand(e.getGuild().getId(), args[1]) != null){
-			Utils.error(e.getChannel(), e.getAuthor(), " This command already exists!");
+			Utils.info(e.getChannel(), "This command already exists!");
 			return;
 		}
 		
@@ -54,10 +57,35 @@ public class EditCmdCommand extends GlobalCommand{
 		Utils.info(e.getChannel(), Main.getCommandPrefix(e.getGuild().getId()) + args[1] + " was added!");
 	}
 	
+	private void setCommand(MessageReceivedEvent e, String[] args){
+		Command cmd = Command.findCommand(e.getGuild().getId(), args[1]);
+		
+		if(cmd == null){
+			Utils.info(e.getChannel(), "This command does not exist!");
+			return;
+		}
+		
+		String instructions = "", desc = "";
+		
+		for(int i = 2; i < args.length; i++)
+			if(args[i].contains("{desc="))
+				desc = args[i].split("\\{desc=")[1].split("}")[0];
+			else instructions += " " + args[i];
+		
+		instructions = instructions.substring(1);
+		
+		cmd.setInstructions(instructions);
+		cmd.setDescription(desc);
+		cmd.save();
+		
+		Utils.info(e.getChannel(), Main.getCommandPrefix(e.getGuild().getId()) + args[1] + " was modified!");
+	}
+	
 	private void setDelimiters(MessageReceivedEvent e, String[] args){
 		Command cmd = Command.findCommand(e.getGuild().getId(), args[1]);
+		
 		if(cmd == null){
-			Utils.error(e.getChannel(), e.getAuthor(), " This command does not exist!");
+			Utils.info(e.getChannel(), "This command does not exist!");
 			return;
 		}
 		
@@ -78,7 +106,7 @@ public class EditCmdCommand extends GlobalCommand{
 	private void deleteCommand(MessageReceivedEvent e, String[] args){
 		Command cmd = Command.findCommand(e.getGuild().getId(), args[1]);
 		if(cmd == null){
-			Utils.error(e.getChannel(), e.getAuthor(), " That command does not exist!");
+			Utils.info(e.getChannel(), "This command does not exist!");
 			return;
 		}
 		

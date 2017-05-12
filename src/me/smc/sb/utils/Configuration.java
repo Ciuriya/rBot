@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
 public class Configuration{
 
 	private File configFile;
@@ -156,8 +158,18 @@ public class Configuration{
 		writeStringList(key, list, sort);
 	}
 	
+	public void convertAndWriteValue(String key, Object object){
+		String value = object == null ? "" : object.toString();
+		
+		if(value.contains(System.getProperty("line.separator"))){
+			writeStringList(key, Lists.newArrayList(value.split(System.getProperty("line.separator"))), false);
+			return;
+		}
+	}
+	
 	public void writeValue(String key, Object object){
 		String value = object == null ? "" : object.toString();
+		
 		BufferedWriter bw = null;
 		try{
 			bw = new BufferedWriter(new OutputStreamWriter(

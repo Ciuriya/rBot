@@ -2,11 +2,13 @@ package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.core.entities.Emote;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
@@ -95,7 +97,7 @@ public class Command{
 				if(m.startsWith(" "))
 					m = Utils.removeStartSpaces(m);
 				
-				Utils.infoBypass(e.getChannel(), m);
+				Utils.infoBypass(e.getChannel(), fillInEmotes(e, m));
 				
 				ArrayList<Thread> sThreads = new ArrayList<Thread>();
 				if(threads.containsKey(e.getGuild().getId())) sThreads = threads.get(e.getGuild().getId());
@@ -127,6 +129,14 @@ public class Command{
 			
 			cfg.writeValue(path, instruction);
 		}
+	}
+	
+	public void setDescription(String description){
+		this.desc = description;
+	}
+	
+	public void setInstructions(String instructions){
+		this.instruction = instructions;
 	}
 	
 	public String getServer(){
@@ -162,9 +172,38 @@ public class Command{
 		}else if(tag.startsWith("mention=")){
 			msg.append(e.getGuild().getMembers()
 			   .stream()
-			   .filter(x -> ((Member) x).getUser().getName().equals(tag.replace("mention=", "")))
+			   .filter(x -> x != null && ((Member) x).getUser() != null &&
+			   				((Member) x).getUser().getName() != null && ((Member) x).getNickname() != null &&
+			   				(((Member) x).getUser().getName().contains(tag.replace("mention=", "")) ||
+					   		((Member) x).getNickname().contains(tag.replace("mention=", "")) || 
+					   		((Member) x).getUser().getId().equals(tag.replace("mention=", ""))))
 			   .findFirst().get().getAsMention());
 		}
+	}
+	
+	private String fillInEmotes(MessageReceivedEvent e, String msg){
+		String fixedMsg = "";
+		
+		for(String split : msg.split(" ")){
+			if(split.startsWith(":") && split.endsWith(":")){
+				List<Emote> emotes = e.getJDA().getEmotesByName(split.replaceAll(":", ""), true);
+				
+				boolean added = false;
+				
+				if(!emotes.isEmpty()){
+					for(Emote emote : emotes)
+						if(emote.canInteract(e.getJDA().getSelfUser(), e.getChannel())){
+							fixedMsg += " " + emotes.get(0).getAsMention();
+							added = true;
+							
+							break;
+						}		
+				}
+				if(!added) fixedMsg += " " + split;
+			} else fixedMsg += " " + split;
+		}
+		
+		return fixedMsg.substring(1);
 	}
 	
 	public void save(){
@@ -176,7 +215,7 @@ public class Command{
 		}
 		if(desc != null && desc != "") cfg.writeValue("cmd-" + name + "-desc", desc);
 		if(delimiters > 0) cfg.writeValue("cmd-" + name + "-del", delimiters);
-		else cfg.writeValue("cmd-" + name, instruction);
+		else cfg.convertAndWriteValue("cmd-" + name, instruction);
 	}
 	
 	public void delete(){
@@ -205,7 +244,23 @@ public class Command{
 				if(cfg.getInt("cmd-" + str + "-del") > 0){
 					int amount = cfg.getInt("cmd-" + str + "-del");
 					new Command(server, str, "", amount, desc);
-				}else new Command(server, str, cfg.getValue("cmd-" + str), 0, desc);
+				}else{
+					String value = cfg.getValue("cmd-" + str);
+					
+					if(value.equals("list")){
+						value = "";
+						List<String> values = cfg.getStringList("cmd-" + str);
+						
+						if(values.size() > 0)
+							for(int i = 0; i < values.size(); i++){
+								value += values.get(i);
+								
+								if(i + 1 < values.size()) value += "\n";
+							}
+					}
+					
+					new Command(server, str, value, 0, desc);
+				}
 			}
 	}
 	

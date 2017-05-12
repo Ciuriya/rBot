@@ -210,8 +210,8 @@ public class Main{
 	}
 	
 	public static void stop(int code){
-		api.getPresence().setStatus(OnlineStatus.OFFLINE);
 		VoiceCommand.saveAllRadios();
+		api.getPresence().setStatus(OnlineStatus.OFFLINE);
 		
 		if(!servers.isEmpty())
 			for(Server server : servers)

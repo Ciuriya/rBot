@@ -5,6 +5,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
+import com.google.common.collect.Lists;
+
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
@@ -23,7 +25,7 @@ public class YoutubeDownloadCommand extends GlobalCommand{
 		
 		File[] ydls = new File("/var/www/html/ydl").listFiles();
 		if(ydls.length > 0)
-			for(File f : ydls)
+			for(File f : Lists.newArrayList(ydls))
 				f.delete();
 	}
 
@@ -56,11 +58,13 @@ public class YoutubeDownloadCommand extends GlobalCommand{
 			Utils.infoBypass(e.getChannel(), "You have one hour to download the song!\nIf it only loads the song for playback, please use CTRL+S to save it!\n" +
 					                         "```http://smcmax.com/ydl/" + newName + "```");
 			
-			final File finalSong = downloadedSong;
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(finalSong != null && finalSong.exists()) finalSong.delete();
+					File file = new File("/var/www/html/ydl/" + newName);
+					
+					if(file != null && file.exists())
+						file.delete();
 				}
 			}, 3600000);
 		}catch(Exception ex){
