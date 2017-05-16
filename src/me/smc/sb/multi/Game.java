@@ -1198,7 +1198,7 @@ public abstract class Game{
 			Timer t = new Timer();
 			t.schedule(new TimerTask(){
 				public void run(){
-					if(state.eq(GameState.VERIFYING) && playersSwapped.isEmpty()) //playersChecked?
+					if(state.eq(GameState.VERIFYING) && verifyingSlots.isEmpty()) //playersChecked?
 						sendPriorityMessage("!mp settings");
 				}
 			}, 2500);
@@ -1473,10 +1473,15 @@ public abstract class Game{
 		
 		if(messageUpdater != null) messageUpdater.cancel();
 		
-		PickedMap picked = new PickedMap(map, selectingTeam, match, warmupsLeft == 0);
-		
-		if(!mapsPicked.stream().anyMatch(p -> p.getMap().export().equals(picked.getMap().export())))
-			mapsPicked.add(picked);
+		try{
+			PickedMap picked = new PickedMap(map, selectingTeam, match, warmupsLeft != 0);
+			
+			if(!mapsPicked.stream().anyMatch(p -> p != null && p.getMap() != null && p.getMap().export() != null &&
+												  p.getMap().export().equals(picked.getMap().export())))
+				mapsPicked.add(picked);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
 		
 		banchoFeedback.clear();
 		

@@ -124,7 +124,8 @@ public class UniqueModPickStrategy implements PickStrategy{
 			final Map fSelected = selected;
 			
 			if(game.mapsPicked.stream().anyMatch(p -> p.getTeam().getTeamName().equals(game.selectingTeam.getTeamName()) && 
-													  p.getMap().getCategory() > 0 && p.getMap().getCategory() == fSelected.getCategory())) {
+													  p.getMap().getCategory() > 0 && p.getMap().getCategory() == fSelected.getCategory() &&
+													  !p.isWarmup())) {
 				game.sendMessage("You cannot select a map within a mod pool twice!");
 				
 				return;

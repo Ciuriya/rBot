@@ -89,7 +89,11 @@ public class Map{
 	}
 	
 	public String export(){
-		return url + "||" + category + (bloodcatLink.length() > 0 ? "||" + bloodcatLink : "");
+		try{
+			return url + "||" + category + (bloodcatLink.length() > 0 ? "||" + bloodcatLink : "");
+		}catch(Exception e){
+			return "";
+		}
 	}
 	
 	public static JSONObject getMapInfo(int id, int mode, boolean priority){

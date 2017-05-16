@@ -165,6 +165,8 @@ public class Configuration{
 			writeStringList(key, Lists.newArrayList(value.split(System.getProperty("line.separator"))), false);
 			return;
 		}
+		
+		writeValue(key, object);
 	}
 	
 	public void writeValue(String key, Object object){

@@ -128,7 +128,8 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 				
 			PickedMap lastPick = null;
 			for(PickedMap picked : reversed)
-				if(picked.getTeam().getTeamName().equals(game.selectingTeam.getTeamName()))
+				if(picked.getTeam().getTeamName().equals(game.selectingTeam.getTeamName()) &&
+				   !picked.isWarmup())
 					lastPick = picked;
 			
 			int lastModPicked = lastPick == null ? 0 : lastPick.getMap().getCategory();
