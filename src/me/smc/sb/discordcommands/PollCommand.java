@@ -12,8 +12,10 @@ public class PollCommand extends GlobalCommand{
 			  "----------\nUsage\n----------\n{prefix}poll start {name} option1,option2,option3 (time before close, ex: 60m) - Creates a poll with the specified options and time limit\n" + 
 			  "{prefix}poll end {name} - Ends the poll and posts the results\n" +
 			  "{prefix}poll list - Lists every poll running on the server\n" +
+			  "{prefix}poll setchannel - Sets the result channel for polls\n" +
 			  "{prefix}poll status {name} - Sends info about the poll (time left, votes, options, etc.)\n" +
-			  "{prefix}poll vote {name} {option} - Adds a vote for the option in the poll (or changes the vote)\n\n" +
+			  "{prefix}poll vote {name} {option} - Adds a vote for the option in the poll (or changes the vote)\n" +
+			  "{prefix}poll votes {name} - Lists all votes for the current poll\n\n" +
 		      "----------\nAliases\n----------\nThere are no aliases.",  
 			  false, 
 			  "poll");

@@ -90,6 +90,15 @@ public class Utils{
 		Main.messagesSentThisSession++;
 	}
 	
+	public static void infoBypass(MessageChannel channel, MessageEmbed embed){
+		channel.sendMessage(embed).queue();
+		
+		if(embed.getAuthor() != null && embed.getTitle() != null)
+			Log.logger.log(Level.INFO, "{Embed sent in " + getGroupLogString(channel) + "} " +
+										embed.getAuthor().getName() + "\n" + embed.getTitle());
+		Main.messagesSentThisSession++;
+	}
+	
 	public static void info(MessageChannel channel, String message){
 		if(channel instanceof TextChannel){
 			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
