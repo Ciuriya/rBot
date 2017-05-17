@@ -433,6 +433,61 @@ public class Utils{
         return display;
 	}
 	
+	public static long fromDuration(String duration){
+		String tempDuration = duration;
+		long length = 0;
+		
+		if(tempDuration.contains("y")){
+			int years = Utils.stringToInt(tempDuration.split("y")[0]);
+			
+			if(years > 0) length += 31557600000L * years;
+			
+			tempDuration = tempDuration.replace(tempDuration.split("y")[0] + "y", "");
+		}
+		
+		if(tempDuration.contains("M")){
+			int months = Utils.stringToInt(tempDuration.split("M")[0]);
+			
+			if(months > 0) length += 2628000000L * months;
+			
+			tempDuration = tempDuration.replace(tempDuration.split("M")[0] + "M", "");
+		}
+		
+		if(tempDuration.contains("d")){
+			int days = Utils.stringToInt(tempDuration.split("d")[0]);
+			
+			if(days > 0) length += 86400000L * days;
+			
+			tempDuration = tempDuration.replace(tempDuration.split("d")[0] + "d", "");
+		}
+		
+		if(tempDuration.contains("h")){
+			int hours = Utils.stringToInt(tempDuration.split("h")[0]);
+			
+			if(hours > 0) length += 3600000L * hours;
+			
+			tempDuration = tempDuration.replace(tempDuration.split("h")[0] + "h", "");
+		}
+		
+		if(tempDuration.contains("m")){
+			int minutes = Utils.stringToInt(tempDuration.split("m")[0]);
+			
+			if(minutes > 0) length += 60000L * minutes;
+			
+			tempDuration = tempDuration.replace(tempDuration.split("m")[0] + "m", "");
+		}
+		
+		if(tempDuration.contains("s")){
+			int seconds = Utils.stringToInt(tempDuration.split("s")[0]);
+			
+			if(seconds > 0) length += 1000L * seconds;
+			
+			tempDuration = tempDuration.replace(tempDuration.split("s")[0] + "s", "");
+		}
+		
+		return length;
+	}
+	
 	public static long toTime(String date){
 		return toTime(date, "yyyy MM dd HH mm");
 	}
@@ -730,6 +785,12 @@ public class Utils{
 		int b = random.nextInt(255);
 		
 		return new Color(r, g, b);
+	}
+	
+	public static String getRandomHexColor(){
+		Color random = getRandomColor();
+		
+		return String.format("#%02X%02X%02X", random.getRed(), random.getGreen(), random.getBlue());
 	}
 	
 	public static boolean isTwitch(Event e){

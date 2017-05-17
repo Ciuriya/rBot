@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,13 +14,15 @@ import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.core.entities.User;
 
-public class Poll{ // make sure there's no - in name
+public class Poll{
 
 	public static List<Poll> polls = new ArrayList<>();
 	
 	private String name;
 	private Guild guild;
+	private String author;
 	private long expirationTime;
 	private List<Option> options;
 	private Timer expiryTimer;
@@ -36,11 +37,12 @@ public class Poll{ // make sure there's no - in name
 		polls.add(this);
 	}
 	
-	public Poll(Guild guild, String name, long expirationTime, List<String> options){
+	public Poll(Guild guild, User author, String name, long expirationTime, List<String> options){
 		this.name = name;
 		this.expirationTime = expirationTime;
 		this.options = new ArrayList<>();
 		this.guild = guild;
+		this.author = author.getId();
 		
 		for(String option : options)
 			this.options.add(new Option(option));
@@ -58,12 +60,48 @@ public class Poll{ // make sure there's no - in name
 		return options;
 	}
 	
+	public Option getOption(String name){
+		for(Option option : options)
+			if(option.getName().equalsIgnoreCase(name))
+				return option;
+		
+		return null;
+	}
+	
+	public boolean vote(String name, String userId){
+		try{
+			for(Option option : options)
+				if(option.hasVoted(userId))
+					option.removeVote(userId);
+				
+			boolean voted = getOption(name).addVote(userId);
+			
+			save();
+			return voted;
+		}catch(Exception e){
+			return false;
+		}
+	}
+	
 	public Guild getGuild(){
 		return guild;
 	}
 	
 	public long getExpirationTime(){
 		return expirationTime;
+	}
+	
+	public User getAuthor(){
+		return Main.api.getUserById(author);
+	}
+	
+	public int getVoteCount(){
+		int votes = 0;
+		
+		for(Option option : options)
+			votes += option.getVotes().size();
+		
+		return votes;
 	}
 	
 	public static TextChannel getResultChannel(Guild guild){
@@ -83,11 +121,39 @@ public class Poll{ // make sure there's no - in name
 		config.writeValue("poll-result-channel", channel.getId());
 	}
 	
-	public void postResults(){
+	public static Poll findPoll(String name, Guild guild){
+		for(Poll poll : polls)
+			if(poll.getName().equalsIgnoreCase(name) &&
+			   poll.getGuild().getId().equalsIgnoreCase(guild.getId()))
+				return poll;
+		
+		return null;
+	}
+	
+	public static List<Poll> findPolls(Guild guild){
+		List<Poll> polls = new ArrayList<>();
+		
+		for(Poll poll : Poll.polls)
+			if(poll.getGuild().getId().equalsIgnoreCase(guild.getId()))
+				polls.add(poll);
+		
+		return polls;
+	}
+	
+	public void postResults(TextChannel channel){
 		EmbedBuilder embed = new EmbedBuilder();
 		
+		TextChannel resultChannel = channel;
+		if(resultChannel == null) resultChannel = getResultChannel(guild);
+		
+		User author = Main.api.getUserById(this.author);
+		
 		embed.setColor(Color.WHITE);
-		embed.setTitle(name + " results", ""); // maybe gen charts later
+		embed.setAuthor("Poll | " + name + " | Results", "http://google.com", 
+						author == null ? Main.api.getSelfUser().getAvatarUrl() : author.getAvatarUrl());
+		
+		if(expirationTime - System.currentTimeMillis() > 0)
+			embed.addField("Ends in", Utils.toDuration(expirationTime - System.currentTimeMillis()), true);
 		
 		Collections.sort(options, new Comparator<Option>(){
 			@Override
@@ -95,38 +161,56 @@ public class Poll{ // make sure there's no - in name
 				int votes1 = o1.getVotes().size();
 				int votes2 = o2.getVotes().size();
 				
-				if(votes1 > votes2)
+				if(votes1 < votes2)
 					return 1;
-				else if(votes2 > votes1)
+				else if(votes2 < votes1)
 					return -1;
 				else
 					return 0;
 			}
 		});
 		
-		for(Option option : options)
-			embed.addField(option.getName(), option.getVotes().size() + " votes", true);
+		String[][] values = new String[options.size()][2];
 		
-		Utils.infoBypass(getResultChannel(guild), embed.build());
+		int i = 0;
+		
+		for(Option option : options){
+			values[i] = new String[2];
+			values[i][0] = option.getName();
+			values[i][1] = option.getVotes().size() + "";
+			embed.addField(option.getName(), option.getVotes().size() + " vote" + (option.getVotes().size() > 1 ? "s" : ""), true);
+			i++;
+		}
+		
+		String chartUrl = Main.chartGenerator.generateChart("pie", name, getVoteCount(), values);
+		
+		if(chartUrl.length() > 0) embed.setImage(chartUrl);
+		
+		Utils.infoBypass(resultChannel, embed.build());
 	}
 	
 	public void startExpiryTimer(){
+		if(expirationTime == 0) return;
 		long delay = expirationTime - System.currentTimeMillis();
 		
 		if(delay <= 0){
-			postResults();
-			delete();
-			
+			end(null);
 			return;
 		}
 		
 		expiryTimer = new Timer();
 		expiryTimer.schedule(new TimerTask(){
 			public void run(){
-				postResults();
-				delete();
+				end(null);
 			}
 		}, delay);
+	}
+	
+	public void end(TextChannel channel){
+		expirationTime = 0;
+		postResults(channel);
+		polls.remove(this);
+		delete();
 	}
 	
 	public void save(){
@@ -138,12 +222,14 @@ public class Poll{ // make sure there's no - in name
 		if(expirationTime > 0)
 			config.writeValue("poll-" + name + "-expire", expirationTime);
 		
+		config.writeValue("poll-" + name + "-author", author);
+		
 		ArrayList<String> exportedOptions = new ArrayList<>();
 		
 		for(Option option : options){
 			exportedOptions.add(option.getName());
 			
-			config.writeStringList("poll-" + name + "-" + option + "-votes", option.getVotes(), false);
+			config.writeStringList("poll-" + name + "-" + option.getName() + "-votes", option.getVotes(), false);
 		}
 		
 		config.writeStringList("poll-" + name + "-options", exportedOptions, false);
@@ -153,6 +239,7 @@ public class Poll{ // make sure there's no - in name
 		Configuration config = Main.serverConfigs.get(guild.getId());
 		
 		this.expirationTime = config.getLong("poll-" + name + "-expire");
+		this.author = config.getValue("poll-" + name + "-author");
 		
 		ArrayList<String> exportedOptions = config.getStringList("poll-" + name + "-options");
 		
@@ -169,6 +256,7 @@ public class Poll{ // make sure there's no - in name
 		
 		config.removeFromStringList("polls", name, true);
 		config.deleteKey("poll-" + name + "-expire");
+		config.deleteKey("poll-" + name + "-author");
 		
 		ArrayList<String> exportedOptions = config.getStringList("poll-" + name + "-options");
 		
@@ -179,5 +267,15 @@ public class Poll{ // make sure there's no - in name
 		config.deleteKey("poll-" + name + "-options");
 		
 		if(expiryTimer != null) expiryTimer.cancel();
+	}
+	
+	public static void loadPolls(Guild guild){
+		Configuration config = Main.serverConfigs.get(guild.getId());
+		
+		List<String> pollList = config.getStringList("polls");
+		
+		if(pollList.size() > 0)
+			for(String poll : pollList)
+				new Poll(guild, poll);
 	}
 }

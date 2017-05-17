@@ -17,6 +17,8 @@ import java.util.logging.Level;
 import org.pircbotx.PircBotX;
 import org.pircbotx.cap.EnableCapHandler;
 
+import me.smc.sb.charts.ChartGenerator;
+import me.smc.sb.charts.ChartType;
 import me.smc.sb.communication.IncomingRequest;
 import me.smc.sb.communication.Server;
 import me.smc.sb.discordcommands.VoiceCommand;
@@ -56,6 +58,7 @@ public class Main{
 	public static TwitchRegulator twitchRegulator;
 	public static BanchoRegulator banchoRegulator;
 	public static HTMLRegulator htmlRegulator;
+	public static ChartGenerator chartGenerator;
 	public static String defaultPrefix = "~/";
 	private int lastRequestCount = 0;
 	
@@ -101,6 +104,9 @@ public class Main{
 		}
 		
 		htmlRegulator = new HTMLRegulator();
+		
+		ChartType.load();
+		chartGenerator = new ChartGenerator(login.getValue("chart-apiKey"));
 		
 		PlayFormat.loadFormats();
 		Tournament.loadTournaments();

@@ -111,6 +111,7 @@ public abstract class GlobalCommand{
 		commands.add(new PingCommand());
 		commands.add(new PlayFormatCommand());
 		commands.add(new PollIRCCommand());
+		commands.add(new PollCommand());
 		commands.add(new ReceivePMCommand());
 		commands.add(new RPGCommand());
 		commands.add(new SearchCommand());
