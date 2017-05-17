@@ -290,15 +290,9 @@ public class Utils{
 		return answer;
 	}
 
-	
 	public static String[] getHTMLCode(String link){
-		return getHTMLCode(link, 1);
-	}
-
-	public static String[] getHTMLCode(String link, int retries){
 		BufferedReader in = null;
 		String[] toReturn = new String[]{};
-		boolean error = false;
 		
 		try{
 			URL url = new URL(link.replaceAll(" ", "%20"));
@@ -323,8 +317,6 @@ public class Utils{
 			toReturn = page.toString().split("\\n");
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, "getHTML Exception: " + e.getMessage());
-			
-			error = true;
 		}finally{
 			try{
 				if(in != null) in.close();
@@ -335,12 +327,6 @@ public class Utils{
 		
 		Main.htmlScrapes++;
 		if(link.contains("osu.ppy.sh")) Main.osuHtmlScrapes++;
-		
-		if(error && retries > 0){
-			Log.logger.log(Level.INFO, "Retrying getHTML on " + link + "...");
-			
-			return getHTMLCode(link, retries - 1);
-		}
 		
 		return toReturn;
 	}

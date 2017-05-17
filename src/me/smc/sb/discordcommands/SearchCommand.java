@@ -75,7 +75,7 @@ public class SearchCommand extends GlobalCommand{
 		}
 
 		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
-		String[] imagePage = Utils.getHTMLCode("http://konachan." + domain + "/post/show/" + id + "/", 0);
+		String[] imagePage = Utils.getHTMLCode("http://konachan." + domain + "/post/show/" + id + "/");
 
 		query = Utils.removeStartSpaces(query);
 		if(hasTags(imagePage, query)){

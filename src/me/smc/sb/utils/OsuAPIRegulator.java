@@ -12,7 +12,7 @@ public class OsuAPIRegulator{
 	private static final int[] FIBONACCI = new int[]{ 1, 1, 2, 3, 5, 8, 13, 21 };
 	private static LinkedList<APIRequest> requests;
 	private static int requestNumber = 0;
-	private static int requestsPerMinute = 60;
+	private static int requestsPerMinute = 900;
 	private Timer requestTimer;
 	private boolean stalled;
 	
