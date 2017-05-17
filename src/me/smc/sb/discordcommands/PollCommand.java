@@ -3,9 +3,11 @@ package me.smc.sb.discordcommands;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.polls.Option;
 import me.smc.sb.polls.Poll;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class PollCommand extends GlobalCommand{
@@ -45,8 +47,8 @@ public class PollCommand extends GlobalCommand{
 	}
 	
 	public void startPoll(MessageReceivedEvent e, String[] args){
+		if(!Permissions.hasPerm(e.getAuthor(), (TextChannel) e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
 		if(args.length < 3){Utils.info(e.getChannel(), "Invalid Arguments"); return;}
-		
 		if(Poll.findPolls(e.getGuild()).size() > 3){Utils.info(e.getChannel(), "You can only have 3 polls running at once!"); return;}
 		
 		String name = "";
@@ -77,6 +79,7 @@ public class PollCommand extends GlobalCommand{
 	}
 	
 	public void endPoll(MessageReceivedEvent e, String[] args){
+		if(!Permissions.hasPerm(e.getAuthor(), (TextChannel) e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
 		if(args.length < 2){Utils.info(e.getChannel(), "Invalid Arguments"); return;}
 		
 		String name = "";
@@ -106,6 +109,7 @@ public class PollCommand extends GlobalCommand{
 	}
 	
 	public void setResultChannel(MessageReceivedEvent e){
+		if(!Permissions.hasPerm(e.getAuthor(), (TextChannel) e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
 		Poll.setResultChannel(e.getTextChannel());
 		
 		Utils.info(e.getChannel(), "Poll results will be posted in this channel!");

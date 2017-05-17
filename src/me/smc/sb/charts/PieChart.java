@@ -23,7 +23,7 @@ public class PieChart extends ChartType{
 		
 		for(int i = 0; i < values.length; i++){
 			int val = Utils.stringToInt(values[i][1]);
-			double percent = (double) totalVal / (double) val;
+			double percent = ((double) val / (double) totalVal) * 100;
 			
 			if(val > 0) slices.add(Slice.newSlice((int) Math.ceil(percent), Color.newColor(Utils.getRandomHexColor().substring(1)), values[i][0]));
 		}
