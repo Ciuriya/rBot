@@ -25,15 +25,31 @@ public class OsuRecentPlaysRequest extends OsuRequest{
 			
 			if(post == "" || !post.contains("{")){
 				answer = "invalid";
+				setDone(true);
 				return;
 			}
 			
 			post = "[" + post + "]";
 			
-			answer = new JSONArray(post);
+			answer = new JSONArray(post);			
+			setDone(true);
+		}else{
+			String[] pageHistory = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-history.php?u=" + specifics[0] + "&m=" + specifics[1]);
 			
-			done = true;
-			Main.requestsSent++;
+			if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):")){
+				answer = "invalid";
+				setDone(false);
+				return;
+			}
+			
+			// finish pls, also standardize output
 		}
+	}
+	
+	private void setDone(boolean api){
+		done = true;
+		
+		if(api) Main.requestsSent++;
+		else Main.requestHtmlSent++;
 	}
 }
