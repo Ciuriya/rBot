@@ -3,6 +3,8 @@ package me.smc.sb.discordcommands;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.json.JSONObject;
+
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
@@ -17,6 +19,7 @@ public class SearchCommand extends GlobalCommand{
 			  "{prefix}search hentai (search tags) - Finds a random e-hentai gallery\n" +
 			  "{prefix}search hentai (search tags) ({type={e-hentai type w/o spaces}}) - Finds a random e-hentai gallery using types\n" + 
 			  "{prefix}search e621 {search} - Finds a random e621 post\n\n" +
+			  "{prefix}search catgirl (search tags) - Finds a random catgirl picture\n\n" +
 			  "----------\nAliases\n----------\n{prefix}lookup",  
 			  true, 
 			  "search", "lookup");
@@ -40,6 +43,7 @@ public class SearchCommand extends GlobalCommand{
 					case "konachan": konachan(e, query); break;
 					case "hentai": hentai(e, query); break;
 					case "e621": e621(e, query); break;
+					case "catgirl": catgirl(e, query); break;
 					default: break;
 				}
 				
@@ -218,4 +222,19 @@ public class SearchCommand extends GlobalCommand{
 	    Utils.infoBypass(e.getChannel(), "http://e621.net" + line.split("href=\"")[1].split("\" onclick=")[0]);
 	}
 	
+	private void catgirl(MessageReceivedEvent e, String query){
+		String BASEURL = "http://catgirls.brussell98.tk/api/random";
+		String NSFWURL = "http://catgirls.brussell98.tk/api/nsfw/random";
+		boolean nsfw = false;
+		
+		if (query.contains("nsfw")) nsfw = true;
+		String[] post = Utils.getHTMLCode(nsfw ? NSFWURL : BASEURL);
+		JSONObject obj = new JSONObject(post[0]);
+		
+		if (!obj.has("url")) {
+			Utils.info(e.getChannel(), "Unable to find image");
+		} else {
+			Utils.info(e.getChannel(), obj.getString("url"));
+		}
+	}
 }
