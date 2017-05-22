@@ -18,7 +18,7 @@ public class SearchCommand extends GlobalCommand{
 			  "{prefix}search konachan (search tags) - Finds a random konachan picture\n" +
 			  "{prefix}search hentai (search tags) - Finds a random e-hentai gallery\n" +
 			  "{prefix}search hentai (search tags) ({type={e-hentai type w/o spaces}}) - Finds a random e-hentai gallery using types\n" + 
-			  "{prefix}search e621 {search} - Finds a random e621 post\n\n" +
+			  "{prefix}search e621 {search} - Finds a random e621 post\n" +
 			  "{prefix}search catgirl (search tags) - Finds a random catgirl picture\n\n" +
 			  "----------\nAliases\n----------\n{prefix}lookup",  
 			  true, 
