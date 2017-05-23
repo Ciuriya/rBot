@@ -1,21 +1,25 @@
 package me.smc.sb.tracking;
 
+import java.util.logging.Level;
+
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import me.smc.sb.discordcommands.OsuStatsCommand;
-import me.smc.sb.main.Main;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
 public class OsuRecentPlaysRequest extends OsuRequest{
 
-	public OsuRecentPlaysRequest(){
-		super("recent-plays", RequestTypes.HYBRID);
+	public OsuRecentPlaysRequest(String... specifics){
+		super("recent-plays", RequestTypes.HYBRID, specifics);
 	}
 
 	@Override
-	public void send(boolean api) throws Exception {
+	public void send(boolean api) throws Exception{
 		if(specifics.length != 2){
 			answer = "invalid";
+			setDone(true);
 			return;
 		}
 		
@@ -38,18 +42,34 @@ public class OsuRecentPlaysRequest extends OsuRequest{
 			
 			if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):")){
 				answer = "invalid";
-				setDone(false);
+				setDone(true);
 				return;
 			}
 			
-			// finish pls, also standardize output
+			String[] splitTime = pageHistory[0].split("<\\/time>");
+			
+			JSONArray response = new JSONArray();
+			
+			for(int i = 0; i < splitTime.length - 1; i++){
+				try{
+					JSONObject play = new JSONObject();
+					String[] scoreSplit = splitTime[i + 1].split("<\\/a>");
+					
+					play.put("date", splitTime[i].split("time class=")[1].split(">")[1].replace(" UTC", ""));
+					play.put("beatmap_id", scoreSplit[0].split("href='\\/b\\/")[1].split("'")[0]);
+					play.put("score", scoreSplit[1].substring(1).split(" ")[0].replaceAll(",", ""));
+					play.put("rank", scoreSplit[1].split("\\(")[1].split("\\)")[0]);
+					play.put("user_id", specifics[0]);
+					play.put("enabled_mods", Mods.getMods(scoreSplit[1].split("<br\\/>")[0].split(" ")[1]));
+					
+					response.put(play);
+				}catch(Exception e){
+					Log.logger.log(Level.INFO, "Error parsing recent-plays HTML, splitTime[" + i + "] =" + splitTime[i]);
+				}
+			}
+			
+			answer = response;
+			setDone(true);
 		}
-	}
-	
-	private void setDone(boolean api){
-		done = true;
-		
-		if(api) Main.requestsSent++;
-		else Main.requestHtmlSent++;
 	}
 }

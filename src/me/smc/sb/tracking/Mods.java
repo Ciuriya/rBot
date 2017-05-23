@@ -50,6 +50,19 @@ public enum Mods{
 	public String getShortName(){
 		return shortName;
 	}
+
+	public static int getMods(String sMods){
+		int bits = 0;
+		
+		for(String sMod : sMods.split(","))
+			for(Mods mod : Mods.values())
+				if(mod.getShortName().equalsIgnoreCase(sMod) ||
+					mod.name().equalsIgnoreCase(sMod))
+					bits += mod.getBit();
+			
+		
+		return bits;
+	}
 	
 	public static List<Mods> getMods(int modsUsed){
 		List<Mods> mods = new ArrayList<>();

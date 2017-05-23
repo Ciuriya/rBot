@@ -1,5 +1,7 @@
 package me.smc.sb.tracking;
 
+import me.smc.sb.main.Main;
+
 public abstract class OsuRequest{
 
 	private String name;
@@ -24,6 +26,10 @@ public abstract class OsuRequest{
 		return type;
 	}
 	
+	public void setRequestType(RequestTypes type){
+		this.type = type;
+	}
+	
 	public Object getAnswer(){
 		return answer;
 	}
@@ -37,4 +43,11 @@ public abstract class OsuRequest{
 	}
 	
 	public abstract void send(boolean api) throws Exception;
+	
+	protected void setDone(boolean api){
+		done = true;
+		
+		if(api) Main.requestsSent++;
+		else Main.requestHtmlSent++;
+	}
 }

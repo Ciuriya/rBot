@@ -65,26 +65,22 @@ public class TrackedPlayer{
 		List<TrackedPlay> plays = new ArrayList<>();
 		
 		if(pp <= 0 && rank <= 0 && countryRank <= 0){
-			String stats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
+			// TO IMPLEMENT
+			/*String stats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
 			
 			pp = Utils.stringToDouble(stats.split("&r=")[0]);
 			rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
-			countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
+			countryRank = Utils.stringToInt(stats.split("&cr=")[1]);*/
 		}
 		
-		if(TrackingUtils.playerHasRecentPlays(userId, mode, lastUpdate)){
-			// fetching plays straight away, otherwise we'd be wasting efficiency in scraping/api stuff
-			String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
-                    	  "&u=" + userId + "&m=" + mode + "&limit=" + API_FETCH_PLAY_LIMIT + "&type=id&event_days=1");
-			
-			if(post == "" || !post.contains("{")) return plays;
-			
-			post = "[" + post + "]";
-			
-			JSONArray jsonResponse = new JSONArray(post);
+		OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
+		Object recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest);
+		
+		if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray && TrackingUtils.playerHasRecentPlays((JSONArray) recentPlaysObj, lastUpdate)){
+			JSONArray jsonResponse = (JSONArray) recentPlaysObj;
 			
 			Utils.sleep(5000);
-			
+			// continue from here
 			String[] pageGeneral = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
 			
 			// this fixes the username if it changed

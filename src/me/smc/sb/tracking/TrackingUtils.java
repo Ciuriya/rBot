@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 
@@ -54,6 +55,22 @@ public class TrackingUtils{
 	
 	public static String escapeCharacters(String toEscape){
 		return toEscape.replaceAll("\\*", "\\*");
+	}
+	
+	public static boolean playerHasRecentPlays(JSONArray response, CustomDate lastUpdate){
+		boolean valid = false;
+		
+		for(int i = 0; i < response.length(); i++){
+			JSONObject play = response.getJSONObject(i);
+			CustomDate date = new CustomDate(play.getString("date"));
+			
+			if(date.after(lastUpdate)){
+				valid = true;
+				break;
+			}
+		}
+		
+		return valid;
 	}
 	
 	public static boolean playerHasRecentPlays(int userId, int mode, CustomDate lastUpdate){

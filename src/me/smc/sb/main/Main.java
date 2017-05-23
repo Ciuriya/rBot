@@ -27,6 +27,7 @@ import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.parsable.ParsableValue;
+import me.smc.sb.tracking.HybridRegulator;
 import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.utils.BanchoRegulator;
 import me.smc.sb.utils.Configuration;
@@ -58,6 +59,7 @@ public class Main{
 	public static TwitchRegulator twitchRegulator;
 	public static BanchoRegulator banchoRegulator;
 	public static HTMLRegulator htmlRegulator;
+	public static HybridRegulator hybridRegulator;
 	public static ChartGenerator chartGenerator;
 	public static String defaultPrefix = "~/";
 	private int lastRequestCount = 0;
@@ -103,6 +105,7 @@ public class Main{
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 		}
 		
+		hybridRegulator = new HybridRegulator();
 		htmlRegulator = new HTMLRegulator();
 		
 		ChartType.load();
