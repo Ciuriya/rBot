@@ -41,11 +41,13 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.communication.Server;
-import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Game;
 import me.smc.sb.multi.Map;
 import me.smc.sb.multi.Tournament;
+import me.smc.sb.tracking.OsuRequest;
+import me.smc.sb.tracking.OsuUserRequest;
+import me.smc.sb.tracking.RequestTypes;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
@@ -642,53 +644,27 @@ public class Utils{
 		}
 	}
 	
-	public static String getOsuPlayerPPAndRank(String[] html){
-		String toReturn = "";
+	public static String getOsuPlayerPPAndRank(JSONObject response){
+		if(response == null) return "-1&r=-1&cr=-1";
 		
-		if(html.length > 0){
-			List<String> ppLine = getNextLineCodeFromLink(html, 0, "Performance<\\/a>:");
-			List<String> countryRankLine = getNextLineCodeFromLink(html, 2, "<img class='flag'");
-			
-			if(ppLine.size() > 0 && countryRankLine.size() > 0){
-				String ppStr = ppLine.get(0);
-				String crStr = countryRankLine.get(0);
-				
-				toReturn += ppStr.split("<\\a>: ")[1].split("pp")[0].replaceAll(",", "");
-				toReturn += "&r=" + ppStr.split("\\(#")[1].split("\\)")[0].replaceAll(",", "");
-				toReturn += "&cr=" + crStr.split("#")[1].replaceAll(",", "");
-				
-				return toReturn;
-			}
-		}
-		
-		return "-1&r=-1&cr=-1"; 
-	}
-	
-	public static String getOsuPlayerPPAndRank(String id, int mode){
-		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-				  	  									 "&u=" + id + "&m=" + mode + "&type=id&event_days=1");
-		
-		if(post == "" || !post.contains("{")) return "-1&r=-1&cr=-1";
-		
-		JSONObject jsonResponse = new JSONObject(post);
 		double rawPP = 0.0;
 		int rank = 0;
 		int countryRank = 0;
 		
 		try{
-			rawPP = jsonResponse.getDouble("pp_raw");
+			rawPP = response.getDouble("pp_raw");
 		}catch(Exception e){
 			rawPP = 0.0;
 		}
 		
 		try{
-			rank = jsonResponse.getInt("pp_rank");
+			rank = response.getInt("pp_rank");
 		}catch(Exception e){
 			rank = 0;
 		}
 		
 		try{
-			countryRank = jsonResponse.getInt("pp_country_rank");
+			countryRank = response.getInt("pp_country_rank");
 		}catch(Exception e){
 			countryRank = 0;
 		}
@@ -697,65 +673,33 @@ public class Utils{
 	}
 	
 	public static int getOsuPlayerRank(String name, int mode){
-		String id = getOsuPlayerId(name);
+		OsuRequest playerRequest = new OsuUserRequest(RequestTypes.API, name, "" + mode, "string");
+		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest);
 		
-		if(id.equals("-1")) return -1;
+		if(playerObj == null || !(playerObj instanceof JSONObject))
+			return -1;
 		
-		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + id + "&m=" + mode);
-		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "Performance</a>: ");
-		
-		if(line.isEmpty()) return getOsuPlayerRankByAPI(name, id, mode);
-		else{
-			int rank = -1;
-			
-			try{
-				rank = stringToInt(line.get(0).split("\\(#")[1].split("\\)")[0].replaceAll(",", ""));
-			}catch(Exception e){
-				return -1;
-			}
-			
-			if(rank == -1) return getOsuPlayerRankByAPI(name, id, mode);
-			else return rank;
-		}
-	}
-	
-	private static int getOsuPlayerRankByAPI(String name, String id, int mode){
-		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-					  									 "&u=" + name.replaceAll(" ", "%20") + "&m=" + mode + "&type=string&event_days=1");
-		
-		if(post == "" || !post.contains("{")) return -1;
-		
-		JSONObject jsonResponse = new JSONObject(post);
-		return jsonResponse.getInt("pp_rank");
+		return ((JSONObject) playerObj).getInt("pp_rank");
 	}
 	
 	public static String getOsuPlayerId(String name){
-		String[] pageProfile = Utils.getHTMLCode("https://osu.ppy.sh/u/" + name);
-		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "var userId =");
+		OsuRequest playerRequest = new OsuUserRequest(RequestTypes.API, name, "0", "string");
+		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest);
 		
-		try{
-			if(line.isEmpty()) return "-1";
-			else return line.stream().findFirst().orElse("= -1;").split("= ")[1].split(";")[0];	
-		}catch(Exception e){
+		if(playerObj == null || !(playerObj instanceof JSONObject))
 			return "-1";
-		}
+		
+		return ((JSONObject) playerObj).getString("user_id");
 	}
 	
 	public static String getOsuPlayerName(int userId){
-		String[] pageProfile = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId);
-		ArrayList<String> line = getNextLineCodeFromLink(pageProfile, 0, "&find=");
+		OsuRequest playerRequest = new OsuUserRequest(RequestTypes.API, "" + userId, "0");
+		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest);
 		
-		if(!line.isEmpty()){
-			String username = "";
-			
-			try{
-				username = line.get(0).split("&find=")[1].split("&m=")[0];
-			}catch(Exception e){}
-			
-			return username;
-		}
+		if(playerObj == null || !(playerObj instanceof JSONObject))
+			return "";
 		
-		return "";
+		return ((JSONObject) playerObj).getString("username");
 	}
 	
 	public static Color getPercentageColor(double percentage){

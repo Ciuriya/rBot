@@ -18,6 +18,8 @@ import org.json.JSONObject;
 import me.smc.sb.main.Main;
 import me.smc.sb.multi.Map;
 import me.smc.sb.tracking.Mods;
+import me.smc.sb.tracking.OsuRequest;
+import me.smc.sb.tracking.OsuTopPlaysRequest;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
@@ -67,17 +69,15 @@ public class OsuLastTopPlays extends GlobalCommand{
 		StringBuilder builder = new StringBuilder();
 		builder.append("**Latest " + plays + " top plays for " + player + " in the " + TrackingUtils.convertMode(Utils.stringToInt(mode)) + " mode**\n\n");
 		
-		String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
-						                                "&u=" + player + "&m=" + mode + "&limit=100&type=string");
+		OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + player, "" + mode, "string");
+		Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest);
 		
-		if(post == "" || !post.contains("{")){
+		if(topPlaysObj == null || !(topPlaysObj instanceof JSONArray)){
 			Utils.info(e.getChannel(), "Could not fetch top plays (api unavailable?)");
 			return;
 		}
 		
-		post = "[" + post + "]";
-		
-		JSONArray jsonResponse = new JSONArray(post);
+		JSONArray jsonResponse = (JSONArray) topPlaysObj;
 		
 		HashMap<String, JSONObject> mostRecentPlays = new HashMap<>();
 		String oldest = "";

@@ -67,7 +67,7 @@ public class OsuRecentPlaysRequest extends OsuRequest{
 					Log.logger.log(Level.INFO, "Error parsing recent-plays HTML, splitTime[" + i + "] =" + splitTime[i]);
 				}
 			}
-			
+
 			answer = response;
 			setDone(true);
 		}

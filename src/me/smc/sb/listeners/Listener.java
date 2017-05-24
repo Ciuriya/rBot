@@ -105,6 +105,7 @@ public class Listener implements EventListener{
 			loadGuilds(api);
 			
 			Utils.infoBypass(api.getUserById("91302128328392704").getPrivateChannel(), "I am now logged in!"); //Sends the developer a message on login
+			Main.discordConnected = true;
 			api.getPresence().setStatus(OnlineStatus.ONLINE);
 			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");
 		}else if(event instanceof ReconnectedEvent)

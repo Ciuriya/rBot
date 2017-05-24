@@ -356,7 +356,7 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 				else{
 					String id = Utils.getOsuPlayerId(user);
 					
-					playerStatUpdates.put(player.toLowerCase(), Utils.getOsuPlayerPPAndRank(id, Utils.stringToInt(mode)));
+					//playerStatUpdates.put(player.toLowerCase(), Utils.getOsuPlayerPPAndRank(id, Utils.stringToInt(mode)));
 					
 					lastUpdated.put(player, Utils.toDate(Utils.getCurrentTimeUTC(), "yyyy-MM-dd HH:mm:ss"));
 					usersUpdating.remove(player);
@@ -396,8 +396,8 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 					return;
 				}
 				
-				String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
-						                                         "&u=" + user + "&m=" + mode + "&limit=" + limit + "&type=string&event_days=1");
+				String post = ""; //Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
+						          //                                   "&u=" + user + "&m=" + mode + "&limit=" + limit + "&type=string&event_days=1");
 				
 				if(post == "" || !post.contains("{")){
 					usersUpdating.remove(player);
@@ -458,7 +458,7 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 					}
 				}
 				
-				String ppAndRank = Utils.getOsuPlayerPPAndRank(playerId, Utils.stringToInt(mode));
+				String ppAndRank = ""; //Utils.getOsuPlayerPPAndRank(playerId, Utils.stringToInt(mode));
 				double ppp = Utils.stringToDouble(ppAndRank.split("&r=")[0]);
 				int rank = Utils.stringToInt(ppAndRank.split("&r=")[1].split("&cr=")[0]);
 				int countryRank = Utils.stringToInt(ppAndRank.split("&cr=")[1]);
@@ -529,8 +529,8 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 							}
 							
 							if(Math.abs(ppDiff) > 0){
-								String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
-                              		  "&u=" + user + "&m=" + mode + "&limit=100&type=string");
+								String topPlays = ""; //Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
+                              		                  //"&u=" + user + "&m=" + mode + "&limit=100&type=string");
 						
 								if(topPlays.length() > 0 && topPlays.contains("{")){
 									topPlays = "[" + topPlays + "]";

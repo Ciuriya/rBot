@@ -6,7 +6,6 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 
@@ -64,13 +63,21 @@ public class TrackedPlayer{
 	public List<TrackedPlay> fetchLatestPlays(){
 		List<TrackedPlay> plays = new ArrayList<>();
 		
+		JSONObject jsonUser = null;
+		
 		if(pp <= 0 && rank <= 0 && countryRank <= 0){
-			// TO IMPLEMENT
-			/*String stats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
+			OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + userId, "" + mode);
+			Object userObj = Main.hybridRegulator.sendRequest(userRequest);
 			
-			pp = Utils.stringToDouble(stats.split("&r=")[0]);
-			rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
-			countryRank = Utils.stringToInt(stats.split("&cr=")[1]);*/
+			if(userObj != null && userObj instanceof JSONObject){
+				jsonUser = (JSONObject) userObj;
+				
+				String stats = Utils.getOsuPlayerPPAndRank(jsonUser);
+				
+				pp = Utils.stringToDouble(stats.split("&r=")[0]);
+				rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
+				countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
+			}
 		}
 		
 		OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
@@ -79,21 +86,38 @@ public class TrackedPlayer{
 		if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray && TrackingUtils.playerHasRecentPlays((JSONArray) recentPlaysObj, lastUpdate)){
 			JSONArray jsonResponse = (JSONArray) recentPlaysObj;
 			
-			Utils.sleep(5000);
-			// continue from here
-			String[] pageGeneral = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-general.php?u=" + userId + "&m=" + mode);
+			if(recentPlaysRequest.getType().equals(RequestTypes.HTML)){
+				recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
+				recentPlaysRequest.setRequestType(RequestTypes.API);
+				recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest);
+				
+				if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray)
+					jsonResponse = (JSONArray) recentPlaysObj;
+				else return plays;
+			}
 			
-			// this fixes the username if it changed
-			List<String> userLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&find=");
+			if(jsonUser == null) Utils.sleep(5000);
 			
-			if(userLine.size() > 0)
-				username = userLine.get(0).split("&find=")[1].split("&")[0];
+			if(jsonUser == null){
+				OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + userId, "" + mode);
+				Object userObj = Main.hybridRegulator.sendRequest(userRequest);
+				
+				if(!(userObj instanceof JSONObject)){
+					System.out.println(userId + " m: " + mode);
+					System.out.println("preval: " + ((OsuUserRequest) userRequest).preval);
+				}
+				
+				if(userObj != null && userObj instanceof JSONObject)
+					jsonUser = (JSONObject) userObj;
+			}
+			
+			username = jsonUser.getString("username");
+			country = jsonUser.getString("country");
 			
 			// to compare fetched plays with these to find out if it the fetched play got a map leaderboard spot
-			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(pageGeneral, lastUpdate);
+			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(jsonUser.getJSONArray("events"), lastUpdate);
 			
-			// the reason this is done without using the general page is to get decimals on the pp value
-			String updatedStats = Utils.getOsuPlayerPPAndRank(String.valueOf(userId), mode);
+			String updatedStats = Utils.getOsuPlayerPPAndRank(jsonUser);
 			double updatedPP = Utils.df(Utils.stringToDouble(updatedStats.split("&r=")[0]));
 			int updatedRank = Utils.stringToInt(updatedStats.split("&r=")[1].split("&cr=")[0]);
 			int updatedCountryRank = Utils.stringToInt(updatedStats.split("&cr=")[1]);
@@ -103,11 +127,6 @@ public class TrackedPlayer{
 			double ppDiff = updatedPP - pp;	
 			int rankDiff = updatedRank - rank;
 			int countryDiff = updatedCountryRank - countryRank;
-			
-			List<String> countryLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "&c=");
-			
-			if(countryLine.size() > 0)
-				country = countryLine.get(0).split("&c=")[1].split("&find=")[0];
 			
 			if(updatedPP <= 0){
 				ppDiff = 0;
@@ -120,15 +139,12 @@ public class TrackedPlayer{
 				countryRank = updatedCountryRank;
 			}
 			
-			String topPlays = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
-            		  											 "&u=" + userId + "&m=" + mode + "&limit=100&type=id");
+			OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + userId, "" + mode);
+			Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest);
 			JSONArray tpJsonResponse = null;
 			
-			if(topPlays.length() > 0 && topPlays.contains("{")){
-				topPlays = "[" + topPlays + "]";
-				
-				tpJsonResponse = new JSONArray(topPlays);
-			}
+			if(topPlaysObj != null && topPlaysObj instanceof JSONArray)
+				tpJsonResponse = (JSONArray) topPlaysObj;
 			
 			for(int i = jsonResponse.length() - 1; i >= 0; i--){		
 				JSONObject jsonObj = jsonResponse.getJSONObject(i);

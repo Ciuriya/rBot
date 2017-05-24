@@ -19,8 +19,8 @@ public class HybridRegulator{
 	private static int lastRefreshApiRequestsCount = 0;
 	private static int lastRefreshHtmlRequestsCount = 0;
 	private static long lastLoadRefresh = 0;
-	private static double apiLoad = 0;
-	private static double htmlLoad = 0;
+	public static double apiLoad = 0;
+	public static double htmlLoad = 0;
 	private Timer requestTimer;
 	private Timer loadTimer;
 	private boolean apiStalled;
@@ -54,12 +54,19 @@ public class HybridRegulator{
 							useApi = true;
 						else if((htmlLoad < apiLoad || apiStalled) && !htmlStalled && htmlLoad < 1)
 							useApi = false;
+						else if(apiLoad == htmlLoad && apiLoad < 1 && !apiStalled && htmlStalled)
+							useApi = true;
+						else if(apiLoad == htmlLoad && apiLoad < 1 && apiStalled && !htmlStalled)
+							useApi = false;
+						else if(apiLoad == htmlLoad && apiLoad < 1 && !apiStalled && !htmlStalled)
+							useApi = true;
 						else return;
 						
 						toProcess = request;
-					}else if(request.getType().equals(RequestTypes.API) && !apiStalled && apiLoad < 1)
+					}else if(request.getType().equals(RequestTypes.API) && !apiStalled && apiLoad < 1){
 						toProcess = request;
-					else if(request.getType().equals(RequestTypes.HTML) && !htmlStalled && htmlLoad < 1)
+						useApi = true;
+					}else if(request.getType().equals(RequestTypes.HTML) && !htmlStalled && htmlLoad < 1)
 						toProcess = request;
 				}
 				
@@ -76,8 +83,13 @@ public class HybridRegulator{
 						public void run(){
 							executeRequest(request, api, 0);
 							
-							if(api) apiStalled = false;
-							else htmlStalled = false;
+							if(api){
+								apiRequestsCompleted++;
+								apiStalled = false;
+							}else{
+								htmlRequestsCompleted++;
+								htmlStalled = false;
+							}
 						}
 					}).start();
 				}
@@ -94,17 +106,19 @@ public class HybridRegulator{
 			public void run(){
 				calculateLoads();
 			}
-		}, 1000, 1000);
+		}, 5000, 5000);
 	}
 	
 	private void executeRequest(OsuRequest request, boolean api, int attempt){
 		try{
+			request.setRequestType(api ? RequestTypes.API : RequestTypes.HTML);
 			request.send(api);
 		}catch(Exception e){
 			if(attempt + 1 >= FIBONACCI.length) return;
 			
 			int nextAttemptDelay = FIBONACCI[attempt + 1];
-			Log.logger.log(Level.WARNING, "Retrying osu!" + (api ? "api" : "html") + " request in " + nextAttemptDelay + " seconds!");
+			Log.logger.log(Level.WARNING, "Retrying osu!" + (api ? "api" : "html") + " request in " + nextAttemptDelay + " seconds!\n" +
+										  "Request: " + request.getName() + " Ex: " + e.getMessage());
 			Utils.sleep(nextAttemptDelay * 1000);
 			
 			executeRequest(request, api, attempt + 1);
@@ -130,8 +144,8 @@ public class HybridRegulator{
 				return "";
 			}
 			
-			Utils.sleep(100);
-			timeElapsed += 100;
+			Utils.sleep(10);
+			timeElapsed += 10;
 		}
 		
 		return request.getAnswer();
@@ -149,6 +163,7 @@ public class HybridRegulator{
 		htmlLoad = htmlPercent * timeSliceMult;
 		lastRefreshApiRequestsCount = apiRequestsCompleted;
 		lastRefreshHtmlRequestsCount = htmlRequestsCompleted;
+		lastLoadRefresh = System.currentTimeMillis();
 	}
 }
 

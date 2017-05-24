@@ -6,6 +6,7 @@ import java.util.List;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tracking.HybridRegulator;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
@@ -73,6 +74,7 @@ public class StatsCommand extends GlobalCommand{
 			   .append("Messages received: " + Main.messagesReceivedThisSession + "\n")
 			   .append("Messages sent: " + Main.messagesSentThisSession + "\n")
 			   .append("Commands used: " + Main.commandsUsedThisSession + "\n")
+			   .append("osu!api load: " + Utils.df(HybridRegulator.apiLoad * 100) + "% | osu!html load: " + Utils.df(HybridRegulator.htmlLoad * 100) + "%\n")
 			   .append("osu!api requests: " + Main.requestsSent + " (" + averageRequestsPerMinute + " average/min, " + Main.highestBurstRequestsSent + " burst/min)\n")
 			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
 					   (tracked + trackedPlayers.size()) + " tracked, " + TrackedPlayer.registeredPlayers.size() + " without duplicates)\n")

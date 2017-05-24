@@ -10,11 +10,14 @@ import java.util.stream.Stream;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
+import me.smc.sb.main.Main;
 import me.smc.sb.multi.Match;
 import me.smc.sb.multi.Player;
 import me.smc.sb.multi.Team;
 import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tracking.OsuPageRequest;
+import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.utils.Utils;
 
 public class ScanCheatersCommand extends IRCCommand{
@@ -62,13 +65,28 @@ public class ScanCheatersCommand extends IRCCommand{
 				for(Team team : t.getTeams()){
 					if(playingOnly && !playingTeams.contains(team)) continue;
 					for(Player player : team.getPlayers()){
-						String[] general = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + Utils.getOsuPlayerId(player.getName()) + "&m=" + t.getMode());
+						String userId = Utils.getOsuPlayerId(player.getName());
+						OsuRequest generalPageRequest = new OsuPageRequest("general", "?u=" + userId + "&m=" + t.getMode());
+						Object generalPageObj = Main.hybridRegulator.sendRequest(generalPageRequest);
+						String[] general = new String[]{};
 						String[] leader = new String[]{};
 						
+						if(generalPageObj != null && generalPageObj instanceof String[])
+							general = (String[]) generalPageObj;
+
 						if(general.length > 10){
-							leader = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-leader.php?u=" + Utils.getOsuPlayerId(player.getName()) + "&m=" + t.getMode());
-							String[] lowerPage = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-leader.php?u=" + Utils.getOsuPlayerId(player.getName()) + "&m=" + t.getMode() + "&pp=1");
-							leader = Stream.concat(Arrays.stream(leader), Arrays.stream(lowerPage)).toArray(String[]::new);
+							OsuRequest leaderPageRequest = new OsuPageRequest("leader", "?u=" + userId + "&m=" + t.getMode());
+							Object leaderPageObj = Main.hybridRegulator.sendRequest(leaderPageRequest);
+							
+							if(leaderPageObj != null && leaderPageObj instanceof String[]){
+								leader = (String[]) leaderPageObj;
+								
+								OsuRequest lowerLeaderPageRequest = new OsuPageRequest("leader", "?u=" + userId + "&m=" + t.getMode() + "&pp=1");
+								Object lowerLeaderPageObj = Main.hybridRegulator.sendRequest(lowerLeaderPageRequest);
+								
+								if(lowerLeaderPageObj != null && lowerLeaderPageObj instanceof String[])
+									leader = Stream.concat(Arrays.stream(leader), Arrays.stream((String[]) lowerLeaderPageObj)).toArray(String[]::new);
+							}
 						}
 						
 						int[] rankIncrease = calculateRankIncrease(general);
@@ -103,8 +121,6 @@ public class ScanCheatersCommand extends IRCCommand{
 								}
 							}
 						}
-
-						Utils.sleep(2500);
 					}
 				}
 				

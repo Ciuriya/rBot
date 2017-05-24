@@ -32,9 +32,7 @@ import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.utils.BanchoRegulator;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.DiscordPlayStatusManager;
-import me.smc.sb.utils.HTMLRegulator;
 import me.smc.sb.utils.Log;
-import me.smc.sb.utils.OsuAPIRegulator;
 import me.smc.sb.utils.TwitchRegulator;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.AccountType;
@@ -52,13 +50,12 @@ public class Main{
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
 	public static int requestsSent = 0, highestBurstRequestsSent = 0, requestHtmlSent = 0;
 	public static int htmlScrapes = 0, osuHtmlScrapes = 0;
+	public static boolean discordConnected = false;
 	public static long bootTime = 0;
 	public static List<Server> servers;
 	public static Connection tourneySQL, rpgSQL;
-	public static OsuAPIRegulator osuRequestManager;
 	public static TwitchRegulator twitchRegulator;
 	public static BanchoRegulator banchoRegulator;
-	public static HTMLRegulator htmlRegulator;
 	public static HybridRegulator hybridRegulator;
 	public static ChartGenerator chartGenerator;
 	public static String defaultPrefix = "~/";
@@ -106,7 +103,6 @@ public class Main{
 		}
 		
 		hybridRegulator = new HybridRegulator();
-		htmlRegulator = new HTMLRegulator();
 		
 		ChartType.load();
 		chartGenerator = new ChartGenerator(login.getValue("chart-apiKey"));
@@ -114,8 +110,6 @@ public class Main{
 		PlayFormat.loadFormats();
 		Tournament.loadTournaments();
 		IRCCommand.registerCommands();
-		
-		osuRequestManager = new OsuAPIRegulator();
 		
 		Timer burstUpdate = new Timer();
 		burstUpdate.scheduleAtFixedRate(new TimerTask(){

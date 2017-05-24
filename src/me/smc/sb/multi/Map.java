@@ -5,8 +5,9 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
+import me.smc.sb.tracking.OsuBeatmapsRequest;
+import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.utils.Utils;
 
 public class Map{
@@ -97,18 +98,16 @@ public class Map{
 	}
 	
 	public static JSONObject getMapInfo(int id, int mode, boolean priority){
-		String post = "";
+		OsuRequest beatmapRequest = new OsuBeatmapsRequest("" + id, "" + mode, "1", "1");
+		Object beatmapObj = null;
 		
-		if(priority){
-			post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", 
-													  "get_beatmaps?k=" + OsuStatsCommand.apiKey + 
-													  "&b=" + id + "&m=" + mode + "&a=1&limit=1", true);
-		}else post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", 
-														"get_beatmaps?k=" + OsuStatsCommand.apiKey + 
-														"&b=" + id + "&m=" + mode + "&a=1&limit=1");
+		if(priority) beatmapObj = Main.hybridRegulator.sendRequest(beatmapRequest, true);
+		else beatmapObj = Main.hybridRegulator.sendRequest(beatmapRequest);
 		
-		if(post.equals("") || !post.contains("{")) return null;
-		return new JSONArray("[" + post + "]").getJSONObject(0);
+		if(beatmapObj == null || !(beatmapObj instanceof JSONArray))
+			return null;
+		
+		return ((JSONArray) beatmapObj).getJSONObject(0);
 	}
 	
 }

@@ -2,9 +2,13 @@ package me.smc.sb.discordcommands;
 
 import java.io.File;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
+import me.smc.sb.tracking.OsuRequest;
+import me.smc.sb.tracking.OsuUserRequest;
+import me.smc.sb.tracking.RequestTypes;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.EmbedBuilder;
@@ -52,40 +56,41 @@ public class OsuStatsCommand extends GlobalCommand{
 		Thread t = new Thread(new Runnable(){
 			public void run(){
 				EmbedBuilder builder = new EmbedBuilder();
-				String post = Main.osuRequestManager.sendRequest("https://osu.ppy.sh/api/", "get_user?k=" + apiKey + "&u=" + finalUser + 
-	                     																	"&m=" + finalMode + "&type=string&event_days=1");
-				if(post == "" || !post.contains("{")) return;
+				OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + finalUser, "" + finalMode, "string");
+				Object userObj = Main.hybridRegulator.sendRequest(userRequest);
 				
-				JSONObject jsonResponse = new JSONObject(post);
-				
-				int userId = jsonResponse.getInt("user_id");
-				double totalAcc = (double) jsonResponse.getInt("count300") * 300.0 + 
-						          (double) jsonResponse.getInt("count100") * 100.0 + 
-						          (double) jsonResponse.getInt("count50") * 50.0;
-				totalAcc = (totalAcc / ((double) (jsonResponse.getInt("count300") + 
-						               			  jsonResponse.getInt("count100") + 
-						               			  jsonResponse.getInt("count50")) 
-						   						  * 300.0)) * 100.0;
-				
-				builder.setColor(Utils.getRandomColor());
-				builder.addField("Player", jsonResponse.getString("username") + " (" + userId + ")", true);
-				builder.setThumbnail("https://a.ppy.sh/" + userId);
-				builder.addField("Rank", "World #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + "\n" + 
-										 jsonResponse.getString("country") + " #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_country_rank")) + "\n" +
-										 Utils.veryLongNumberDisplay(jsonResponse.getDouble("pp_raw")) + "pp", true);
-				builder.addField("Accuracy", "Weighted • " + Utils.df(jsonResponse.getDouble("accuracy"), 4) + "%" +
-										 	 (finalMode.equals("2") ? "" : "\nTotal • " + Utils.df(totalAcc, 4) + "%"), true);
-				builder.addField("Play Stats", "Level • " + jsonResponse.getDouble("level") + "\n" +
-										 	   "Play Count • " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")) + "\n" +
-										 	   "Play Time • " + Utils.veryLongNumberDisplay(getPlayTime(userId, finalMode)) + " hours", 
-										 	   true);
-				builder.addField("Score", "Ranked • " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + "\n" +
-										  "Total • " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")), true);
-				builder.addField("Ranks", Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_ss")) + " SS • " + 
-										  Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_s")) + " S • " + 
-										  Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_a")) + " A", true);
+				if(userObj != null && userObj instanceof JSONArray){
+					JSONObject jsonResponse = (JSONObject) userObj;
+					
+					int userId = jsonResponse.getInt("user_id");
+					double totalAcc = (double) jsonResponse.getInt("count300") * 300.0 + 
+							          (double) jsonResponse.getInt("count100") * 100.0 + 
+							          (double) jsonResponse.getInt("count50") * 50.0;
+					totalAcc = (totalAcc / ((double) (jsonResponse.getInt("count300") + 
+							               			  jsonResponse.getInt("count100") + 
+							               			  jsonResponse.getInt("count50")) 
+							   						  * 300.0)) * 100.0;
+					
+					builder.setColor(Utils.getRandomColor());
+					builder.addField("Player", jsonResponse.getString("username") + " (" + userId + ")", true);
+					builder.setThumbnail("https://a.ppy.sh/" + userId);
+					builder.addField("Rank", "World #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_rank")) + "\n" + 
+											 jsonResponse.getString("country") + " #" + Utils.veryLongNumberDisplay(jsonResponse.getInt("pp_country_rank")) + "\n" +
+											 Utils.veryLongNumberDisplay(jsonResponse.getDouble("pp_raw")) + "pp", true);
+					builder.addField("Accuracy", "Weighted • " + Utils.df(jsonResponse.getDouble("accuracy"), 4) + "%" +
+											 	 (finalMode.equals("2") ? "" : "\nTotal • " + Utils.df(totalAcc, 4) + "%"), true);
+					builder.addField("Play Stats", "Level • " + jsonResponse.getDouble("level") + "\n" +
+											 	   "Play Count • " + Utils.veryLongNumberDisplay(jsonResponse.getInt("playcount")) + "\n" +
+											 	   "Play Time • " + Utils.veryLongNumberDisplay(getPlayTime(userId, finalMode)) + " hours", 
+											 	   true);
+					builder.addField("Score", "Ranked • " + Utils.veryLongNumberDisplay(jsonResponse.getLong("ranked_score")) + "\n" +
+											  "Total • " + Utils.veryLongNumberDisplay(jsonResponse.getLong("total_score")), true);
+					builder.addField("Ranks", Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_ss")) + " SS • " + 
+											  Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_s")) + " S • " + 
+											  Utils.veryLongNumberDisplay(jsonResponse.getInt("count_rank_a")) + " A", true);
 
-				Utils.info(e.getChannel(), builder.build());
+					Utils.info(e.getChannel(), builder.build());
+				}
 			}
 		});
 		

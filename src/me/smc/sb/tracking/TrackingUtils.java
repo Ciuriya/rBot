@@ -24,7 +24,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 
-import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -73,62 +72,32 @@ public class TrackingUtils{
 		return valid;
 	}
 	
-	public static boolean playerHasRecentPlays(int userId, int mode, CustomDate lastUpdate){
-		// loading recent plays history from profile to see if the player has done anything recently
-		// this avoids spamming the api to check, note that this is called a LOT.
-		String[] pageHistory = Main.htmlRegulator.sendRequest("https://osu.ppy.sh/pages/include/profile-history.php?u=" + userId + "&m=" + mode);
-		
-		// if no plays, go back
-		if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):"))
-			return false;
-		
-		String[] splitTime = pageHistory[0].split("<\\/time>");
-		
-		boolean valid = false;
-		
-		// for every play, check if date is worth posting (recent enough)
-		for(int i = 0; i < splitTime.length - 1; i++){
-			CustomDate date = new CustomDate(splitTime[i].split("time class=")[1].split(">")[1].replace(" UTC", ""));
-			
-			if(date.after(lastUpdate)){
-				valid = true;
-				break;
-			}
-		}
-		
-		return valid;
-	}
-	
-	public static List<RecentPlay> fetchPlayerRecentPlays(String[] html, CustomDate lastUpdate){
+	public static List<RecentPlay> fetchPlayerRecentPlays(JSONArray playerEvents, CustomDate lastUpdate){
 		List<RecentPlay> recentPlays = new ArrayList<>();
 		
-		if(Utils.getNextLineCodeFromLink(html, 0, "This user hasn't done anything notable recently!").size() == 0){
-			List<String> list = Utils.getNextLineCodeFromLink(html, 0, "<div class='profileStatHeader'>Recent Activity</div>");
+		for(int i = playerEvents.length() - 1; i >= 0; i--){		
+			JSONObject jsonObj = playerEvents.getJSONObject(i);
+			String displayHtml = jsonObj.getString("display_html");
 			
-			if(list.size() != 0){
-				String line = list.get(0);
-				String[] plays = line.split("<tr>");
+			if(displayHtml.contains("achieved") && displayHtml.contains("rank #")){
+				CustomDate date = new CustomDate(jsonObj.getString("date"));
+				date.convertFromOsuDate();
 				
-				for(int i = 1; i < plays.length; i++){
-					if(plays[i].contains("achieved") && plays[i].contains("rank #")){
-						CustomDate date = new CustomDate(plays[i].split("UTC")[0].split("Z'>")[1]);
-						int rank = Utils.stringToInt(plays[i].split("rank #")[1].split(" on")[0].replace("</b>", ""));
-						int beatmapId = Utils.stringToInt(plays[i].split("href='\\/b\\/")[1].split("\\?m=")[0]);
-						
-						RecentPlay play = new RecentPlay(beatmapId, date, rank);
-						
-						boolean equal = false;
-						
-						if(recentPlays.size() > 0)
-							for(RecentPlay r : recentPlays)
-								if(r.eq(play))
-									equal = true;
-						
-						if(equal) continue;
-						
-						if(date.after(lastUpdate)) recentPlays.add(play);
-					}
-				}
+				int rank = Utils.stringToInt(displayHtml.split("rank #")[1].split("<\\/b>")[0]);
+				int beatmapId = jsonObj.getInt("beatmap_id");
+				
+				RecentPlay play = new RecentPlay(beatmapId, date, rank);
+				
+				boolean equal = false;
+				
+				if(recentPlays.size() > 0)
+					for(RecentPlay r : recentPlays)
+						if(r.eq(play))
+							equal = true;
+				
+				if(equal) continue;
+				
+				if(date.after(lastUpdate)) recentPlays.add(play);
 			}
 		}
 		
