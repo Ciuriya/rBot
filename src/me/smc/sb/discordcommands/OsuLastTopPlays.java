@@ -62,6 +62,9 @@ public class OsuLastTopPlays extends GlobalCommand{
 		if(args.length > 1 && Utils.stringToInt(original.split(" ")[original.split(" ").length - 1]) != -1){
 			plays = Utils.stringToInt(original.split(" ")[original.split(" ").length - 1]);
 			player = player.replace(" " + plays, "");
+			
+			if(plays > 100) plays = 100;
+			else if(plays <= 0) plays = 1;
 		}
 		
 		List<String> seperatePosts = new ArrayList<String>();

@@ -12,7 +12,7 @@ public class HybridRegulator{
 
 	private static final int[] FIBONACCI = new int[]{ 1, 1, 2, 3, 5, 8, 13, 21 };
 	private static LinkedList<OsuRequest> requests;
-	private static int apiPerMinute = 600;
+	private static int apiPerMinute = 700;
 	private static int htmlPerMinute = 120;
 	private static int apiRequestsCompleted = 0;
 	private static int htmlRequestsCompleted = 0;
@@ -106,7 +106,7 @@ public class HybridRegulator{
 			public void run(){
 				calculateLoads();
 			}
-		}, 5000, 5000);
+		}, 500, 500);
 	}
 	
 	private void executeRequest(OsuRequest request, boolean api, int attempt){
@@ -141,7 +141,7 @@ public class HybridRegulator{
 		
 		while(!request.isDone()){
 			if(timeElapsed >= timeout && timeout > 0){
-				return "";
+				return "Request: " + request.getName() + " timed out.";
 			}
 			
 			Utils.sleep(10);

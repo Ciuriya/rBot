@@ -9,8 +9,6 @@ import me.smc.sb.utils.Utils;
 
 public class OsuUserRequest extends OsuRequest{
 	
-	public String preval;
-	
 	public OsuUserRequest(RequestTypes type, String... specifics){
 		super("user", type, specifics);
 	}
@@ -33,13 +31,12 @@ public class OsuUserRequest extends OsuRequest{
 					"&u=" + specifics[0] + "&m=" + specifics[1] + "&type=" + type + "&event_days=1");
 			
 			if(post == null || post.equals("") || !post.contains("{") || post.equals("[]")){
-				System.out.println("invalid post on: " + specifics[0] + " m: " + specifics[1] + " type: " + type);
+				// if it's invalid, user is probably banned
 				answer = "invalid";
 				setDone(true);
 				return;
 			}
-			
-			preval = post;
+
 			answer = new JSONObject(post);
 			setDone(true);
 		}else{

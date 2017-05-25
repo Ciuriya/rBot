@@ -103,8 +103,8 @@ public class TrackedPlayer{
 				Object userObj = Main.hybridRegulator.sendRequest(userRequest);
 				
 				if(!(userObj instanceof JSONObject)){
-					System.out.println(userId + " m: " + mode);
-					System.out.println("preval: " + ((OsuUserRequest) userRequest).preval);
+					System.out.println("Test: " + userObj.toString());
+					return plays;
 				}
 				
 				if(userObj != null && userObj instanceof JSONObject)
