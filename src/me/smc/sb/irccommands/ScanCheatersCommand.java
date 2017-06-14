@@ -65,7 +65,7 @@ public class ScanCheatersCommand extends IRCCommand{
 				for(Team team : t.getTeams()){
 					if(playingOnly && !playingTeams.contains(team)) continue;
 					for(Player player : team.getPlayers()){
-						String userId = Utils.getOsuPlayerId(player.getName());
+						String userId = Utils.getOsuPlayerId(player.getName(), true);
 						OsuRequest generalPageRequest = new OsuPageRequest("general", "?u=" + userId + "&m=" + t.getMode());
 						Object generalPageObj = Main.hybridRegulator.sendRequest(generalPageRequest);
 						String[] general = new String[]{};

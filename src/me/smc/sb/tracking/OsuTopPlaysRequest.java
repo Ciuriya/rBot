@@ -28,7 +28,7 @@ public class OsuTopPlaysRequest extends OsuRequest{
 																"&u=" + specifics[0] + "&m=" + specifics[1] + "&limit=100&type=" + type);
 		
 		if(post == "" || !post.contains("{")){
-			answer = "invalid";
+			answer = "failed";
 			setDone(true);
 			return;
 		}

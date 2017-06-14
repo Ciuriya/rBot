@@ -41,7 +41,7 @@ public class ReceivePMCommand extends GlobalCommand{
 		message = toggled ? "You are now listening to osu! private messages!" :
 							"You are no longer listening to osu! private messages!";
 		
-		Utils.infoBypass(e.getAuthor().getPrivateChannel(), message);
+		Utils.infoBypass(e.getAuthor().openPrivateChannel().complete(), message);
 	}
 	
 }

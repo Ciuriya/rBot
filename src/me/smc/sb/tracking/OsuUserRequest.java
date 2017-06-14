@@ -30,9 +30,9 @@ public class OsuUserRequest extends OsuRequest{
 			String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
 					"&u=" + specifics[0] + "&m=" + specifics[1] + "&type=" + type + "&event_days=1");
 			
-			if(post == null || post.equals("") || !post.contains("{") || post.equals("[]")){
+			if(post.equals("") || !post.contains("{")){
 				// if it's invalid, user is probably banned
-				answer = "invalid";
+				answer = "failed";
 				setDone(true);
 				return;
 			}
@@ -43,7 +43,7 @@ public class OsuUserRequest extends OsuRequest{
 			String[] pageGeneral = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-general.php?u=" + specifics[0] + "&m=" + specifics[1]);
 			
 			if(pageGeneral.length == 0){
-				answer = "invalid";
+				answer = "failed";
 				setDone(true);
 				return;
 			}

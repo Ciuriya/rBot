@@ -101,10 +101,10 @@ public class TrackingGuild{
 		if(registered != null){
 			success = registered.trackPlayer(this);
 		}else{
-			int userId = Utils.stringToInt(Utils.getOsuPlayerId(username));
+			int userId = Utils.stringToInt(Utils.getOsuPlayerId(username, true));
 			
 			if(userId == -1){
-				Utils.info(trackUpdateChannel, "Could not fetch userId from " + username + "! Please try again later. (osu! website error)");
+				Utils.info(trackUpdateChannel, "Could not fetch userId from " + username + "! Please try again later. (osu! error)");
 				return false;
 			}
 			
@@ -152,7 +152,7 @@ public class TrackingGuild{
 			int mode = Utils.stringToInt(tracked.split("&m=")[1]);
 			
 			if(userId == -1){
-				userId = Utils.stringToInt(Utils.getOsuPlayerId(tracked.split("&m=")[0]));
+				userId = Utils.stringToInt(Utils.getOsuPlayerId(tracked.split("&m=")[0], true));
 				outdatedPlayers.put(tracked, userId);
 			}
 			

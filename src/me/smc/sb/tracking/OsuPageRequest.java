@@ -19,7 +19,7 @@ public class OsuPageRequest extends OsuRequest{
 		String[] pageGeneral = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-" + specifics[0] + ".php" + specifics[1]);
 		
 		if(pageGeneral.length == 0){
-			answer = "invalid";
+			answer = "failed";
 			setDone(true);
 			return;
 		}

@@ -73,7 +73,7 @@ public class OsuLastTopPlays extends GlobalCommand{
 		builder.append("**Latest " + plays + " top plays for " + player + " in the " + TrackingUtils.convertMode(Utils.stringToInt(mode)) + " mode**\n\n");
 		
 		OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + player, "" + mode, "string");
-		Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest);
+		Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest, true);
 		
 		if(topPlaysObj == null || !(topPlaysObj instanceof JSONArray)){
 			Utils.info(e.getChannel(), "Could not fetch top plays (api unavailable?)");

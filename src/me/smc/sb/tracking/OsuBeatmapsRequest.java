@@ -23,7 +23,7 @@ public class OsuBeatmapsRequest extends OsuRequest{
 				  					 "&b=" + specifics[0] + "&m=" + specifics[1] + "&a=" + specifics[2] + "&limit=" + specifics[3]);
 
 		if(post == "" || !post.contains("{")){
-			answer = "invalid";
+			answer = "failed";
 			setDone(true);
 			return;
 		}

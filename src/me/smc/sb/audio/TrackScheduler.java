@@ -285,7 +285,8 @@ public class TrackScheduler extends AudioEventAdapter{
 					break;
 				}
 			
-			currentPlaylist.getTracks().remove(currentSong.getTrack());
+			if(currentSong != null)
+				currentPlaylist.getTracks().remove(currentSong.getTrack());
 		}
 		
 		String nextPS = config.getValue("voice-next-ps");

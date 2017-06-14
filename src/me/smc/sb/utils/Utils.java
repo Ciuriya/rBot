@@ -255,8 +255,8 @@ public class Utils{
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			connection.setRequestMethod("POST");	
-			connection.setConnectTimeout(5000);
-			connection.setReadTimeout(5000);
+			connection.setConnectTimeout(30000);
+			connection.setReadTimeout(30000);
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("charset", "utf-8");
@@ -673,8 +673,12 @@ public class Utils{
 	}
 	
 	public static int getOsuPlayerRank(String name, int mode){
+		return getOsuPlayerRank(name, mode, false);
+	}
+	
+	public static int getOsuPlayerRank(String name, int mode, boolean priority){
 		OsuRequest playerRequest = new OsuUserRequest(RequestTypes.API, name, "" + mode, "string");
-		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest);
+		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest, priority);
 		
 		if(playerObj == null || !(playerObj instanceof JSONObject))
 			return -1;
@@ -683,8 +687,12 @@ public class Utils{
 	}
 	
 	public static String getOsuPlayerId(String name){
+		return getOsuPlayerId(name, false);
+	}
+	
+	public static String getOsuPlayerId(String name, boolean priority){
 		OsuRequest playerRequest = new OsuUserRequest(RequestTypes.API, name, "0", "string");
-		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest);
+		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest, priority);
 		
 		if(playerObj == null || !(playerObj instanceof JSONObject))
 			return "-1";
@@ -693,8 +701,12 @@ public class Utils{
 	}
 	
 	public static String getOsuPlayerName(int userId){
+		return getOsuPlayerName(userId, false);
+	}
+	
+	public static String getOsuPlayerName(int userId, boolean priority){
 		OsuRequest playerRequest = new OsuUserRequest(RequestTypes.API, "" + userId, "0");
-		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest);
+		Object playerObj = Main.hybridRegulator.sendRequest(playerRequest, priority);
 		
 		if(playerObj == null || !(playerObj instanceof JSONObject))
 			return "";

@@ -52,7 +52,7 @@ public class ConfirmTeamCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		if(user == null) return "Invalid user!";
 		
-		int userID = Utils.stringToInt(Utils.getOsuPlayerId(user));
+		int userID = Utils.stringToInt(Utils.getOsuPlayerId(user, true));
 		if(userID == -1) return "Could not fetch your user ID, please message a tournament administrator!";
 		
 		int teamID = -1;

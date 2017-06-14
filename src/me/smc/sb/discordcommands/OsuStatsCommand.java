@@ -2,7 +2,6 @@ package me.smc.sb.discordcommands;
 
 import java.io.File;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
@@ -57,9 +56,9 @@ public class OsuStatsCommand extends GlobalCommand{
 			public void run(){
 				EmbedBuilder builder = new EmbedBuilder();
 				OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + finalUser, "" + finalMode, "string");
-				Object userObj = Main.hybridRegulator.sendRequest(userRequest);
+				Object userObj = Main.hybridRegulator.sendRequest(userRequest, true);
 				
-				if(userObj != null && userObj instanceof JSONArray){
+				if(userObj != null && userObj instanceof JSONObject){
 					JSONObject jsonResponse = (JSONObject) userObj;
 					
 					int userId = jsonResponse.getInt("user_id");

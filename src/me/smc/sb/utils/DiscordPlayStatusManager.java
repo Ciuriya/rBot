@@ -28,21 +28,25 @@ public class DiscordPlayStatusManager{
 		rotationTimer = new Timer();
 		rotationTimer.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
-				if(currentIndex == DiscordStatuses.values().length)
-					currentIndex = 0;
-				
-				if(!DiscordStatuses.values()[currentIndex].canParse()){
-					while(!DiscordStatuses.values()[currentIndex].canParse()){
-						incrementCurrentIndex();
+				if(Main.debug)
+					Main.api.getPresence().setGame(Game.of("Temporary Maintenance"));
+				else{
+					if(currentIndex == DiscordStatuses.values().length)
+						currentIndex = 0;
+					
+					if(!DiscordStatuses.values()[currentIndex].canParse()){
+						while(!DiscordStatuses.values()[currentIndex].canParse()){
+							incrementCurrentIndex();
+						}
+						
+						if(!DiscordStatuses.values()[currentIndex].canParse())
+							incrementCurrentIndex();
 					}
 					
-					if(!DiscordStatuses.values()[currentIndex].canParse())
-						incrementCurrentIndex();
+					Main.api.getPresence().setGame(Game.of(DiscordStatuses.values()[currentIndex].getStatus()));
+					
+					currentIndex++;
 				}
-				
-				Main.api.getPresence().setGame(Game.of(DiscordStatuses.values()[currentIndex].getStatus()));
-				
-				currentIndex++;
 			}
 		}, 0, STATUS_ROTATION_INTERVAL * 1000);
 	}

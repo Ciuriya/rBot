@@ -76,6 +76,7 @@ public class StatsCommand extends GlobalCommand{
 			   .append("Commands used: " + Main.commandsUsedThisSession + "\n")
 			   .append("osu!api load: " + Utils.df(HybridRegulator.apiLoad * 100) + "% | osu!html load: " + Utils.df(HybridRegulator.htmlLoad * 100) + "%\n")
 			   .append("osu!api requests: " + Main.requestsSent + " (" + averageRequestsPerMinute + " average/min, " + Main.highestBurstRequestsSent + " burst/min)\n")
+			   .append("Queued osu!requests: " + HybridRegulator.requests.size() + " | Failed osu!requests: " + Main.failedRequests + "\n")
 			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
 					   (tracked + trackedPlayers.size()) + " tracked, " + TrackedPlayer.registeredPlayers.size() + " without duplicates)\n")
 			   .append("Most tracked users in a single server: " + highestTrackAmount + " players (" + highestTrackGuild.getName() + ")\n")

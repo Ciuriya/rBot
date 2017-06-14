@@ -67,10 +67,10 @@ public class HelpCommand extends GlobalCommand{
     		String toSend = rest.substring(0, 1992);
     		rest = rest.substring(1992);
     		
-    		Utils.info(e.getAuthor().getPrivateChannel(), "```" + toSend + "```");
+    		Utils.info(e.getAuthor().openPrivateChannel().complete(), "```" + toSend + "```");
     	}
     	
-		Utils.info(e.getAuthor().getPrivateChannel(), "```" + rest + "```");
+		Utils.info(e.getAuthor().openPrivateChannel().complete(), "```" + rest + "```");
 	}
 	
 }

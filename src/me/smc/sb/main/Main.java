@@ -48,7 +48,7 @@ public class Main{
 	public static PircBotX twitchBot = null;
 	public static HashMap<String, Configuration> serverConfigs;
 	public static int messagesReceivedThisSession = 0, messagesSentThisSession = 0, commandsUsedThisSession = 0;
-	public static int requestsSent = 0, highestBurstRequestsSent = 0, requestHtmlSent = 0;
+	public static int requestsSent = 0, highestBurstRequestsSent = 0, requestHtmlSent = 0, failedRequests = 0;
 	public static int htmlScrapes = 0, osuHtmlScrapes = 0;
 	public static boolean discordConnected = false;
 	public static long bootTime = 0;
@@ -59,6 +59,7 @@ public class Main{
 	public static HybridRegulator hybridRegulator;
 	public static ChartGenerator chartGenerator;
 	public static String defaultPrefix = "~/";
+	public static boolean debug = false;
 	private int lastRequestCount = 0;
 	
 	public static void main(String[] args){

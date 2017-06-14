@@ -34,7 +34,7 @@ public class SuggestCommand extends GlobalCommand{
 		
 		cfg.appendToStringList("suggestions", suggestionStr, true);
 		Utils.info(e.getChannel(), "Your suggestion has been sent!");
-		Utils.infoBypass(e.getJDA().getUserById("91302128328392704").getPrivateChannel(), suggestionStr);
+		Utils.infoBypass(e.getJDA().getUserById("91302128328392704").openPrivateChannel().complete(), suggestionStr);
 	}
 
 }

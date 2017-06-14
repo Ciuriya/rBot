@@ -47,6 +47,10 @@ public abstract class OsuRequest{
 	protected void setDone(boolean api){
 		done = true;
 		
+		if(answer.equals("invalid")) return;
+		
+		if(answer.equals("failed")) Main.failedRequests++;
+		
 		if(api) Main.requestsSent++;
 		else Main.requestHtmlSent++;
 	}

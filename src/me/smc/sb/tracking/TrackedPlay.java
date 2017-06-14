@@ -28,7 +28,7 @@ public class TrackedPlay{
 	}
 	
 	public void loadMap(){
-		map = Map.getMapInfo(play.getInt("beatmap_id"), mode, false);
+		map = Map.getMapInfo(play.getInt("beatmap_id"), mode, true);
 	}
 	
 	/*

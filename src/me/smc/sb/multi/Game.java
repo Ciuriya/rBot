@@ -1819,7 +1819,7 @@ public abstract class Game{
 		if(joinQueue.contains(player)) joinQueue.remove(player);
 		
 		Player pl = findPlayer(player);
-		String userID = Utils.getOsuPlayerId(pl.getName());
+		String userID = Utils.getOsuPlayerId(pl.getName(), true);
 		
 		if(!userID.equals("-1")) pl.setUserID(userID);
 		
@@ -1863,7 +1863,7 @@ public abstract class Game{
 		else joinQueue.add(player.replaceAll(" ", "_"));
 		
 		Player pl = findPlayer(player);
-		String userID = Utils.getOsuPlayerId(pl.getName());
+		String userID = Utils.getOsuPlayerId(pl.getName(), true);
 		
 		if(!userID.equals("-1")) pl.setUserID(userID);
 
@@ -2062,7 +2062,7 @@ public abstract class Game{
 				int rank = -1;
 				
 				if(lower != upper && lower >= 1 && upper >= 1 && !playersRankChecked.contains(pl)){			
-					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
+					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode(), true);
 					
 					if(rank != -1 && (rank < lower || rank > upper)){
 						sendMessage(pl.getName() + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
@@ -2080,7 +2080,7 @@ public abstract class Game{
 					
 					playersRankChecked.add(pl);
 				}else if(match.getTournament().isUsingMapStats()){
-					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode());
+					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode(), true);
 				}
 				
 				if(rank > 0){

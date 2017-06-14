@@ -63,7 +63,9 @@ public class TrackingUtils{
 			JSONObject play = response.getJSONObject(i);
 			CustomDate date = new CustomDate(play.getString("date"));
 			
-			if(date.after(lastUpdate)){
+			if(play.has("count300")) date.convertFromOsuDate();
+			
+			if(date.after(lastUpdate) && !play.getString("rank").equalsIgnoreCase("F")){
 				valid = true;
 				break;
 			}
@@ -328,7 +330,7 @@ public class TrackingUtils{
 		
         connection.setDoOutput(true);
         connection.setDoInput(true);
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
         connection.setRequestProperty("content-type", "binary/data");
         
         return connection;

@@ -2,11 +2,13 @@ package me.smc.sb.tracking;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
 public class TrackedPlayer{
@@ -28,7 +30,7 @@ public class TrackedPlayer{
 	private List<TrackingGuild> currentlyTracking;
 	
 	public TrackedPlayer(int userId, int mode){
-		this(Utils.getOsuPlayerName(userId), userId, mode);
+		this(Utils.getOsuPlayerName(userId, true), userId, mode);
 	}
 	
 	public TrackedPlayer(String username, int userId, int mode){
@@ -103,7 +105,7 @@ public class TrackedPlayer{
 				Object userObj = Main.hybridRegulator.sendRequest(userRequest);
 				
 				if(!(userObj instanceof JSONObject)){
-					System.out.println("Test: " + userObj.toString());
+					System.out.println(userObj.toString());
 					return plays;
 				}
 				
@@ -145,8 +147,8 @@ public class TrackedPlayer{
 			
 			if(topPlaysObj != null && topPlaysObj instanceof JSONArray)
 				tpJsonResponse = (JSONArray) topPlaysObj;
-			
-			for(int i = jsonResponse.length() - 1; i >= 0; i--){		
+
+			for(int i = jsonResponse.length() - 1; i >= 0; i--){	
 				JSONObject jsonObj = jsonResponse.getJSONObject(i);
 				TrackedPlay play = new TrackedPlay(jsonObj, mode);
 				
@@ -162,18 +164,22 @@ public class TrackedPlayer{
 					PPInfo oppaiPP = new PPInfo(0, 0);
 					
 					if(mode == 0){
-						int combo = 0;
-						
-						if(!play.isPerfect()) combo = play.getCombo();
-						
-						oppaiPP = TrackingUtils.fetchPPFromOppai(play.getBeatmapId(),
-															     play.getBeatmapSetId(), 
-															     play.getAccuracy(),
-															     combo, 
-															     play.getModDisplay(), 
-															     play.getMisses(),
-															     play.getFifties(),
-															     play.getHundreds());
+						try{
+							int combo = 0;
+							
+							if(!play.isPerfect()) combo = play.getCombo();
+							
+							oppaiPP = TrackingUtils.fetchPPFromOppai(play.getBeatmapId(),
+																     play.getBeatmapSetId(), 
+																     play.getAccuracy(),
+																     combo, 
+																     play.getModDisplay(), 
+																     play.getMisses(),
+																     play.getFifties(),
+																     play.getHundreds());
+						}catch(Exception e){
+							Log.logger.log(Level.INFO, "Could not load peppers: " + e.getMessage());
+						}
 					}
 					
 					int mapRank = 0;
@@ -192,7 +198,7 @@ public class TrackedPlayer{
 					play.setMapRank(mapRank);
 					
 					int personalBest = 0;
-					
+
 					if(Math.abs(ppDiff) > 0 && tpJsonResponse != null){
 						for(int j = 0; j < tpJsonResponse.length(); j++){
 							JSONObject topPlay = tpJsonResponse.getJSONObject(j);

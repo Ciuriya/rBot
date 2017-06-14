@@ -28,20 +28,20 @@ public class OsuRecentPlaysRequest extends OsuRequest{
               	  						 "&u=" + specifics[0] + "&m=" + specifics[1] + "&limit=" + TrackedPlayer.API_FETCH_PLAY_LIMIT + "&type=id&event_days=1");
 			
 			if(post == "" || !post.contains("{")){
-				answer = "invalid";
+				answer = "failed";
 				setDone(true);
 				return;
 			}
 			
 			post = "[" + post + "]";
 			
-			answer = new JSONArray(post);			
+			answer = new JSONArray(post);
 			setDone(true);
 		}else{
 			String[] pageHistory = Utils.getHTMLCode("https://osu.ppy.sh/pages/include/profile-history.php?u=" + specifics[0] + "&m=" + specifics[1]);
 			
 			if(pageHistory.length == 0 || !pageHistory[0].contains("<div class='profileStatHeader'>Recent Plays (last 24h):")){
-				answer = "invalid";
+				answer = "failed";
 				setDone(true);
 				return;
 			}

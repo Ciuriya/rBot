@@ -54,13 +54,13 @@ public class SeedTeamsCommand extends IRCCommand{
 						List<Integer> ranks = new ArrayList<>();
 						
 						for(Player player : team.getPlayers()){
-							int rank = Utils.getOsuPlayerRank(player.getName(), t.getMode());
+							int rank = Utils.getOsuPlayerRank(player.getName(), t.getMode(), true);
 
 							if(rank == -1){
 								int retries = 5; //retries left
 								
 								while(retries > 0 && rank == -1){
-									rank = Utils.getOsuPlayerRank(player.getName(), t.getMode());
+									rank = Utils.getOsuPlayerRank(player.getName(), t.getMode(), true);
 									
 									retries--;
 									

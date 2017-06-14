@@ -11,8 +11,8 @@ import me.smc.sb.utils.Utils;
 public class HybridRegulator{
 
 	private static final int[] FIBONACCI = new int[]{ 1, 1, 2, 3, 5, 8, 13, 21 };
-	private static LinkedList<OsuRequest> requests;
-	private static int apiPerMinute = 700;
+	public static LinkedList<OsuRequest> requests;
+	private static int apiPerMinute = 600;
 	private static int htmlPerMinute = 120;
 	private static int apiRequestsCompleted = 0;
 	private static int htmlRequestsCompleted = 0;
@@ -72,15 +72,16 @@ public class HybridRegulator{
 				
 				if(toProcess != null){
 					requests.remove(toProcess);
-					
-					if(useApi) apiStalled = true;
-					else htmlStalled = true;
+					toProcess.setRequestType(useApi ? RequestTypes.API : RequestTypes.HTML);
 					
 					final OsuRequest request = toProcess;
 					final boolean api = useApi;
 					
 					new Thread(new Runnable(){
 						public void run(){
+							if(api) apiStalled = true;
+							else htmlStalled = true;
+							
 							executeRequest(request, api, 0);
 							
 							if(api){
@@ -111,7 +112,6 @@ public class HybridRegulator{
 	
 	private void executeRequest(OsuRequest request, boolean api, int attempt){
 		try{
-			request.setRequestType(api ? RequestTypes.API : RequestTypes.HTML);
 			request.send(api);
 		}catch(Exception e){
 			if(attempt + 1 >= FIBONACCI.length) return;
@@ -141,6 +141,8 @@ public class HybridRegulator{
 		
 		while(!request.isDone()){
 			if(timeElapsed >= timeout && timeout > 0){
+				requests.remove(request);
+				
 				return "Request: " + request.getName() + " timed out.";
 			}
 			
@@ -153,17 +155,19 @@ public class HybridRegulator{
 	
 	private void calculateLoads(){
 		long delay = System.currentTimeMillis() - lastLoadRefresh;
-		int apiRequests = apiRequestsCompleted - lastRefreshApiRequestsCount;
-		int htmlRequests = htmlRequestsCompleted - lastRefreshHtmlRequestsCount;
-		double timeSliceMult = 60000.0 / (double) delay;
-		double apiPercent = (double) apiRequests / (double) apiPerMinute;
-		double htmlPercent = (double) htmlRequests / (double) htmlPerMinute;
 		
-		apiLoad = apiPercent * timeSliceMult;
-		htmlLoad = htmlPercent * timeSliceMult;
-		lastRefreshApiRequestsCount = apiRequestsCompleted;
-		lastRefreshHtmlRequestsCount = htmlRequestsCompleted;
-		lastLoadRefresh = System.currentTimeMillis();
+		if(delay >= 60000){
+			lastLoadRefresh = System.currentTimeMillis();
+			lastRefreshApiRequestsCount = apiRequestsCompleted;
+			lastRefreshHtmlRequestsCount = htmlRequestsCompleted;
+		}else{
+			int apiRequests = apiRequestsCompleted - lastRefreshApiRequestsCount;
+			int htmlRequests = htmlRequestsCompleted - lastRefreshHtmlRequestsCount;
+			double timeSliceMult = 60000.0 / (double) delay;
+			
+			apiLoad = ((double) apiRequests * timeSliceMult) / (double) apiPerMinute;
+			htmlLoad = ((double) htmlRequests * timeSliceMult) / (double) htmlPerMinute;
+		}
 	}
 }
 

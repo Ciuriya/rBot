@@ -15,7 +15,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
 
-	private static int REQUESTS_PER_MINUTE = 600;
+	private static int REQUESTS_PER_MINUTE = 400;
 	private static Timer trackingTimer = null;
 	public static double currentRefreshRate = 0;
 	
@@ -136,9 +136,9 @@ public class OsuTrackCommand extends GlobalCommand{
 					new TrackingGuild(guild.getId());
 				
 				if(!Main.discordConnected)
-					Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "Tracking now waiting for discord to connect...");
+					Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), "Tracking now waiting for discord to connect...");
 				else
-					Utils.infoBypass(Main.api.getUserById("91302128328392704").getPrivateChannel(), "Tracking started!");
+					Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), "Tracking started!");
 				
 				while(!Main.discordConnected){
 					Utils.sleep(100);
