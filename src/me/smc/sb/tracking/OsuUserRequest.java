@@ -28,7 +28,7 @@ public class OsuUserRequest extends OsuRequest{
 				type = specifics[2];
 			
 			String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-					"&u=" + specifics[0] + "&m=" + specifics[1] + "&type=" + type + "&event_days=1");
+										 "&u=" + specifics[0] + "&m=" + specifics[1] + "&type=" + type + "&event_days=1");
 			
 			if(post.equals("") || !post.contains("{")){
 				// if it's invalid, user is probably banned

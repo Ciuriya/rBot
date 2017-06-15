@@ -14,18 +14,31 @@ public class OsuRecentPlaysRequest extends OsuRequest{
 	public OsuRecentPlaysRequest(String... specifics){
 		super("recent-plays", RequestTypes.HYBRID, specifics);
 	}
+	
+	public OsuRecentPlaysRequest(RequestTypes type, String... specifics){
+		super("recent-plays", type, specifics);
+	}
 
 	@Override
 	public void send(boolean api) throws Exception{
-		if(specifics.length != 2){
+		if(specifics.length < 2){
 			answer = "invalid";
 			setDone(true);
 			return;
 		}
 		
 		if(api){
+			String type = "id";
+			int limit = TrackedPlayer.API_FETCH_PLAY_LIMIT;
+			
+			if(specifics.length >= 3)
+				type = specifics[2];
+			
+			if(specifics.length == 4)
+				limit = Utils.stringToInt(specifics[3]);
+			
 			String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user_recent?k=" + OsuStatsCommand.apiKey + 
-              	  						 "&u=" + specifics[0] + "&m=" + specifics[1] + "&limit=" + TrackedPlayer.API_FETCH_PLAY_LIMIT + "&type=id&event_days=1");
+              	  						 "&u=" + specifics[0] + "&m=" + specifics[1] + "&limit=" + limit + "&type=" + type + "&event_days=1");
 			
 			if(post == "" || !post.contains("{")){
 				answer = "failed";

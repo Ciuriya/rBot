@@ -42,7 +42,11 @@ public class OsuLastTopPlays extends GlobalCommand{
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
-		String original = e.getMessage().getContent().replace("!osulastplays ", ""); //make modular kthx
+		String original = "";
+		
+		for(String arg : args) original += " " + arg;
+		original = original.substring(1);
+		
 		int plays = 5;
 		String mode = "0";
 		String player = "";

@@ -20,12 +20,16 @@ public class OsuTopPlaysRequest extends OsuRequest{
 		}
 		
 		String type = "id";
+		String limit = "100";
 		
 		if(specifics.length >= 3)
 			type = specifics[2];
 		
+		if(specifics.length == 4)
+			limit = specifics[3];
+	
 		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user_best?k=" + OsuStatsCommand.apiKey + 
-																"&u=" + specifics[0] + "&m=" + specifics[1] + "&limit=100&type=" + type);
+																"&u=" + specifics[0] + "&m=" + specifics[1] + "&limit=" + limit + "&type=" + type);
 		
 		if(post == "" || !post.contains("{")){
 			answer = "failed";
