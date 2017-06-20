@@ -1,11 +1,13 @@
 package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.json.JSONObject;
 
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class SearchCommand extends GlobalCommand{
@@ -14,11 +16,10 @@ public class SearchCommand extends GlobalCommand{
 		super(null, 
 			  " - Lets you search many different sites (including nsfw sites)", 
 			  "{prefix}search\nThis command lets you search the internet.\n\n" +
-			  "----------\nUsage\n----------\n{prefix}search google {search} - Sends the first google search result\n" +
+			  "----------\nUsage\n----------\n{prefix}search list - Returns all possible search sites\n" +
 			  "{prefix}search konachan (search tags) - Finds a random konachan picture\n" +
 			  "{prefix}search hentai (search tags) - Finds a random e-hentai gallery\n" +
 			  "{prefix}search hentai (search tags) ({type={e-hentai type w/o spaces}}) - Finds a random e-hentai gallery using types\n" + 
-			  "{prefix}search e621 {search} - Finds a random e621 post\n" +
 			  "{prefix}search catgirl (search tags) - Finds a random catgirl picture\n\n" +
 			  "----------\nAliases\n----------\n{prefix}lookup",  
 			  true, 
@@ -40,17 +41,35 @@ public class SearchCommand extends GlobalCommand{
 				if(query.length() > 0) query = query.substring(1);
 				
 				switch(args[0].toLowerCase()){
+					case "list": list(e); break;
 					case "konachan": konachan(e, query); break;
 					case "hentai": hentai(e, query); break;
 					case "e621": e621(e, query); break;
 					case "catgirl": catgirl(e, query); break;
+					case "danbooru": danbooru(e, query); break;
 					default: break;
 				}
 				
 				Thread.currentThread().stop();
 			}
 		});
+		
 		t.start();
+	}
+	
+	private void list(MessageReceivedEvent e){
+		EmbedBuilder builder = new EmbedBuilder();
+		
+		builder.setTitle("Searchable Websites");
+		
+		builder.addField("SFW", "[konachan](https://konachan.net) (using {domain=net})", false);
+		
+		builder.addField("NSFW", "[konachan](https://konachan.com)\n" +
+								 "[hentai](http://e-hentai.org)\n" +
+								 "[danbooru](http://danbooru.donmai.us)\n" +
+								 "[catgirl](http://catgirls.brussell98.tk)", false);
+		
+		Utils.info(e.getChannel(), builder.build());
 	}
 	
 	private void konachan(MessageReceivedEvent e, String query){
@@ -66,20 +85,16 @@ public class SearchCommand extends GlobalCommand{
 			return;
 		}
 		
-		String[] page = Utils.getHTMLCode("https://konachan." + domain +  "/post");
-		int maxId = Integer.parseInt(Utils.getNextLineCodeFromLink(page, 1, "Post.register_tags").get(0).split("register\\(\\{\"id\"")[1].split(",\"tags\"")[0].substring(1));
-		
-		checkRandomPost(e, maxId, domain, query, 0);
+		checkRandomPost(e, domain, query, 0);
 	}
 	
-	private void checkRandomPost(MessageReceivedEvent e, int maxId, String domain, String query, int hops){ //fix the post errors
-		if(hops >= 50){
-			Utils.infoBypass(e.getChannel(), "Could not find matching image in 50 tries!");
+	private void checkRandomPost(MessageReceivedEvent e, String domain, String query, int hops){
+		if(hops > 50){
+			Utils.info(e.getChannel(), "Could not find matching image within 50 tries.");
 			return;
 		}
-
-		int id = (int) (new Random().nextDouble() * (maxId - 1) + 1);
-		String[] imagePage = Utils.getHTMLCode("http://konachan." + domain + "/post/show/" + id + "/");
+		
+		String[] imagePage = Utils.getHTMLCode("http://konachan." + domain + "/post/random");
 
 		query = Utils.removeStartSpaces(query);
 		if(hasTags(imagePage, query)){
@@ -102,7 +117,7 @@ public class SearchCommand extends GlobalCommand{
 							ArrayList<String> uncensored = Utils.getNextLineCodeFromLink(imagePage, 0, "unchanged\" href=\"");
 							
 							if(uncensored.size() == 0){
-								checkRandomPost(e, maxId, domain, query, hops + 1);
+								checkRandomPost(e, domain, query, hops + 1);
 								return;
 							}
 							
@@ -113,8 +128,8 @@ public class SearchCommand extends GlobalCommand{
 					}
 				}
 				return;
-			}else checkRandomPost(e, maxId, domain, query, hops + 1);
-		}else checkRandomPost(e, maxId, domain, query, hops + 1);
+			}else checkRandomPost(e, domain, query, hops + 1);
+		}else checkRandomPost(e, domain, query, hops + 1);
 	}
 	
 	private boolean hasTags(String[] html, String query){
@@ -236,5 +251,19 @@ public class SearchCommand extends GlobalCommand{
 		} else {
 			Utils.info(e.getChannel(), obj.getString("url"));
 		}
+	}
+	
+	private void danbooru(MessageReceivedEvent e, String query){
+		String url = "http://danbooru.donmai.us/posts/random";
+		
+		if(query.split(" ").length > 0) url += "?tags=" + query.replaceAll(" ", "%20");
+		
+		String[] post = Utils.getHTMLCode(url);
+		List<String> imageLine = Utils.getNextLineCodeFromLink(post, 0, "<meta property=\"og:image\" content=\"");
+		
+		if(imageLine.size() > 0) 
+			Utils.info(e.getChannel(), imageLine.get(0).split("content=\"")[1].split("\"")[0]);
+		else Utils.info(e.getChannel(), "Could not find anything!");
+		
 	}
 }
