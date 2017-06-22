@@ -80,7 +80,7 @@ public class ConfirmTeamCommand extends IRCCommand{
 			return "Could not connect to database!";
 		}
 		
-		Utils.info(e, pe, discord, "Your participation is now confirmed! Thanks for registering in " + tournamentName + "!");
+		Utils.info(e, pe, discord, "Your participation is now confirmed! Thanks for registering in " + tournamentName.substring(0, tournamentName.length() - 1) + "!");
 		
 		return "";
 	}

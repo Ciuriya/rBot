@@ -88,7 +88,7 @@ public class Tournament{
 		pickWaitTime = getConfig().getInt("pickWaitTime");
 		banWaitTime = getConfig().getInt("banWaitTime");
 		readyWaitTime = getConfig().getInt("readyWaitTime");
-		tournamentType = getConfig().getInt("tournamentType");
+		tournamentType = getConfig().getInt("type");
 		mode = getConfig().getInt("mode");
 		resultDiscord = getConfig().getValue("resultDiscord");
 		alertDiscord = getConfig().getValue("alertDiscord");

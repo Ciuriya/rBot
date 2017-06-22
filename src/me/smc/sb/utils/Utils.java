@@ -49,7 +49,6 @@ import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuUserRequest;
 import me.smc.sb.tracking.RequestTypes;
 import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
@@ -589,13 +588,13 @@ public class Utils{
 	
 	public static void deleteMessage(MessageChannel channel, Message msg){
 		Timer t = new Timer();
-		t.schedule(new TimerTask() {	
-			@Override public void run() {
+		t.schedule(new TimerTask(){	
+			@Override public void run(){
 				try{
 					if(channel instanceof TextChannel){
 						Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
 						
-						if(member != null && member.hasPermission(((TextChannel) channel), Permission.MESSAGE_MANAGE))
+						if(member != null)
 							msg.delete().queue();
 					}
 				}catch(Exception e){}
