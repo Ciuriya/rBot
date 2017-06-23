@@ -12,7 +12,7 @@ public class HybridRegulator{
 
 	private static final int[] FIBONACCI = new int[]{ 1, 1, 2, 3, 5, 8, 13, 21 };
 	public static LinkedList<OsuRequest> requests;
-	private static int apiPerMinute = 600;
+	private static int apiPerMinute = 500;
 	private static int htmlPerMinute = 120;
 	private static int apiRequestsCompleted = 0;
 	private static int htmlRequestsCompleted = 0;
