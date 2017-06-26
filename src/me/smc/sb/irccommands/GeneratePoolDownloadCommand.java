@@ -68,11 +68,12 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 				
 				if(mapsDownloaded.isEmpty()) Utils.info(e, pe, discord, "Could not download any maps!");
 				else{
-					zipPackage(dlFolder, "/var/www/html/s/" + t.getName() + "-" + pool.getPoolNum() + ".zip");
+					List<Integer> zippedMaps = zipPackage(dlFolder, "/var/www/html/s/" + t.getName() + "-" + pool.getPoolNum() + ".zip");
 					
 					try{
 						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.getName() + "-" + pool.getPoolNum(), "UTF-8").replaceAll("\\+", "%20") + ".zip";
-						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url + "\nDownloaded " + mapsDownloaded.size() + " maps.");
+						
+						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url + "\nSkipped " + (pool.getMaps().size() - zippedMaps.size()) + " maps.");
 					}catch(Exception ex){
 						Utils.info(e, pe, discord, "Could not zip the package: " + ex.getMessage());
 					}
@@ -97,25 +98,37 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		
 		String url = "https://osu.ppy.sh/d/" + setID + "n";
 		
-		url = Utils.getFinalURL(url);
+		try{
+			url = Utils.getFinalURL(url);
+		}catch(Exception e){}
 
 		URLConnection connection = establishConnection(url);
 
 		boolean bloodcat = false;
-		boolean mengsky = false;
+		boolean mnetwork = false;
 
-		if(connection.getContentLength() <= 100) connection = establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID));
+		if(connection.getContentLength() <= 100){
+			try{
+				connection = establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID));
+			}catch(Exception e){}
+		}
 
 		String location = downloadFromURL(connection, parent, setID);
 
-		while(!oszContainsAudio(location)){
-			if(!bloodcat){
-				bloodcat = true;
-				location = downloadFromURL(establishConnection(Utils.getFinalURL("http://bloodcat.com/osu/s/" + setID)), parent, setID);
-			}else if(!mengsky){
-				mengsky = true;
-				location = downloadFromURL(establishConnection(Utils.getFinalURL("http://osu.mengsky.net/api/download/" + setID)), parent, setID);
-			}else return null;
+		while(location == null || !oszContainsAudio(location)){
+			try{
+				if(!bloodcat){
+					bloodcat = true;
+					url = Utils.getFinalURL("http://bloodcat.com/osu/s/" + setID);
+					connection = establishConnection(url);
+					location = downloadFromURL(connection, parent, setID);
+				}else if(!mnetwork){
+					mnetwork = true;
+					url = Utils.getFinalURL("http://osu.uu.gl/s/" + setID);
+					connection = establishConnection(url);
+					location = downloadFromURL(connection, parent, setID);
+				}else return null;
+			}catch(Exception e){}
 		}
 		
 		return new File(location);
@@ -134,9 +147,9 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 
 			in.close();
 			out.close();
+			
 			return parent.getAbsolutePath() + File.separator + setID + ".osz";
 		}catch(Exception e){
-			e.printStackTrace();
 			return null;
 		}
 	}
@@ -145,13 +158,13 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		try{
 			FileInputStream fis = new FileInputStream(oszLocation);
 			ZipInputStream zis = new ZipInputStream(fis);
+			ZipEntry entry = null;
 			
-			while(zis.available() == 1){
-				ZipEntry entry = zis.getNextEntry();
-				
+			while((entry = zis.getNextEntry()) != null){
 				if(entry.getName().endsWith(".mp3")){
 					zis.close();
 					fis.close();
+					
 					return true;
 				}
 				
@@ -160,9 +173,7 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 			
 			zis.close();
 			fis.close();
-		}catch(Exception e){
-			e.printStackTrace();
-		}
+		}catch(Exception e){}
 		
 		return false;
 	}
@@ -175,15 +186,12 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
-		
-        connection.setDoOutput(true);
-        connection.setDoInput(true);
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
-        connection.setRequestProperty("content-type", "binary/data");
+        
         return connection;
 	}
 	
-	private void zipPackage(File parent, String zipLocation){
+	private List<Integer> zipPackage(File parent, String zipLocation){
+		List<Integer> zippedFiles = new ArrayList<Integer>();
 		byte[] b = new byte[1024];
 		
 		try{
@@ -193,6 +201,12 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 			ZipOutputStream zos = new ZipOutputStream(fos);
 			
 			for(File file : new ArrayList<File>(Arrays.asList(parent.listFiles()))){
+				if(file.length() <= 100){
+					file.delete();
+					
+					continue;
+				}
+				
 				ZipEntry ze = new ZipEntry(file.getName());
 				zos.putNextEntry(ze);
 				
@@ -205,6 +219,8 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		        in.close();
 		        
 		        file.delete();
+		        
+		        zippedFiles.add(Utils.stringToInt(file.getName().replace(".osz", "")));
 			}
 			
 			zos.closeEntry();
@@ -214,6 +230,8 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+		
+		return zippedFiles;
 	}
 	
 }

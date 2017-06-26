@@ -230,7 +230,9 @@ public class TrackingUtils{
 		String diffName = Jsoup.parse(line.get(0).split("<span>")[1].split("</span>")[0]).text();
 		String url = "https://osu.ppy.sh/d/" + setId + "n";
 		
-		url = Utils.getFinalURL(url);
+		try{
+			url = Utils.getFinalURL(url);
+		}catch(Exception e){}
 		
 		URLConnection connection = establishConnection(url);
 		boolean bloodcat = false;

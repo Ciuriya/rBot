@@ -95,6 +95,7 @@ public abstract class GlobalCommand{
 		commands.add(new AboutCommand());
 		commands.add(new BrainPowerCommand());
 		commands.add(new CleanCommand());
+		commands.add(new DownloadOsuMapCommand());
 		commands.add(new EditCmdCommand());
 		commands.add(new ExecIRCCommand());
 		commands.add(new ExecProcessCommand());

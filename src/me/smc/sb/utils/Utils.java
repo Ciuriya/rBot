@@ -624,23 +624,18 @@ public class Utils{
 		}else return message;
 	}
 	
-	public static String getFinalURL(String url){
-		try{
-		    HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-		    con.setInstanceFollowRedirects(false);
-		    con.connect();
-		    con.getInputStream();
+	public static String getFinalURL(String url) throws Exception{
+	    HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+	    con.setInstanceFollowRedirects(false);
+	    con.connect();
+	    con.getInputStream();
 
-		    if(con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || con.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP){
-		        String redirectUrl = con.getHeaderField("Location");
-		        return getFinalURL(redirectUrl);
-		    }
-		    
-		    return url;	
-		}catch(Exception e){
-			Log.logger.log(Level.SEVERE, e.getMessage(), e);
-			return url;
-		}
+	    if(con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || con.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP){
+	        String redirectUrl = con.getHeaderField("Location");
+	        return getFinalURL(redirectUrl);
+	    }
+	    
+	    return url;	
 	}
 	
 	public static String getOsuPlayerPPAndRank(JSONObject response){

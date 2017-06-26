@@ -718,7 +718,7 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 		
 		String url = "https://osu.ppy.sh/d/" + setId + "n";
 		
-		url = Utils.getFinalURL(url);
+		//url = Utils.getFinalURL(url);
 		
 		URLConnection connection = establishConnection(url);
 		boolean bloodcat = false;
