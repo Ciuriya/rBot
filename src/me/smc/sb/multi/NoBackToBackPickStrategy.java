@@ -63,11 +63,11 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			
 			if(chosen){
 				if(select && game.warmupsLeft == 0){
-					if(game.bans.contains(m)){game.sendMessage("This map is banned! Please choose something else."); return;}
+					if(game.bans.contains(m)){game.sendMessage("This map was removed! Please choose something else."); return;}
 					if(!game.checkMap(m)){game.sendMessage("This map was already picked once! Please choose something else."); return;}
 				}
 				
-				if(m.getCategory() == 5){game.sendMessage("You cannot " + (select ? "select" : "ban") + " the tiebreaker!"); return;}
+				if(m.getCategory() == 5){game.sendMessage("You cannot " + (select ? "select" : "remove") + " the tiebreaker!"); return;}
 				
 				selected = m;
 				break;
@@ -91,12 +91,12 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 					String name = game.getMod(fSelected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 						    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
 					
-					game.sendMessage(name + " was banned!");
+					game.sendMessage(name + " was removed!");
 					
 					game.bansWithNames.add("{" + game.getMod(fSelected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 
 					    	  		  jsMap.getString("title") + " [" + jsMap.getString("version") + "] (" + banningTeam.getTeamName() + ")");
 					
-					game.updateTwitch(name + " was banned by " + banningTeam.getTeamName() + "!");
+					game.updateTwitch(name + " was removed by " + banningTeam.getTeamName() + "!");
 					
 					if(game.match.getTournament().isUsingMapStats()){
 						int mapId = game.match.getMapPool().getMapId(fSelected);
@@ -159,6 +159,6 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			return;
 		}
 		
-		if(selected == null || !select) game.sendMessage("Invalid " + (select ? "selection!" : "ban!"));
+		if(selected == null || !select) game.sendMessage("Invalid " + (select ? "selection!" : "removal!"));
 	}
 }
