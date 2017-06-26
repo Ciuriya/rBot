@@ -72,7 +72,7 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 					
 					try{
 						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.getName() + "-" + pool.getPoolNum(), "UTF-8").replaceAll("\\+", "%20") + ".zip";
-						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url);
+						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url + "\nDownloaded " + mapsDownloaded.size() + " maps.");
 					}catch(Exception ex){
 						Utils.info(e, pe, discord, "Could not zip the package: " + ex.getMessage());
 					}
@@ -102,21 +102,20 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		URLConnection connection = establishConnection(url);
 
 		boolean bloodcat = false;
+		boolean mengsky = false;
 
-		if(connection.getContentLength() <= 100){
-			connection = establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID));
-
-			if(connection.getContentLength() <= 100){
-				connection = establishConnection(Utils.getFinalURL("http://bloodcat.com/osu/s/" + setID));
-				bloodcat = true;
-			}
-		}
+		if(connection.getContentLength() <= 100) connection = establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID));
 
 		String location = downloadFromURL(connection, parent, setID);
-		
-		if(!oszContainsAudio(location)){
-			if(!bloodcat) location = downloadFromURL(establishConnection(Utils.getFinalURL("https://osu.ppy.sh/d/" + setID)), parent, setID);
-			else return null;
+
+		while(!oszContainsAudio(location)){
+			if(!bloodcat){
+				bloodcat = true;
+				location = downloadFromURL(establishConnection(Utils.getFinalURL("http://bloodcat.com/osu/s/" + setID)), parent, setID);
+			}else if(!mengsky){
+				mengsky = true;
+				location = downloadFromURL(establishConnection(Utils.getFinalURL("http://osu.mengsky.net/api/download/" + setID)), parent, setID);
+			}else return null;
 		}
 		
 		return new File(location);
