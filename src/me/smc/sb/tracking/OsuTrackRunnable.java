@@ -14,9 +14,11 @@ public class OsuTrackRunnable extends TimerTask{
 	
 	private List<TrackedPlayer> playersToRefresh;
 	private OsuTrackCommand trackManager;
+	private int updatingPlayers;
 	
 	public OsuTrackRunnable(OsuTrackCommand trackManager){
 		playersToRefresh = new ArrayList<>();
+		updatingPlayers = 0;
 		this.trackManager = trackManager;
 	}
 	
@@ -24,6 +26,7 @@ public class OsuTrackRunnable extends TimerTask{
 	public void run(){	
 		// if list changed, restart to get updated timer period
 		if(TrackedPlayer.changeOccured){
+			updatingPlayers = 0;
 			TrackedPlayer.changeOccured = false;
 			trackManager.startTracker();
 			stop();
@@ -31,7 +34,7 @@ public class OsuTrackRunnable extends TimerTask{
 			return;
 		}
 		
-		if(playersToRefresh.isEmpty()){
+		if(playersToRefresh.isEmpty() && updatingPlayers == 0){
 			boolean change = TrackedPlayer.updateRegisteredPlayers();
 			
 			// again, if change, restart for updated timer period, although this one
@@ -48,26 +51,38 @@ public class OsuTrackRunnable extends TimerTask{
 			playersToRefresh = new ArrayList<>(TrackedPlayer.registeredPlayers);
 		}
 		
-		TrackedPlayer player = playersToRefresh.get(0);
+		TrackedPlayer player = null;
+		
+		try{
+			player = playersToRefresh.get(0);
+		}catch(Exception ex){
+			return;
+		}
+		
+		if(player == null) return;
+		
 		playersToRefresh.remove(player);
 		
 		if(player.isUpdating() || player.getTrackers().isEmpty()) return;
 		
 		player.setUpdating(true);
+		updatingPlayers++;
+		
+		final TrackedPlayer fPlayer = player;
 		
 		new Thread(new Runnable(){
 			public void run(){
 				try{
-					List<TrackedPlay> plays = player.fetchLatestPlays();
+					List<TrackedPlay> plays = fPlayer.fetchLatestPlays();
 					
 					if(plays.size() > 0){
-						for(TrackingGuild guild : player.getTrackers()){
+						for(TrackingGuild guild : fPlayer.getTrackers()){
 							boolean onlyBest = guild.onlyTrackingBestPlays();
 							int minimumPP = guild.getMinimumPPAmount();
 							
 							for(TrackedPlay play : plays){
 								if((onlyBest && play.isPersonalBest() || !onlyBest) && (play.getPP() >= minimumPP || minimumPP <= 0)){
-									guild.getPlayFormat().send(guild, play, player);
+									guild.getPlayFormat().send(guild, play, fPlayer);
 								}
 							}
 						}
@@ -77,7 +92,8 @@ public class OsuTrackRunnable extends TimerTask{
 					e.printStackTrace();
 				}
 				
-				player.setUpdating(false);
+				fPlayer.setUpdating(false);
+				updatingPlayers--;
 			}
 		}).start();
 	}

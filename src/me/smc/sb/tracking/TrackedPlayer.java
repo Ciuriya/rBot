@@ -91,7 +91,7 @@ public class TrackedPlayer{
 			if(recentPlaysRequest.getType().equals(RequestTypes.HTML)){
 				recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
 				recentPlaysRequest.setRequestType(RequestTypes.API);
-				recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest, true);
+				recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest);
 				
 				if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray)
 					jsonResponse = (JSONArray) recentPlaysObj;
@@ -102,7 +102,7 @@ public class TrackedPlayer{
 			
 			if(jsonUser == null){
 				OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + userId, "" + mode);
-				Object userObj = Main.hybridRegulator.sendRequest(userRequest, true);
+				Object userObj = Main.hybridRegulator.sendRequest(userRequest);
 				
 				if(!(userObj instanceof JSONObject)){
 					System.out.println(userObj.toString());
@@ -142,7 +142,7 @@ public class TrackedPlayer{
 			}
 			
 			OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + userId, "" + mode);
-			Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest, true);
+			Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest);
 			JSONArray tpJsonResponse = null;
 			
 			if(topPlaysObj != null && topPlaysObj instanceof JSONArray)
