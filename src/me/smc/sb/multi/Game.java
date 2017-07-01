@@ -2046,8 +2046,9 @@ public abstract class Game{
 				}*/
 				
 				pl.setSlot(i);
-				sendMessage("!mp move " + pl.getIRCTag() + " " + i);
+				sendMessage("!mp add " + pl.getIRCTag());
 				sendMessage("!mp team " + pl.getIRCTag() + " " + color);
+				sendMessage("!mp move " + pl.getIRCTag() + " " + i);
 				
 				int lower = match.getTournament().getLowerRankBound();
 				int upper = match.getTournament().getUpperRankBound();
