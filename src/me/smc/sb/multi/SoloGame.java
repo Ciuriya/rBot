@@ -31,24 +31,12 @@ public class SoloGame extends Game{
 	}
 
 	@Override
-	protected void playerLeft(String message){ //If player leaves for more than a certain time, game lost for him
+	protected void playerLeft(String message){ // If player leaves for more than a certain time, game lost for him
 		String player = message.replace(" left the game.", "").replaceAll(" ", "_");
-		joinQueue.remove(player);
 		playersInRoom.remove(player);
 		
 		for(Player pl : findTeam(player).getPlayers())
 			if(pl.eq(player)) pl.setSlot(-1);
-		
-		if(!hijackedSlots.isEmpty()){
-			int rSlot = -1;
-			for(int slot : hijackedSlots.keySet())
-				if(hijackedSlots.get(slot).equalsIgnoreCase(player)){
-					rSlot = slot;
-					break;
-				}
-			
-			if(rSlot != -1) hijackedSlots.remove(rSlot);
-		}
 		
 		boolean team = teamToBoolean(findTeam(player));
 		

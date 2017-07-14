@@ -18,7 +18,6 @@ import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.ChangeWarmupModCommand;
 import me.smc.sb.irccommands.ContestCommand;
 import me.smc.sb.irccommands.InvitePlayerCommand;
-import me.smc.sb.irccommands.JoinMatchCommand;
 import me.smc.sb.irccommands.PassTurnCommand;
 import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
@@ -60,11 +59,8 @@ public abstract class Game{
 	protected GameState state;
 	protected int rematchesLeftFTeam = 0;
 	protected int rematchesLeftSTeam = 0;
-	protected List<String> invitesSent;
 	protected List<String> playersInRoom;
 	protected List<String> captains;
-	protected List<String> joinQueue;
-	protected java.util.Map<Integer, String> hijackedSlots;
 	protected List<Map> bans;
 	protected List<String> bansWithNames;
 	protected LinkedList<PickedMap> mapsPicked;
@@ -92,16 +88,13 @@ public abstract class Game{
 		this.match = match;
 		this.multiChannel = "";
 		this.mpLink = "";
-		this.invitesSent = new ArrayList<>();
 		this.playersInRoom = new ArrayList<>();
 		this.banchoFeedback = new LinkedList<>();
 		this.bans = new ArrayList<>();
 		this.bansWithNames = new ArrayList<>();
 		this.mapsPicked = new LinkedList<>();
 		this.captains = new ArrayList<>();
-		this.joinQueue = new ArrayList<>();
 		this.playersSwapped = new ArrayList<>();
-		this.hijackedSlots = new HashMap<>();
 		this.verifyingSlots = new HashMap<>();
 		this.pickTimers = new ArrayList<>();
 		this.playersRankChecked = new ArrayList<>();
@@ -535,9 +528,6 @@ public abstract class Game{
 		
 		waitingForCaptains = 0;
 		
-		for(String player : invitesSent)
-			JoinMatchCommand.gameInvites.remove(player);
-		
 		InvitePlayerCommand.allowedInviters.remove(match.getFirstTeam());
 		InvitePlayerCommand.allowedInviters.remove(match.getSecondTeam());
 		RandomCommand.waitingForRolls.remove(match.getFirstTeam());
@@ -625,16 +615,13 @@ public abstract class Game{
 			Main.banchoRegulator.sendPriorityMessage("BanchoBot", "!mp make " + match.getTournament().getDisplayName() + ": TEMP LOBBY");
 		}
 		
-		invitesSent.clear(); invitesSent = null;
 		playersInRoom.clear(); playersInRoom = null;
 		banchoFeedback.clear(); banchoFeedback = null;
 		bans.clear(); bans = null;
 		bansWithNames.clear(); bansWithNames = null;
 		mapsPicked.clear(); mapsPicked = null;
 		captains.clear(); captains = null;
-		joinQueue.clear(); joinQueue = null;
 		playersSwapped.clear(); playersSwapped = null;
-		hijackedSlots.clear(); hijackedSlots = null;
 		verifyingSlots.clear(); verifyingSlots = null;
 		pickTimers.clear(); pickTimers = null;
 		playersRankChecked.clear(); playersRankChecked = null;
@@ -1816,21 +1803,17 @@ public abstract class Game{
 			return;
 		}
 		
-		if(joinQueue.contains(player)) joinQueue.remove(player);
-		
 		Player pl = findPlayer(player);
-		String userID = Utils.getOsuPlayerId(pl.getName(), true);
 		
-		if(!userID.equals("-1")) pl.setUserID(userID);
-		
-		if(joinQueue.isEmpty()){
-			joinQueue.add(player);
-			joinRoom(player, true);
-		}else{
-			int slot = Utils.stringToInt(message.split("joined in slot ")[1].split(" for team")[0]);
-			findPlayer(player).setSlot(slot);
-			hijackedSlots.put(slot, player);
+		if(pl.getUserID().equals("-1")){
+			String userID = Utils.getOsuPlayerId(pl.getName(), true);
+			
+			if(!userID.equals("-1")) pl.setUserID(userID);
 		}
+		
+		int slot = Utils.stringToInt(message.split("joined in slot ")[1].split(" for team")[0]); // optimize for color?
+		findPlayer(player).setSlot(slot);
+		joinRoom(player);
 	}
 	
 	protected void sendPriorityMessage(String command){
@@ -1842,77 +1825,12 @@ public abstract class Game{
 	}
 	
 	public void invitePlayer(String player){
-		if(!invitesSent.contains(player)) invitesSent.add(player);
-		JoinMatchCommand.gameInvites.put(player, this);
-		
-		sendInviteMessages(player);
+		sendMessage("!mp invite " + player);
 	}
 	
-	protected void sendInviteMessages(String player){
-		pmUser(player, "You have been invited to join: " + match.getLobbyName());
-		pmUser(player, "Reply with !join to join the game. Please note that this command is reusable.");
-		
-		Log.logger.log(Level.INFO, "Invited " + player + " to join " + multiChannel);
-	}
-	
-	public void acceptInvite(String player){
-		if(playersInRoom.contains(player.replaceAll(" ", "_")) || playersInRoom.size() >= match.getPlayers()) return;
-		if(!verifyPlayer(player.replaceAll(" ", "_"))) return;
-		
-		if(joinQueue.contains(player.replaceAll(" ", "_"))) return;
-		else joinQueue.add(player.replaceAll(" ", "_"));
-		
-		Player pl = findPlayer(player);
-		String userID = Utils.getOsuPlayerId(pl.getName(), true);
-		
-		if(!userID.equals("-1")) pl.setUserID(userID);
-
-		joinRoom(player.replaceAll(" ", "_"), false);
-	}
-	
-	protected void joinRoom(String player, boolean hijack){
+	protected void joinRoom(String player){
 		playersInRoom.add(player.replaceAll(" ", "_"));
-		assignSlotAndTeam(player.replaceAll(" ", "_"), hijack);
-	}
-	
-	private void advanceQueue(String player, List<String> hijackers){
-		joinQueue.remove(player);
-		
-		if(joinQueue.size() > 0){
-			String nextPlayer = "";
-			
-			for(String pl : joinQueue){
-				nextPlayer = pl;
-				break;
-			}
-			
-			joinRoom(nextPlayer, false);
-		}
-		
-		if(!hijackers.isEmpty()){
-			for(String hijacker : hijackers)
-				joinRoom(hijacker, false);
-			
-			roomSize = match.getPlayers();
-			sendMessage("!mp size " + roomSize);
-		}
-		
-		if(!hijackedSlots.isEmpty()){
-			for(int slot : hijackedSlots.keySet()){
-				String hijackingPlayer = hijackedSlots.get(slot);
-				
-				playersInRoom.add(hijackingPlayer);
-				
-				hijackedSlots.remove(slot);
-				if(!assignSlotAndTeam(hijackingPlayer, true)){
-					Player pl = findPlayer(hijackingPlayer);
-					playersInRoom.remove(hijackingPlayer);
-					
-					if(pl == null) sendMessage("!mp kick " + hijackingPlayer);
-					else sendMessage("!mp kick " + pl.getIRCTag());
-				}
-			}
-		}
+		assignSlotAndTeam(player.replaceAll(" ", "_"));
 	}
 	
 	protected Team findTeam(String player){
@@ -1974,20 +1892,20 @@ public abstract class Game{
 		return false;
 	}
 	
-	private boolean assignSlotAndTeam(String player, boolean hijack){
-		if(!joinQueue.contains(player)) joinQueue.add(player);
-		
+	private boolean assignSlotAndTeam(String player){	
 		Team team = findTeam(player);
 		boolean fTeam = teamToBoolean(team);
 		String color = fTeam ? "blue" : "red";
 		Player pl = findPlayer(player);
 		int i = fTeam ? 1 : (match.getPlayers() / 2 + 1);
 		int upperBound = fTeam ? (match.getPlayers() / 2 + 1) : (match.getPlayers() + 1);
+		int currentSlot = pl.getSlot();
+		
+		if(currentSlot < upperBound) return joinChecks(pl, color);
 		
 		pl.setSlot(-1);
 		
 		List<Integer> usedSlots = new ArrayList<>();
-		List<String> hijackers = new ArrayList<>();
 		
 		if(isTeamGame())
 			for(Player p : team.getPlayers())
@@ -1995,40 +1913,6 @@ public abstract class Game{
 					usedSlots.add(p.getSlot());
 		
 		for(; i < upperBound; i++){
-			if(hijackedSlots.containsKey(i)){
-				String hijackingPlayer = hijackedSlots.get(i);
-				
-				Player hijackPl = findPlayer(hijackingPlayer);
-				
-				if(hijack){
-					roomSize++;
-
-					sendMessage("!mp size " + roomSize);
-					
-					if(hijackPl == null) sendMessage("!mp move " + hijackingPlayer + " " + roomSize);
-					else sendMessage("!mp move " + hijackPl.getIRCTag() + " " + roomSize);
-					
-					hijackedSlots.remove(i);
-					hijackers.add(hijackingPlayer);
-				}else{
-					playersInRoom.add(hijackingPlayer);
-					
-					hijackedSlots.remove(i);
-					if(!assignSlotAndTeam(hijackingPlayer, true)){
-						playersInRoom.remove(hijackingPlayer);
-						
-						if(hijackPl == null) sendMessage("!mp kick " + hijackingPlayer);
-						else sendMessage("!mp kick " + hijackPl.getIRCTag());
-					}else{
-						usedSlots.clear();
-						
-						for(Player p : team.getPlayers())
-							if(playersInRoom.contains(p.getName().replaceAll(" ", "_")) && p.getSlot() != -1)
-								usedSlots.add(p.getSlot());
-					}	
-				}
-			}
-			
 			if(!usedSlots.contains(i)){
 				/*if(match.getTournament().isUsingConfirms()){
 					try{
@@ -2046,65 +1930,62 @@ public abstract class Game{
 				}*/
 				
 				pl.setSlot(i);
-				sendMessage("!mp add " + pl.getIRCTag());
-				sendMessage("!mp team " + pl.getIRCTag() + " " + color);
 				sendMessage("!mp move " + pl.getIRCTag() + " " + i);
 				
-				int lower = match.getTournament().getLowerRankBound();
-				int upper = match.getTournament().getUpperRankBound();
-				
-				if(lower > upper){
-					int temp = upper;
-					
-					upper = lower;
-					lower = temp;
-				}
-				
-				int rank = -1;
-				
-				if(lower != upper && lower >= 1 && upper >= 1 && !playersRankChecked.contains(pl)){			
-					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode(), true);
-					
-					if(rank != -1 && (rank < lower || rank > upper)){
-						sendMessage(pl.getName() + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
-								   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
-						sendMessage("!mp kick " + pl.getIRCTag());
-						playersInRoom.remove(player);
-						
-						pmUser(player, "You were kicked because your rank is out of range. You are #" + Utils.veryLongNumberDisplay(rank) +
-									   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
-						
-						advanceQueue(player.replaceAll(" ", "_"), hijackers);
-						pl.setSlot(-1);
-						return false;
-					}
-					
-					playersRankChecked.add(pl);
-				}else if(match.getTournament().isUsingMapStats()){
-					rank = Utils.getOsuPlayerRank(pl.getName(), match.getTournament().getMode(), true);
-				}
-				
-				if(rank > 0){
-					pl.setRank(rank);
-				}
-				
-				if(isCaptain(player.replaceAll(" ", "_")))
-					waitingForCaptains--;
-				
-				if(waitingForCaptains == 0 && playersInRoom.size() < 2)
-					waitingForCaptains++;
-				else if(waitingForCaptains <= 0){
-					advanceQueue(player.replaceAll(" ", "_"), hijackers);
-					mapSelection(1);
-					return true;
-				}
-				
-				advanceQueue(player.replaceAll(" ", "_"), hijackers);
-				return true;
+				return joinChecks(pl, color);
 			}
 		}
 		
-		advanceQueue(player.replaceAll(" ", "_"), hijackers);
+		sendMessage("!mp kick " + pl.getIRCTag()); // invalid slot joined
+		
 		return false;
+	}
+	
+	private boolean joinChecks(Player player, String color){
+		sendMessage("!mp team " + player.getIRCTag() + " " + color);
+		
+		int lower = match.getTournament().getLowerRankBound();
+		int upper = match.getTournament().getUpperRankBound();
+		
+		if(lower > upper){
+			int temp = upper;
+			
+			upper = lower;
+			lower = temp;
+		}
+		
+		int rank = -1;
+		
+		if(lower != upper && lower >= 1 && upper >= 1 && !playersRankChecked.contains(player)){			
+			rank = Utils.getOsuPlayerRank(player.getName(), match.getTournament().getMode(), true);
+			
+			if(rank != -1 && (rank < lower || rank > upper)){
+				sendMessage(player.getName() + "'s rank is out of range. His rank is " + Utils.veryLongNumberDisplay(rank) + 
+						   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
+				sendMessage("!mp kick " + player.getIRCTag());
+				playersInRoom.remove(player);
+				
+				pmUser(player.getIRCTag(), "You were kicked because your rank is out of range. You are #" + Utils.veryLongNumberDisplay(rank) +
+							   			   " while the range is " + Utils.veryLongNumberDisplay(lower) + " to " + Utils.veryLongNumberDisplay(upper) + "!");
+				
+				player.setSlot(-1);
+				return false;
+			}
+			
+			playersRankChecked.add(player);
+		}else if(match.getTournament().isUsingMapStats())
+			rank = Utils.getOsuPlayerRank(player.getName(), match.getTournament().getMode(), true);
+		
+		if(rank > 0) player.setRank(rank);
+		
+		if(isCaptain(player.getIRCTag()))
+			waitingForCaptains--;
+		
+		if(waitingForCaptains == 0 && playersInRoom.size() < 2)
+			waitingForCaptains++;
+		else if(waitingForCaptains <= 0)
+			mapSelection(1);
+		
+		return true;
 	}
 }

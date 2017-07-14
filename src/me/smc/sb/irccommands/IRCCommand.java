@@ -148,7 +148,6 @@ public abstract class IRCCommand{
 		commands.add(new ResizeMatchCommand());
 		commands.add(new ResyncMatchCommand());
 		commands.add(new ConfirmTeamCommand());
-		commands.add(new JoinMatchCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());
 		commands.add(new InvitePlayerCommand());
