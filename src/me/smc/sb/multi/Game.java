@@ -1811,9 +1811,10 @@ public abstract class Game{
 			if(!userID.equals("-1")) pl.setUserID(userID);
 		}
 		
-		int slot = Utils.stringToInt(message.split("joined in slot ")[1].split(" for team")[0]); // optimize for color?
+		int slot = Utils.stringToInt(message.split("joined in slot ")[1].split(" for team")[0]);
+		String color = message.split(" for team ")[1].split("\\.")[0];
 		findPlayer(player).setSlot(slot);
-		joinRoom(player);
+		joinRoom(player, color);
 	}
 	
 	protected void sendPriorityMessage(String command){
@@ -1828,9 +1829,9 @@ public abstract class Game{
 		sendMessage("!mp invite " + player);
 	}
 	
-	protected void joinRoom(String player){
+	protected void joinRoom(String player, String color){
 		playersInRoom.add(player.replaceAll(" ", "_"));
-		assignSlotAndTeam(player.replaceAll(" ", "_"));
+		assignSlotAndTeam(player.replaceAll(" ", "_"), color);
 	}
 	
 	protected Team findTeam(String player){
@@ -1892,16 +1893,15 @@ public abstract class Game{
 		return false;
 	}
 	
-	private boolean assignSlotAndTeam(String player){	
+	private boolean assignSlotAndTeam(String player, String color){	
 		Team team = findTeam(player);
 		boolean fTeam = teamToBoolean(team);
-		String color = fTeam ? "blue" : "red";
 		Player pl = findPlayer(player);
 		int i = fTeam ? 1 : (match.getPlayers() / 2 + 1);
 		int upperBound = fTeam ? (match.getPlayers() / 2 + 1) : (match.getPlayers() + 1);
 		int currentSlot = pl.getSlot();
 		
-		if(currentSlot < upperBound) return joinChecks(pl, color);
+		if(currentSlot < upperBound && currentSlot >= i) return joinChecks(pl, color, fTeam);
 		
 		pl.setSlot(-1);
 		
@@ -1932,7 +1932,7 @@ public abstract class Game{
 				pl.setSlot(i);
 				sendMessage("!mp move " + pl.getIRCTag() + " " + i);
 				
-				return joinChecks(pl, color);
+				return joinChecks(pl, color, fTeam);
 			}
 		}
 		
@@ -1941,8 +1941,11 @@ public abstract class Game{
 		return false;
 	}
 	
-	private boolean joinChecks(Player player, String color){
-		sendMessage("!mp team " + player.getIRCTag() + " " + color);
+	private boolean joinChecks(Player player, String color, boolean fTeam){
+		String expectedColor = fTeam ? "blue" : "red";
+		
+		if(!color.equalsIgnoreCase(expectedColor))
+			sendMessage("!mp team " + player.getIRCTag() + " " + expectedColor);
 		
 		int lower = match.getTournament().getLowerRankBound();
 		int upper = match.getTournament().getUpperRankBound();
