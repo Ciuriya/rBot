@@ -1060,6 +1060,7 @@ public class Tournament{
 				MapPool pool = new MapPool(this, Utils.stringToInt(poolNum), false);
 				
 				List<String> maps = config.getStringList("pool-" + poolNum + "-maps");
+				
 				if(maps.size() != 0)
 					for(String map : maps)
 						pool.addMap(new Map(map, pool));

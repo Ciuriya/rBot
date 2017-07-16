@@ -51,15 +51,56 @@ public class Tournament{
 	
 	@SuppressWarnings("unchecked")
 	public ArrayList<String> getStringList(String key){
-		return (ArrayList<String>) configValues.get(key);
+		ArrayList<String> list = (ArrayList<String>) configValues.get(key);
+		
+		return list == null ? new ArrayList<String>() : list;
 	}
 	
+	public void appendToStringList(String key, String value){
+		ArrayList<String> list = getStringList(key);
+		
+		list.add(value);
+		
+		set(key, value);
+	}
+	
+	public void removeFromStringList(String key, String value){
+		ArrayList<String> list = getStringList(key);
+		
+		list.remove(value);
+		
+		set(key, value);
+	}
+	
+	@SuppressWarnings("unchecked")
 	public void set(String key, Object value){
 		configValues.put(key, value);
+		
+		Configuration config = getConfig();
+		
+		if(value instanceof ArrayList)
+			config.writeStringList("conf-" + key, (ArrayList<String>) value, true);
+		else config.writeValue("conf-" + key, value);
 	}
 	
 	public Configuration getConfig(){
 		return new Configuration(new File("tournament-" + get("name") + ".txt"));
+	}
+	
+	protected int incrementPoolCount(){
+		int lastPool = getInt("last-pool");
+		
+		set("last-pool", lastPool + 1);
+		
+		return lastPool + 1;
+	}
+	
+	protected int incrementMatchCount(){
+		int lastMatch = getInt("last-match");
+		
+		set("last-match", lastMatch + 1);
+		
+		return lastMatch + 1;
 	}
 	
 	public void load(){
@@ -105,8 +146,8 @@ public class Tournament{
 			for(String sTournament : savedTournaments){
 				Tournament tournament = new Tournament(sTournament, false);
 
-				/*tournament.loadPools();
-				tournament.loadTeams();
+				MapPool.loadPools(tournament);
+				/*tournament.loadTeams();
 				tournament.loadMatches();
 				
 				if(!tournament.getConfig().getStringList("tournament-admins").isEmpty()){
