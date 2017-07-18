@@ -110,12 +110,11 @@ public class MapPool{
 		return null;
 	}
 	
-	public void delete(){
-		Configuration config = tournament.getConfig();
-		tournament.removeFromStringList("pools", "" + poolNum);
+	public static void removePool(Tournament t, int poolNum){
+		MapPool pool = getPool(t, poolNum);
 		
-		config.deleteKey("pool-" + poolNum + "-maps");
-		config.deleteKey("pool-" + poolNum + "-sheet");
+		pools.remove(pool);
+		pool.delete();
 	}
 	
 	public void save(boolean append){
@@ -133,6 +132,14 @@ public class MapPool{
 		}
 		
 		if(sheetUrl != "") config.writeValue("pool-" + poolNum + "-sheet", sheetUrl);
+	}
+	
+	public void delete(){
+		Configuration config = tournament.getConfig();
+		
+		tournament.removeFromStringList("pools", "" + poolNum);
+		config.deleteKey("pool-" + poolNum + "-maps");
+		config.deleteKey("pool-" + poolNum + "-sheet");
 	}
 	
 	public static void loadPools(Tournament t){

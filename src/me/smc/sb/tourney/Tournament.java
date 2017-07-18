@@ -12,6 +12,7 @@ import me.smc.sb.utils.Utils;
 public class Tournament{
 
 	public static List<Tournament> tournaments;
+	public Map<String, Match> conditionalTeams = new HashMap<>();
 	private Map<String, Object> configValues;
 	
 	public Tournament(String name){
@@ -138,6 +139,18 @@ public class Tournament{
 		}
 	}
 	
+	public void delete(){
+		Configuration config = new Configuration(new File("tournaments.txt"));
+		ArrayList<String> savedTournaments = config.getStringList("tournaments");
+		
+		if(!savedTournaments.isEmpty()){
+			savedTournaments.remove(get("name"));
+			config.writeStringList("tournaments", savedTournaments, true);
+		}
+		
+		getConfig().delete();
+	}
+	
 	public static void loadTournaments(){
 		tournaments = new ArrayList<>();
 		List<String> savedTournaments = new Configuration(new File("tournaments.txt")).getStringList("tournaments");
@@ -147,12 +160,8 @@ public class Tournament{
 				Tournament tournament = new Tournament(sTournament, false);
 
 				MapPool.loadPools(tournament);
-				/*tournament.loadTeams();
-				tournament.loadMatches();
-				
-				if(!tournament.getConfig().getStringList("tournament-admins").isEmpty()){
-					tournament.setMatchAdmins(tournament.getConfig().getStringList("tournament-admins"));
-				}*/
+				Team.loadTeams(tournament);
+				Match.loadMatches(tournament);
 			}	
 	}
 }
