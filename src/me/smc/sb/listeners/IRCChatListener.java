@@ -15,9 +15,9 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Game;
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
+import me.smc.sb.tourney.Game;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -132,7 +132,7 @@ public class IRCChatListener extends ListenerAdapter{
 			int next = 0;
 			
 			while(t != null){
-				Log.logger.log(Level.INFO, "Finding match in tournament: " + t.getName() + " (Display: " + t.getDisplayName() + ")");
+				Log.logger.log(Level.INFO, "Finding match in tournament: " + t.get("name") + " (Display: " + t.get("displayName") + ")");
 				
 				if(findMatch(t, gameName, mpLink)) return true;
 				else{
@@ -140,15 +140,13 @@ public class IRCChatListener extends ListenerAdapter{
 					t = Tournament.getTournament(tournamentName, next);
 				}
 			}
-			
-			Log.logger.log(Level.INFO, "------------ Failed Game: " + gameName);
 		}
 		
 		return false;
 	}
 	
 	private boolean findMatch(Tournament t, String gameName, String mpLink){
-		for(Match match : t.getMatches()){
+		for(Match match : Match.getMatches(t)){
 			if(match == null) continue;
 			
 			Log.logger.log(Level.INFO, "Match: " + match.getLobbyName() + " | Current: " + gameName);

@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
-import me.smc.sb.multi.Game;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
@@ -50,7 +50,7 @@ public class Match{
 		matches.add(this);
 	}
 	
-	public int getPlayers(){
+	public int getMatchSize(){
 		return players;
 	}
 	
@@ -221,6 +221,10 @@ public class Match{
 					return match;
 		
 		return null;
+	}
+	
+	public static List<Match> getMatches(Tournament t){
+		return matches.stream().filter(m -> m.getTournament().get("name").equalsIgnoreCase(t.get("name"))).collect(Collectors.toList());
 	}
 	
 	public static void removeMatch(Tournament t, int matchNum){

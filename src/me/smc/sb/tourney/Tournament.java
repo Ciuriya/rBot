@@ -104,6 +104,44 @@ public class Tournament{
 		return lastMatch + 1;
 	}
 	
+	public long getTempLobbyDecayTime(){
+		Object decayTime = configValues.get("tempLobbyDecayTime");
+		
+		return decayTime == null ? 0 : (long) decayTime;
+	}
+	
+	public void setTempLobbyDecayTime(){
+		configValues.put("tempLobbyDecayTime", System.currentTimeMillis() + 300000l); // 5 minutes later
+	}
+	
+	public static Tournament getTournament(String name){
+		return getTournament(name, 0);
+	}
+	
+	public static Tournament getTournament(String name, int next){
+		int nextSelected = next;
+		
+		if(!tournaments.isEmpty())
+			for(Tournament t : tournaments)
+				if(t.get("name").equalsIgnoreCase(name)){
+					if(nextSelected > 0){
+						nextSelected--;
+						continue;
+					}
+					
+					return t;
+				}else if(t.get("displayName").equalsIgnoreCase(name)){
+					if(nextSelected > 0){
+						nextSelected--;
+						continue;
+					}
+					
+					return t;
+				}
+		
+		return null;
+	}
+	
 	public void load(){
 		Configuration config = getConfig();
 		
@@ -149,6 +187,10 @@ public class Tournament{
 		}
 		
 		getConfig().delete();
+	}
+	
+	public void setDefaults(){
+		//fill in
 	}
 	
 	public static void loadTournaments(){

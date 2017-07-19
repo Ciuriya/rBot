@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import me.smc.sb.multi.Player;
 import me.smc.sb.utils.Configuration;
 
 public class Team{
@@ -44,6 +43,10 @@ public class Team{
 	
 	public int getServerTeamID(){
 		return serverTeamID;
+	}
+	
+	public boolean has(Player player){
+		return players.contains(player);
 	}
 	
 	public void setServerTeamID(int serverTeamID){

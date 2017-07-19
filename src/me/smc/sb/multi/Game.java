@@ -111,7 +111,7 @@ public abstract class Game{
 		this.mpLink = mpLink;
 		
 		IRCChatListener.gameCreatePMs.remove(multiChannel.replace("#mp_", "") + "|" + match.getLobbyName());
-		IRCChatListener.gamesListening.put(multiChannel, this);
+		//IRCChatListener.gamesListening.put(multiChannel, this);
 		
 		setupGame();
 		
