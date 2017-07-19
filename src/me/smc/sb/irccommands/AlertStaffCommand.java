@@ -7,8 +7,8 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Game;
-import me.smc.sb.multi.Tournament;
+import me.smc.sb.tourney.Game;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.entities.TextChannel;
 
@@ -42,13 +42,13 @@ public class AlertStaffCommand extends IRCCommand{
 		
 		if(!gamesAllowedToAlert.isEmpty())
 			for(Game game : gamesAllowedToAlert)
-				if(game.verifyPlayer(userName.replaceAll(" ", "_"))){
+				if(game.verify(userName)){
 					Tournament t = game.match.getTournament();
 					
-					TextChannel channel = Main.api.getTextChannelById(t.getAlertDiscord());
-					String mention = channel.getGuild().getRolesByName(t.getAlertMessage(), true).get(0).getAsMention();
+					TextChannel channel = Main.api.getTextChannelById(t.get("alertDiscord"));
+					String mention = channel.getGuild().getRolesByName(t.get("alertMessage"), true).get(0).getAsMention();
 					
-					if(Main.api.getTextChannelById(t.getAlertDiscord()) != null)
+					if(Main.api.getTextChannelById(t.get("alertDiscord")) != null)
 						Utils.infoBypass(channel, mention + 
 												  "\nGame #" + game.getMpNum() + " (match #" + game.match.getMatchNum() + ")\n" + 
 												  userName + "\n" + msg);
@@ -58,5 +58,4 @@ public class AlertStaffCommand extends IRCCommand{
 		
 		return "You cannot alert staff right now.";
 	}
-	
 }

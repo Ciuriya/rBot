@@ -14,6 +14,7 @@ public class Tournament{
 	public static List<Tournament> tournaments;
 	public Map<String, Match> conditionalTeams = new HashMap<>();
 	private Map<String, Object> configValues;
+	private TwitchHandler twitchHandler;
 	
 	public Tournament(String name){
 		this(name, true);
@@ -28,6 +29,11 @@ public class Tournament{
 		if(append) save(true);
 		
 		tournaments.add(this);
+		
+		Object twitchChannel = configValues.get("twitchChannel");
+		
+		if(twitchChannel != null && twitchChannel instanceof String)
+			twitchHandler = TwitchHandler.add((String) twitchChannel, this);
 	}
 	
 	public String get(String key){
@@ -102,6 +108,10 @@ public class Tournament{
 		set("last-match", lastMatch + 1);
 		
 		return lastMatch + 1;
+	}
+	
+	public TwitchHandler getTwitchHandler(){
+		return twitchHandler;
 	}
 	
 	public long getTempLobbyDecayTime(){

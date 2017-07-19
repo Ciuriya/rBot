@@ -17,7 +17,6 @@ import me.smc.sb.irccommands.AlertStaffCommand;
 import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.ChangeWarmupModCommand;
 import me.smc.sb.irccommands.ContestCommand;
-import me.smc.sb.irccommands.InvitePlayerCommand;
 import me.smc.sb.irccommands.PassTurnCommand;
 import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
@@ -142,7 +141,7 @@ public abstract class Game{
 		
 		updateTwitch("Waiting for players to join the lobby...");
 		
-		if(match.getTournament().getAlertDiscord().length() > 0) AlertStaffCommand.gamesAllowedToAlert.add(this);
+		//if(match.getTournament().getAlertDiscord().length() > 0) AlertStaffCommand.gamesAllowedToAlert.add(this);
 	}
 	
 	public void setupGame(){
@@ -528,8 +527,8 @@ public abstract class Game{
 		
 		waitingForCaptains = 0;
 		
-		InvitePlayerCommand.allowedInviters.remove(match.getFirstTeam());
-		InvitePlayerCommand.allowedInviters.remove(match.getSecondTeam());
+		//InvitePlayerCommand.allowedInviters.remove(match.getFirstTeam());
+		//InvitePlayerCommand.allowedInviters.remove(match.getSecondTeam());
 		RandomCommand.waitingForRolls.remove(match.getFirstTeam());
 		RandomCommand.waitingForRolls.remove(match.getSecondTeam());
 		SelectMapCommand.pickingTeams.remove(match.getFirstTeam());

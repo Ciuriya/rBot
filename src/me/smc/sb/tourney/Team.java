@@ -49,6 +49,10 @@ public class Team{
 		return players.contains(player);
 	}
 	
+	public boolean has(String playerName){
+		return players.stream().anyMatch(p -> p.getName().replaceAll(" ", "_").equalsIgnoreCase(playerName));
+	}
+	
 	public void setServerTeamID(int serverTeamID){
 		this.serverTeamID = serverTeamID;
 	}

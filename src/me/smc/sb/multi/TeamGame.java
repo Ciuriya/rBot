@@ -5,8 +5,6 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import me.smc.sb.irccommands.InvitePlayerCommand;
-
 public class TeamGame extends Game{
 
 	public TeamGame(Match match){
@@ -55,14 +53,14 @@ public class TeamGame extends Game{
 	
 	@Override
 	public void allowTeamInvites(){
-		if(InvitePlayerCommand.allowedInviters.containsKey(match.getFirstTeam())) return;
+		//if(InvitePlayerCommand.allowedInviters.containsKey(match.getFirstTeam())) return;
 		
 		messageUpdater("Use !invite <player name> to invite your teammates or invite them through osu!. ",
 				       "Both captains, use !random to settle which team goes first." + 
 				       (match.getTournament().getAlertDiscord().length() > 0 ? "If you need help, use !alert <message>" : ""));
 	
-		InvitePlayerCommand.allowedInviters.put(match.getFirstTeam(), this);
-		InvitePlayerCommand.allowedInviters.put(match.getSecondTeam(), this);
+		//InvitePlayerCommand.allowedInviters.put(match.getFirstTeam(), this);
+		//InvitePlayerCommand.allowedInviters.put(match.getSecondTeam(), this);
 	}
 
 	@Override

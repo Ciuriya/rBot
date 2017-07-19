@@ -150,7 +150,6 @@ public abstract class IRCCommand{
 		commands.add(new ConfirmTeamCommand());
 		commands.add(new RandomCommand());
 		commands.add(new SelectMapCommand());
-		commands.add(new InvitePlayerCommand());
 		commands.add(new BanMapCommand());
 		commands.add(new PassTurnCommand());
 		commands.add(new SkipRematchCommand());

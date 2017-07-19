@@ -15,7 +15,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
-import me.smc.sb.tourney.Game;
+import me.smc.sb.tourney.BanchoHandler;
 import me.smc.sb.tourney.Match;
 import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Log;
@@ -27,7 +27,7 @@ public class IRCChatListener extends ListenerAdapter{
 	public static LinkedList<String> pmsToSend = new LinkedList<>();
 	public static Timer pmQueue;
 	private boolean started = false;
-	public static Map<String, Game> gamesListening = new HashMap<>();
+	public static Map<String, BanchoHandler> gamesListening = new HashMap<>();
 	public static List<String> gameCreatePMs = new ArrayList<>();
 	
 	@Override
@@ -85,7 +85,8 @@ public class IRCChatListener extends ListenerAdapter{
 		if(e.getUser().getNick().equalsIgnoreCase("BanchoBot"))
 			for(String game : gamesListening.keySet())
 				if(e.getChannel().getName().equalsIgnoreCase(game)){
-					gamesListening.get(game).handleBanchoFeedback(e.getMessage());
+					gamesListening.get(game).handleMessage(e.getMessage());
+					
 					return true;
 				}
 		
@@ -154,7 +155,10 @@ public class IRCChatListener extends ListenerAdapter{
 			if(match.getLobbyName().equalsIgnoreCase(gameName) &&
 			   match.getGame() != null){
 				Log.logger.log(Level.INFO, "Launched match.");
+				
+				gameCreatePMs.remove(mpLink.split("mp\\/")[1] + "|" + match.getLobbyName());
 				match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
+				
 				return true;
 			}
 		}
