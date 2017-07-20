@@ -324,7 +324,7 @@ public class SelectionManager{
 					
 					if(map != null){
 						game.banchoHandle.sendMessage("Attempting to force start...", false);
-						readyCheck(true);
+						game.readyManager.playersReady();
 						
 						return;
 					}

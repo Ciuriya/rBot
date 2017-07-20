@@ -104,7 +104,6 @@ public class ResultManager{
 										 Utils.veryLongNumberDisplay((long) Math.abs(fTeamScore - sTeamScore)) + " points!";
 					
 					game.selectionManager.warmupsLeft--;
-					
 					game.banchoHandle.sendMessage(updateMessage, false);
 					game.feed.updateTwitch(updateMessage, 20);
 					game.feed.updateDiscord();
@@ -143,74 +142,68 @@ public class ResultManager{
 						return;
 					}
 					
-					if(game.match.getTournament().getBool("usingMapStats")){
-
-					}
+					if(game.match.getTournament().getBool("usingMapStats"))
+						incrementPlayerStats(totalScore, targetRangeScore, totalPasses, targetRangePasses, totalSubmits);
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
 					
-					String updateMessage = (fTeamScore > sTeamScore ? match.getFirstTeam().getTeamName() :
-						 					match.getSecondTeam().getTeamName()) + " won by " + 
+					String updateMessage = (fTeamScore > sTeamScore ? game.firstTeam.getTeam().getTeamName() :
+						 					game.secondTeam.getTeam().getTeamName()) + " won by " + 
 						 					Utils.veryLongNumberDisplay((long) Math.abs(fTeamScore - sTeamScore)) + " points!";
 					
-					sendMessage(updateMessage);
-					updateTwitch(updateMessage, 20);
+					game.banchoHandle.sendMessage(updateMessage, false);
+					game.feed.updateTwitch(updateMessage, 20);
 					
-					if(fTeamWon) fTeamPoints++;
-					else sTeamPoints++;
+					if(fTeamWon) game.firstTeam.addPoint();
+					else game.secondTeam.addPoint();
 					
-					lastWinner = fTeamScore > sTeamScore ? match.getFirstTeam() : match.getSecondTeam();
-					
-					updateScores(true);
+					lastWinner = fTeamScore > sTeamScore;
+					updateScores();
 				}
 				
-				switchPlaying(false, true);
-				
-				banchoFeedback.clear();
+				game.readyManager.switchPlaying(false, true);
 			}
 		}, 10000);
 	}
 	
 	protected void updateScores(){
-		sendMessage(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
-				sTeamPoints + " " + match.getSecondTeam().getTeamName() +
-				"      Best of " + match.getBestOf());
+		game.selectionManager.map = null;
 		
-		updateResults(false);
-		updateTwitch(match.getFirstTeam().getTeamName() + " " + fTeamPoints + " | " +
-					 sTeamPoints + " " + match.getSecondTeam().getTeamName() + " BO" + match.getBestOf(), 20);
+		PlayingTeam first = game.firstTeam;
+		PlayingTeam second = game.secondTeam;
+		
+		game.banchoHandle.sendMessage(first.getTeam().getTeamName() + " " + first.getPoints() + " | " +
+									  second.getPoints() + " " + second.getTeam().getTeamName() +
+									  "      Best of " + game.match.getBestOf(), false);
+		game.feed.updateDiscord();
+		game.feed.updateTwitch(first.getTeam().getTeamName() + " " + first.getPoints() + " | " +
+					 		   second.getPoints() + " " + second.getTeam().getTeamName() + " BO" + game.match.getBestOf(), 20);
 	
-		if(fTeamPoints + sTeamPoints == match.getBestOf() - 1 && fTeamPoints == sTeamPoints){
-			changeMap(match.getMapPool().findTiebreaker());
-			
-			mapSelected = true;
-			if(mapUpdater != null) mapUpdater.cancel();
-			
+		if(first.getPoints() + second.getPoints() == game.match.getBestOf() - 1 && first.getPoints() == second.getPoints()){
+			game.selectionManager.changeMap(game.match.getMapPool().findTiebreaker());
 			contestMessage();
-		}else if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2)){
-			String winningTeam = (fTeamPoints > sTeamPoints ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName());
+			game.readyManager.startReadyWait();
+		}else if(first.getPoints() > Math.floor(game.match.getBestOf() / 2) || second.getPoints() > Math.floor(game.match.getBestOf() / 2)){
+			String winningTeam = (first.getPoints() > second.getPoints() ? first.getTeam().getTeamName() : second.getTeam().getTeamName());
 			
-			sendMessage(winningTeam + " has won this game!");
-			sendMessage("The lobby is ending in 30 seconds, thanks for playing!");
-			sendMessage("!mp timer");
-			
-			if(mapUpdater != null) mapUpdater.cancel();
-			
-			updateTwitch(winningTeam + " has won this game! " + mpLink, 20);
+			game.banchoHandle.sendMessage(winningTeam + " has won this game!", false);
+			game.banchoHandle.sendMessage("The lobby is ending in 30 seconds, thanks for playing!", false);
+			game.banchoHandle.sendMessage("!mp timer", false);
+			game.feed.updateTwitch(winningTeam + " has won this game! " + game.mpLink, 20);
 			
 			Timer twitchCloseDelay = new Timer();
 			twitchCloseDelay.schedule(new TimerTask(){
 				public void run(){
-					if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2))
-						match.getTournament().stopStreaming(Game.this);
+					if(first.getPoints() > Math.floor(game.match.getBestOf() / 2) || second.getPoints() > Math.floor(game.match.getBestOf() / 2))
+						game.match.getTournament().getTwitchHandler().stopStreaming(game);
 				}
 			}, 25500);
 			
 			Timer time = new Timer();
 			time.schedule(new TimerTask(){
 				public void run(){
-					if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2))
-						stop();
+					if(first.getPoints() > Math.floor(game.match.getBestOf() / 2) || second.getPoints() > Math.floor(game.match.getBestOf() / 2))
+						game.stop();
 				}
 			}, 30000);
 			
@@ -219,7 +212,7 @@ public class ResultManager{
 			return;
 		}else{
 			contestMessage();
-			mapSelection(4);
+			game.selectionManager.selectPicks();
 		}
 	}
 	
@@ -310,7 +303,6 @@ public class ResultManager{
 	protected void contestMessage(){
 		ContestCommand.gamesAllowedToContest.add(game);
 		contestState = 0;
-		
 		game.banchoHandle.sendMessage("If you wish to give the other team the point instead, both teams please use !contest", false);
 	}
 	
