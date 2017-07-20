@@ -1,44 +1,49 @@
 package me.smc.sb.irccommands;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Game;
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
+import me.smc.sb.tourney.PlayingTeam;
 import me.smc.sb.utils.Utils;
 
 public class RandomCommand extends IRCCommand{
 
-	public static Map<Team, Game> waitingForRolls;
+	public static List<PlayingTeam> waitingForRolls;
 	
 	public RandomCommand(){
-		super("Rolls a random number from 1 to 100.",
+		super("Rolls a random number from 1 to 100 (or even a desired maximum).",
 			  " ",
 			  null,
 			  true,
-			  "random");
-		waitingForRolls = new HashMap<>();
+			  "random", "dice", "toss", "flip", "r");
+		waitingForRolls = new ArrayList<>();
 	}
 
 	@Override
 	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		String userName = Utils.toUser(e, pe);
+		int max = 100;
+		int random = 0;
 		
-		int random = Utils.fetchRandom(1, 100);
-		Utils.info(e, pe, discord, userName + " rolled " + random + "!");
+		if(args.length > 0 && Utils.stringToInt(args[0]) >= 1)
+			max = Utils.stringToInt(args[0]);
 		
 		if(!waitingForRolls.isEmpty() && !Utils.isTwitch(e))
-			for(Team team : waitingForRolls.keySet())
-				for(Player pl : team.getPlayers())
-					if(pl.getName().replaceAll(" ", "_").equalsIgnoreCase(userName.replaceAll(" ", "_"))){
-						waitingForRolls.get(team).acceptRoll(userName.replaceAll(" ", "_"), random);
-						return "";
-					}
+			for(PlayingTeam team : waitingForRolls){
+				if(team.getTeam().has(userName)){
+					max = 100;
+					random = Utils.fetchRandom(1, max);
+					team.setRoll(random);
+				}
+			}
 		
+		if(random == 0) random = Utils.fetchRandom(1, max);
+		
+		Utils.info(e, pe, discord, userName + " rolled " + random + "!");
+				
 		return "";
 	}
 	

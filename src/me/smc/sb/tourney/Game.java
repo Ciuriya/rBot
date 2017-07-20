@@ -1,9 +1,12 @@
 package me.smc.sb.tourney;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import me.smc.sb.irccommands.AlertStaffCommand;
+import me.smc.sb.irccommands.PassTurnCommand;
+import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.utils.Utils;
 
@@ -15,17 +18,22 @@ public class Game{
 	protected PlayingTeam firstTeam;
 	protected PlayingTeam secondTeam;
 	protected BanchoHandler banchoHandle;
+	protected LobbyManager lobbyManager;
 	protected GameFeed feed;
+	protected Timer messageUpdater;
 	protected int roomSize;
-	protected boolean finished;
+	protected long lastPickTime;
+	protected PlayingTeam nextTeam;
+	protected GameState state;
 	
 	public Game(Match match){
 		this.match = match;
 		this.match.setGame(this);
 		this.banchoHandle = new BanchoHandler(this);
+		this.lobbyManager = new LobbyManager(this);
 		this.firstTeam = new PlayingTeam(match.getFirstTeam(), this);
 		this.secondTeam = new PlayingTeam(match.getSecondTeam(), this);
-		this.finished = false;
+		this.state = GameState.WAITING;
 		
 		banchoHandle.sendMessage("BanchoBot", "!mp make " + match.getLobbyName(), true);
 	}
@@ -40,6 +48,14 @@ public class Game{
 		
 		firstTeam.inviteTeam(0, 60000);
 		secondTeam.inviteTeam(0, 60000);
+		
+		new Timer().schedule(new TimerTask(){
+			public void run(){
+				if(state.eq(GameState.WAITING)){
+					
+				}
+			}
+		}, match.getTournament().getInt("gracePeriodTime") * 1000);
 		
 		feed = new GameFeed(this);
 		feed.updateTwitch("Waiting for players to join the lobby...");
@@ -73,21 +89,118 @@ public class Game{
 			banchoHandle.sendMessage("!mp addref " + admins, true);
 	}
 	
-	public List<Player> getCurrentPlayers(){
-		List<Player> current = new ArrayList<>();
+	public void checkRolls(){
+		int first = firstTeam.getRoll();
+		int second = secondTeam.getRoll();
 		
-		current.addAll(firstTeam.getCurrentPlayers());
-		current.addAll(secondTeam.getCurrentPlayers());
-		
-		return current;
+		if(first != -1 && second != -1){
+			if(first == second){
+				banchoHandle.sendMessage("Rolls were equal! Please reroll using !random", false);
+				
+				RandomCommand.waitingForRolls.add(firstTeam);
+				RandomCommand.waitingForRolls.add(secondTeam);
+				
+				return;
+			}
+			
+			if(first > second) nextTeam = firstTeam;
+			else nextTeam = secondTeam;
+			
+			PassTurnCommand.passingTeams.add(nextTeam);
+			
+			banchoHandle.sendMessage(nextTeam.getTeam().getTeamName() + 
+									 ", you can use !pass within the next 20 seconds to let the other " + getTeamIndicator() + " start instead!",
+									 false);
+	
+			if(messageUpdater != null) messageUpdater.cancel();
+			
+			final PlayingTeam rollWinTeam = nextTeam;
+			
+			Timer t = new Timer();
+			t.schedule(new TimerTask(){
+				public void run(){
+					PassTurnCommand.passingTeams.remove(rollWinTeam);
+					
+					feed.updateDiscord();
+					banchoHandle.sendMessage("This match is reffed by a bot! " + 
+											 "If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord server] or to Smc. " +
+											 "Thank you!", false);
+					//mapSelection(2);
+				}
+			}, 20000);
+		}
 	}
 	
-	public boolean verify(String playerName){
-		return firstTeam.getTeam().has(playerName.replaceAll(" ", "_")) ||
-			   secondTeam.getTeam().has(playerName.replaceAll(" ", "_"));
+	protected void messageUpdater(String...messages){
+		messageUpdater(0, 0, messages);
+	}
+	
+	protected void messageUpdater(int delay, long waitTime, String...messages){
+		if(messageUpdater != null) messageUpdater.cancel();
+		if(messages == null || messages.length <= 0) return;
+		
+		messageUpdater = new Timer();
+		messageUpdater.scheduleAtFixedRate(new TimerTask(){
+			public void run(){
+				if(waitTime > 0){
+					if(System.currentTimeMillis() >= lastPickTime + (waitTime * 1000)) return;
+					else{
+						for(String message : messages)
+							banchoHandle.sendMessage(message, false);
+						
+						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + waitTime) - (System.currentTimeMillis() / 1000))) / 60, 0);
+						banchoHandle.sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!", false);
+					}
+				}else 
+					for(String message : messages)
+						banchoHandle.sendMessage(message, false);
+			}
+		}, delay * 1000, 60000);
+	}
+	
+	public PlayingTeam getFirstTeam(){
+		return firstTeam;
+	}
+	
+	public PlayingTeam getSecondTeam(){
+		return secondTeam;
+	}
+	
+	public PlayingTeam getOppositeTeam(PlayingTeam team){
+		if(team.getTeam().getTeamName().equalsIgnoreCase(firstTeam.getTeam().getTeamName()))
+			return secondTeam;
+		else return firstTeam;
+	}
+	
+	public void switchNextTeam(){
+		if(nextTeam.getTeam().getTeamName().equalsIgnoreCase(firstTeam.getTeam().getTeamName()))
+			nextTeam = secondTeam;
+		else nextTeam = firstTeam;
+	}
+	
+	// team for team tourney, player for solo tourney
+	public String getTeamIndicator(){
+		if(match.getTournament().getInt("type") == 0) return "team";
+		else return "player";
+	}
+	
+	public BanchoHandler getBanchoHandle(){
+		return banchoHandle;
+	}
+	
+	public LobbyManager getLobbyManager(){
+		return lobbyManager;
+	}
+	
+	public GameFeed getGameFeed(){
+		return feed;
 	}
 	
 	public int getMpNum(){
 		return Utils.stringToInt(multiChannel.replace("#mp_", ""));
+	}
+	
+	public void stop(){
+		
 	}
 }

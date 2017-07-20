@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import me.smc.sb.irccommands.RandomCommand;
+
 public class PlayingTeam{
 	
 	private Game game;
 	private Team team;
 	private int points;
 	private int rematchesLeft;
+	private int roll;
 	private List<Player> currentPlayers;
 	private List<Map> bans;
 	private LinkedList<PickedMap> mapsPicked;
@@ -19,6 +22,7 @@ public class PlayingTeam{
 	public PlayingTeam(Team team, Game game){
 		this.game = game;
 		this.team = team;
+		this.roll = -1;
 		this.rematchesLeft = game.match.getTournament().getInt("rematchesAllowed");
 		this.currentPlayers = new ArrayList<>();
 		this.bans = new ArrayList<>();
@@ -41,6 +45,10 @@ public class PlayingTeam{
 		return points;
 	}
 	
+	public int getRoll(){
+		return roll;
+	}
+	
 	public boolean canRematch(){
 		return rematchesLeft != 0;
 	}
@@ -57,6 +65,14 @@ public class PlayingTeam{
 		return mapsPicked;
 	}
 	
+	public void addPoint(){
+		points++;
+	}
+	
+	public void removePoint(){
+		points--;
+	}
+	
 	public boolean useRematch(){
 		boolean rematch = canRematch();
 		
@@ -65,11 +81,19 @@ public class PlayingTeam{
 		return rematch;
 	}
 	
+	public void setRoll(int roll){
+		this.roll = roll;
+		RandomCommand.waitingForRolls.remove(team);
+		game.checkRolls();
+	}
+	
 	public boolean addPlayer(Player player){
 		if(currentPlayers.size() < getMatch().getMatchSize() / 2 && team.has(player) &&
 			!currentPlayers.contains(player)){
 			return currentPlayers.add(player);
 		}
+		
+		if(currentPlayers.contains(player)) return true;
 		
 		return false;
 	}

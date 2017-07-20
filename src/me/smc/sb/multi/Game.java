@@ -230,8 +230,8 @@ public abstract class Game{
 			case 1:
 				allowTeamInvites();
 				
-				RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
-				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
+				//RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
+				//RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				break;
 			case 2:
 				if(state.eq(GameState.PAUSED)) return;
@@ -471,8 +471,8 @@ public abstract class Game{
 	public void acceptRoll(String player, int roll){
 		Team team = findTeam(player);
 		
-		if(!RandomCommand.waitingForRolls.containsKey(team))
-			return;
+		//if(!RandomCommand.waitingForRolls.containsKey(team))
+			//return;
 			
 		rollsLeft--;
 		RandomCommand.waitingForRolls.remove(team);
@@ -482,8 +482,8 @@ public abstract class Game{
 			
 			if(roll == previousRoll){
 				sendMessage("Rolls were equal! Please reroll using !random.");
-				RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
-				RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
+				//RandomCommand.waitingForRolls.put(match.getFirstTeam(), this);
+				//RandomCommand.waitingForRolls.put(match.getSecondTeam(), this);
 				rollsLeft = 2;
 				return;
 			}
@@ -491,7 +491,7 @@ public abstract class Game{
 			if(roll > previousRoll) fTeamFirst = fTeam;
 			else fTeamFirst = !fTeam;
 			
-			PassTurnCommand.passingTeams.put(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam(), this);
+			//PassTurnCommand.passingTeams.put(fTeamFirst ? match.getFirstTeam() : match.getSecondTeam(), this);
 			
 			sendMessage((fTeamFirst ? match.getFirstTeam().getTeamName() : match.getSecondTeam().getTeamName()) + 
 					        ", you can use !pass within the next 20 seconds to let the other team start instead!");
@@ -1842,7 +1842,7 @@ public abstract class Game{
 		
 		return null;
 	}
-
+	
 	protected boolean teamToBoolean(Team team){
 		return team.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName());
 	}

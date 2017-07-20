@@ -42,7 +42,7 @@ public class AlertStaffCommand extends IRCCommand{
 		
 		if(!gamesAllowedToAlert.isEmpty())
 			for(Game game : gamesAllowedToAlert)
-				if(game.verify(userName)){
+				if(game.getLobbyManager().verify(userName)){
 					Tournament t = game.match.getTournament();
 					
 					TextChannel channel = Main.api.getTextChannelById(t.get("alertDiscord"));

@@ -50,7 +50,7 @@ public class Team{
 	}
 	
 	public boolean has(String playerName){
-		return players.stream().anyMatch(p -> p.getName().replaceAll(" ", "_").equalsIgnoreCase(playerName));
+		return players.stream().anyMatch(p -> p.getName().replaceAll(" ", "_").equalsIgnoreCase(playerName.replaceAll(" ", "_")));
 	}
 	
 	public void setServerTeamID(int serverTeamID){

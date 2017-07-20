@@ -73,7 +73,11 @@ public class GameFeed{
 	}
 	
 	public void updateTwitch(String message){
-		new Thread(new Runnable(){
+		updateTwitch(message, 0);
+	}
+	
+	public void updateTwitch(String message, int delay){
+		new Timer().schedule(new TimerTask(){
 			public void run(){
 				if(connectToStream(game)){
 					String channel = game.match.getTournament().get("twitchChannel");
@@ -89,7 +93,7 @@ public class GameFeed{
 					Main.twitchRegulator.sendMessage(channel, message);
 				}
 			}
-		}).start();
+		}, delay * 1000 + 1);
 	}
 	
 	private boolean connectToStream(Game game){
@@ -118,11 +122,11 @@ public class GameFeed{
 		
 		message += "Best of " + game.match.getBestOf() + "\n\n";
 		
-		message += "Status: " + (game.finished ? "ended" : getMatchStatus());
+		message += "Status: " + (game.state.eq(GameState.ENDED) ? "ended" : getMatchStatus());
 		
-		List<Player> currentPlayers = game.getCurrentPlayers();
+		List<Player> currentPlayers = game.lobbyManager.getCurrentPlayers();
 		
-		if(!game.finished){
+		if(!game.state.eq(GameState.ENDED)){
 			message += "\n\nLobby\n";
 			
 			java.util.Map<Integer, Player> players = new HashMap<>();
@@ -144,6 +148,6 @@ public class GameFeed{
 	}
 	
 	public String getMatchStatus(){
-		return game.finished ? "ended" : "ongoing";
+		return game.state.eq(GameState.ENDED) ? "ended" : "ongoing";
 	}
 }

@@ -20,6 +20,12 @@ public class BanchoHandler{
 	}
 	
 	public void handleMessage(String message){
-		
+		if(message.contains("joined in")) game.lobbyManager.join(message);
+		else if(message.contains("left the game.")) game.lobbyManager.leave(message.replace(" left the game.", "").replaceAll(" ", "_"));
+	}
+	
+	public void kickPlayer(String player, String reason){
+		if(reason.length() > 0) game.banchoHandle.sendMessage(reason, false); 
+		game.banchoHandle.sendMessage("!mp kick " + player.replaceAll(" ", "_"), true); 
 	}
 }
