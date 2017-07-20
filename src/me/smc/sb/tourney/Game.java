@@ -1,13 +1,23 @@
 package me.smc.sb.tourney;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import me.smc.sb.irccommands.AlertStaffCommand;
+import me.smc.sb.irccommands.BanMapCommand;
+import me.smc.sb.irccommands.ChangeWarmupModCommand;
+import me.smc.sb.irccommands.ContestCommand;
 import me.smc.sb.irccommands.PassTurnCommand;
 import me.smc.sb.irccommands.RandomCommand;
+import me.smc.sb.irccommands.SelectMapCommand;
+import me.smc.sb.irccommands.SkipRematchCommand;
+import me.smc.sb.irccommands.SkipWarmupCommand;
 import me.smc.sb.listeners.IRCChatListener;
+import me.smc.sb.utils.Log;
+import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
 public class Game{
@@ -234,6 +244,98 @@ public class Game{
 	}
 	
 	public void stop(){
+		selectionManager.clearPickTimer();
 		
+		if(multiChannel != null)
+			match.getTournament().getTwitchHandler().stopStreaming(this);
+		
+		RandomCommand.waitingForRolls.remove(match.getFirstTeam());
+		RandomCommand.waitingForRolls.remove(match.getSecondTeam());
+		SelectMapCommand.pickingTeams.remove(match.getFirstTeam());
+		SelectMapCommand.pickingTeams.remove(match.getSecondTeam());
+		PassTurnCommand.passingTeams.remove(match.getFirstTeam());
+		PassTurnCommand.passingTeams.remove(match.getSecondTeam());
+		ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
+		BanMapCommand.banningTeams.remove(match.getFirstTeam());
+		BanMapCommand.banningTeams.remove(match.getSecondTeam());
+		SkipRematchCommand.gamesAllowedToSkip.remove(this);
+		SkipWarmupCommand.gamesAllowedToSkip.remove(this);
+		ContestCommand.gamesAllowedToContest.remove(this);
+		AlertStaffCommand.gamesAllowedToAlert.remove(this);
+		IRCChatListener.gamesListening.remove(multiChannel);
+		
+		Team winningTeam = firstTeam.getPoints() > secondTeam.getPoints() ? match.getFirstTeam() : match.getSecondTeam();
+		
+		if(firstTeam.getPoints() != secondTeam.getPoints()){
+			Team losingTeam = winningTeam.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName()) ? match.getSecondTeam() : match.getFirstTeam();
+			
+			if(match.getTournament().getConditionalTeams().size() > 0){
+				for(String conditional : new HashMap<String, Match>(match.getTournament().getConditionalTeams()).keySet()){
+					int conditionalNum = Utils.stringToInt(conditional.split(" ")[1]);
+					
+					Log.logger.log(Level.INFO, "Checking conditional match... (" + conditional + ")");
+					if(match.getMatchNum() != conditionalNum && !match.getServerID().equalsIgnoreCase(conditional.split(" ")[1])) continue;
+					
+					Log.logger.log(Level.INFO, "Winning team: " + winningTeam.getTeamName() + " | Losing team: " + losingTeam.getTeamName());
+					
+					Team cTeam = conditional.split(" ")[0].equalsIgnoreCase("winner") ? winningTeam : losingTeam;
+					Match conditionalMatch = match.getTournament().getConditionalTeams().get(conditional);
+					boolean fTeam = Utils.stringToInt(conditional.split(" ")[2]) == 1;
+					
+					conditionalMatch.setTeams(fTeam ? cTeam : conditionalMatch.getFirstTeam(), 
+											  !fTeam ? cTeam : conditionalMatch.getSecondTeam());
+					conditionalMatch.save(false);
+					
+					Log.logger.log(Level.INFO, "Set conditional team " + cTeam.getTeamName() + " to match #" + conditionalMatch.getMatchNum());
+				}
+			}
+		}
+		
+		if(match.getTournament().getBool("usingTourneyServer") && match.getServerID().length() > 0 && winningTeam.getServerTeamID() != 0){
+			RemotePatyServerUtils.setMPLinkAndWinner(mpLink, winningTeam, match.getServerID(), 
+													 match.getTournament().get("name"), firstTeam.getPoints(), 
+													 secondTeam.getPoints());
+		}
+		
+		String shortGameEndMsg = match.getFirstTeam().getTeamName() + " (" + firstTeam.getPoints() + 
+				  				 ") vs (" + secondTeam.getPoints() + ") " + match.getSecondTeam().getTeamName() + 
+				  				 " - " + mpLink;
+		
+		banchoHandle.sendMessage("!mp close", false);
+		
+		for(String admin : match.getMatchAdmins())
+			banchoHandle.sendMessage(admin.replaceAll(" ", "_"), shortGameEndMsg, false);
+		
+		for(String admin : match.getTournament().getStringList("tournament-admins"))
+			banchoHandle.sendMessage(admin.replaceAll(" ", "_"), shortGameEndMsg, false);
+		
+		state = GameState.ENDED;
+		feed.updateDiscord();
+		Log.logger.log(Level.INFO, shortGameEndMsg);
+		
+		if(messageUpdater != null){
+			messageUpdater.cancel();
+			messageUpdater = null;
+		}
+		
+		if(selectionManager.lobbyUpdater != null){
+			selectionManager.lobbyUpdater.cancel();
+			selectionManager.lobbyUpdater = null;
+		}
+		
+		if(System.currentTimeMillis() > match.getTournament().getTempLobbyDecayTime()){
+			match.getTournament().setTempLobbyDecayTime();
+			banchoHandle.sendMessage("BanchoBot", "!mp make " + match.getTournament().get("displayName") + ": TEMP LOBBY", true);
+		}
+		
+		firstTeam = null;
+		secondTeam = null;
+		banchoHandle = null;
+		lobbyManager = null;
+		selectionManager = null;
+		readyManager = null;
+		resultManager = null;
+		feed = null;
+		nextTeam = null;
 	}
 }

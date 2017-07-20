@@ -70,6 +70,15 @@ public class Team{
 		return null;
 	}
 	
+	public static Team getTeam(Tournament t, int serverID){
+		if(!teams.isEmpty())
+			for(Team team : teams)
+				if(team.getServerTeamID() == serverID && team.getTournament().get("name").equalsIgnoreCase(t.get("name")))
+					return team;
+		
+		return null;
+	}
+	
 	public static void removeTeam(Tournament t, String teamName){
 		Team team = getTeam(t, teamName);
 		

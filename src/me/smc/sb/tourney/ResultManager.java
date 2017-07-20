@@ -107,6 +107,7 @@ public class ResultManager{
 					game.banchoHandle.sendMessage(updateMessage, false);
 					game.feed.updateTwitch(updateMessage, 20);
 					game.feed.updateDiscord();
+					game.switchNextTeam();
 					game.selectionManager.selectWarmups();
 				}else{
 					rematch: if((int) Math.abs(fTeamPlayers.size() - sTeamPlayers.size()) != 0){	
@@ -153,6 +154,7 @@ public class ResultManager{
 					
 					game.banchoHandle.sendMessage(updateMessage, false);
 					game.feed.updateTwitch(updateMessage, 20);
+					game.switchNextTeam();
 					
 					if(fTeamWon) game.firstTeam.addPoint();
 					else game.secondTeam.addPoint();

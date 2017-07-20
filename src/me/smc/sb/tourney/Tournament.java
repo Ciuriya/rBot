@@ -114,6 +114,10 @@ public class Tournament{
 		return twitchHandler;
 	}
 	
+	public Map<String, Match> getConditionalTeams(){
+		return conditionalTeams;
+	}
+	
 	public long getTempLobbyDecayTime(){
 		Object decayTime = configValues.get("tempLobbyDecayTime");
 		

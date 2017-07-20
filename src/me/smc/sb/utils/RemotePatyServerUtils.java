@@ -16,10 +16,11 @@ import java.util.logging.Level;
 import com.jcabi.jdbc.JdbcSession;
 import com.jcabi.jdbc.Outcome;
 
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 
 public class RemotePatyServerUtils{
 
@@ -246,7 +247,7 @@ public class RemotePatyServerUtils{
 		if(players.size() > 0){
 			team.setPlayers(players);
 			team.save(false);
-		}else t.removeTeam(teamName);
+		}else Team.removeTeam(t, teamName);
 		
 		return team;
 	}
@@ -321,7 +322,7 @@ public class RemotePatyServerUtils{
 	}
 	
 	public static boolean syncMatch(Tournament t, ResultSet rset) throws SQLException{
-		Match match = t.getMatch(Integer.parseInt(rset.getString(1)));
+		Match match = Match.getMatch(t, Integer.parseInt(rset.getString(1)));
 		
 		if(match == null){
 			match = new Match(t);
@@ -335,16 +336,16 @@ public class RemotePatyServerUtils{
 		Team sTeam = null;
 		
 		if(Utils.stringToInt(fTeamString) != -1){
-			fTeam = t.getTeam(Utils.stringToInt(fTeamString));
+			fTeam = Team.getTeam(t, Utils.stringToInt(fTeamString));
 		}
 		
 		if(Utils.stringToInt(sTeamString) != -1){
-			sTeam = t.getTeam(Utils.stringToInt(sTeamString));
+			sTeam = Team.getTeam(t, Utils.stringToInt(sTeamString));
 		}
 		
 		match.setTeams(fTeam, sTeam);
 		
-		match.setMapPool(t.getPool(Utils.stringToInt(rset.getString(4))));
+		match.setMapPool(MapPool.getPool(t, Utils.stringToInt(rset.getString(4))));
 		
 		match.setBestOf(rset.getInt(6));
 		
@@ -371,14 +372,14 @@ public class RemotePatyServerUtils{
 		if(invalidTime)
 			return false;
 		
-		if(fTeamString != null && t.isMatchConditional(fTeamString)){
+		if(fTeamString != null && Match.isMatchConditional(fTeamString)){
 			t.conditionalTeams.put(fTeamString + " 1", match);
 			t.getConfig().writeValue("match-" + match.getMatchNum() + "-team1", fTeamString);
 			
 			Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + fTeamString + " 1");
 		}
 		
-		if(sTeamString != null && t.isMatchConditional(sTeamString)){
+		if(sTeamString != null && Match.isMatchConditional(sTeamString)){
 			t.conditionalTeams.put(sTeamString + " 2", match);
 			t.getConfig().writeValue("match-" + match.getMatchNum() + "-team2", sTeamString);
 			
