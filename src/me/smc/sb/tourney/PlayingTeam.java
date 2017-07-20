@@ -54,6 +54,10 @@ public class PlayingTeam{
 		return rematchesLeft != 0;
 	}
 	
+	public int getRematchesLeft(){
+		return rematchesLeft;
+	}
+	
 	public List<Player> getCurrentPlayers(){
 		return currentPlayers;
 	}
@@ -72,6 +76,10 @@ public class PlayingTeam{
 	
 	public void addBan(Map map){
 		bans.add(map);
+	}
+	
+	public void addRematch(){
+		rematchesLeft++;
 	}
 	
 	public void addPoint(){

@@ -6,7 +6,7 @@ import java.util.List;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Game;
+import me.smc.sb.tourney.Game;
 import me.smc.sb.utils.Utils;
 
 public class SkipRematchCommand extends IRCCommand{
@@ -29,8 +29,9 @@ public class SkipRematchCommand extends IRCCommand{
 		
 		if(!gamesAllowedToSkip.isEmpty())
 			for(Game game : gamesAllowedToSkip)
-				if(game.verifyPlayer(userName.replaceAll(" ", "_"))){
-					game.acceptSkipRematch(userName);
+				if(game.getLobbyManager().verify(userName)){
+					game.getResultManager().skipRematch(userName);
+					
 					return "";
 				}
 		

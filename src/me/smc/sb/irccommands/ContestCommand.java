@@ -6,7 +6,7 @@ import java.util.List;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Game;
+import me.smc.sb.tourney.Game;
 import me.smc.sb.utils.Utils;
 
 public class ContestCommand extends IRCCommand{
@@ -29,8 +29,9 @@ public class ContestCommand extends IRCCommand{
 		
 		if(!gamesAllowedToContest.isEmpty())
 			for(Game game : gamesAllowedToContest)
-				if(game.verifyPlayer(userName.replaceAll(" ", "_"))){
-					game.acceptContest(userName);
+				if(game.getLobbyManager().verify(userName)){
+					game.getResultManager().contest(userName);
+					
 					return "";
 				}
 		

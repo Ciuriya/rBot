@@ -1013,7 +1013,6 @@ public abstract class Game{
 			if(fTeamPoints > Math.floor(match.getBestOf() / 2) || sTeamPoints > Math.floor(match.getBestOf() / 2))
 				selectAfter = true;
 			
-			
 			if(teamToBoolean(lastWinner)){
 				fTeamPoints--;
 				sTeamPoints++;

@@ -27,7 +27,8 @@ public class BanchoHandler{
 		else if(message.contains("All players are ready") && game.state.eq(GameState.READYING)) game.readyManager.playersReady();
 		else if(message.startsWith("Slot ") && game.state.eq(GameState.VERIFYING)) game.readyManager.verifyPlayer(message);
 		else if(message.contains("The match has started!")) game.readyManager.matchStarted();
-		else if(message.contains("The match has finished!")) playEnded();
+		else if(message.contains("The match has finished!")) game.resultManager.analyseResults();
+		else if(message.contains("finished playing")) game.resultManager.addResult(message);
 	}
 	
 	public void kickPlayer(String player, String reason){

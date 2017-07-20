@@ -128,8 +128,10 @@ public class ReadyManager{
 	
 	public void onMatchStart(){
 		game.selectionManager.clearPickTimer();
-		SkipRematchCommand.gamesAllowedToSkip.remove(this);
-		ContestCommand.gamesAllowedToContest.remove(this);
+		SkipRematchCommand.gamesAllowedToSkip.remove(game);
+		ContestCommand.gamesAllowedToContest.remove(game);
+		game.resultManager.skipRematchState = 0;
+		game.resultManager.contestState = 0;
 		
 		if(game.messageUpdater != null) game.messageUpdater.cancel();
 		if(game.selectionManager.lobbyUpdater != null) game.selectionManager.lobbyUpdater.cancel();

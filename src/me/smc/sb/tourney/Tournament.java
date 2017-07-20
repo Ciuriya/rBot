@@ -174,7 +174,10 @@ public class Tournament{
 	
 	@SuppressWarnings("unchecked")
 	public void save(boolean append){
-		if(append) new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", get("name"), true);
+		if(append){
+			setDefaults();
+			new Configuration(new File("tournaments.txt")).appendToStringList("tournaments", get("name"), true);
+		}
 		
 		Configuration config = getConfig();
 		
@@ -200,7 +203,45 @@ public class Tournament{
 	}
 	
 	public void setDefaults(){
-		//fill in
+		configValues.put("displayName", get("name"));
+		configValues.put("twitchChannel", "");
+		configValues.put("scoreV2", true);
+		configValues.put("pickWaitTime", 180);
+		configValues.put("banWaitTime", 120);
+		configValues.put("readyWaitTime", 120);
+		configValues.put("type", 0);
+		configValues.put("mode", 0);
+		configValues.put("resultDiscord", "");
+		configValues.put("alertDiscord", "");
+		configValues.put("alertMessage", "");
+		configValues.put("lowerRankBound", 0);
+		configValues.put("upperRankBound", 0);
+		configValues.put("skipWarmups", true);
+		configValues.put("pickStrategy", "regular");
+		configValues.put("rematchesAllowed", 1);
+		configValues.put("usingTourneyServer", true);
+		configValues.put("usingConfirms", true);
+		configValues.put("usingMapStats", true);
+		configValues.put("targetRankLowerBound", 0);
+		configValues.put("targetRankUpperBound", 0);
+		configValues.put("matchSize", 6);
+		configValues.put("usingDQs", false);
+		configValues.put("dqTime", 150);
+		configValues.put("usingBans", true);
+		configValues.put("banCount", 1);
+		configValues.put("gracePeriodTime", 600);
+		
+		ArrayList<String> freemodMods = new ArrayList<>();
+		freemodMods.add("HD");
+		freemodMods.add("HR");
+		freemodMods.add("FL");
+		freemodMods.add("EZ");
+		
+		configValues.put("allowedFreemodMods", freemodMods);
+		configValues.put("warmupLength", 270);
+		configValues.put("warmupCount", 1);
+		configValues.put("rematchCutoff", 30);
+		configValues.put("tournament-admins", new ArrayList<>());
 	}
 	
 	public static void loadTournaments(){

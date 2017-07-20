@@ -21,6 +21,7 @@ public class Game{
 	protected LobbyManager lobbyManager;
 	protected SelectionManager selectionManager;
 	protected ReadyManager readyManager;
+	protected ResultManager resultManager;
 	protected GameFeed feed;
 	protected Timer messageUpdater;
 	protected int roomSize;
@@ -35,6 +36,7 @@ public class Game{
 		this.lobbyManager = new LobbyManager(this);
 		this.selectionManager = new SelectionManager(this);
 		this.readyManager = new ReadyManager(this);
+		this.resultManager = new ResultManager(this);
 		this.firstTeam = new PlayingTeam(match.getFirstTeam(), this);
 		this.secondTeam = new PlayingTeam(match.getSecondTeam(), this);
 		this.state = GameState.WAITING;
@@ -213,6 +215,10 @@ public class Game{
 	
 	public ReadyManager getReadyManager(){
 		return readyManager;
+	}
+	
+	public ResultManager getResultManager(){
+		return resultManager;
 	}
 	
 	public GameFeed getGameFeed(){
