@@ -16,11 +16,13 @@ public class Map{
 	private int category; // 0 - NM, 1 - FM, 2 - HD, 3 - HR, 4 - DT, 5 - TB
 	private String bloodcatLink; // only longer than 0 if available
 	private MapPool pool;
+	private int length;
 	
 	public Map(String exported, MapPool pool){
 		this.pool = pool;
 		this.url = exported.split("\\|\\|")[0];
 		this.category = Utils.stringToInt(exported.split("\\|\\|")[1]);
+		this.length = 0;
 		
 		bloodcatLink = "";
 		
@@ -41,6 +43,10 @@ public class Map{
 	
 	public int getCategory(){
 		return category;
+	}
+	
+	public int getLength(){
+		return length;
 	}
 	
 	public int getBeatmapID(){
@@ -96,6 +102,10 @@ public class Map{
 		}catch(Exception e){
 			return "";
 		}
+	}
+	
+	public void setLength(int length){
+		this.length = length;
 	}
 	
 	public static JSONObject getMapInfo(int id, int mode, boolean priority){

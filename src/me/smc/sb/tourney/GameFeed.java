@@ -1,5 +1,6 @@
 package me.smc.sb.tourney;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -18,9 +19,11 @@ public class GameFeed{
 	private Game game;
 	private Message discordFeed;
 	private MessageChannel resultDiscord;
+	private List<String> bans;
 	
 	public GameFeed(Game game){
 		this.game = game;
+		this.bans = new ArrayList<>();
 		
 		postDiscordFeed();
 	}
@@ -54,12 +57,12 @@ public class GameFeed{
 				String localMessage = buildFeed();
 				
 				if(resultDiscord != null && discordFeed != null){
-					/*if(bansWithNames.size() > 0){
-						localMessage += (game.finished ? "\n" : "") + "\nBans\n";
+					if(bans.size() > 0){
+						localMessage += (game.state.eq(GameState.ENDED) ? "\n" : "") + "\nBans\n";
 						
-						for(String banned : bansWithNames)
+						for(String banned : bans)
 							localMessage += banned + "\n";
-					}*/
+					}
 					
 					discordFeed.editMessage(localMessage + "```").queue(new Consumer<Message>(){
 						@Override
@@ -145,6 +148,10 @@ public class GameFeed{
 		}
 		
 		return message;
+	}
+	
+	public void addBan(String ban){
+		bans.add(ban);
 	}
 	
 	public String getMatchStatus(){

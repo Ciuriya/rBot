@@ -22,6 +22,7 @@ public class PlayingTeam{
 	public PlayingTeam(Team team, Game game){
 		this.game = game;
 		this.team = team;
+		this.points = 0;
 		this.roll = -1;
 		this.rematchesLeft = game.match.getTournament().getInt("rematchesAllowed");
 		this.currentPlayers = new ArrayList<>();
@@ -63,6 +64,14 @@ public class PlayingTeam{
 	
 	public LinkedList<PickedMap> getPicks(){
 		return mapsPicked;
+	}
+	
+	public void addPick(PickedMap map){
+		mapsPicked.add(map);
+	}
+	
+	public void addBan(Map map){
+		bans.add(map);
 	}
 	
 	public void addPoint(){

@@ -42,9 +42,9 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.communication.Server;
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Game;
-import me.smc.sb.multi.Map;
-import me.smc.sb.multi.Tournament;
+import me.smc.sb.tourney.Game;
+import me.smc.sb.tourney.Map;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuUserRequest;
 import me.smc.sb.tracking.RequestTypes;
@@ -739,11 +739,11 @@ public class Utils{
 	public static void updateTwitch(Game game, Map selected){
 		new Thread(new Runnable(){
 			public void run(){
-				JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getMode(), true);
+				JSONObject jsMap = Map.getMapInfo(selected.getBeatmapID(), game.match.getTournament().getInt("mode"), true);
 				
-				game.updateTwitch(game.getMod(selected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
-			    	  	 	 	  jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
-			    	  	 	 	  game.getSelectingTeam().getTeamName() + "!");
+				game.getGameFeed().updateTwitch(game.getSelectionManager().getMod(selected).replace("None", "Nomod") + 
+												" pick: " + jsMap.getString("artist") + " - " + jsMap.getString("title") + 
+												" [" + jsMap.getString("version") + "] was picked by " + game.getNextTeam().getTeam().getTeamName() + "!");
 			}
 		}).start();
 	}

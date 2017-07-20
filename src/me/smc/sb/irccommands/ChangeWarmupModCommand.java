@@ -6,7 +6,7 @@ import java.util.List;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Game;
+import me.smc.sb.tourney.Game;
 import me.smc.sb.utils.Utils;
 
 public class ChangeWarmupModCommand extends IRCCommand{
@@ -36,8 +36,10 @@ public class ChangeWarmupModCommand extends IRCCommand{
 		
 		if(!gamesAllowedToChangeMod.isEmpty())
 			for(Game game : gamesAllowedToChangeMod)
-				if(game.verifyPlayer(userName.replaceAll(" ", "_"))){
-					game.acceptWarmupModChange(userName.replaceAll(" ", "_"), args[0]);
+				if(game.getLobbyManager().verify(userName.replaceAll(" ", "_")) &&
+					game.getNextTeam().getTeam().has(userName)){
+					game.getSelectionManager().setWarmupMod(args[0]);
+					
 					return "";
 				}
 		

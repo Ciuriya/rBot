@@ -144,7 +144,7 @@ public class LobbyManager{
 		player.setSlot(-1);
 		
 		if(game.state.eq(GameState.PLAYING)){
-			//dc
+			disconnect();
 		}
 		
 		if(game.match.getTournament().getInt("type") == 1 && game.match.getTournament().getBool("usingDQs") &&

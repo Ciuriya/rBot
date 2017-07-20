@@ -19,11 +19,12 @@ public class Game{
 	protected PlayingTeam secondTeam;
 	protected BanchoHandler banchoHandle;
 	protected LobbyManager lobbyManager;
+	protected SelectionManager selectionManager;
 	protected GameFeed feed;
 	protected Timer messageUpdater;
 	protected int roomSize;
 	protected long lastPickTime;
-	protected PlayingTeam nextTeam;
+	protected PlayingTeam nextTeam; // actually currentTeam, I'm just stupid
 	protected GameState state;
 	
 	public Game(Match match){
@@ -31,6 +32,7 @@ public class Game{
 		this.match.setGame(this);
 		this.banchoHandle = new BanchoHandler(this);
 		this.lobbyManager = new LobbyManager(this);
+		this.selectionManager = new SelectionManager(this);
 		this.firstTeam = new PlayingTeam(match.getFirstTeam(), this);
 		this.secondTeam = new PlayingTeam(match.getSecondTeam(), this);
 		this.state = GameState.WAITING;
@@ -52,7 +54,13 @@ public class Game{
 		new Timer().schedule(new TimerTask(){
 			public void run(){
 				if(state.eq(GameState.WAITING)){
+					int fPlayers = firstTeam.getCurrentPlayers().size();
+					int sPlayers = secondTeam.getCurrentPlayers().size();
 					
+					if(fPlayers == 0) firstTeam.addPoint();
+					else if(sPlayers == 0) secondTeam.addPoint();
+					
+					if(fPlayers == 0 || sPlayers == 0) stop();
 				}
 			}
 		}, match.getTournament().getInt("gracePeriodTime") * 1000);
@@ -125,7 +133,8 @@ public class Game{
 					banchoHandle.sendMessage("This match is reffed by a bot! " + 
 											 "If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord server] or to Smc. " +
 											 "Thank you!", false);
-					//mapSelection(2);
+					
+					selectionManager.selectWarmups();
 				}
 			}, 20000);
 		}
@@ -178,6 +187,10 @@ public class Game{
 		else nextTeam = firstTeam;
 	}
 	
+	public PlayingTeam getNextTeam(){
+		return nextTeam;
+	}
+	
 	// team for team tourney, player for solo tourney
 	public String getTeamIndicator(){
 		if(match.getTournament().getInt("type") == 0) return "team";
@@ -192,8 +205,16 @@ public class Game{
 		return lobbyManager;
 	}
 	
+	public SelectionManager getSelectionManager(){
+		return selectionManager;
+	}
+	
 	public GameFeed getGameFeed(){
 		return feed;
+	}
+	
+	public GameState getState(){
+		return state;
 	}
 	
 	public int getMpNum(){
