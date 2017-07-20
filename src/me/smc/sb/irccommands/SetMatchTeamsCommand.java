@@ -3,8 +3,10 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetMatchTeamsCommand extends IRCCommand{
@@ -42,16 +44,16 @@ public class SetMatchTeamsCommand extends IRCCommand{
 				}
 			}
 			
-			if(t.getTeam(teamName2) == null){
+			if(Team.getTeam(t, teamName2) == null){
 				return "Invalid second team name!";
 			}else{
 				if(Utils.stringToInt(args[args.length - 1]) == -1) return "Match number needs to be a number!";
-				if(t.getMatch(Utils.stringToInt(args[args.length - 1])) == null) return "The match is invalid!";
+				if(Match.getMatch(t, Utils.stringToInt(args[args.length - 1])) == null) return "The match is invalid!";
 				
-				t.getMatch(Utils.stringToInt(args[args.length - 1]))
-				.setTeams(t.getTeam(validation.split("\\|")[0]), t.getTeam(teamName2));
+				Match.getMatch(t, Utils.stringToInt(args[args.length - 1]))
+				.setTeams(Team.getTeam(t, validation.split("\\|")[0]), Team.getTeam(t, teamName2));
 				
-				t.getMatch(Utils.stringToInt(args[args.length - 1])).save(false);
+				Match.getMatch(t, Utils.stringToInt(args[args.length - 1])).save(false);
 				
 				return "Match teams were set!";
 			}

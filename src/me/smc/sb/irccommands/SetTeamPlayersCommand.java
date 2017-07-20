@@ -5,9 +5,10 @@ import java.util.LinkedList;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetTeamPlayersCommand extends IRCCommand{
@@ -43,8 +44,8 @@ public class SetTeamPlayersCommand extends IRCCommand{
 					players.add(new Player(p));
 			else players.add(new Player(msg));
 			
-			t.getTeam(validation.split("\\|")[0]).setPlayers(players);
-			t.getTeam(validation.split("\\|")[0]).save(false);
+			Team.getTeam(t, validation.split("\\|")[0]).setPlayers(players);
+			Team.getTeam(t, validation.split("\\|")[0]).save(false);
 			
 			return "Set players to the " + validation.split("\\|")[0] + " team!";
 		}

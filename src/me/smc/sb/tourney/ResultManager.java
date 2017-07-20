@@ -160,7 +160,7 @@ public class ResultManager{
 					else game.secondTeam.addPoint();
 					
 					lastWinner = fTeamScore > sTeamScore;
-					updateScores();
+					updateScores(false);
 				}
 				
 				game.readyManager.switchPlaying(false, true);
@@ -168,9 +168,7 @@ public class ResultManager{
 		}, 10000);
 	}
 	
-	protected void updateScores(){
-		game.selectionManager.map = null;
-		
+	public void updateScores(boolean onlyMessages){
 		PlayingTeam first = game.firstTeam;
 		PlayingTeam second = game.secondTeam;
 		
@@ -212,7 +210,8 @@ public class ResultManager{
 			contestMessage();
 			
 			return;
-		}else{
+		}else if(!onlyMessages){
+			game.selectionManager.map = null;
 			contestMessage();
 			game.selectionManager.selectPicks();
 		}
@@ -263,7 +262,8 @@ public class ResultManager{
 				if(lastWinner) game.firstTeam.addPoint();
 				else game.secondTeam.addPoint();
 				
-				updateScores();
+				game.switchNextTeam();
+				updateScores(false);
 			}
 		}
 	}
@@ -298,7 +298,7 @@ public class ResultManager{
 				lastWinner = true;
 			}
 			
-			updateScores();
+			updateScores(false);
 		}
 	}
 	

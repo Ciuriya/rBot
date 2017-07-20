@@ -3,8 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetMapPoolSheetCommand extends IRCCommand{
@@ -29,13 +30,13 @@ public class SetMapPoolSheetCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Map pool number needs to be a number!";
-		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null) return "The map pool is invalid!";
+		if(MapPool.getPool(t, Utils.stringToInt(args[args.length - 2])) == null) return "The map pool is invalid!";
 		
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.getPool(Utils.stringToInt(args[args.length - 2])).setSheetUrl(args[args.length - 1]);
-			t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
+			MapPool.getPool(t, Utils.stringToInt(args[args.length - 2])).setSheetUrl(args[args.length - 1]);
+			MapPool.getPool(t, Utils.stringToInt(args[args.length - 2])).save(false);
 			
 			return "Set the map pool's sheet to " + args[args.length - 1] + "!";
 		}

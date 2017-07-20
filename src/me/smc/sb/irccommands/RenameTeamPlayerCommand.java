@@ -3,10 +3,10 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class RenameTeamPlayerCommand extends IRCCommand{
@@ -27,7 +27,7 @@ public class RenameTeamPlayerCommand extends IRCCommand{
 		if(!validation.contains("|")) return validation;
 		
 		Tournament t = Tournament.getTournament(validation.split("\\|")[1]);
-		Team team = t.getTeam(validation.split("\\|")[0]);
+		Team team = Team.getTeam(t, validation.split("\\|")[0]);
 		
 		String user = Utils.toUser(e, pe);
 		

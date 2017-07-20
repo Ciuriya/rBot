@@ -3,8 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
@@ -36,14 +37,12 @@ public class ResyncMatchCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.removeMatch(Integer.parseInt(matchId));
-			RemotePatyServerUtils.syncMatch(t.getName(), matchId);
+			Match.removeMatch(t, Integer.parseInt(matchId));
+			RemotePatyServerUtils.syncMatch(t.get("name"), matchId);
 			
-			if(t.getMatch(Integer.parseInt(matchId)) != null){
+			if(Match.getMatch(t, Integer.parseInt(matchId)) != null){
 				return "Match resynced successfully!";
-			}else{
-				return "Could not resync the match!";
-			}
+			}else return "Could not resync the match!";
 		}
 		
 		return "";

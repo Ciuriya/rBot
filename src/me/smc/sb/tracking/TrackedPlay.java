@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 
-import me.smc.sb.multi.Map;
+import me.smc.sb.tourney.Map;
 import me.smc.sb.utils.Utils;
 
 public class TrackedPlay{

@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetAlertDiscordCommand extends IRCCommand{
@@ -33,7 +33,7 @@ public class SetAlertDiscordCommand extends IRCCommand{
 		if(t.isAdmin(user)){
 			if(discord == null) return "You need to use this command in the discord channel you wish to receive alerts into!";
 			
-			t.setAlertDiscord(discord);
+			t.set("alertDiscord", discord);
 			t.save(false);
 			
 			return "The alert discord was set!";

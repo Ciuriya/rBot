@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetDisplayNameCommand extends IRCCommand{
@@ -44,7 +44,8 @@ public class SetDisplayNameCommand extends IRCCommand{
 				}else displayName += args[i].replace("{", "") + " ";
 			
 			displayName = displayName.replace("{", "").substring(0, displayName.length() - 2);
-			t.setDisplayName(displayName);
+			
+			t.set("displayName", displayName);
 			t.save(false);
 			
 			return "Set the tournament's display name to " + displayName + "!";

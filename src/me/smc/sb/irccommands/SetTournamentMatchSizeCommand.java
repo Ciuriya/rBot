@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetTournamentMatchSizeCommand extends IRCCommand{
@@ -31,10 +31,10 @@ public class SetTournamentMatchSizeCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.setMatchSize(Utils.stringToInt(args[args.length - 1]));
+			t.set("matchSize", Utils.stringToInt(args[args.length - 1]));
 			t.save(false);
 			
-			return "Set the tournament's default match size to " + t.getMatchSize() + " players!";
+			return "Set the tournament's default match size to " + t.getInt("matchSize") + " players!";
 		}
 		
 		return "";

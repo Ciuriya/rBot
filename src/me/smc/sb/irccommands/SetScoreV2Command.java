@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetScoreV2Command extends IRCCommand{
@@ -31,10 +31,10 @@ public class SetScoreV2Command extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.setScoreV2(Boolean.parseBoolean(args[args.length - 1]));
+			t.set("scoreV2", Boolean.parseBoolean(args[args.length - 1]));
 			t.save(false);
 			
-			return "Set the tournament's scoring to scoreV" + (t.isScoreV2() ? "2" : "1") + "!";
+			return "Set the tournament's scoring to scoreV" + (t.getBool("scoreV2") ? "2" : "1") + "!";
 		}
 		
 		return "";

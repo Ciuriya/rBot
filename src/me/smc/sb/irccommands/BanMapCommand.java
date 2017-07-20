@@ -6,9 +6,7 @@ import java.util.List;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.ModPickStrategy;
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
+import me.smc.sb.pickstrategies.ModPickStrategy;
 import me.smc.sb.tourney.PlayingTeam;
 import me.smc.sb.utils.Utils;
 

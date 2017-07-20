@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
@@ -36,20 +36,20 @@ public class SyncDataFromServerCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			for(Match match : new ArrayList<>(t.getMatches())){
-				t.removeMatch(match.getMatchNum());
+			for(Match match : new ArrayList<>(Match.getMatches(t))){
+				Match.removeMatch(t, match.getMatchNum());
 			}
 			
-			for(Team team : new ArrayList<>(t.getTeams())){
-				t.removeTeam(team.getTeamName());
+			for(Team team : new ArrayList<>(Team.getTeams(t))){
+				Team.removeTeam(t, team.getTeamName());
 			}
 			
 			new Thread(new Runnable(){
 				public void run(){
-					RemotePatyServerUtils.syncTeams(t.getName());
-					RemotePatyServerUtils.syncMatches(t.getName());
+					RemotePatyServerUtils.syncTeams(t.get("name"));
+					RemotePatyServerUtils.syncMatches(t.get("name"));
 					
-					Utils.info(e, pe, discord, t.getTeams().size() + " teams and " + t.getMatches().size() + " matches synced!");
+					Utils.info(e, pe, discord, Team.getTeams(t).size() + " teams and " + Match.getMatches(t).size() + " matches synced!");
 				}
 			}).start();
 		}

@@ -4,17 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import org.json.JSONObject;
 
 import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.ChangeWarmupModCommand;
+import me.smc.sb.irccommands.ContestCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
+import me.smc.sb.irccommands.SkipRematchCommand;
 import me.smc.sb.irccommands.SkipWarmupCommand;
+import me.smc.sb.tourney.Game;
 import me.smc.sb.tourney.Map;
 import me.smc.sb.tourney.GameState;
 import me.smc.sb.pickstrategies.ModPickStrategy;
 import me.smc.sb.pickstrategies.PickStrategy;
+import me.smc.sb.utils.Log;
+import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
 
 public class SelectionManager{
@@ -134,6 +140,66 @@ public class SelectionManager{
 		   selectionStartTime + (long) (game.match.getTournament().getInt("pickWaitTime") / 2 * 1000) <= System.currentTimeMillis()) return;
 		
 		strategy.handleMapSelect(game, map, select, mod);
+	}
+	
+	public boolean forceSelect(boolean revertScore, Map newMap){
+		String indicator = game.match.getTournament().getInt("type") == 0 ? "teams" : "players";
+		
+		if(game.firstTeam.getRoll() == -1 || game.secondTeam.getRoll() == -1){
+			game.banchoHandle.sendMessage("You cannot force select whilst " + indicator + " have not finished rolling!", false);
+			
+			return false;
+		}else if(warmupsLeft != 0){
+			game.banchoHandle.sendMessage("You cannot force select whilst " + indicator + " have not finished warmups yet!", false);
+			
+			return false;
+		}else if(bansLeft > 0){
+			game.banchoHandle.sendMessage("You cannot force select whilst " + indicator + " have not banned yet!", false);
+			
+			return false;
+		}
+		
+		if(newMap != null) changeMap(newMap);
+		else changeMap(game.getOppositeTeam(game.nextTeam).getPicks().getLast().getMap());
+		
+		game.resultManager.skipRematchState = 0;
+		game.resultManager.contestState = 0;
+		SkipRematchCommand.gamesAllowedToSkip.remove(game);
+		ContestCommand.gamesAllowedToContest.remove(game);
+		SelectMapCommand.pickingTeams.remove(game.nextTeam);
+		
+		if(lobbyUpdater != null) lobbyUpdater.cancel();
+		if(game.messageUpdater != null) game.messageUpdater.cancel();
+		
+		if(revertScore && game.firstTeam.getPoints() + game.secondTeam.getPoints() > 0 && map != null){
+			if(game.resultManager.lastWinner) game.firstTeam.removePoint();
+			else game.secondTeam.removePoint();
+			
+			game.resultManager.updateScores(false);
+			
+			int mapId = game.match.getMapPool().getMapId(map);
+			
+			if(mapId != 0){
+				int tourneyId = 0;
+				
+				try{
+					tourneyId = RemotePatyServerUtils.fetchTournamentId(game.match.getTournament().get("name"));
+				}catch(Exception e){
+					Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
+				}
+				
+				if(tourneyId != 0){
+					RemotePatyServerUtils.incrementMapValue(mapId, game.match.getMapPool().getPoolNum(), tourneyId, "pickcount", -1);
+				}
+			}
+			
+			return true;
+		}
+		
+		game.readyManager.switchPlaying(false, true);
+		game.readyManager.startReadyWait();
+		
+		return true;
 	}
 	
 	public void startLobbyUpdater(){

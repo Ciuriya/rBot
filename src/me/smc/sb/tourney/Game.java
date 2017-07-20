@@ -16,6 +16,7 @@ import me.smc.sb.irccommands.SelectMapCommand;
 import me.smc.sb.irccommands.SkipRematchCommand;
 import me.smc.sb.irccommands.SkipWarmupCommand;
 import me.smc.sb.listeners.IRCChatListener;
+import me.smc.sb.tourney.GameState;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
@@ -181,6 +182,37 @@ public class Game{
 		}, delay * 1000, 60000);
 	}
 	
+	public void handlePause(boolean pause){
+		if(pause){
+			if(state.eq(GameState.PAUSED)) return;
+			
+			selectionManager.clearPickTimer();
+			SkipRematchCommand.gamesAllowedToSkip.remove(this);
+			ContestCommand.gamesAllowedToContest.remove(this);
+			resultManager.skipRematchState = 0;
+			resultManager.contestState = 0;
+			selectionManager.selectionStartTime = 0;
+			
+			if(messageUpdater != null) messageUpdater.cancel();
+			if(selectionManager.lobbyUpdater != null) selectionManager.lobbyUpdater.cancel();
+			if(state.eq(GameState.PLAYING)) banchoHandle.sendMessage("!mp abort", true);
+			if(state.eq(GameState.PRESTART)) banchoHandle.sendMessage("!mp aborttimer", true);
+			
+			state = GameState.PAUSED;
+			readyManager.switchPlaying(false, true);
+		}else{
+			if(!state.eq(GameState.PAUSED)) return;
+			
+			state = GameState.WAITING;
+			
+			if(firstTeam.getRoll() == -1 || secondTeam.getRoll() == -1) lobbyManager.setupRolling();
+			else if(selectionManager.warmupsLeft  > 0) selectionManager.selectWarmups();
+			else if(selectionManager.bansLeft > 0) selectionManager.selectBans();
+			else if(selectionManager.map != null) readyManager.startReadyWait();
+			else selectionManager.selectPicks();
+		}
+	}
+	
 	public PlayingTeam getFirstTeam(){
 		return firstTeam;
 	}
@@ -241,6 +273,10 @@ public class Game{
 	
 	public int getMpNum(){
 		return Utils.stringToInt(multiChannel.replace("#mp_", ""));
+	}
+	
+	public String getMpLink(){
+		return mpLink;
 	}
 	
 	public void stop(){
@@ -337,5 +373,9 @@ public class Game{
 		resultManager = null;
 		feed = null;
 		nextTeam = null;
+		
+		match.setGame(null);
+		Match.removeMatch(match.getTournament(), match.getMatchNum());
+		match = null;
 	}
 }

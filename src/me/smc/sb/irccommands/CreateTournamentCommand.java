@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class CreateTournamentCommand extends IRCCommand{
@@ -35,8 +35,9 @@ public class CreateTournamentCommand extends IRCCommand{
 			return "This tournament already exists!";
 		
 		Tournament t = new Tournament(tournamentName.substring(0, tournamentName.length() - 1));
+		
 		if(tournamentArgLength < args.length){
-			t.setMode(Utils.stringToInt(args[args.length - 1]));
+			t.set("mode", Utils.stringToInt(args[args.length - 1]));
 			t.save(false);
 		}
 		

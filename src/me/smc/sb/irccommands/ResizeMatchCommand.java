@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ResizeMatchCommand extends IRCCommand{
@@ -30,7 +30,7 @@ public class ResizeMatchCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Match number needs to be a number!";
 		
-		Match match = t.getMatch(Utils.stringToInt(args[args.length - 2]));
+		Match match = Match.getMatch(t, Utils.stringToInt(args[args.length - 2]));
 		if(match == null) return "The match is invalid!";
 		
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Player amount must be a number!";

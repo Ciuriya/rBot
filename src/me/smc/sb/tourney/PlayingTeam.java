@@ -90,6 +90,10 @@ public class PlayingTeam{
 		points--;
 	}
 	
+	public void setPoints(int points){
+		this.points = points;
+	}
+	
 	public boolean useRematch(){
 		boolean rematch = canRematch();
 		

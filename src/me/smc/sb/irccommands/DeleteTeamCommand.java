@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class DeleteTeamCommand extends IRCCommand{
@@ -30,12 +30,13 @@ public class DeleteTeamCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			Team team = t.getTeam(validation.split("\\|")[0]);
+			Team team = Team.getTeam(t, validation.split("\\|")[0]);
 			
 			if(team == null)
 				return "Could not find team!";
 			else{
-				Tournament.getTournament(validation.split("\\|")[1]).removeTeam(validation.split("\\|")[0]);
+				Team.removeTeam(t, validation.split("\\|")[0]);
+				
 				return "Deleted the " + validation.split("\\|")[0] + " team!";	
 			}
 		}

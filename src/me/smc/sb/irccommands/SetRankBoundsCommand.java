@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetRankBoundsCommand extends IRCCommand{
@@ -38,8 +38,8 @@ public class SetRankBoundsCommand extends IRCCommand{
 			if(lower < 0) lower = 0;
 			if(upper < 0) upper = 0;
 			
-			t.setLowerRankBound(lower);
-			t.setUpperRankBound(upper);
+			t.set("lowerRankBound", lower);
+			t.set("upperRankBound", upper);
 			t.save(false);
 			
 			return "The rank bounds are now " + lower + " to " + upper + "!";

@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
 
 import me.smc.sb.tourney.Map;
 import me.smc.sb.utils.Configuration;
@@ -108,6 +109,10 @@ public class MapPool{
 					return pool;
 		
 		return null;
+	}
+	
+	public static List<MapPool> getPools(Tournament t){
+		return pools.stream().filter(p -> p.getTournament().get("name").equalsIgnoreCase(t.get("name"))).collect(Collectors.toList());
 	}
 	
 	public static void removePool(Tournament t, int poolNum){

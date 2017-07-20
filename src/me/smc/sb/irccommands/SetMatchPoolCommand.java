@@ -3,8 +3,10 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetMatchPoolCommand extends IRCCommand{
@@ -29,14 +31,14 @@ public class SetMatchPoolCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Match number needs to be a number!";
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Map pool number needs to be a number!";
-		if(t.getMatch(Utils.stringToInt(args[args.length - 2])) == null) return "The match is invalid!";
-		if(t.getPool(Utils.stringToInt(args[args.length - 1])) == null) return "The map pool is invalid!";
+		if(Match.getMatch(t, Utils.stringToInt(args[args.length - 2])) == null) return "The match is invalid!";
+		if(MapPool.getPool(t, Utils.stringToInt(args[args.length - 1])) == null) return "The map pool is invalid!";
 		
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.getMatch(Utils.stringToInt(args[args.length - 2])).setMapPool(t.getPool(Utils.stringToInt(args[args.length - 1])));
-			t.getMatch(Utils.stringToInt(args[args.length - 2])).save(false);
+			Match.getMatch(t, Utils.stringToInt(args[args.length - 2])).setMapPool(MapPool.getPool(t, Utils.stringToInt(args[args.length - 1])));
+			Match.getMatch(t, Utils.stringToInt(args[args.length - 2])).save(false);
 			
 			return "Set match #" + args[args.length - 2] + "'s map pool to map pool #" + args[args.length - 1] + "!";
 		}

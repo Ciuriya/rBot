@@ -28,7 +28,7 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Map;
+import me.smc.sb.tourney.Map;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
@@ -354,7 +354,7 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 				
 				if(lastUpdated.containsKey(player)) lastUpdate = lastUpdated.get(player);
 				else{
-					String id = Utils.getOsuPlayerId(user);
+					//String id = Utils.getOsuPlayerId(user);
 					
 					//playerStatUpdates.put(player.toLowerCase(), Utils.getOsuPlayerPPAndRank(id, Utils.stringToInt(mode)));
 					

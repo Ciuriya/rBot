@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.MapPool;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class CreateMapPoolCommand extends IRCCommand{
@@ -33,6 +33,7 @@ public class CreateMapPoolCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			MapPool pool = new MapPool(t);
+			
 			return "Created map pool #" + pool.getPoolNum() + "!";
 		}
 		

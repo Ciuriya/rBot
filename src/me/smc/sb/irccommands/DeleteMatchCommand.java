@@ -3,8 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class DeleteMatchCommand extends IRCCommand{
@@ -32,9 +33,11 @@ public class DeleteMatchCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			if(t.removeMatch(Utils.stringToInt(args[args.length - 1])))
+			if(Match.getMatch(t, Utils.stringToInt(args[args.length - 1])) != null){
+				Match.removeMatch(t, Utils.stringToInt(args[args.length - 1]));
+				
 				return "Deleted match #" + args[args.length - 1] + "!";
-			else return "Match does not exist!";
+			}else return "Match does not exist!";
 		}
 		
 		return "";

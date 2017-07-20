@@ -16,7 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Map;
+import me.smc.sb.tourney.Map;
 import me.smc.sb.tracking.Mods;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuTopPlaysRequest;

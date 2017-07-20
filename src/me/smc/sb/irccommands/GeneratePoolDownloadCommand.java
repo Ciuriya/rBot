@@ -18,10 +18,10 @@ import java.util.zip.ZipOutputStream;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Map;
-import me.smc.sb.multi.MapPool;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Map;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -47,12 +47,12 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Map pool number needs to be a number!";
 		
-		MapPool pool = t.getPool(Utils.stringToInt(args[args.length - 1]));
+		MapPool pool = MapPool.getPool(t, Utils.stringToInt(args[args.length - 1]));
 		
 		Thread thread = new Thread(new Runnable(){
 			@SuppressWarnings("deprecation")
 			public void run(){
-				File dlFolder = new File("temp||" + t.getName() + "||pool||" + pool.getPoolNum());
+				File dlFolder = new File("temp||" + t.get("name") + "||pool||" + pool.getPoolNum());
 				dlFolder.mkdir();
 				
 				List<File> mapsDownloaded = new ArrayList<>();
@@ -68,10 +68,10 @@ public class GeneratePoolDownloadCommand extends IRCCommand{
 				
 				if(mapsDownloaded.isEmpty()) Utils.info(e, pe, discord, "Could not download any maps!");
 				else{
-					List<Integer> zippedMaps = zipPackage(dlFolder, "/var/www/html/s/" + t.getName() + "-" + pool.getPoolNum() + ".zip");
+					List<Integer> zippedMaps = zipPackage(dlFolder, "/var/www/html/s/" + t.get("name") + "-" + pool.getPoolNum() + ".zip");
 					
 					try{
-						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.getName() + "-" + pool.getPoolNum(), "UTF-8").replaceAll("\\+", "%20") + ".zip";
+						String url = "http://smcmax.com/s/" + URLEncoder.encode(t.get("name") + "-" + pool.getPoolNum(), "UTF-8").replaceAll("\\+", "%20") + ".zip";
 						
 						Utils.info(e, pe, discord, "Here is the zipped map pool: " + url + "\nSkipped " + (pool.getMaps().size() - zippedMaps.size()) + " maps.");
 					}catch(Exception ex){

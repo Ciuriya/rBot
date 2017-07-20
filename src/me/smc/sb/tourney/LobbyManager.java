@@ -122,18 +122,22 @@ public class LobbyManager{
 		if(rank > 0) player.setRank(rank);
 		
 		if(game.firstTeam.getCurrentPlayers().size() > 0 && game.secondTeam.getCurrentPlayers().size() > 0 && game.state.eq(GameState.WAITING)){
-			game.state = GameState.ROLLING;
-			boolean teamTourney = game.match.getTournament().getInt("type") == 0;
-			
-			if(teamTourney) 		
-				game.messageUpdater("Invite your teammates through osu! and use !random to settle which team goes first. ",
-							   	   (game.match.getTournament().get("alertDiscord").length() > 0 ? "If you need help, use !alert <message>" : ""));
-			else game.messageUpdater("Both players, use !random to settle who goes first. " + 
-							   		(game.match.getTournament().get("alertDiscord").length() > 0 ? "If you need help, use !alert <message>" : ""));
-			
-			RandomCommand.waitingForRolls.add(game.firstTeam);
-			RandomCommand.waitingForRolls.add(game.secondTeam);
+			setupRolling();
 		}
+	}
+	
+	public void setupRolling(){
+		game.state = GameState.ROLLING;
+		boolean teamTourney = game.match.getTournament().getInt("type") == 0;
+		
+		if(teamTourney) 		
+			game.messageUpdater("Invite your teammates through osu! and use !random to settle which team goes first. ",
+						   	   (game.match.getTournament().get("alertDiscord").length() > 0 ? "If you need help, use !alert <message>" : ""));
+		else game.messageUpdater("Both players, use !random to settle who goes first. " + 
+						   		(game.match.getTournament().get("alertDiscord").length() > 0 ? "If you need help, use !alert <message>" : ""));
+		
+		RandomCommand.waitingForRolls.add(game.firstTeam);
+		RandomCommand.waitingForRolls.add(game.secondTeam);
 	}
 	
 	public void leave(String sPlayer){
@@ -152,6 +156,11 @@ public class LobbyManager{
 				
 				return;
 			}
+		}else if(game.state.eq(GameState.PRESTART)){
+			game.banchoHandle.sendMessage("!mp aborttimer", true);
+			game.readyManager.startReadyWait();
+			
+			return;
 		}
 		
 		if(game.match.getTournament().getInt("type") == 1 && game.match.getTournament().getBool("usingDQs") &&

@@ -10,11 +10,11 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.discordcommands.OsuStatsCommand;
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ScanPlayerRanksCommand extends IRCCommand{
@@ -50,7 +50,7 @@ public class ScanPlayerRanksCommand extends IRCCommand{
 		List<Team> playingTeams = new ArrayList<>();
 		
 		if(playingOnly)
-			for(Match match : t.getMatches()){
+			for(Match match : Match.getMatches(t)){
 				playingTeams.add(match.getFirstTeam());
 				playingTeams.add(match.getSecondTeam());
 			}
@@ -59,7 +59,7 @@ public class ScanPlayerRanksCommand extends IRCCommand{
 			public void run(){
 				String msg = "```";
 				
-				for(Team team : t.getTeams()){
+				for(Team team : Team.getTeams(t)){
 					if(playingOnly && !playingTeams.contains(team)) continue;
 					for(Player player : team.getPlayers()){
 						ranks.put(player, findPlayerRank(player));

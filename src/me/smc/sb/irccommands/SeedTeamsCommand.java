@@ -11,10 +11,10 @@ import java.util.logging.Level;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -38,7 +38,7 @@ public class SeedTeamsCommand extends IRCCommand{
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null) return "Invalid tournament!";
-		if(t.getTeams().size() < 1) return "Invalid amount of teams!";
+		if(Team.getTeams(t).size() < 1) return "Invalid amount of teams!";
 		
 		String user = Utils.toUser(e, pe);
 		
@@ -50,17 +50,17 @@ public class SeedTeamsCommand extends IRCCommand{
 				public void run(){
 					Map<Float, Team> teams = new HashMap<>();
 					
-					for(Team team : t.getTeams()){
+					for(Team team : Team.getTeams(t)){
 						List<Integer> ranks = new ArrayList<>();
 						
 						for(Player player : team.getPlayers()){
-							int rank = Utils.getOsuPlayerRank(player.getName(), t.getMode(), true);
+							int rank = Utils.getOsuPlayerRank(player.getName(), t.getInt("mode"), true);
 
 							if(rank == -1){
 								int retries = 5; //retries left
 								
 								while(retries > 0 && rank == -1){
-									rank = Utils.getOsuPlayerRank(player.getName(), t.getMode(), true);
+									rank = Utils.getOsuPlayerRank(player.getName(), t.getInt("mode"), true);
 									
 									retries--;
 									
@@ -94,11 +94,11 @@ public class SeedTeamsCommand extends IRCCommand{
 						teams.put(average, team);
 					}
 					
-					String msg = "```diff\n!== [Team averages in " + t.getName() + "] ==!\n";
+					String msg = "```diff\n!== [Team averages in " + t.get("name") + "] ==!\n";
 					
 					String lastSign = "+";
 					
-					for(int i = 0; i < t.getTeams().size(); i++){
+					for(int i = 0; i < Team.getTeams(t).size(); i++){
 						float avg = teams.keySet().stream().max(new Comparator<Float>(){
 							@Override
 							public int compare(Float o1, Float o2){

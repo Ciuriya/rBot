@@ -7,10 +7,10 @@ import java.util.List;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Map;
-import me.smc.sb.multi.MapPool;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Map;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ListMapsInPoolCommand extends IRCCommand{
@@ -35,14 +35,14 @@ public class ListMapsInPoolCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Map pool number needs to be a number!";
 		
-		MapPool pool = t.getPool(Utils.stringToInt(args[args.length - 1]));
+		MapPool pool = MapPool.getPool(t, Utils.stringToInt(args[args.length - 1]));
 		
 		if(pool == null) return "Map pool does not exist!";
 		
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			String msg = "Maps in map pool #" + pool.getPoolNum() + " of " + t.getName();
+			String msg = "Maps in map pool #" + pool.getPoolNum() + " of " + t.get("name");
 			msg = addNewLine(discord, msg, 2);
 			
 			java.util.Map<Integer, List<Map>> maps = new HashMap<>();

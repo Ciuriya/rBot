@@ -3,8 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class RemoveMapFromPoolCommand extends IRCCommand{
@@ -29,19 +30,21 @@ public class RemoveMapFromPoolCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Map pool number needs to be a number!";
-		if(t.getPool(Utils.stringToInt(args[args.length - 2])) == null) return "The map pool is invalid!";
+		
+		MapPool pool = MapPool.getPool(t, Utils.stringToInt(args[args.length - 2]));
+		
+		if(pool == null) return "The map pool is invalid!";
 		
 		String user = Utils.toUser(e, pe);
 
 		if(t.isAdmin(user)){
 			String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
 			
-			if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}")){
+			if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}"))
 				return "Invalid URL, example format: https://osu.ppy.sh/b/123456";
-			}
 			
-			t.getPool(Utils.stringToInt(args[args.length - 2])).removeMap(args[args.length - 1]);
-			t.getPool(Utils.stringToInt(args[args.length - 2])).save(false);
+			pool.removeMap(args[args.length - 1]);
+			pool.save(false);
 			
 			return "Removed " + args[args.length - 1] + " from the map pool!";
 		}

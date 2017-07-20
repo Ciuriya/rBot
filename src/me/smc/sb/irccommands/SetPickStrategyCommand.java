@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.PickStrategy;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.pickstrategies.PickStrategy;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetPickStrategyCommand extends IRCCommand{
@@ -32,10 +32,10 @@ public class SetPickStrategyCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.setPickStrategy(args[args.length - 1]);
+			t.set("pickStrategy", args[args.length - 1]);
 			t.save(false);
 			
-			return "Set the tournament's pick strategy to " + PickStrategy.getStrategyName(t.getPickStrategy()) + "!";
+			return "Set the tournament's pick strategy to " + PickStrategy.getStrategyName(PickStrategy.findStrategy(t.get("pickStrategy"))) + "!";
 		}
 		
 		return "";

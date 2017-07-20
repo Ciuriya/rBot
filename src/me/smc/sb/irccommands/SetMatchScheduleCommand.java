@@ -3,8 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetMatchScheduleCommand extends IRCCommand{
@@ -28,7 +29,7 @@ public class SetMatchScheduleCommand extends IRCCommand{
 		
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 6]) == -1) return "Match number needs to be a number!";
-		if(t.getMatch(Utils.stringToInt(args[args.length - 6])) == null) return "The match is invalid!";
+		if(Match.getMatch(t, Utils.stringToInt(args[args.length - 6])) == null) return "The match is invalid!";
 		
 		String user = Utils.toUser(e, pe);
 		
@@ -40,8 +41,8 @@ public class SetMatchScheduleCommand extends IRCCommand{
 			
 			if(time == -1 || time < Utils.getCurrentTimeUTC()) return "This time is either in the past or invalid!";
 			
-			t.getMatch(Utils.stringToInt(args[args.length - 6])).setTime(time);
-			t.getMatch(Utils.stringToInt(args[args.length - 6])).save(false);
+			Match.getMatch(t, Utils.stringToInt(args[args.length - 6])).setTime(time);
+			Match.getMatch(t, Utils.stringToInt(args[args.length - 6])).save(false);
 			
 			return "Set match #" + args[args.length - 6] + " to " + date;
 		}

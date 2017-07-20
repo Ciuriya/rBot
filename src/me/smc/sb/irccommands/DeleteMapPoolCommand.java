@@ -3,8 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class DeleteMapPoolCommand extends IRCCommand{
@@ -32,9 +33,11 @@ public class DeleteMapPoolCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			if(t.removePool(Utils.stringToInt(args[args.length - 1])))
+			if(MapPool.getPool(t, Utils.stringToInt(args[args.length - 1])) != null){
+				MapPool.removePool(t, Utils.stringToInt(args[args.length - 1]));
+				
 				return "Deleted map pool #" + args[args.length - 1] + "!";
-			else return "Map pool does not exist!";
+			}else return "Map pool does not exist!";
 		}
 		
 		return "";

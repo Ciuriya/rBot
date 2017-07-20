@@ -11,11 +11,11 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.tracking.OsuPageRequest;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.utils.Utils;
@@ -50,7 +50,7 @@ public class ScanCheatersCommand extends IRCCommand{
 		List<Team> playingTeams = new ArrayList<>();
 		
 		if(playingOnly)
-			for(Match match : t.getMatches()){
+			for(Match match : Match.getMatches(t)){
 				playingTeams.add(match.getFirstTeam());
 				playingTeams.add(match.getSecondTeam());
 			}
@@ -62,11 +62,11 @@ public class ScanCheatersCommand extends IRCCommand{
 				Map<Float, String> sharpRankIncreases = new HashMap<>();
 				Map<Float, String> largestPPGaps = new HashMap<>();
 				
-				for(Team team : t.getTeams()){
+				for(Team team : Team.getTeams(t)){
 					if(playingOnly && !playingTeams.contains(team)) continue;
 					for(Player player : team.getPlayers()){
 						String userId = Utils.getOsuPlayerId(player.getName(), true);
-						OsuRequest generalPageRequest = new OsuPageRequest("general", "?u=" + userId + "&m=" + t.getMode());
+						OsuRequest generalPageRequest = new OsuPageRequest("general", "?u=" + userId + "&m=" + t.getInt("mode"));
 						Object generalPageObj = Main.hybridRegulator.sendRequest(generalPageRequest);
 						String[] general = new String[]{};
 						String[] leader = new String[]{};
@@ -75,13 +75,13 @@ public class ScanCheatersCommand extends IRCCommand{
 							general = (String[]) generalPageObj;
 
 						if(general.length > 10){
-							OsuRequest leaderPageRequest = new OsuPageRequest("leader", "?u=" + userId + "&m=" + t.getMode());
+							OsuRequest leaderPageRequest = new OsuPageRequest("leader", "?u=" + userId + "&m=" + t.getInt("mode"));
 							Object leaderPageObj = Main.hybridRegulator.sendRequest(leaderPageRequest);
 							
 							if(leaderPageObj != null && leaderPageObj instanceof String[]){
 								leader = (String[]) leaderPageObj;
 								
-								OsuRequest lowerLeaderPageRequest = new OsuPageRequest("leader", "?u=" + userId + "&m=" + t.getMode() + "&pp=1");
+								OsuRequest lowerLeaderPageRequest = new OsuPageRequest("leader", "?u=" + userId + "&m=" + t.getInt("mode") + "&pp=1");
 								Object lowerLeaderPageObj = Main.hybridRegulator.sendRequest(lowerLeaderPageRequest);
 								
 								if(lowerLeaderPageObj != null && lowerLeaderPageObj instanceof String[])

@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ListGamesCommand extends IRCCommand{
@@ -33,7 +33,7 @@ public class ListGamesCommand extends IRCCommand{
 		
 		String msg = "";
 		
-		for(Match match : t.getMatches())
+		for(Match match : Match.getMatches(t))
 			if(match.getGame() != null && match.isMatchAdmin(user))
 				msg += "MP #" + match.getGame().getMpNum() + " (match #" + match.getMatchNum() + ") " +
 					   match.getFirstTeam().getTeamName() + " vs " + match.getSecondTeam().getTeamName() + "\n";

@@ -3,6 +3,7 @@ package me.smc.sb.tourney;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import me.smc.sb.utils.Configuration;
 
@@ -77,6 +78,10 @@ public class Team{
 					return team;
 		
 		return null;
+	}
+	
+	public static List<Team> getTeams(Tournament tournament){
+		return teams.stream().filter(t -> t.tournament.get("name").equalsIgnoreCase(tournament.get("name"))).collect(Collectors.toList());
 	}
 	
 	public static void removeTeam(Tournament t, String teamName){

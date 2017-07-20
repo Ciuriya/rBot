@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ListMatchesCommand extends IRCCommand{
@@ -32,11 +32,11 @@ public class ListMatchesCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			String msg = "Matches in " + t.getName();
+			String msg = "Matches in " + t.get("name");
 			if(discord != null) msg = "```" + msg + "\n";
 			else msg += "=";
 			
-			for(Match match : t.getMatches()){
+			for(Match match : Match.getMatches(t)){
 				msg += "\n#" + match.getMatchNum();
 				
 				if(match.getFirstTeam() != null)
@@ -49,7 +49,7 @@ public class ListMatchesCommand extends IRCCommand{
 				
 				if(match.getTime() != 0) msg += " - " + Utils.toDate(match.getTime()) + " UTC";
 				
-				msg += "\n" + match.getPlayers() + " players - BO" + 
+				msg += "\n" + match.getMatchSize() + " players - BO" + 
 				       match.getBestOf() + " - MapPool #" + 
 					   (match.getMapPool() != null ? 
 					   match.getMapPool().getPoolNum() : -1);

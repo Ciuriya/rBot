@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ListTeamsCommand extends IRCCommand{
@@ -32,11 +32,11 @@ public class ListTeamsCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 
 		if(t.isAdmin(user)){
-			String msg = "Teams in " + t.getName();
+			String msg = "Teams in " + t.get("name");
 			if(discord != null) msg = "```" + msg + "\n";
 			else msg += "=";
 			
-			for(Team team : t.getTeams()){
+			for(Team team : Team.getTeams(t)){
 				msg += team.getTeamName();
 				if(discord != null) msg += "\n";
 				else msg += "=";

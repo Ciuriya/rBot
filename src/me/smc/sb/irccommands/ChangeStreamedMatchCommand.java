@@ -4,9 +4,10 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
+import me.smc.sb.tourney.TwitchHandler;
 import me.smc.sb.utils.Utils;
 
 public class ChangeStreamedMatchCommand extends IRCCommand{
@@ -31,29 +32,16 @@ public class ChangeStreamedMatchCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 1]) == -1) return "Match number needs to be a number!";
 		
-		Match match = t.getMatch(Utils.stringToInt(args[args.length - 1]));
+		Match match = Match.getMatch(t, Utils.stringToInt(args[args.length - 1]));
 		
 		if(!match.isMatchAdmin(Utils.toUser(e, pe))) return "";
-		
-		if(match.getGame() != null && t.getCurrentlyStreamed() != match.getGame()){
-			if(t.getCurrentlyStreamed() != null){
-				t.getCurrentlyStreamed().streamed = false;
-				
-				if(t.getCurrentlyStreamed().match.getStreamPriority() == 0){
-					t.getCurrentlyStreamed().match.setStreamPriority(1);
-				}
-				
-				t.stopStreaming(t.getCurrentlyStreamed());
-			}
+		if(match.getGame() != null){
+			TwitchHandler handler = t.getTwitchHandler();
 			
-			match.getGame().match.setStreamPriority(0);
-			match.getGame().streamed = true;
-			
-			t.setCurrentlyStreamed(match.getGame());
-			
-			Main.twitchRegulator.sendMessage(match.getTournament().getTwitchChannel(),
-					 						"Game switched to " + match.getLobbyName());
-			
+			handler.forceStream(match.getGame());
+			Main.twitchRegulator.sendMessage(match.getTournament().get("twitchChannel"),
+					"Game switched to " + match.getLobbyName());
+
 			return "Switched to " + match.getLobbyName() + "!";
 		}
 		

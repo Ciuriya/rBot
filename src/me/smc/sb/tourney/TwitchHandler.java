@@ -60,6 +60,14 @@ public class TwitchHandler{
 		return true;
 	}
 	
+	public void forceStream(Game game){
+		if(streamed != null)
+			streamQueue.add(streamed);
+		
+		streamed = game;
+		changeStreamTitle(streamed);
+	}
+	
 	public void stopStreaming(Game game){
 		if(!isStreamed(game)) streamQueue.remove(game);
 		else{
@@ -105,8 +113,6 @@ public class TwitchHandler{
 		}
 	}
 	
-	// add garbage about mp link and all
-	
 	public boolean isStreaming(){
 		return streamed != null;
 	}
@@ -127,5 +133,9 @@ public class TwitchHandler{
 	
 	public static TwitchHandler get(Tournament tournament){
 		return handlers.stream().filter(h -> h.getChannel().equalsIgnoreCase(tournament.get("twitchChannel"))).findFirst().orElse(null);
+	}
+	
+	public static TwitchHandler get(String channel){
+		return handlers.stream().filter(h -> h.getChannel().equalsIgnoreCase(channel)).findFirst().orElse(null);
 	}
 }

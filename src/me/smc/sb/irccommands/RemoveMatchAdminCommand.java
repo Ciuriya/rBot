@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class RemoveMatchAdminCommand extends IRCCommand{
@@ -30,7 +30,7 @@ public class RemoveMatchAdminCommand extends IRCCommand{
 		if(t == null) return "Invalid tournament!";
 		if(Utils.stringToInt(args[args.length - 2]) == -1) return "Match number needs to be a number!";
 		
-		Match match = t.getMatch(Utils.stringToInt(args[args.length - 2]));
+		Match match = Match.getMatch(t, Utils.stringToInt(args[args.length - 2]));
 		
 		match.removeMatchAdmin(args[args.length - 1]);
 		match.save(false);

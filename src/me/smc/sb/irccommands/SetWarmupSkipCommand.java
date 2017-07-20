@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetWarmupSkipCommand extends IRCCommand{
@@ -31,10 +31,10 @@ public class SetWarmupSkipCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.setSkippingWarmups(Boolean.parseBoolean(args[args.length - 1]));
+			t.set("skipWarmups", Boolean.parseBoolean(args[args.length - 1]));
 			t.save(false);
 			
-			return tournamentName + " is " + (t.isSkippingWarmups() ? "now" : "no longer") + " skipping warmups!";
+			return tournamentName + " is " + (t.getBool("skipWarmups") ? "now" : "no longer") + " skipping warmups!";
 		}
 		
 		return "";

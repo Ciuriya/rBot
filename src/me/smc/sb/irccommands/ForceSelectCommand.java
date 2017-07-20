@@ -3,10 +3,10 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Map;
-import me.smc.sb.multi.Match;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Map;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ForceSelectCommand extends IRCCommand {
@@ -46,7 +46,7 @@ public class ForceSelectCommand extends IRCCommand {
 		if(Utils.stringToInt(args[args.length - 2 - mapArgMod]) == -1) 
 			return "Match number needs to be a number!";
 		
-		Match match = t.getMatch(Utils.stringToInt(args[args.length - 2 - mapArgMod]));
+		Match match = Match.getMatch(t, Utils.stringToInt(args[args.length - 2 - mapArgMod]));
 		
 		boolean revertScore = false;
 		
@@ -83,7 +83,8 @@ public class ForceSelectCommand extends IRCCommand {
 		if(match.getGame() == null) return "The game is not started!";
 		
 		if(match.isMatchAdmin(user)){
-			boolean success = match.getGame().forceSelect(revertScore, newMap);
+			boolean success = match.getGame().getSelectionManager().forceSelect(revertScore, newMap);
+			
 			return success ? "Force select successful!" : "";
 		}
 		

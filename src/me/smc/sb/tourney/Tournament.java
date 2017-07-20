@@ -124,6 +124,14 @@ public class Tournament{
 		return decayTime == null ? 0 : (long) decayTime;
 	}
 	
+	public boolean isAdmin(String user){
+		for(String admin : getStringList("tournament-admins"))
+			if(user.replaceAll(" ", "_").equalsIgnoreCase(admin.replaceAll(" ", "_")))
+				return true;
+		
+		return false;
+	}
+	
 	public void setTempLobbyDecayTime(){
 		configValues.put("tempLobbyDecayTime", System.currentTimeMillis() + 300000l); // 5 minutes later
 	}

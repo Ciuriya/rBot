@@ -3,10 +3,10 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Player;
-import me.smc.sb.multi.Team;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Player;
+import me.smc.sb.tourney.Team;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ListTeamPlayersCommand extends IRCCommand{
@@ -31,12 +31,12 @@ public class ListTeamPlayersCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 
 		if(t.isAdmin(user)){
-			Team team = t.getTeam(validation.split("\\|")[0]);
+			Team team = Team.getTeam(t, validation.split("\\|")[0]);
 			
 			if(team == null)
 				return "Could not find team!";
 			else{
-				String msg = "Team " + team.getTeamName() + " in " + Tournament.getTournament(validation.split("\\|")[1]).getName();
+				String msg = "Team " + team.getTeamName() + " in " + Tournament.getTournament(validation.split("\\|")[1]).get("name");
 				if(discord != null) msg = "```" + msg + "\n";
 				else msg += "=";
 				

@@ -3,8 +3,8 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class SetBanWaitTimeCommand extends IRCCommand{
@@ -31,10 +31,10 @@ public class SetBanWaitTimeCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			t.setBanWaitTime(Utils.stringToInt(args[args.length - 1]));
+			t.set("banWaitTime", Utils.stringToInt(args[args.length - 1]));
 			t.save(false);
 			
-			return "Set the tournament's ban wait time to " + t.getBanWaitTime() + "!";
+			return "Set the tournament's ban wait time to " + t.getInt("banWaitTime") + "!";
 		}
 		
 		return "";

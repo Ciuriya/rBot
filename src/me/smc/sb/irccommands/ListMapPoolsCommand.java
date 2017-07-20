@@ -3,9 +3,9 @@ package me.smc.sb.irccommands;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
-import me.smc.sb.multi.MapPool;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tourney.MapPool;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 
 public class ListMapPoolsCommand extends IRCCommand{
@@ -32,11 +32,11 @@ public class ListMapPoolsCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			String msg = "Map Pools in " + t.getName();
+			String msg = "Map Pools in " + t.get("name");
 			if(discord != null) msg = "```" + msg + "\n";
 			else msg += "=";
 			
-			for(MapPool pool : t.getMapPools()){
+			for(MapPool pool : MapPool.getPools(t)){
 				msg += "#" + pool.getPoolNum() + " - " + pool.getMaps().size() + " maps";
 				if(discord != null) msg += "\n";
 				else msg += "=";

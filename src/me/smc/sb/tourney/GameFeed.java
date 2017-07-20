@@ -155,6 +155,13 @@ public class GameFeed{
 	}
 	
 	public String getMatchStatus(){
-		return game.state.eq(GameState.ENDED) ? "ended" : "ongoing";
+		int totalWarmups = game.match.getTournament().getInt("warmupCount") * 2;
+		int totalBans = game.match.getTournament().getInt("banCount") * 2;
+		
+		if(game.state.eq(GameState.ENDED)) return "ended";
+		else if(game.firstTeam.getRoll() == -1 || game.secondTeam.getRoll() == -1) return "pre-warmup";
+		else if(game.selectionManager.warmupsLeft > 0) return "warm-up (" + (totalWarmups - game.selectionManager.warmupsLeft + 1) + "/" + totalWarmups + ")";
+		else if(game.selectionManager.bansLeft > 0) return "bans (" + (totalBans - game.selectionManager.bansLeft + 1) + "/" + totalBans + ")";
+		else return "ongoing";
 	}
 }

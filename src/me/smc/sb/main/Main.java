@@ -25,8 +25,9 @@ import me.smc.sb.discordcommands.VoiceCommand;
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.listeners.Listener;
-import me.smc.sb.multi.Tournament;
 import me.smc.sb.parsable.ParsableValue;
+import me.smc.sb.tourney.Match;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.tracking.HybridRegulator;
 import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.utils.BanchoRegulator;
@@ -124,7 +125,7 @@ public class Main{
 				
 				long uptime = System.currentTimeMillis() - Main.bootTime;
 				
-				if(htmlScrapes == 0 && uptime >= 120000 && Tournament.matchesRunning == 0){
+				if(htmlScrapes == 0 && uptime >= 120000 && Match.runningMatches == 0){
 					//Utils.info(api.getUserById("91302128328392704").getPrivateChannel(), "I am restarting due to the lack of html scrapes.");
 					//stop(2);
 				}

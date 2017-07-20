@@ -14,7 +14,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import com.jcabi.jdbc.JdbcSession;
 import com.jcabi.jdbc.Outcome;
 
-import me.smc.sb.multi.Tournament;
+import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.FinalInt;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
@@ -57,18 +57,18 @@ public class ConfirmTeamCommand extends IRCCommand{
 		
 		int teamID = -1;
 		
-		if(t.getTournamentType() == 0){
+		if(t.getInt("type") == 0){
 			teamID = Utils.stringToInt(args[args.length - 1]);
 			if(teamID == -1) return "Invalid team ID!";
 		}
 		
 		try{
-			int tourneyId = RemotePatyServerUtils.fetchTournamentId(t.getName());
+			int tourneyId = RemotePatyServerUtils.fetchTournamentId(t.get("name"));
 			if(tourneyId == 0) return "This tournament doesn't exist!";
 			
 			String errorMessage = "";
 			
-			if(t.getTournamentType() == 0)
+			if(t.getInt("type") == 0)
 				errorMessage = teamConfirm(tourneyId, teamID, userID, tournamentName);
 			else errorMessage = soloConfirm(tourneyId, userID, tournamentName);
 			
