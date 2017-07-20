@@ -56,6 +56,7 @@ public class SelectMapCommand extends IRCCommand{
 					}
 					
 					team.getGame().getSelectionManager().handleMapSelect(url, true, mod);
+					
 					return "";
 				}
 		

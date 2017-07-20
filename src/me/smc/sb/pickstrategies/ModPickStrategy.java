@@ -45,7 +45,7 @@ public class ModPickStrategy implements PickStrategy{
 				    	  	  				(mod.length() > 0 ? "+" + mod + " " : "") + "was picked by " + 
 				    	  	  				game.getNextTeam().getTeam().getTeamName() + "!");
 			
-			game.prepareReadyCheck();
+			game.getReadyManager().startReadyWait();
 			
 			return;
 		}
@@ -85,7 +85,7 @@ public class ModPickStrategy implements PickStrategy{
 		if(selected != null && manager.getMap() == null && select){
 			manager.setMap(selected);
 			Utils.updateTwitch(game, selected);
-			game.prepareReadyCheck();
+			game.getReadyManager().startReadyWait();
 			
 			return;
 		}

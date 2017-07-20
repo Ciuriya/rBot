@@ -20,6 +20,7 @@ public class Game{
 	protected BanchoHandler banchoHandle;
 	protected LobbyManager lobbyManager;
 	protected SelectionManager selectionManager;
+	protected ReadyManager readyManager;
 	protected GameFeed feed;
 	protected Timer messageUpdater;
 	protected int roomSize;
@@ -33,6 +34,7 @@ public class Game{
 		this.banchoHandle = new BanchoHandler(this);
 		this.lobbyManager = new LobbyManager(this);
 		this.selectionManager = new SelectionManager(this);
+		this.readyManager = new ReadyManager(this);
 		this.firstTeam = new PlayingTeam(match.getFirstTeam(), this);
 		this.secondTeam = new PlayingTeam(match.getSecondTeam(), this);
 		this.state = GameState.WAITING;
@@ -207,6 +209,10 @@ public class Game{
 	
 	public SelectionManager getSelectionManager(){
 		return selectionManager;
+	}
+	
+	public ReadyManager getReadyManager(){
+		return readyManager;
 	}
 	
 	public GameFeed getGameFeed(){

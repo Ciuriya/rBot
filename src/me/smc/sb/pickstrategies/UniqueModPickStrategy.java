@@ -9,7 +9,6 @@ import me.smc.sb.tourney.Game;
 import me.smc.sb.tourney.Map;
 import me.smc.sb.tourney.PlayingTeam;
 import me.smc.sb.tourney.SelectionManager;
-import me.smc.sb.tourney.Team;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
@@ -49,7 +48,7 @@ public class UniqueModPickStrategy implements PickStrategy{
 				    	  	  				(mod.length() > 0 ? "+" + mod + " " : "") + "was picked by " + 
 				    	  	  				game.getNextTeam().getTeam().getTeamName() + "!");
 			
-			game.prepareReadyCheck();
+			game.getReadyManager().startReadyWait();
 			
 			return;
 		}
@@ -147,7 +146,7 @@ public class UniqueModPickStrategy implements PickStrategy{
 		if(selected != null && manager.getMap() == null && select){
 			manager.setMap(selected);
 			Utils.updateTwitch(game, selected);
-			game.prepareReadyCheck();
+			game.getReadyManager().startReadyWait();
 			
 			return;
 		}else if(manager.getMap() != null && select && selected != null){

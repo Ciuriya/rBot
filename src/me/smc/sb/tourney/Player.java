@@ -9,6 +9,7 @@ public class Player{
 	private double modMultiplier;
 	private boolean isPlaying;
 	private boolean verified;
+	private boolean submitted;
 	private int rank;
 	
 	public Player(String name){
@@ -19,6 +20,7 @@ public class Player{
 		this.modMultiplier = 1;
 		this.isPlaying = false;
 		this.verified = false;
+		this.submitted = false;
 		this.rank = -1;
 	}
 	
@@ -54,6 +56,10 @@ public class Player{
 		return verified;
 	}
 	
+	public boolean submittedScore(){
+		return submitted;
+	}
+	
 	public int getRank(){
 		return rank;
 	}
@@ -84,6 +90,10 @@ public class Player{
 	
 	public void setVerified(boolean verified){
 		this.verified = verified;
+	}
+	
+	public void setSubmitted(boolean submitted){
+		this.submitted = submitted;
 	}
 	
 	public void setRank(int rank){

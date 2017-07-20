@@ -5,10 +5,13 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.json.JSONObject;
+
 import me.smc.sb.irccommands.BanMapCommand;
 import me.smc.sb.irccommands.ChangeWarmupModCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
 import me.smc.sb.irccommands.SkipWarmupCommand;
+import me.smc.sb.tourney.Map;
 import me.smc.sb.tourney.GameState;
 import me.smc.sb.pickstrategies.ModPickStrategy;
 import me.smc.sb.pickstrategies.PickStrategy;
@@ -39,10 +42,7 @@ public class SelectionManager{
 	public void selectWarmups(){
 		if(game.state.eq(GameState.PAUSED)) return;
 		
-		if(pickTimer != null){
-			pickTimer.cancel();
-			pickTimer = null;
-		}
+		clearPickTimer();
 		
 		game.state = GameState.SELECTING;
 		
@@ -80,10 +80,7 @@ public class SelectionManager{
 		ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(game);
 		SkipWarmupCommand.gamesAllowedToSkip.remove(game);
 		
-		if(pickTimer != null){
-			pickTimer.cancel();
-			pickTimer = null;
-		}
+		clearPickTimer();
 		
 		game.state = GameState.BANNING;
 		warmupsLeft = 0;
@@ -108,10 +105,7 @@ public class SelectionManager{
 	public void selectPicks(){
 		if(game.state.eq(GameState.PAUSED)) return;
 		
-		if(pickTimer != null){
-			pickTimer.cancel();
-			pickTimer = null;
-		}
+		clearPickTimer();
 		
 		game.state = GameState.SELECTING;
 		bansLeft = 0;
@@ -120,6 +114,7 @@ public class SelectionManager{
 		if(!SelectMapCommand.pickingTeams.contains(game.nextTeam))
 			SelectMapCommand.pickingTeams.add(game.nextTeam);
 		
+		selectionStartTime = System.currentTimeMillis();
 		startLobbyUpdater();
 		pickTimer(game.match.getTournament().getInt("pickWaitTime"));
 		
@@ -135,7 +130,8 @@ public class SelectionManager{
 	}
 	
 	public void handleMapSelect(String map, boolean select, String mod){
-		if(game.state.eq(GameState.PAUSED)) return;
+		if(game.state.eq(GameState.PAUSED) || 
+		   selectionStartTime + (long) (game.match.getTournament().getInt("pickWaitTime") / 2 * 1000) <= System.currentTimeMillis()) return;
 		
 		strategy.handleMapSelect(game, map, select, mod);
 	}
@@ -235,15 +231,13 @@ public class SelectionManager{
 	
 	public void skipWarmup(){
 		if(warmupsLeft > 0 && game.state.eq(GameState.SELECTING)){
-			if(pickTimer != null){
-				pickTimer.cancel();
-				pickTimer = null;
-			}
-			
+			clearPickTimer();
 			warmupsLeft--;
+			
 			SelectMapCommand.pickingTeams.remove(game.nextTeam);
 			ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(game);
 			SkipWarmupCommand.gamesAllowedToSkip.remove(game);
+			
 			game.switchNextTeam();
 			game.feed.updateDiscord();
 			game.banchoHandle.sendMessage("The warmup has been skipped!", false);
@@ -253,6 +247,30 @@ public class SelectionManager{
 	
 	public void setMap(Map map){
 		this.map = map;
+	}
+	
+	// in case the map was changed externally
+	public void updateMap(String link){
+		if(map != null && map.getURL().equalsIgnoreCase(link)) return;
+		
+		if(game.state.eq(GameState.PLAYING)){
+			this.map = game.match.getMapPool().findMap(link);
+			this.lobbyMap = map;
+			game.readyManager.onMatchStart();
+			
+			return;
+		}
+		
+		final Map fMap = map;
+		this.map = game.match.getMapPool().findMap(link);
+		this.lobbyMap = map;
+		JSONObject jsMap = Map.getMapInfo(map.getBeatmapID(), game.match.getTournament().getInt("mode"), true);
+		
+		game.feed.updateTwitch(getMod(map).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+	    	  	 	 		   jsMap.getString("title") + " [" + jsMap.getString("version") + "] was picked by " + 
+	    	  	 	 		   game.nextTeam.getTeam().getTeamName() + "!");
+		
+		if(fMap == null) game.getReadyManager().startReadyWait();
 	}
 	
 	public void setWarmupMod(String mod){
@@ -285,7 +303,7 @@ public class SelectionManager{
 		return length / modMultiplier > game.match.getTournament().getInt("warmupLength");
 	}
 	
-	private void pickTimer(int waitTime){
+	public void pickTimer(int waitTime){
 		if(game.state.eq(GameState.PLAYING)) return;
 		if(pickTimer != null) pickTimer.cancel();
 		
@@ -333,5 +351,12 @@ public class SelectionManager{
 				}
 			}
 		}, waitTime * 1000);
+	}
+	
+	public void clearPickTimer(){
+		if(pickTimer != null){
+			pickTimer.cancel();
+			pickTimer = null;
+		}
 	}
 }
