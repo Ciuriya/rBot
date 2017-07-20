@@ -71,8 +71,7 @@ public class ResultManager{
 							rematch = game.selectionManager.warmupsLeft > 0 && team.canRematch();
 							rematchTeam = team;
 							game.banchoHandle.sendMessage(player + " is on fallback, please use stable!" + 
-														 (rematch ? " There will be a rematch! (" + 
-														 (team.getRematchesLeft() - 1) + " remaining)" : ""), false);
+														 (rematch ? " There will be a rematch!" : ""), false);
 						}
 						
 						if(fTeam) fTeamScore += score;
@@ -135,42 +134,17 @@ public class ResultManager{
 					}
 					
 					if(fTeamScore == sTeamScore){
-						sendMessage("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
-						mapSelected = true;
-						banchoFeedback.clear();
-						
-						switchPlaying(false, true);
-						
-						updateTwitch("Both " + (isTeamGame() ? "teams" : "players") + " have tied, there will be a rematch!");
+						String message = "Both " + (game.match.getTournament().getInt("type") == 0 ? "teams" : "players") + " have tied, there will be a rematch!";
+						game.banchoHandle.sendMessage(message, false);
+						game.feed.updateTwitch(message);
+						game.readyManager.switchPlaying(false, true);
+						game.readyManager.startReadyWait();
 						
 						return;
 					}
 					
-					if(match.getTournament().isUsingMapStats()){
-						int mapId = match.getMapPool().getMapId(map);
-						
-						if(mapId != 0){
-							int tourneyId = 0;
-							
-							try{
-								tourneyId = RemotePatyServerUtils.fetchTournamentId(match.getTournament().getName());
-							}catch(Exception e){
-								Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
-							}
-							
-							if(tourneyId != 0){
-								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "pickcount", 1);
-								
-								if(sTeamScore > 0 && fTeamScore > 0){
-									RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "total_score", totalScore);
-									RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "target_range_score", targetRangeScore);
-								}
-								
-								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "target_range_passed", targetRangePasses);
-								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "plays_submitted", totalSubmits);
-								RemotePatyServerUtils.incrementMapValue(mapId, match.getMapPool().getPoolNum(), tourneyId, "plays_passed", totalPasses);
-							}
-						}
+					if(game.match.getTournament().getBool("usingMapStats")){
+
 					}
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
@@ -317,20 +291,19 @@ public class ResultManager{
 			
 			game.banchoHandle.sendMessage("The contest has been accepted.", false);
 			contestState = 0;
+			game.selectionManager.clearPickTimer();
 			
-			if(teamToBoolean(lastWinner)){
-				fTeamPoints--;
-				sTeamPoints++;
-				lastWinner = match.getSecondTeam();
+			if(lastWinner){
+				game.firstTeam.removePoint();
+				game.secondTeam.addPoint();
+				lastWinner = false;
 			}else{
-				sTeamPoints--;
-				fTeamPoints++;
-				lastWinner = match.getFirstTeam();
+				game.secondTeam.removePoint();
+				game.firstTeam.addPoint();
+				lastWinner = true;
 			}
 			
-			updateScores(false);
-			
-			if(selectAfter) mapSelection(4);
+			updateScores();
 		}
 	}
 	
@@ -343,6 +316,35 @@ public class ResultManager{
 	
 	public void addResult(String result){
 		results.add(result);
+	}
+	
+	private void incrementPlayerStats(long totalScore, long targetRangeScore, long totalPasses, long targetRangePasses, long totalSubmits){
+		int mapId = game.match.getMapPool().getMapId(game.selectionManager.map);
+		
+		if(mapId != 0){
+			int tourneyId = 0;
+			
+			try{
+				tourneyId = RemotePatyServerUtils.fetchTournamentId(game.match.getTournament().get("name"));
+			}catch(Exception e){
+				Log.logger.log(Level.SEVERE, "Could not fetch tourney id", e);
+			}
+			
+			if(tourneyId != 0){
+				int poolNum = game.match.getMapPool().getPoolNum();
+				
+				RemotePatyServerUtils.incrementMapValue(mapId, poolNum, tourneyId, "pickcount", 1);
+				
+				if(totalScore > 0){
+					RemotePatyServerUtils.incrementMapValue(mapId, poolNum, tourneyId, "total_score", totalScore);
+					RemotePatyServerUtils.incrementMapValue(mapId, poolNum, tourneyId, "target_range_score", targetRangeScore);
+				}
+				
+				RemotePatyServerUtils.incrementMapValue(mapId, poolNum, tourneyId, "target_range_passed", targetRangePasses);
+				RemotePatyServerUtils.incrementMapValue(mapId, poolNum, tourneyId, "plays_submitted", totalSubmits);
+				RemotePatyServerUtils.incrementMapValue(mapId, poolNum, tourneyId, "plays_passed", totalPasses);
+			}
+		}
 	}
 	
 	private int calculateMissingScores(boolean fTeam){ // v2 only

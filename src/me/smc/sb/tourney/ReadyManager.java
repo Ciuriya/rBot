@@ -20,6 +20,7 @@ import me.smc.sb.utils.Utils;
 public class ReadyManager{
 	
 	private Game game;
+	protected long startTime;
 	
 	public ReadyManager(Game game){
 		this.game = game;
@@ -150,6 +151,8 @@ public class ReadyManager{
 	}
 	
 	public void matchStarted(){
+		startTime = System.currentTimeMillis();
+		
 		if(!game.state.eq(GameState.PLAYING)){
 			if(!game.state.eq(GameState.PRESTART))
 				game.banchoHandle.sendMessage("!mp settings", false);
