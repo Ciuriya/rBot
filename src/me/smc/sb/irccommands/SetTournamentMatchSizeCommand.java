@@ -32,7 +32,6 @@ public class SetTournamentMatchSizeCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("matchSize", Utils.stringToInt(args[args.length - 1]));
-			t.save(false);
 			
 			return "Set the tournament's default match size to " + t.getInt("matchSize") + " players!";
 		}

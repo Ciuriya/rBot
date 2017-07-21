@@ -32,7 +32,6 @@ public class SetTwitchChannelCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("twitchChannel", args[args.length - 1].toLowerCase());
-			t.save(false);
 			
 			return "Set the tournament's twitch channel to " + t.get("twitchChannel") + "!";
 		}

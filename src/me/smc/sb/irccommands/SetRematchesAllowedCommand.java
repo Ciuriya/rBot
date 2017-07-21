@@ -33,7 +33,6 @@ public class SetRematchesAllowedCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("rematchesAllowed", Utils.stringToInt(args[args.length - 1]));
-			t.save(false);
 			
 			return "Set the tournament's rematches allowed per match to " + t.getInt("rematchesAllowed") + "!";
 		}

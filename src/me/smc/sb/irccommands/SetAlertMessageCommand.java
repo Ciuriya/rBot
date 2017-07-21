@@ -52,7 +52,6 @@ public class SetAlertMessageCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("alertMessage", message);
-			t.save(false);
 			
 			return "The alert message was set!";
 		}

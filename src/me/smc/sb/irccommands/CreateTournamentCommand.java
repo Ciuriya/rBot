@@ -36,10 +36,8 @@ public class CreateTournamentCommand extends IRCCommand{
 		
 		Tournament t = new Tournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
-		if(tournamentArgLength < args.length){
+		if(tournamentArgLength < args.length)
 			t.set("mode", Utils.stringToInt(args[args.length - 1]));
-			t.save(false);
-		}
 		
 		return "Created the " + tournamentName.substring(0, tournamentName.length() - 1) + " tournament!";
 	}

@@ -40,7 +40,6 @@ public class SetRankBoundsCommand extends IRCCommand{
 			
 			t.set("lowerRankBound", lower);
 			t.set("upperRankBound", upper);
-			t.save(false);
 			
 			return "The rank bounds are now " + lower + " to " + upper + "!";
 		}

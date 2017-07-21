@@ -37,30 +37,40 @@ public class Tournament{
 	}
 	
 	public String get(String key){
-		return (String) configValues.get(key);
+		Object obj = configValues.get(key);
+		
+		return obj == null ? "" : String.valueOf(obj);
 	}
 	
 	public int getInt(String key){
-		return (Integer) configValues.get(key);
+		Object obj = configValues.get(key);
+		
+		return obj == null ? 0 : String.valueOf(obj).length() > 0 ? Integer.parseInt(String.valueOf(obj)) : 0;
 	}
 	
 	public double getDouble(String key){
-		return (Double) configValues.get(key);
+		Object obj = configValues.get(key);
+		
+		return obj == null ? 0.0 : String.valueOf(obj).length() > 0 ? Double.parseDouble(String.valueOf(obj)) : 0.0;
 	}
 	
 	public boolean getBool(String key){
-		return (Boolean) configValues.get(key);
+		Object obj = configValues.get(key);
+		
+		return obj == null ? false : String.valueOf(obj).length() > 0 ? Boolean.parseBoolean(String.valueOf(obj)) : false;
 	}
 	
 	public float getFloat(String key){
-		return (Float) configValues.get(key);
+		Object obj = configValues.get(key);
+		
+		return obj == null ? 0.0f : String.valueOf(obj).length() > 0 ? Float.parseFloat(String.valueOf(obj)) : 0.0f;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public ArrayList<String> getStringList(String key){
-		ArrayList<String> list = (ArrayList<String>) configValues.get(key);
+		Object obj = configValues.get(key);
 		
-		return list == null ? new ArrayList<String>() : list;
+		return obj == null ? new ArrayList<String>() : (ArrayList<String>) obj;
 	}
 	
 	public void appendToStringList(String key, String value){
@@ -68,7 +78,7 @@ public class Tournament{
 		
 		list.add(value);
 		
-		set(key, value);
+		set(key, list);
 	}
 	
 	public void removeFromStringList(String key, String value){
@@ -76,11 +86,13 @@ public class Tournament{
 		
 		list.remove(value);
 		
-		set(key, value);
+		set(key, list);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void set(String key, Object value){
+		if(key.equalsIgnoreCase("name")) return;
+		
 		configValues.put(key, value);
 		
 		Configuration config = getConfig();
@@ -125,6 +137,8 @@ public class Tournament{
 	}
 	
 	public boolean isAdmin(String user){
+		if(user == null) return true;
+		
 		for(String admin : getStringList("tournament-admins"))
 			if(user.replaceAll(" ", "_").equalsIgnoreCase(admin.replaceAll(" ", "_")))
 				return true;
@@ -145,7 +159,8 @@ public class Tournament{
 		
 		if(!tournaments.isEmpty())
 			for(Tournament t : tournaments)
-				if(t.get("name").equalsIgnoreCase(name)){
+				if(t == null) continue;
+				else if(t.get("name").equalsIgnoreCase(name)){
 					if(nextSelected > 0){
 						nextSelected--;
 						continue;
@@ -172,9 +187,11 @@ public class Tournament{
 				String key = line.substring(0, line.indexOf(":")).replace("conf-", "");
 				
 				if(line.endsWith(":list"))
-					configValues.put(key, "conf-" + config.getStringList(key));
+					configValues.put(key, config.getStringList("conf-" + key));
 				else{
-					String value = config.getValue(key);
+					if(key.equalsIgnoreCase("name")) continue;
+					
+					String value = config.getValue("conf-" + key);
 					
 					if(Utils.stringToInt(value) != -1)
 						configValues.put(key, Utils.stringToInt(value));
@@ -194,9 +211,11 @@ public class Tournament{
 		Configuration config = getConfig();
 		
 		for(String key : configValues.keySet()){
+			if(key.equalsIgnoreCase("name")) continue;
+			
 			Object value = configValues.get(key);
 			
-			if(value instanceof ArrayList)
+			if(value instanceof ArrayList<?>)
 				config.writeStringList("conf-" + key, (ArrayList<String>) value, true);
 			else config.writeValue("conf-" + key, value);
 		}
@@ -211,6 +230,7 @@ public class Tournament{
 			config.writeStringList("tournaments", savedTournaments, true);
 		}
 		
+		tournaments.remove(this);
 		getConfig().delete();
 	}
 	

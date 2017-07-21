@@ -33,7 +33,6 @@ public class SetPickStrategyCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("pickStrategy", args[args.length - 1]);
-			t.save(false);
 			
 			return "Set the tournament's pick strategy to " + PickStrategy.getStrategyName(PickStrategy.findStrategy(t.get("pickStrategy"))) + "!";
 		}

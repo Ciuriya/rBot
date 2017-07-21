@@ -32,7 +32,6 @@ public class SetWarmupSkipCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("skipWarmups", Boolean.parseBoolean(args[args.length - 1]));
-			t.save(false);
 			
 			return tournamentName + " is " + (t.getBool("skipWarmups") ? "now" : "no longer") + " skipping warmups!";
 		}

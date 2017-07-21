@@ -32,7 +32,6 @@ public class SetBanWaitTimeCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("banWaitTime", Utils.stringToInt(args[args.length - 1]));
-			t.save(false);
 			
 			return "Set the tournament's ban wait time to " + t.getInt("banWaitTime") + "!";
 		}

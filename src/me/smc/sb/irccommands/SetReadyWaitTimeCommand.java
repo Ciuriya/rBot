@@ -32,7 +32,6 @@ public class SetReadyWaitTimeCommand extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("readyWaitTime", Utils.stringToInt(args[args.length - 1]));
-			t.save(false);
 			
 			return "Set the tournament's ready wait time to " + t.getInt("readyWaitTime") + "!";
 		}

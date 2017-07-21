@@ -35,7 +35,6 @@ public class SetResultDiscordCommand extends IRCCommand{
 			if(discord == null) return "You need to use this command in the discord channel you wish to receive results into!";
 			
 			t.set("resultDiscord", discord);
-			t.save(false);
 			
 			return "The result discord was set!";
 		}

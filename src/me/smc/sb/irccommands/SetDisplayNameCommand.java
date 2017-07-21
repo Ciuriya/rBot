@@ -46,9 +46,8 @@ public class SetDisplayNameCommand extends IRCCommand{
 			displayName = displayName.replace("{", "").substring(0, displayName.length() - 2);
 			
 			t.set("displayName", displayName);
-			t.save(false);
 			
-			return "Set the tournament's display name to " + displayName + "!";
+			return "Set the tournament's display name to " + t.get("displayName") + "!";
 		}
 		
 		return "";

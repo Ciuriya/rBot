@@ -240,7 +240,7 @@ public class Match{
 	public void save(boolean append){
 		Configuration config = tournament.getConfig();
 		
-		if(append) tournament.appendToStringList("matches", "" + matchNum);
+		if(append) config.appendToStringList("conf-matches", "" + matchNum, true);
 		
 		config.writeValue("match-" + matchNum + "-players", players);
 		
@@ -272,6 +272,8 @@ public class Match{
 		this.fTeam = null;
 		this.sTeam = null;
 		this.pool = null;
+		
+		matches.remove(this);
 		
 		matchAdmins.clear();
 		

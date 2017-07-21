@@ -19,7 +19,7 @@ public class ListTournamentsCommand extends IRCCommand{
 	@Override
 	public String onCommand(MessageEvent e, PrivateMessageEvent pe, String discord, String[] args){
 		String msg = "Tournaments";
-		if(discord != null) msg = "```" + msg + "\n";
+		if(discord != null) msg = "```\n" + msg + "\n";
 		else msg += "=";
 		
 		for(Tournament tournament : Tournament.tournaments){

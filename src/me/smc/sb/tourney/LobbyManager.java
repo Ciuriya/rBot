@@ -148,8 +148,8 @@ public class LobbyManager{
 		player.setSlot(-1);
 		
 		if(game.state.eq(GameState.PLAYING)){
-			if(System.currentTimeMillis() - game.readyManager.startTime <= game.match.getTournament().getInt("rematchCutoff") * 1000 &&
-				team.canRematch()){
+			if((System.currentTimeMillis() - game.readyManager.startTime <= game.match.getTournament().getInt("rematchCutoff") * 1000 &&
+				team.canRematch()) || (game.match.getTournament().getInt("type") == 1 && team.canRematch())){
 				game.banchoHandle.sendMessage("Someone has disconnected, there will be a rematch!", false);
 				game.feed.updateTwitch("There was a disconnection, the match will be replayed!");
 				game.resultManager.rematch(team);

@@ -32,7 +32,6 @@ public class SetScoreV2Command extends IRCCommand{
 		
 		if(t.isAdmin(user)){
 			t.set("scoreV2", Boolean.parseBoolean(args[args.length - 1]));
-			t.save(false);
 			
 			return "Set the tournament's scoring to scoreV" + (t.getBool("scoreV2") ? "2" : "1") + "!";
 		}

@@ -34,7 +34,6 @@ public class SetAlertDiscordCommand extends IRCCommand{
 			if(discord == null) return "You need to use this command in the discord channel you wish to receive alerts into!";
 			
 			t.set("alertDiscord", discord);
-			t.save(false);
 			
 			return "The alert discord was set!";
 		}
