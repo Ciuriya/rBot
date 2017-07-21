@@ -35,6 +35,7 @@ public class ReadyManager{
 		
 		if(game.match.getTournament().getBool("scoreV2")) message = "Waiting for all players to ready up, stable (fallback) scores will not count!";
 		
+		game.selectionManager.selectionStartTime = System.currentTimeMillis();
 		game.selectionManager.pickTimer(game.match.getTournament().getInt("readyWaitTime"));
 		game.messageUpdater(0, game.match.getTournament().getInt("readyWaitTime"), 
 							message, "The match will force start after the timer. You may change map if needed (not in case of disconnection)");

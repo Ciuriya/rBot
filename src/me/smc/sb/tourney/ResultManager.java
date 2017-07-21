@@ -302,21 +302,23 @@ public class ResultManager{
 				default: return;
 			}
 			
-			game.banchoHandle.sendMessage("The contest has been accepted.", false);
-			contestState = 0;
-			game.selectionManager.clearPickTimer();
-			
-			if(lastWinner){
-				game.firstTeam.removePoint();
-				game.secondTeam.addPoint();
-				lastWinner = false;
-			}else{
-				game.secondTeam.removePoint();
-				game.firstTeam.addPoint();
-				lastWinner = true;
+			if(contestState == 3){
+				game.banchoHandle.sendMessage("The contest has been accepted.", false);
+				contestState = 0;
+				game.selectionManager.clearPickTimer();
+				
+				if(lastWinner){
+					game.firstTeam.removePoint();
+					game.secondTeam.addPoint();
+					lastWinner = false;
+				}else{
+					game.secondTeam.removePoint();
+					game.firstTeam.addPoint();
+					lastWinner = true;
+				}
+				
+				updateScores(false);
 			}
-			
-			updateScores(false);
 		}
 	}
 	

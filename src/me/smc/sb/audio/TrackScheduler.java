@@ -168,7 +168,7 @@ public class TrackScheduler extends AudioEventAdapter{
 			new Thread(new Runnable(){
 				public void run(){
 					try{
-						Server.sendMessage(npIp, 13245, info + " --" + channel.getGuild().getName());
+						Server.sendMessage(npIp, 13245, info + " --" + channel.getGuild().getName().substring(0, 3));
 					}catch(Exception e){}
 				}
 			}).start();

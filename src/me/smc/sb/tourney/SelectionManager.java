@@ -68,7 +68,7 @@ public class SelectionManager{
 		if(!SkipWarmupCommand.gamesAllowedToSkip.contains(game))
 			SkipWarmupCommand.gamesAllowedToSkip.add(game);
 		
-		selectionStartTime = System.currentTimeMillis();
+		selectionStartTime = 0;
 		startLobbyUpdater();
 		pickTimer(game.match.getTournament().getInt("pickWaitTime"));
 		game.messageUpdater(0, game.match.getTournament().getInt("pickWaitTime"), 
@@ -119,7 +119,7 @@ public class SelectionManager{
 		if(!SelectMapCommand.pickingTeams.contains(game.nextTeam))
 			SelectMapCommand.pickingTeams.add(game.nextTeam);
 		
-		selectionStartTime = System.currentTimeMillis();
+		selectionStartTime = 0;
 		startLobbyUpdater();
 		pickTimer(game.match.getTournament().getInt("pickWaitTime"));
 		
@@ -136,6 +136,7 @@ public class SelectionManager{
 	
 	public void handleMapSelect(String map, boolean select, String mod){
 		if(game.state.eq(GameState.PAUSED)) return;
+		if(selectionStartTime != 0 && selectionStartTime + (long) (game.match.getTournament().getInt("readyWaitTime") / 2 * 1000) <= System.currentTimeMillis()) return;
 		
 		strategy.handleMapSelect(game, map, select, mod);
 	}
@@ -206,7 +207,7 @@ public class SelectionManager{
 		lobbyUpdater = new Timer();
 		lobbyUpdater.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
-				if(selectionStartTime != 0 && selectionStartTime + (long) (game.match.getTournament().getInt("pickWaitTime") / 2 * 1000) <= System.currentTimeMillis()){
+				if(selectionStartTime != 0 && selectionStartTime + (long) (game.match.getTournament().getInt("readyWaitTime") / 2 * 1000) <= System.currentTimeMillis()){
 					lobbyUpdater.cancel();
 					
 					return;

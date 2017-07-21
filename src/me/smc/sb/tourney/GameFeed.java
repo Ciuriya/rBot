@@ -132,7 +132,7 @@ public class GameFeed{
 		
 		message += "Status: " + (game.state.eq(GameState.ENDED) ? "ended" : getMatchStatus());
 		
-		if(game.selectionManager.map != null) message += "\nPlaying: " + game.selectionManager.map.getURL();
+		if(game.selectionManager.map != null && !game.state.eq(GameState.ENDED)) message += "\nPlaying: " + game.selectionManager.map.getURL();
 		
 		List<Player> currentPlayers = game.lobbyManager.getCurrentPlayers();
 		
