@@ -81,17 +81,15 @@ public class Game{
 			}
 		}, match.getTournament().getInt("gracePeriodTime") * 1000);
 		
-		feed = new GameFeed(this);
-		feed.updateTwitch("Waiting for players to join the lobby...");
+		try{
+			feed = new GameFeed(this);
+			feed.updateTwitch("Waiting for players to join the lobby...");
+		}catch(Exception e){}
 		
 		if(match.getTournament().get("alertDiscord").length() > 0) AlertStaffCommand.gamesAllowedToAlert.add(this);
 		
-		new Timer().schedule(new TimerTask(){
-			public void run(){
-				firstTeam.inviteTeam(0, 60000);
-				secondTeam.inviteTeam(0, 60000);
-			}
-		}, 2500);
+		firstTeam.inviteTeam(0, 60000);
+		secondTeam.inviteTeam(0, 60000);
 	}
 	
 	public void setupGame(){

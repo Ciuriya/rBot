@@ -38,7 +38,7 @@ public class RemoveMapFromPoolCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 
 		if(t.isAdmin(user)){
-			String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 2]);
+			String url = Utils.takeOffExtrasInBeatmapURL(args[args.length - 1]);
 			
 			if(!url.matches("^https?:\\/\\/osu.ppy.sh\\/b\\/[0-9]{1,8}"))
 				return "Invalid URL, example format: https://osu.ppy.sh/b/123456";

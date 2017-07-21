@@ -174,7 +174,8 @@ public class SelectionManager{
 			if(game.resultManager.lastWinner) game.firstTeam.removePoint();
 			else game.secondTeam.removePoint();
 			
-			game.resultManager.updateScores(false);
+			game.switchNextTeam();
+			game.resultManager.updateScores(true);
 			
 			int mapId = game.match.getMapPool().getMapId(map);
 			
@@ -191,8 +192,6 @@ public class SelectionManager{
 					RemotePatyServerUtils.incrementMapValue(mapId, game.match.getMapPool().getPoolNum(), tourneyId, "pickcount", -1);
 				}
 			}
-			
-			return true;
 		}
 		
 		game.readyManager.switchPlaying(false, true);
