@@ -1,5 +1,7 @@
 package me.smc.sb.tourney;
 
+import me.smc.sb.utils.Utils;
+
 public class Player{
 
 	private String name;
@@ -33,6 +35,8 @@ public class Player{
 	}
 	
 	public String getIRCTag(){
+		if(userID.length() == 0) userID = Utils.getOsuPlayerId(name);
+		
 		return userID.length() > 0 ? "#" + userID : name.replaceAll(" ", "_");
 	}
 	

@@ -33,7 +33,7 @@ public class GameFeed{
 		
 		String gameMessage = buildFeed() + "```";
 		
-		if(resultDiscord != null){
+		if(discord != null){
 			if(Main.api.getTextChannelById(discord) != null){
 				resultDiscord = Main.api.getTextChannelById(discord);
 			}else resultDiscord = Main.api.getPrivateChannelById(discord);
@@ -100,9 +100,10 @@ public class GameFeed{
 	}
 	
 	private boolean connectToStream(Game game){
+		boolean isStreamed = game.match.getTournament().getTwitchHandler().isStreamed(game);
 		boolean streamed = game.match.getTournament().getTwitchHandler().startStreaming(game);
 		
-		if(streamed)
+		if(streamed && !isStreamed)
 			Main.twitchRegulator.sendMessage(game.match.getTournament().get("twitchChannel"),
 											 "Game switched to " + game.match.getLobbyName());
 		

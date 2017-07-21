@@ -36,13 +36,16 @@ public class RandomCommand extends IRCCommand{
 				if(team.getTeam().has(userName)){
 					max = 100;
 					random = Utils.fetchRandom(1, max);
+					Utils.info(e, pe, discord, userName.replaceAll("_", " ") + " rolled " + random + "!");
 					team.setRoll(random);
+					
+					return "";
 				}
 			}
 		
 		if(random == 0) random = Utils.fetchRandom(1, max);
 		
-		Utils.info(e, pe, discord, userName + " rolled " + random + "!");
+		Utils.info(e, pe, discord, userName.replaceAll("_", " ") + " rolled " + random + "!");
 				
 		return "";
 	}

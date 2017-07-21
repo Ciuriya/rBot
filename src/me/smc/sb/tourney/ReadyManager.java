@@ -102,10 +102,10 @@ public class ReadyManager{
 			t.schedule(new TimerTask(){
 				public void run(){
 					if(game.lobbyManager.getCurrentPlayers().size() == game.match.getMatchSize() && 
-					   !game.state.eq(GameState.PLAYING))
+					   !game.state.eq(GameState.PLAYING) && !game.state.eq(GameState.PRESTART))
 						startMatch(0, true);
 				}
-			}, delay * 1000 + 1000);	
+			}, delay * 1000 + 3000);	
 		}
 		
 		if(game.roomSize > game.match.getMatchSize()){

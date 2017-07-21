@@ -68,7 +68,7 @@ public class RegularPickStrategy implements PickStrategy{
 						return;
 					}
 					
-					if(!manager.wasPicked(m)){
+					if(manager.wasPicked(m)){
 						game.getBanchoHandle().sendMessage("This map was already picked once! Please choose something else.", false); 
 						
 						return;

@@ -63,17 +63,18 @@ public class Game{
 		
 		setupGame();
 		
-		firstTeam.inviteTeam(0, 60000);
-		secondTeam.inviteTeam(0, 60000);
-		
 		new Timer().schedule(new TimerTask(){
 			public void run(){
 				if(state.eq(GameState.WAITING)){
 					int fPlayers = firstTeam.getCurrentPlayers().size();
 					int sPlayers = secondTeam.getCurrentPlayers().size();
 					
-					if(fPlayers == 0) firstTeam.addPoint();
-					else if(sPlayers == 0) secondTeam.addPoint();
+					if(fPlayers == 0) secondTeam.addPoint();
+					if(sPlayers == 0) firstTeam.addPoint();
+					if(fPlayers == 0 && sPlayers == 0){
+						firstTeam.setPoints(0);
+						secondTeam.setPoints(0);
+					}
 					
 					if(fPlayers == 0 || sPlayers == 0) stop();
 				}
@@ -84,6 +85,13 @@ public class Game{
 		feed.updateTwitch("Waiting for players to join the lobby...");
 		
 		if(match.getTournament().get("alertDiscord").length() > 0) AlertStaffCommand.gamesAllowedToAlert.add(this);
+		
+		new Timer().schedule(new TimerTask(){
+			public void run(){
+				firstTeam.inviteTeam(0, 60000);
+				secondTeam.inviteTeam(0, 60000);
+			}
+		}, 2500);
 	}
 	
 	public void setupGame(){

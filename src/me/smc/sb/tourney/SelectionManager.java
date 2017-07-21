@@ -135,8 +135,7 @@ public class SelectionManager{
 	}
 	
 	public void handleMapSelect(String map, boolean select, String mod){
-		if(game.state.eq(GameState.PAUSED) || 
-		   selectionStartTime + (long) (game.match.getTournament().getInt("pickWaitTime") / 2 * 1000) <= System.currentTimeMillis()) return;
+		if(game.state.eq(GameState.PAUSED)) return;
 		
 		strategy.handleMapSelect(game, map, select, mod);
 	}

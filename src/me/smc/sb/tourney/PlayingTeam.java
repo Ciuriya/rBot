@@ -128,6 +128,8 @@ public class PlayingTeam{
 	
 	// index starts at 0
 	public void inviteTeam(int index, long delay){
+		if(!game.state.eq(GameState.WAITING)) return;
+		
 		if(index > team.getPlayers().size() - 1) inviteTeam(0, delay);
 		else{
 			game.banchoHandle.sendMessage("!mp invite " + team.getPlayers().get(index).getIRCTag(), false);

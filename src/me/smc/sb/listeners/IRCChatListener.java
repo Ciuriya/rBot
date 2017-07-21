@@ -157,7 +157,13 @@ public class IRCChatListener extends ListenerAdapter{
 				Log.logger.log(Level.INFO, "Launched match.");
 				
 				gameCreatePMs.remove(mpLink.split("mp\\/")[1] + "|" + match.getLobbyName());
-				match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
+				gamesListening.put("#mp_" + mpLink.split("mp\\/")[1], match.getGame().getBanchoHandle());
+				
+				new Thread(new Runnable(){
+					public void run(){
+						match.getGame().start("#mp_" + mpLink.split("mp\\/")[1], mpLink);
+					}
+				}).start();
 				
 				return true;
 			}

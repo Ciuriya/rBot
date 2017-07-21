@@ -172,14 +172,16 @@ public class LobbyManager{
 				public void run(){
 					timeLeft.sub(10000);
 					
-					if(timeLeft.get() <= 0){
-						int players = getCurrentPlayers().size();
+					int players = getCurrentPlayers().size();
+					
+					if(players == game.match.getMatchSize()){
+						t.cancel();
 						
-						if(players == game.match.getMatchSize()){
-							t.cancel();
-							
-							return;
-						}else if(players == 0){
+						return;
+					}
+					
+					if(timeLeft.get() <= 0){
+						if(players == 0){
 							game.banchoHandle.sendMessage("No one has shown up! Closing lobby...", false);
 						}else{
 							PlayingTeam winningTeam = findTeam(getCurrentPlayers().get(0));
@@ -191,8 +193,10 @@ public class LobbyManager{
 							game.banchoHandle.sendMessage("The lobby is ending in 30 seconds, thanks for playing!", false);
 							game.banchoHandle.sendMessage("!mp timer", false);
 							
-							game.feed.updateTwitch(winningTeam + " has won this game! " + game.mpLink, 20);
+							game.feed.updateTwitch(winningTeam.getTeam().getTeamName() + " has won this game! " + game.mpLink, 20);
 						}
+						
+						game.selectionManager.clearPickTimer();
 						
 						Timer twitchCloseDelay = new Timer();
 						twitchCloseDelay.schedule(new TimerTask(){
@@ -205,9 +209,10 @@ public class LobbyManager{
 						time.schedule(new TimerTask(){
 							public void run(){
 								game.stop();
-								t.cancel();
 							}
 						}, 30000);
+						
+						t.cancel();
 					}
 				}
 			}, 10000, 10000);
