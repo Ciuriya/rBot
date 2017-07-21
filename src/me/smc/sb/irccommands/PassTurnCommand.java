@@ -25,11 +25,17 @@ public class PassTurnCommand extends IRCCommand{
 		if(e == null || discord != null || pe != null) return "You cannot pass the starting turn in here!";
 		
 		String userName = e.getUser().getNick();
+		PlayingTeam passed = null;
 		
 		if(!passingTeams.isEmpty())
 			for(PlayingTeam team : passingTeams)
-				if(team.getTeam().has(userName))
+				if(team.getTeam().has(userName)){
 					team.getGame().switchNextTeam();
+					team.getGame().getBanchoHandle().sendMessage("Passed!", false);
+					passed = team;
+				}
+		
+		if(passed != null) passingTeams.remove(passed);
 		
 		return "";
 	}

@@ -49,7 +49,6 @@ public class SelectionManager{
 		if(game.state.eq(GameState.PAUSED)) return;
 		
 		clearPickTimer();
-		
 		game.state = GameState.SELECTING;
 		
 		if(game.match.getTournament().getBool("skipWarmups") || warmupsLeft == 0){
@@ -92,7 +91,7 @@ public class SelectionManager{
 		warmupsLeft = 0;
 		map = null;
 		
-		if(game.match.getTournament().getBool("usingBans") || bansLeft == 0 || strategy instanceof ModPickStrategy){
+		if(!game.match.getTournament().getBool("usingBans") || bansLeft == 0 || strategy instanceof ModPickStrategy){
 			selectPicks();
 			
 			return;

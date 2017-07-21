@@ -104,7 +104,7 @@ public class PlayingTeam{
 	
 	public void setRoll(int roll){
 		this.roll = roll;
-		RandomCommand.waitingForRolls.remove(team);
+		RandomCommand.waitingForRolls.remove(this);
 		game.checkRolls();
 	}
 	

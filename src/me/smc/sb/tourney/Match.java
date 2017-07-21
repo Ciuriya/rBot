@@ -257,7 +257,7 @@ public class Match{
 	public void delete(){
 		Configuration config = tournament.getConfig();
 
-		tournament.removeFromStringList("matches", "" + matchNum);
+		config.removeFromStringList("conf-matches", "" + matchNum, true);
 		
 		config.deleteKey("match-" + matchNum + "-players");
 		config.deleteKey("match-" + matchNum + "-priority");

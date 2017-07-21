@@ -49,8 +49,10 @@ public class ForceStopGameCommand extends IRCCommand{
 			if(match.isMatchAdmin(user)){
 				if(match.getGame() == null) return "Game is already stopped!";
 				
+				int num = match.getGame().match.getMatchNum();
 				match.getGame().stop();
-				return "Game #" + Utils.stringToInt(args[0]) + " was force stopped!";
+				
+				return "Game #" + num + " was force stopped!";
 			}
 			
 			return "";

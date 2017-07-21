@@ -125,7 +125,7 @@ public class MapPool{
 	public void save(boolean append){
 		Configuration config = tournament.getConfig();
 		
-		if(append) tournament.appendToStringList("pools", "" + poolNum);
+		if(append) config.appendToStringList("conf-pools", "" + poolNum, true);
 		
 		if(!maps.isEmpty()){
 			ArrayList<String> exportedMaps = new ArrayList<>();
@@ -142,7 +142,7 @@ public class MapPool{
 	public void delete(){
 		Configuration config = tournament.getConfig();
 		
-		tournament.removeFromStringList("pools", "" + poolNum);
+		config.removeFromStringList("conf-pools", "" + poolNum, true);
 		config.deleteKey("pool-" + poolNum + "-maps");
 		config.deleteKey("pool-" + poolNum + "-sheet");
 	}

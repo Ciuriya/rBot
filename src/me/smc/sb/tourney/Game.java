@@ -90,7 +90,7 @@ public class Game{
 		roomSize = match.getMatchSize();
 		
 		banchoHandle.sendMessage("!mp lock", true);
-		banchoHandle.sendMessage("!mp size" + roomSize, true);
+		banchoHandle.sendMessage("!mp size " + roomSize, true);
 		banchoHandle.sendMessage("!mp set 2 " + (match.getTournament().getBool("scoreV2") ? "4" : "0"), true);
 		
 		String admins = "";
@@ -149,6 +149,8 @@ public class Game{
 											 "If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord server] or to Smc. " +
 											 "Thank you!", false);
 					
+					if(messageUpdater != null) messageUpdater.cancel();
+					
 					selectionManager.selectWarmups();
 				}
 			}, 20000);
@@ -162,6 +164,8 @@ public class Game{
 	protected void messageUpdater(int delay, long waitTime, String...messages){
 		if(messageUpdater != null) messageUpdater.cancel();
 		if(messages == null || messages.length <= 0) return;
+		
+		lastPickTime = System.currentTimeMillis();
 		
 		messageUpdater = new Timer();
 		messageUpdater.scheduleAtFixedRate(new TimerTask(){

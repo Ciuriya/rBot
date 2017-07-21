@@ -94,7 +94,7 @@ public class Team{
 	public void save(boolean append){
 		Configuration config = tournament.getConfig();
 		
-		if(append) tournament.appendToStringList("teams", "" + teamName);
+		if(append) config.appendToStringList("conf-teams", "" + teamName, true);
 		
 		if(players.size() != 0){
 			ArrayList<String> convertedPlayers = new ArrayList<String>();
@@ -111,7 +111,7 @@ public class Team{
 	public void delete(){
 		Configuration config = tournament.getConfig();
 		
-		tournament.removeFromStringList("teams", "" + teamName);
+		config.removeFromStringList("conf-teams", "" + teamName, true);
 		config.deleteKey("team-" + teamName);
 		config.deleteKey("team-" + teamName + "-serverID");
 	}
