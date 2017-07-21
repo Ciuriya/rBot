@@ -20,17 +20,19 @@ import me.smc.sb.utils.Utils;
 public class ResultManager{
 
 	private Game game;
-	private List<String> results;
+	protected List<String> results;
 	protected int skipRematchState; // 0 = no, 1 = first agree, 2 = second agree, 3 = ok
 	protected int contestState;     // ^
 	protected boolean lastRematch;  // true = first team initiated rematch
 	protected boolean lastWinner;   // ^ but for last winner
+	protected boolean rematching;
 	
 	public ResultManager(Game game){
 		this.game = game;
 		this.results = new ArrayList<>();
 		this.skipRematchState = 0;
 		this.contestState = 0;
+		this.rematching = false;
 	}
 	
 	public void analyseResults(){
@@ -40,6 +42,8 @@ public class ResultManager{
 		// make sure you set the map to null
 		new Timer().schedule(new TimerTask(){
 			public void run(){
+				if(rematching) return;
+				
 				List<Player> fTeamPlayers = new ArrayList<>();
 				List<Player> sTeamPlayers = new ArrayList<>();
 				float fTeamScore = 0, sTeamScore = 0;
@@ -86,6 +90,8 @@ public class ResultManager{
 						}
 					}
 				}
+				
+				results.clear();
 				
 				if(rematch && rematchTeam != null){
 					game.feed.updateTwitch("A player was using fallback, there will be a rematch!");
@@ -143,8 +149,17 @@ public class ResultManager{
 						return;
 					}
 					
-					if(game.match.getTournament().getBool("usingMapStats"))
-						incrementPlayerStats(totalScore, targetRangeScore, totalPasses, targetRangePasses, totalSubmits);
+					if(game.match.getTournament().getBool("usingMapStats")){
+						final long tScore = totalScore, trScore = targetRangeScore;
+						final long tPasses = totalPasses, trPasses = targetRangePasses;
+						final long tSubmits = totalSubmits;
+						
+						new Thread(new Runnable(){
+							public void run(){
+								incrementPlayerStats(tScore, trScore, tPasses, trPasses, tSubmits);
+							}
+						}).start();
+					}
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
 					
@@ -218,6 +233,8 @@ public class ResultManager{
 	}
 	
 	public void rematch(PlayingTeam team){
+		if(rematching) return;
+		
 		boolean fTeam = game.firstTeam.getTeam().getTeamName().equalsIgnoreCase(team.getTeam().getTeamName());
 		lastRematch = fTeam;
 		
@@ -227,6 +244,7 @@ public class ResultManager{
 		
 		SkipRematchCommand.gamesAllowedToSkip.add(game);
 		skipRematchState = 0;
+		rematching = true;
 		game.readyManager.switchPlaying(false, true);
 		game.readyManager.startReadyWait();
 	}

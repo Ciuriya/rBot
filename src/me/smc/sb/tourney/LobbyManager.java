@@ -121,6 +121,8 @@ public class LobbyManager{
 		
 		if(rank > 0) player.setRank(rank);
 		
+		game.feed.updateDiscord();
+		
 		if(game.firstTeam.getCurrentPlayers().size() > 0 && game.secondTeam.getCurrentPlayers().size() > 0 && game.state.eq(GameState.WAITING)){
 			setupRolling();
 		}
@@ -146,6 +148,8 @@ public class LobbyManager{
 		
 		team.removePlayer(player);
 		player.setSlot(-1);
+		
+		game.feed.updateDiscord();
 		
 		if(game.state.eq(GameState.PLAYING)){
 			if((System.currentTimeMillis() - game.readyManager.startTime <= game.match.getTournament().getInt("rematchCutoff") * 1000 &&

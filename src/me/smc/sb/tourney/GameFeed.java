@@ -51,8 +51,8 @@ public class GameFeed{
 		}
 	}
 	
-	public void updateDiscord(){
-		new Thread(new Runnable(){
+	public Thread updateDiscord(){
+		Thread t = new Thread(new Runnable(){
 			public void run(){
 				String localMessage = buildFeed();
 				
@@ -72,7 +72,11 @@ public class GameFeed{
 					});
 				}
 			}
-		}).start();
+		});
+		
+		t.start();
+		
+		return t;
 	}
 	
 	public void updateTwitch(String message){
@@ -127,6 +131,8 @@ public class GameFeed{
 		message += "Best of " + game.match.getBestOf() + "\n\n";
 		
 		message += "Status: " + (game.state.eq(GameState.ENDED) ? "ended" : getMatchStatus());
+		
+		if(game.selectionManager.map != null) message += "\nPlaying: " + game.selectionManager.map.getURL();
 		
 		List<Player> currentPlayers = game.lobbyManager.getCurrentPlayers();
 		

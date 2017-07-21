@@ -1,10 +1,6 @@
 package me.smc.sb.tourney;
 
-import java.util.logging.Level;
-
 import me.smc.sb.main.Main;
-import me.smc.sb.tourney.GameState;
-import me.smc.sb.utils.Log;
 
 public class BanchoHandler{
 	
@@ -24,8 +20,6 @@ public class BanchoHandler{
 	}
 	
 	public void handleMessage(String message){
-		Log.logger.log(Level.INFO, "handling: " + message);
-		
 		if(message.contains("joined in")) game.lobbyManager.join(message);
 		else if(message.contains("left the game.")) game.lobbyManager.leave(message.replace(" left the game.", "").replaceAll(" ", "_"));
 		else if(message.startsWith("Beatmap: ")) game.selectionManager.updateMap(message.split(" ")[1]); // if the map changes without notice

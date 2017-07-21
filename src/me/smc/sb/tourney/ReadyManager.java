@@ -148,6 +148,9 @@ public class ReadyManager{
 		}
 		
 		switchPlaying(true, false);
+		
+		game.resultManager.results.clear();
+		game.resultManager.rematching = false;
 	}
 	
 	public void matchStarted(){

@@ -5,6 +5,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.tracking.OsuBeatmapsRequest;
 import me.smc.sb.tracking.OsuRequest;
@@ -112,7 +113,13 @@ public class Map{
 		OsuRequest beatmapRequest = new OsuBeatmapsRequest("" + id, "" + mode, "1", "1");
 		Object beatmapObj = null;
 		
-		if(priority) beatmapObj = Main.hybridRegulator.sendRequest(beatmapRequest, true);
+		if(priority)
+			try{
+				beatmapObj = new JSONArray("[" + Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + 
+						  				   "&b=" + id + "&m=" + mode + "&a=" + 1 + "&limit=" + 1) + "]");
+			}catch(Exception e){
+				beatmapObj = Main.hybridRegulator.sendRequest(beatmapRequest);
+			}
 		else beatmapObj = Main.hybridRegulator.sendRequest(beatmapRequest);
 		
 		if(beatmapObj == null || !(beatmapObj instanceof JSONArray))

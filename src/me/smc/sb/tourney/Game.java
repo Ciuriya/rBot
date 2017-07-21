@@ -358,7 +358,6 @@ public class Game{
 			banchoHandle.sendMessage(admin.replaceAll(" ", "_"), shortGameEndMsg, false);
 		
 		state = GameState.ENDED;
-		feed.updateDiscord();
 		Log.logger.log(Level.INFO, shortGameEndMsg);
 		
 		if(messageUpdater != null){
@@ -375,6 +374,10 @@ public class Game{
 			match.getTournament().setTempLobbyDecayTime();
 			banchoHandle.sendMessage("BanchoBot", "!mp make " + match.getTournament().get("displayName") + ": TEMP LOBBY", true);
 		}
+		
+		try{
+			feed.updateDiscord().join();
+		}catch (InterruptedException e){}
 		
 		firstTeam = null;
 		secondTeam = null;

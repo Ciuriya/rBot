@@ -35,9 +35,9 @@ public class Player{
 	}
 	
 	public String getIRCTag(){
-		if(userID.length() == 0) userID = Utils.getOsuPlayerId(name);
+		if(userID.length() == 0 || userID.equalsIgnoreCase("-1")) userID = Utils.getOsuPlayerId(name, true);
 		
-		return userID.length() > 0 ? "#" + userID : name.replaceAll(" ", "_");
+		return userID.length() > 0 && !userID.equalsIgnoreCase("-1") ? "#" + userID : name.replaceAll(" ", "_");
 	}
 	
 	public int getSlot(){

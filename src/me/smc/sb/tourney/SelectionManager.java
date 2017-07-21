@@ -225,7 +225,7 @@ public class SelectionManager{
 	public void changeMap(Map map){
 		game.banchoHandle.sendMessage("!mp map " + map.getBeatmapID() + " " + game.match.getTournament().getInt("mode"), false);
 		
-		if(warmupsLeft == 0 && map.getCategory() != 0)
+		if(warmupsLeft == 0)
 			game.banchoHandle.sendMessage("!mp mods " + getMod(map), false);
 		
 		this.map = map;
@@ -237,6 +237,8 @@ public class SelectionManager{
 			if(bloodcat.length() > 0)
 				game.banchoHandle.sendMessage("[" + bloodcat + " A bloodcat download link is available for this map here.]", false);
 		}catch(Exception e){}
+		
+		game.feed.updateDiscord();
 	}
 	
 	public Map getMap(){

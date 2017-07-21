@@ -33,7 +33,7 @@ public class UniqueModPickStrategy implements PickStrategy{
 				
 			if(manager.isWarmupTooLong(mod, length)){
 				game.getBanchoHandle().sendMessage("The warmup selected is too long! The maximum length is " + 
-												   Utils.toDuration(game.match.getTournament().getInt("warmupLength")) + ".", false);
+												   Utils.toDuration(game.match.getTournament().getInt("warmupLength") * 1000) + ".", false);
 				
 				return;
 			}
@@ -42,6 +42,7 @@ public class UniqueModPickStrategy implements PickStrategy{
 			
 			if(mod.length() > 0)
 				game.getBanchoHandle().sendMessage("!mp mods " + mod.toUpperCase() + " Freemod", false);
+			else game.getBanchoHandle().sendMessage("!mp mods Freemod", false);
 			
 			game.getGameFeed().updateTwitch("Warmup: " + jsMap.getString("artist") + " - " + 
 				    	  	  				jsMap.getString("title") + " [" + jsMap.getString("version") + "] " + 
