@@ -14,7 +14,7 @@ public class PlayingTeam{
 	private Team team;
 	private int points;
 	private int rematchesLeft;
-	private int roll;
+	protected int roll;
 	private List<Player> currentPlayers;
 	private List<Map> bans;
 	private LinkedList<PickedMap> mapsPicked;

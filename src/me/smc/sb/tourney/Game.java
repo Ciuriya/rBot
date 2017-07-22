@@ -126,6 +126,9 @@ public class Game{
 			if(first == second){
 				banchoHandle.sendMessage("Rolls were equal! Please reroll using !random", false);
 				
+				firstTeam.roll = -1;
+				secondTeam.roll = -1;
+				
 				RandomCommand.waitingForRolls.add(firstTeam);
 				RandomCommand.waitingForRolls.add(secondTeam);
 				

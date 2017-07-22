@@ -77,12 +77,17 @@ public class TwitchHandler{
 				next = streamQueue.stream().min(new Comparator<Game>(){
 					@Override
 					public int compare(Game o1, Game o2){
-						int firstPriority = o1.match.getStreamPriority();
-						int secondPriority = o2.match.getStreamPriority();
-						
-						if(firstPriority > secondPriority) return 1;
-						else if(firstPriority == secondPriority) return 0;
-						else return -1;
+						try{
+							int firstPriority = o1.match.getStreamPriority();
+							int secondPriority = o2.match.getStreamPriority();
+							
+							if(firstPriority > secondPriority) return 1;
+							else if(firstPriority == secondPriority) return 0;
+							else return -1;
+						}catch(Exception e){
+							return o1.state.eq(GameState.ENDED) && o2.state.eq(GameState.ENDED) ? 0 : (o1.state.eq(GameState.ENDED) ? -1 : 1);
+						}
+
 					}
 				}).orElse(null);
 			

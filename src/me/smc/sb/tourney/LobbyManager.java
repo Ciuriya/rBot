@@ -34,7 +34,7 @@ public class LobbyManager{
 		String color = message.split(" for team ")[1].split("\\.")[0];
 		
 		if(player.getUserID().equals("-1")){
-			String userID = Utils.getOsuPlayerId(player.getName(), true);
+			String userID = Utils.getOsuPlayerIdFast(player.getName());
 			
 			if(!userID.equals("-1")) player.setUserID(userID);
 		}

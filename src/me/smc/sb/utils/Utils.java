@@ -41,6 +41,7 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.communication.Server;
+import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.tourney.Game;
 import me.smc.sb.tourney.Map;
@@ -692,6 +693,18 @@ public class Utils{
 			return "-1";
 		
 		return ((JSONObject) playerObj).getString("user_id");
+	}
+	
+	public static String getOsuPlayerIdFast(String name){
+		try{
+			String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
+				 	  	  "&u=" + name + "&m=0&type=string&event_days=1");
+			JSONObject obj = new JSONObject(post);
+			
+			return obj.getString("user_id");
+		}catch(Exception e){
+			return getOsuPlayerId(name, true);
+		}
 	}
 	
 	public static String getOsuPlayerName(int userId){
