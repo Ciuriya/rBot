@@ -90,6 +90,7 @@ public class SelectionManager{
 		game.state = GameState.BANNING;
 		warmupsLeft = 0;
 		map = null;
+		selectionStartTime = 0;
 		
 		if(!game.match.getTournament().getBool("usingBans") || bansLeft == 0 || strategy instanceof ModPickStrategy){
 			selectPicks();
@@ -315,6 +316,10 @@ public class SelectionManager{
 		this.map = map;
 	}
 	
+	public void removeBanLeft(){
+		bansLeft--;
+	}
+	
 	// in case the map was changed externally
 	public void updateMap(String link){
 		if(map != null && map.getURL().equalsIgnoreCase(link)) return;
@@ -380,6 +385,7 @@ public class SelectionManager{
 					game.messageUpdater.cancel();
 					
 					if(warmupsLeft == 0 && game.state.eq(GameState.BANNING)){
+						bansLeft--;
 						game.nextTeam.addBan(new Map("https://osu.ppy.sh/b/1", 1, null));
 						BanMapCommand.banningTeams.remove(game.nextTeam);
 						game.switchNextTeam();

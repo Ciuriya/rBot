@@ -90,6 +90,8 @@ public class Game{
 		
 		firstTeam.inviteTeam(0, 60000);
 		secondTeam.inviteTeam(0, 60000);
+		
+		match.setGame(this);
 	}
 	
 	public void setupGame(){

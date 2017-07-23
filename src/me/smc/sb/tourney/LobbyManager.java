@@ -169,7 +169,7 @@ public class LobbyManager{
 		}
 		
 		if(game.match.getTournament().getInt("type") == 1 && game.match.getTournament().getBool("usingDQs") &&
-			!game.state.eq(GameState.ROLLING) && !game.state.eq(GameState.WAITING)){ // solo, dq check
+			!game.state.eq(GameState.ROLLING) && !game.state.eq(GameState.WAITING) && !game.state.eq(GameState.PAUSED)){ // solo, dq check
 			final FinalInt timeLeft = new FinalInt(game.match.getTournament().getInt("dqTime") * 1000); // 2.5mins dq time for now?
 			
 			Timer t = new Timer();
@@ -185,14 +185,15 @@ public class LobbyManager{
 						return;
 					}
 					
-					if(timeLeft.get() <= 0){
+					if(timeLeft.get() <= 0 && !game.state.eq(GameState.PAUSED)){
 						if(players == 0){
 							game.banchoHandle.sendMessage("No one has shown up! Closing lobby...", false);
 						}else{
 							PlayingTeam winningTeam = findTeam(getCurrentPlayers().get(0));
 							PlayingTeam losingTeam = game.getOppositeTeam(winningTeam);
 							
-							winningTeam.addPoint();
+							winningTeam.setPoints(1);
+							losingTeam.setPoints(0);
 							
 							game.banchoHandle.sendMessage(losingTeam.getTeam().getTeamName() + " has been disqualified!", false);
 							game.banchoHandle.sendMessage("The lobby is ending in 30 seconds, thanks for playing!", false);

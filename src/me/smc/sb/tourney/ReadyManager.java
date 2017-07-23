@@ -134,6 +134,7 @@ public class ReadyManager{
 		ContestCommand.gamesAllowedToContest.remove(game);
 		game.resultManager.skipRematchState = 0;
 		game.resultManager.contestState = 0;
+		game.selectionManager.selectionStartTime = 0;
 		
 		if(game.messageUpdater != null) game.messageUpdater.cancel();
 		if(game.selectionManager.lobbyUpdater != null) game.selectionManager.lobbyUpdater.cancel();

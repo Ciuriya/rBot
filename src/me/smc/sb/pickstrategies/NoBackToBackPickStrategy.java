@@ -23,6 +23,7 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 		Map selected = null;
 		SelectionManager manager = game.getSelectionManager();
 		
+		System.out.println("selecting");
 		if(manager.getWarmupsLeft() > 0 && select){
 			JSONObject jsMap = Map.getMapInfo(new Map(map, 1, null).getBeatmapID(), game.match.getTournament().getInt("mode"), true);
 			
@@ -56,6 +57,8 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			return;
 		}
 		
+		System.out.println("going through pool..");
+		
 		int num = 1;
 		for(Map m : game.match.getMapPool().getMaps()){
 			boolean chosen = false;
@@ -84,6 +87,8 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 					return;
 				}
 				
+				System.out.println("selected");
+				
 				selected = m;
 				
 				break;
@@ -92,6 +97,7 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			num++;
 		}
 
+		System.out.println("select: " + select + " | selected null? " + (selected == null) + " | contains: " + manager.getBans().contains(selected));
 		if(!select && selected != null && !manager.getBans().contains(selected)){
 			BanMapCommand.banningTeams.remove(game.getNextTeam());
 			game.getNextTeam().addBan(selected);
@@ -99,7 +105,9 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			final Map fSelected = selected;
 			final PlayingTeam banningTeam = game.getNextTeam();
 			
+			System.out.println("fetching info");
 			JSONObject jsMap = Map.getMapInfo(fSelected.getBeatmapID(), game.match.getTournament().getInt("mode"), true);
+			System.out.println("fetched");
 			String name = manager.getMod(fSelected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
 				    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
 			game.getBanchoHandle().sendMessage(name + " was removed!", false);
@@ -129,6 +137,8 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 				}
 			}).start();
 			
+			game.getSelectionManager().removeBanLeft();
+			game.switchNextTeam();
 			manager.selectBans();
 			
 			return;

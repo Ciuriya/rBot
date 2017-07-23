@@ -127,6 +127,8 @@ public class UniqueModPickStrategy implements PickStrategy{
 				}
 			}).start();
 			
+			game.getSelectionManager().removeBanLeft();
+			game.switchNextTeam();
 			manager.selectBans();
 			
 			return;
