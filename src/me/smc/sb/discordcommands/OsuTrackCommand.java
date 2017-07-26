@@ -1,6 +1,9 @@
 package me.smc.sb.discordcommands;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Timer;
 
 import me.smc.sb.main.Main;
@@ -11,6 +14,7 @@ import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
@@ -25,6 +29,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			  "{prefix}osutrack\nThis command lets you track osu! players' recent performance\n\n" +
 		      "----------\nUsage\n----------\n{prefix}osutrack {player} ({mode={0/1/2/3}}) - Tracks or untracks the player's recent statistics for this mode\n" + 
 			  "{prefix}osutrack {player} ({ext}) - Tracks or untracks the player in a separate channel\n" +
+		      "{prefix}osutrack list - Lists all players currently tracked in the server\n" +
 		      "{prefix}osutrack ({best}) - Tracks only players' best plays in this server\n" +
 			  "{prefix}osutrack ({pp=XXX}) - Tracks every play above XXX pp\n\n" +
 		      "----------\nAliases\n----------\nThere are no aliases.", 
@@ -45,6 +50,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		boolean scanServer = false;
 		boolean changeToBestPlayTracking = false;
 		boolean ppCap = false;
+		boolean listing = false;
 		int ppAmount = 0;
 		
 		for(int i = 0; i < args.length; i++)
@@ -53,6 +59,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			else if(args[i].contains("{ext}")) ext = true;
 			else if(args[i].contains("{scan}")) scanServer = true;
 			else if(args[i].contains("{best}")) changeToBestPlayTracking = true;
+			else if(args[i].equalsIgnoreCase("list") && i == 0) listing = true;
 			else if(args[i].contains("{pp=")){
 				ppCap = true;
 				ppAmount = Utils.stringToInt(args[i].split("pp=")[1].split("}")[0]);
@@ -60,8 +67,50 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		TrackingGuild guild = TrackingGuild.get(e.getGuild().getId());
 		
-		if(guild == null){
-			guild = new TrackingGuild(e.getGuild().getId());
+		if(guild == null) guild = new TrackingGuild(e.getGuild().getId());
+		
+		if(listing){
+			Configuration sCfg = Main.serverConfigs.get(e.getGuild().getId());
+			String trackingId = sCfg.getValue("track-update-group");
+			String info = "```diff\n+ Tracked users in " + e.getGuild().getName() + "\n" +
+					  	  "+ Track Channel - #" + e.getJDA().getTextChannelById(trackingId).getName() + " (" + trackingId + ")\n";
+			List<TrackedPlayer> playerList = new ArrayList<>(TrackedPlayer.registeredPlayers);
+    		
+			Collections.sort(playerList, new Comparator<TrackedPlayer>(){
+				@Override
+				public int compare(TrackedPlayer o1, TrackedPlayer o2){
+					int result = o1.getUsername().compareTo(o2.getUsername());
+					
+					if(result == 0){
+						if(o1.getMode() < o2.getMode()) return 1;
+						else if(o1.getMode() > o2.getMode()) return -1;
+						else return 0;
+					}else return result;
+				}
+			});
+			
+    		for(TrackedPlayer player : playerList){
+    			if(player.isTracked(guild)){
+        			info += "\n- " + player.getUsername() + " | " + TrackingUtils.convertMode(player.getMode());
+        			
+        			if(guild.getChannel(player) != null){
+        				TextChannel channel = guild.getChannel(player);
+        				
+        				if(!channel.getId().equalsIgnoreCase(trackingId))
+        					info += " | #" + channel.getName();
+        			}
+        			
+        			if(info.length() > 1900){
+        				Utils.info(e.getChannel(), info + "```");
+        				
+        				info = "```diff";
+        			}
+    			}
+    		}
+    		
+    		if(info.length() > 0) Utils.info(e.getChannel(), info + "```");
+    		
+			return;
 		}
 		
 		if(ppCap){

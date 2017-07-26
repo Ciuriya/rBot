@@ -15,6 +15,7 @@ import me.smc.sb.irccommands.RandomCommand;
 import me.smc.sb.irccommands.SelectMapCommand;
 import me.smc.sb.irccommands.SkipRematchCommand;
 import me.smc.sb.irccommands.SkipWarmupCommand;
+import me.smc.sb.irccommands.TimeoutCommand;
 import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.tourney.GameState;
 import me.smc.sb.utils.Log;
@@ -36,7 +37,10 @@ public class Game{
 	protected GameFeed feed;
 	protected Timer messageUpdater;
 	protected int roomSize;
+	protected int pausesLeft;
+	protected int pauseState; // 0 = none, 1 = fTeam, 2 = sTeam, 3 = ok
 	protected long lastPickTime;
+	protected Timer timeoutTimer;
 	protected PlayingTeam nextTeam; // actually currentTeam, I'm just stupid
 	protected GameState state;
 	
@@ -50,6 +54,7 @@ public class Game{
 		this.resultManager = new ResultManager(this);
 		this.firstTeam = new PlayingTeam(match.getFirstTeam(), this);
 		this.secondTeam = new PlayingTeam(match.getSecondTeam(), this);
+		this.pausesLeft = match.getTournament().getInt("pausesAllowed");
 		this.state = GameState.WAITING;
 		
 		banchoHandle.sendMessage("BanchoBot", "!mp make " + match.getLobbyName(), true);
@@ -155,6 +160,9 @@ public class Game{
 				public void run(){
 					PassTurnCommand.passingTeams.remove(rollWinTeam);
 					
+					if(!TimeoutCommand.gamesAllowedToTimeout.contains(Game.this))
+						TimeoutCommand.gamesAllowedToTimeout.add(Game.this);
+					
 					feed.updateDiscord();
 					banchoHandle.sendMessage("This match is reffed by a bot! " + 
 											 "If you have suggestions or have found a bug, please report in our [http://discord.gg/0f3XpcqmwGkNseMR discord server] or to Smc. " +
@@ -188,7 +196,8 @@ public class Game{
 							banchoHandle.sendMessage(message, false);
 						
 						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + waitTime) - (System.currentTimeMillis() / 1000))) / 60, 0);
-						banchoHandle.sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!", false);
+						banchoHandle.sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!" + 
+												(pausesLeft > 0 ? " (Use !timeout if you need a small break!)" : ""), false);
 					}
 				}else 
 					for(String message : messages)
@@ -218,6 +227,11 @@ public class Game{
 		}else{
 			if(!state.eq(GameState.PAUSED)) return;
 			
+			if(timeoutTimer != null){
+				timeoutTimer.cancel();
+				timeoutTimer = null;
+			}
+			
 			state = GameState.WAITING;
 			
 			if(firstTeam.getRoll() == -1 || secondTeam.getRoll() == -1) lobbyManager.setupRolling();
@@ -225,6 +239,52 @@ public class Game{
 			else if(selectionManager.bansLeft > 0) selectionManager.selectBans();
 			else if(selectionManager.map != null) readyManager.startReadyWait();
 			else selectionManager.selectPicks();
+		}
+	}
+	
+	public void timeout(String userName){
+		if(state.eq(GameState.PAUSED) || state.eq(GameState.WAITING) || state.eq(GameState.ROLLING) || state.eq(GameState.ENDED)){
+			banchoHandle.sendMessage("You cannot timeout right now!", false);
+			
+			return;
+		}
+		
+		Player player = lobbyManager.findPlayer(userName);
+		PlayingTeam team = lobbyManager.findTeam(player);
+		
+		if(team != null){
+			boolean fTeam = lobbyManager.isOnFirstTeam(player);
+			
+			switch(pauseState){
+				case 0: pauseState = fTeam ? 1 : 2;
+						banchoHandle.sendMessage(team.getTeam().getTeamName() + " has asked for a temporary timeout!", false);
+						break;
+				case 1: if(!fTeam) pauseState = 3; break;
+				case 2: if(fTeam) pauseState = 3; break;
+				default: return;
+			}
+			
+			if(pauseState == 3){
+				int length = match.getTournament().getInt("pauseLength");
+				
+				pausesLeft--;
+				banchoHandle.sendMessage("A " + Utils.toDuration(length) + " timeout has been issued!", false);
+				pauseState = 0;
+				
+				handlePause(true);
+				
+				if(timeoutTimer != null){
+					timeoutTimer.cancel();
+					timeoutTimer = null;
+				}
+				
+				timeoutTimer = new Timer();
+				timeoutTimer.schedule(new TimerTask(){
+					public void run(){
+						handlePause(false);
+					}
+				}, length * 1000);
+			}
 		}
 	}
 	

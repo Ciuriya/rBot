@@ -155,6 +155,7 @@ public abstract class IRCCommand{
 		commands.add(new SkipRematchCommand());
 		commands.add(new SkipWarmupCommand());
 		commands.add(new ContestCommand());
+		commands.add(new TimeoutCommand());
 		commands.add(new ChangeWarmupModCommand());
 		commands.add(new AlertStaffCommand());
 		commands.add(new MPLinkCommand());

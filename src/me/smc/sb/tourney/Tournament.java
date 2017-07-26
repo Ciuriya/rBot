@@ -251,6 +251,8 @@ public class Tournament{
 		configValues.put("skipWarmups", true);
 		configValues.put("pickStrategy", "regular");
 		configValues.put("rematchesAllowed", 1);
+		configValues.put("pausesAllowed", 1);
+		configValues.put("pauseLength", 180);
 		configValues.put("usingTourneyServer", true);
 		configValues.put("usingConfirms", true);
 		configValues.put("usingMapStats", true);

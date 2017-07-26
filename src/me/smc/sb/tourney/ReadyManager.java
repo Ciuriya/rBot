@@ -220,7 +220,7 @@ public class ReadyManager{
 			displayAllowedMods = displayAllowedMods.substring(2);
 			
 			for(String mod : mods.split(", ")){
-				if(!validFreemodMods.contains(mod.toLowerCase())){
+				if(!validFreemodMods.contains(mod)){
 					validMod = false;
 					break;
 				}

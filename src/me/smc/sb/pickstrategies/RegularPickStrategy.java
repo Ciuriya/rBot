@@ -42,6 +42,7 @@ public class RegularPickStrategy implements PickStrategy{
 			
 			if(mod.length() > 0)
 				game.getBanchoHandle().sendMessage("!mp mods " + mod.toUpperCase() + " Freemod", false);
+			else game.getBanchoHandle().sendMessage("!mp mods Freemod", false);
 			
 			game.getGameFeed().updateTwitch("Warmup: " + jsMap.getString("artist") + " - " + 
 				    	  	  				jsMap.getString("title") + " [" + jsMap.getString("version") + "] " + 
