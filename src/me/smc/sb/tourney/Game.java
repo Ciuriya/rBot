@@ -160,7 +160,7 @@ public class Game{
 				public void run(){
 					PassTurnCommand.passingTeams.remove(rollWinTeam);
 					
-					if(!TimeoutCommand.gamesAllowedToTimeout.contains(Game.this))
+					if(!TimeoutCommand.gamesAllowedToTimeout.contains(Game.this) && pausesLeft > 0)
 						TimeoutCommand.gamesAllowedToTimeout.add(Game.this);
 					
 					feed.updateDiscord();
@@ -243,7 +243,7 @@ public class Game{
 	}
 	
 	public void timeout(String userName){
-		if(state.eq(GameState.PAUSED) || state.eq(GameState.WAITING) || state.eq(GameState.ROLLING) || state.eq(GameState.ENDED)){
+		if(state.eq(GameState.PAUSED) || state.eq(GameState.WAITING) || state.eq(GameState.ROLLING) || state.eq(GameState.ENDED) || pausesLeft == 0){
 			banchoHandle.sendMessage("You cannot timeout right now!", false);
 			
 			return;
@@ -271,6 +271,9 @@ public class Game{
 				banchoHandle.sendMessage("A " + Utils.toDuration(length) + " timeout has been issued!", false);
 				pauseState = 0;
 				
+				if(pausesLeft == 0)
+					TimeoutCommand.gamesAllowedToTimeout.remove(Game.this);
+				
 				handlePause(true);
 				
 				if(timeoutTimer != null){
@@ -280,7 +283,7 @@ public class Game{
 				
 				timeoutTimer = new Timer();
 				timeoutTimer.schedule(new TimerTask(){
-					public void run(){
+					public void run(){			
 						handlePause(false);
 					}
 				}, length * 1000);
