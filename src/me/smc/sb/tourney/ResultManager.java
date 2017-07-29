@@ -56,37 +56,39 @@ public class ResultManager{
 				for(String result : results){
 					String playerName = result.substring(0, result.indexOf(" finished"));
 					
-					if(fTeamPlayers.contains(playerName) || sTeamPlayers.contains(playerName)) continue;
-					
-					Player player = game.lobbyManager.findPlayer(playerName);
-					PlayingTeam team = game.lobbyManager.findTeam(player);
-					boolean fTeam = game.lobbyManager.isOnFirstTeam(player);
-					
-					if(fTeam) fTeamPlayers.add(player);
-					else sTeamPlayers.add(player);
-					
-					player.setSubmitted(true);
-					totalSubmits++;
-					
-					if(result.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
-						int score = Utils.stringToInt(result.split("Score: ")[1].split(",")[0]);
+					if(!fTeamPlayers.contains(playerName) && !sTeamPlayers.contains(playerName)){
+						Player player = game.lobbyManager.findPlayer(playerName);
+						PlayingTeam team = game.lobbyManager.findTeam(player);
+						boolean fTeam = game.lobbyManager.isOnFirstTeam(player);
 						
-						if(score > 1200000 * player.getModMultiplier() && game.match.getTournament().getBool("scoreV2")){
-							rematch = game.selectionManager.warmupsLeft > 0 && team.canRematch();
-							rematchTeam = team;
-							game.banchoHandle.sendMessage(player + " is on fallback, please use stable!" + 
-														 (rematch ? " There will be a rematch!" : ""), false);
-						}
-						
-						if(fTeam) fTeamScore += score;
-						else sTeamScore += score;
-						
-						totalScore += score;
-						totalPasses++;
-						
-						if(player.getRank() > 0 && isWithinTargetBounds(player.getRank())){
-							targetRangeScore += score;
-							targetRangePasses++;
+						if(!player.submittedScore()){
+							if(fTeam) fTeamPlayers.add(player);
+							else sTeamPlayers.add(player);
+							
+							player.setSubmitted(true);
+							totalSubmits++;
+							
+							if(result.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
+								int score = Utils.stringToInt(result.split("Score: ")[1].split(",")[0]);
+								
+								if(score > 1200000 * player.getModMultiplier() && game.match.getTournament().getBool("scoreV2")){
+									rematch = game.selectionManager.warmupsLeft > 0 && team.canRematch();
+									rematchTeam = team;
+									game.banchoHandle.sendMessage(player + " is on fallback, please use stable!" + 
+																 (rematch ? " There will be a rematch!" : ""), false);
+								}
+								
+								if(fTeam) fTeamScore += score;
+								else sTeamScore += score;
+								
+								totalScore += score;
+								totalPasses++;
+								
+								if(player.getRank() > 0 && isWithinTargetBounds(player.getRank())){
+									targetRangeScore += score;
+									targetRangePasses++;
+								}
+							}
 						}
 					}
 				}
@@ -329,6 +331,10 @@ public class ResultManager{
 	}
 	
 	public void addResult(String result){
+		for(String r : results)
+			if(r.equalsIgnoreCase(result))
+				return;
+		
 		results.add(result);
 	}
 	

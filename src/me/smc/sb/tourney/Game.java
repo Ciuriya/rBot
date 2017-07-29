@@ -406,9 +406,13 @@ public class Game{
 		}
 		
 		if(match.getTournament().getBool("usingTourneyServer") && match.getServerID().length() > 0 && winningTeam.getServerTeamID() != 0){
-			RemotePatyServerUtils.setMPLinkAndWinner(mpLink, winningTeam, match.getServerID(), 
-													 match.getTournament().get("name"), firstTeam.getPoints(), 
-													 secondTeam.getPoints());
+			new Thread(new Runnable(){
+				public void run(){
+					RemotePatyServerUtils.setMPLinkAndWinner(mpLink, winningTeam, match.getServerID(), 
+															 match.getTournament().get("name"), firstTeam.getPoints(), 
+															 secondTeam.getPoints());
+				}
+			}).start();
 		}
 		
 		String shortGameEndMsg = match.getFirstTeam().getTeamName() + " (" + firstTeam.getPoints() + 

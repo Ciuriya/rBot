@@ -97,12 +97,12 @@ public class TwitchHandler{
 	}
 	
 	// fix one day? lol
-	public void changeStreamTitle(Game game){
-		String accessToken = new Configuration(new File("login.txt")).getValue("twitch-access");
-		String title = game.match.getTournament().get("displayName") + ":+" + 
-					   game.match.getFirstTeam().getTeamName() + "+vs+" + game.match.getSecondTeam().getTeamName();
-		
+	public void changeStreamTitle(Game game){	
 		try{
+			String accessToken = new Configuration(new File("login.txt")).getValue("twitch-access");
+			String title = game.match.getTournament().get("displayName") + ":+" + 
+						   game.match.getFirstTeam().getTeamName() + "+vs+" + game.match.getSecondTeam().getTeamName();
+			
 		    ProcessBuilder pb = new ProcessBuilder(
 		            "curl",
 		            "-H 'Accept: application/vnd.twitchtv.v2+json'",
