@@ -197,7 +197,9 @@ public class Game{
 						
 						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + waitTime) - (System.currentTimeMillis() / 1000))) / 60, 0);
 						banchoHandle.sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!" + 
-												(pausesLeft > 0 ? " (Use !timeout if you need a small break!)" : ""), false);
+												(pausesLeft > 0 ? " (Both use !timeout if you need a " + 
+												Utils.toDuration(match.getTournament().getInt("pauseLength") * 1000) + 
+												" break!)" : ""), false);
 					}
 				}else 
 					for(String message : messages)
@@ -265,7 +267,7 @@ public class Game{
 			}
 			
 			if(pauseState == 3){
-				int length = match.getTournament().getInt("pauseLength");
+				int length = match.getTournament().getInt("pauseLength") * 1000;
 				
 				pausesLeft--;
 				banchoHandle.sendMessage("A " + Utils.toDuration(length) + " timeout has been issued!", false);
@@ -286,7 +288,7 @@ public class Game{
 					public void run(){			
 						handlePause(false);
 					}
-				}, length * 1000);
+				}, length);
 			}
 		}
 	}

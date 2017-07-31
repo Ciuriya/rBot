@@ -100,10 +100,15 @@ public class SelectionManager{
 		
 		BanMapCommand.banningTeams.add(game.nextTeam);
 		pickTimer(game.match.getTournament().getInt("banWaitTime"));
+		
+		String poolSheet = "";
+		
+		try{
+			poolSheet = game.match.getMapPool().getSheetUrl().length() > 0 ? " [" + game.match.getMapPool().getSheetUrl() + " You can find the maps here]" : "";
+		}catch(Exception e){}
+		
 		game.messageUpdater(0, game.match.getTournament().getInt("banWaitTime"), 
-						    game.nextTeam.getTeam().getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" +
-						    (game.match.getMapPool().getSheetUrl().length() > 0 ? " [" + game.match.getMapPool().getSheetUrl() + 
-						    " You can find the maps here]" : ""));
+						    game.nextTeam.getTeam().getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" + poolSheet);
 		
 		if(getBans().size() > 0) game.getGameFeed().updateDiscord();
 	}
@@ -128,10 +133,14 @@ public class SelectionManager{
 		
 		if(getPickStrategy() instanceof ModPickStrategy) selectUsage = "!select <mod>";
 		
+		String poolSheet = "";
+		
+		try{
+			poolSheet = game.match.getMapPool().getSheetUrl().length() > 0 ? " [" + game.match.getMapPool().getSheetUrl() + " You can find the maps here]" : "";
+		}catch(Exception e){}
+		
 		game.messageUpdater(0, game.match.getTournament().getInt("pickWaitTime"), 
-							game.nextTeam.getTeam().getTeamName() + ", please pick a map using " + selectUsage +
-							(game.match.getMapPool().getSheetUrl().length() > 0 ? " [" + game.match.getMapPool().getSheetUrl() + 
-							" You can find the maps here]" : ""), 
+							game.nextTeam.getTeam().getTeamName() + ", please pick a map using " + selectUsage + poolSheet, 
 				   			"If the lobby order is not correct, do not worry about it, it will be fixed.");
 	}
 	

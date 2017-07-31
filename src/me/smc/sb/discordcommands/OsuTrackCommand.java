@@ -22,6 +22,7 @@ public class OsuTrackCommand extends GlobalCommand{
 	private static int REQUESTS_PER_MINUTE = 250;
 	private static Timer trackingTimer = null;
 	public static double currentRefreshRate = 0;
+	public static boolean trackingStarted = false;
 	
 	public OsuTrackCommand(){
 		super(null, 
@@ -33,7 +34,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		      "{prefix}osutrack ({best}) - Tracks only players' best plays in this server\n" +
 			  "{prefix}osutrack ({pp=XXX}) - Tracks every play above XXX pp\n\n" +
 		      "----------\nAliases\n----------\nThere are no aliases.", 
-			  false, 
+			  false,
 			  "osutrack");
 		
 		load();
@@ -90,7 +91,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			});
 			
     		for(TrackedPlayer player : playerList){
-    			if(player.isTracked(guild)){
+    			if(player.isTracked(guild, false)){
         			info += "\n- " + player.getUsername() + " | " + TrackingUtils.convertMode(player.getMode());
         			
         			if(guild.getChannel(player) != null){
@@ -154,8 +155,8 @@ public class OsuTrackCommand extends GlobalCommand{
 		
 		TrackedPlayer player = TrackedPlayer.get(user, mode);
 		
-		if(player != null && player.isTracked(guild)){
-			boolean untracked = guild.untrack(player.getUsername(), mode);
+		if(player != null && player.isTracked(guild, false)){
+			boolean untracked = guild.untrack(player.getUsername(), mode, false);
 			
 			guild.setChannel(e.getTextChannel().getId());
 			
@@ -166,7 +167,7 @@ public class OsuTrackCommand extends GlobalCommand{
 			return;
 		}
 		
-		boolean tracked = guild.track(user, mode, true);
+		boolean tracked = guild.track(user, mode, true, false);
 		
 		player = TrackedPlayer.get(user, mode);
 		
@@ -194,6 +195,7 @@ public class OsuTrackCommand extends GlobalCommand{
 				}
 				
 				TrackedPlayer.changeOccured = false;
+				trackingStarted = true;
 				startTracker();
 			}
 		}).start();

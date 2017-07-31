@@ -74,7 +74,7 @@ public class ResultManager{
 								if(score > 1200000 * player.getModMultiplier() && game.match.getTournament().getBool("scoreV2")){
 									rematch = game.selectionManager.warmupsLeft > 0 && team.canRematch();
 									rematchTeam = team;
-									game.banchoHandle.sendMessage(player + " is on fallback, please use stable!" + 
+									game.banchoHandle.sendMessage(player.getName() + " is on fallback, please use stable!" + 
 																 (rematch ? " There will be a rematch!" : ""), false);
 								}
 								
@@ -95,7 +95,7 @@ public class ResultManager{
 				
 				results.clear();
 				
-				if(rematch && rematchTeam != null){
+				if(rematch && rematchTeam != null && game.selectionManager.warmupsLeft == 0){
 					game.feed.updateTwitch("A player was using fallback, there will be a rematch!");
 					rematch(rematchTeam);
 					

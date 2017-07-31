@@ -7,6 +7,7 @@ import java.util.List;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.tracking.HybridRegulator;
+import me.smc.sb.tracking.OsuTrackRunnable;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
@@ -79,6 +80,8 @@ public class StatsCommand extends GlobalCommand{
 			   .append("Queued osu!requests: " + HybridRegulator.requests.size() + " | Failed osu!requests: " + Main.failedRequests + "\n")
 			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
 					   (tracked + trackedPlayers.size()) + " tracked, " + TrackedPlayer.registeredPlayers.size() + " without duplicates)\n")
+			   .append("Actual osu!track refresh rate per player: " + Utils.df((double) OsuTrackRunnable.totalTimeUsed / (double) OsuTrackRunnable.trackedTotal) + "ms\n")
+			   .append("Request send time: " + Utils.df((double) HybridRegulator.timeExecutingRequests / (double) HybridRegulator.requestsSent) + "ms\n")
 			   .append("Most tracked users in a single server: " + highestTrackAmount + " players (" + highestTrackGuild.getName() + ")\n")
 			   .append("HTML pages scraped: " + Main.htmlScrapes + " (" + Main.osuHtmlScrapes + " from osu!)\n")
 			   .append("HTML pages scraped/min average: " + averageHtmlScrapesPerMinute + " (" + averageOsuHtmlScrapesPerMinute + " for osu!)```");

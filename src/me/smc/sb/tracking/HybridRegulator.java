@@ -12,8 +12,10 @@ public class HybridRegulator{
 
 	private static final int[] FIBONACCI = new int[]{ 1, 1, 2, 3, 5, 8, 13, 21 };
 	public static LinkedList<OsuRequest> requests;
+	public static long timeExecutingRequests = 0;
+	public static int requestsSent = 0;
 	private static int apiPerMinute = 600;
-	private static int htmlPerMinute = 120;
+	private static int htmlPerMinute = 80;
 	private static int apiRequestsCompleted = 0;
 	private static int htmlRequestsCompleted = 0;
 	private static int lastRefreshApiRequestsCount = 0;
@@ -47,19 +49,13 @@ public class HybridRegulator{
 				boolean useApi = false; // false means using html
 				
 				if(!requests.isEmpty()){
-					OsuRequest request = requests.getFirst();
+					OsuRequest request = requests.stream().filter(r -> r.isPriority()).findAny().orElse(requests.getFirst());
 					
 					if(request.getType().equals(RequestTypes.HYBRID)){
-						if((apiLoad < htmlLoad || htmlStalled) && !apiStalled && apiLoad < 1)
+						if(!apiStalled && apiLoad < 1)
 							useApi = true;
-						else if((htmlLoad < apiLoad || apiStalled) && !htmlStalled && htmlLoad < 1)
+						else if(apiStalled && !htmlStalled && htmlLoad < 1)
 							useApi = false;
-						else if(apiLoad == htmlLoad && apiLoad < 1 && !apiStalled && htmlStalled)
-							useApi = true;
-						else if(apiLoad == htmlLoad && apiLoad < 1 && apiStalled && !htmlStalled)
-							useApi = false;
-						else if(apiLoad == htmlLoad && apiLoad < 1 && !apiStalled && !htmlStalled)
-							useApi = true;
 						else return;
 						
 						toProcess = request;
@@ -79,18 +75,10 @@ public class HybridRegulator{
 					
 					new Thread(new Runnable(){
 						public void run(){
-							if(api) apiStalled = true;
-							else htmlStalled = true;
-							
 							executeRequest(request, api, 0);
 							
-							if(api){
-								apiRequestsCompleted++;
-								apiStalled = false;
-							}else{
-								htmlRequestsCompleted++;
-								htmlStalled = false;
-							}
+							if(api) apiRequestsCompleted++;
+							else htmlRequestsCompleted++;
 						}
 					}).start();
 				}
@@ -107,7 +95,7 @@ public class HybridRegulator{
 			public void run(){
 				calculateLoads();
 			}
-		}, 500, 500);
+		}, 100, 100);
 	}
 	
 	private void executeRequest(OsuRequest request, boolean api, int attempt){
@@ -116,12 +104,31 @@ public class HybridRegulator{
 		}catch(Exception e){
 			if(attempt + 1 >= FIBONACCI.length) return;
 			
+			boolean stalled = false;
+			
+			while((api && apiStalled) || (!api && htmlStalled)){
+				stalled = true;
+				Utils.sleep(1000);
+			}
+			
+			if(stalled){
+				executeRequest(request, api, attempt + 1);
+				
+				return;
+			}
+			
+			if(api) apiStalled = true;
+			else htmlStalled = true;
+			
 			int nextAttemptDelay = FIBONACCI[attempt + 1];
 			Log.logger.log(Level.WARNING, "Retrying osu!" + (api ? "api" : "html") + " request in " + nextAttemptDelay + " seconds!\n" +
 										  "Request: " + request.getName() + " Ex: " + e.getMessage());
 			Utils.sleep(nextAttemptDelay * 1000);
 			
 			executeRequest(request, api, attempt + 1);
+			
+			if(api) apiStalled = false;
+			else htmlStalled = false;
 		}
 	}
 	
@@ -134,8 +141,11 @@ public class HybridRegulator{
 	}
 	
 	public Object sendRequest(OsuRequest request, int timeout, boolean priority){
-		if(priority) requests.addFirst(request);
-		else requests.add(request);
+		long time = System.currentTimeMillis();
+		
+		if(priority) request.setPrioritary();
+		
+		requests.add(request);
 		
 		int timeElapsed = 0;
 		
@@ -149,6 +159,9 @@ public class HybridRegulator{
 			Utils.sleep(10);
 			timeElapsed += 10;
 		}
+		
+		HybridRegulator.timeExecutingRequests += System.currentTimeMillis() - time;
+		HybridRegulator.requestsSent++;
 		
 		return request.getAnswer();
 	}

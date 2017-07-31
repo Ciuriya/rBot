@@ -108,6 +108,7 @@ public abstract class GlobalCommand{
 		commands.add(new MessageIRCCommand());
 		commands.add(new MsgUserCommand());
 		commands.add(new OsuLastTopPlays());
+		commands.add(new OsuLiveLeaderboardCommand());
 		commands.add(new OsuStatsCommand());
 		commands.add(new OsuTrackCommand());
 		commands.add(new PingCommand());

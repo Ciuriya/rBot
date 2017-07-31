@@ -9,6 +9,7 @@ public abstract class OsuRequest{
 	protected Object answer;
 	protected boolean done;
 	protected String[] specifics;
+	protected boolean priority;
 	
 	public OsuRequest(String name, RequestTypes type, String...specifics){
 		this.name = name;
@@ -16,6 +17,7 @@ public abstract class OsuRequest{
 		this.answer = null;
 		this.done = false;
 		this.specifics = specifics;
+		this.priority = false;
 	}
 	
 	public String getName(){
@@ -38,6 +40,10 @@ public abstract class OsuRequest{
 		return done;
 	}
 	
+	public boolean isPriority(){
+		return priority;
+	}
+	
 	public String[] getSpecifics(){
 		return specifics;
 	}
@@ -53,5 +59,9 @@ public abstract class OsuRequest{
 		
 		if(api) Main.requestsSent++;
 		else Main.requestHtmlSent++;
+	}
+	
+	protected void setPrioritary(){
+		this.priority = true;
 	}
 }

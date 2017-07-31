@@ -28,6 +28,9 @@ public class TrackedPlayer{
 	private String lastUpdateMessage;
 	private CustomDate lastUpdate;
 	private List<TrackingGuild> currentlyTracking;
+	private List<TrackingGuild> leaderboardTracking;
+	private boolean normalTrack;
+	private boolean leaderboardTrack;
 	
 	public TrackedPlayer(int userId, int mode){
 		this(Utils.getOsuPlayerName(userId, true), userId, mode);
@@ -37,12 +40,15 @@ public class TrackedPlayer{
 		this.username = username;
 		this.userId = userId;
 		this.mode = mode;
+		this.normalTrack = false;
+		this.leaderboardTrack = false;
 		pp = 0;
 		rank = 0;
 		countryRank = 0;
 		lastUpdate = new CustomDate();
 		updatingPlayer = false;
 		currentlyTracking = new ArrayList<>();
+		leaderboardTracking = new ArrayList<>();
 		country = "A2";
 		
 		registeredPlayers.add(this);
@@ -53,7 +59,7 @@ public class TrackedPlayer{
 		boolean change = false;
 		
 		for(TrackedPlayer player : new ArrayList<>(registeredPlayers)){
-			if(player.getTrackers().size() == 0){
+			if(player.getTrackers().size() == 0 && player.getLeaderboardTrackers().size() == 0){
 				registeredPlayers.remove(player);
 				change = true;
 			}
@@ -67,7 +73,7 @@ public class TrackedPlayer{
 		
 		JSONObject jsonUser = null;
 		
-		if(pp <= 0 && rank <= 0 && countryRank <= 0){
+		if((pp <= 0 && rank <= 0 && countryRank <= 0) || leaderboardTrack){
 			OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + userId, "" + mode);
 			Object userObj = Main.hybridRegulator.sendRequest(userRequest);
 			
@@ -79,8 +85,18 @@ public class TrackedPlayer{
 				pp = Utils.stringToDouble(stats.split("&r=")[0]);
 				rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
 				countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
+				country = jsonUser.getString("country");
 			}
 		}
+
+		if(leaderboardTrack && !normalTrack){
+			lastUpdate = new CustomDate();
+			saveInfo();
+			
+			return null;
+		}
+		
+		if(!normalTrack) return plays;
 		
 		OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
 		Object recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest);
@@ -242,22 +258,56 @@ public class TrackedPlayer{
 		return currentlyTracking;
 	}
 	
-	public boolean isTracked(TrackingGuild guild){
-		return currentlyTracking.contains(guild);
+	public List<TrackingGuild> getLeaderboardTrackers(){
+		return leaderboardTracking;
 	}
 	
-	public boolean trackPlayer(TrackingGuild guild){
-		if(!currentlyTracking.contains(guild)){
+	public boolean isTracked(TrackingGuild guild, boolean leaderboard){
+		return (currentlyTracking.contains(guild) && !leaderboard) || (leaderboardTracking.contains(guild) && leaderboard);
+	}
+	
+	public boolean isLeaderboardTrack(){
+		return leaderboardTrack;
+	}
+	
+	public boolean isNormalTrack(){
+		return normalTrack;
+	}
+	
+	public void setLeaderboardTrack(boolean leaderboard){
+		this.leaderboardTrack = leaderboard;
+	}
+	
+	public void setNormalTrack(boolean normal){
+		this.normalTrack = normal;
+	}
+	
+	public boolean trackPlayer(TrackingGuild guild, boolean leaderboard){
+		if(leaderboard && !leaderboardTracking.contains(guild)){
+			leaderboardTracking.add(guild);
+			
+			return true;
+		}else if(!leaderboard && !currentlyTracking.contains(guild)){
 			currentlyTracking.add(guild);
 			
 			return true;
 		}
-		
+
 		return false;
 	}
 	
-	public void untrackPlayer(TrackingGuild guild){
-		currentlyTracking.remove(guild);
+	public void untrackPlayer(TrackingGuild guild, boolean leaderboard){
+		if(leaderboard){
+			leaderboardTracking.remove(guild);
+			
+			if(leaderboardTracking.size() == 0)
+				leaderboardTrack = false;
+		}else{
+			currentlyTracking.remove(guild);
+			
+			if(currentlyTracking.size() == 0)
+				normalTrack = false;
+		}
 	}
 	
 	public void setStats(String statString){
@@ -301,6 +351,10 @@ public class TrackedPlayer{
 		return countryRank;
 	}
 	
+	public String getCountry(){
+		return country;
+	}
+	
 	public String getLastUpdateMessage(){
 		return lastUpdateMessage;
 	}
@@ -333,5 +387,14 @@ public class TrackedPlayer{
 		}
 		
 		return null;
+	}
+	
+	public static List<TrackedPlayer> get(TrackingGuild guild, boolean leaderboard){
+		List<TrackedPlayer> list = new ArrayList<>();
+		
+		for(TrackedPlayer registered : new ArrayList<>(registeredPlayers))
+			if(registered.isTracked(guild, leaderboard)) list.add(registered);
+		
+		return list;
 	}
 }

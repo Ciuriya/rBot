@@ -15,6 +15,8 @@ public class OsuTrackRunnable extends TimerTask{
 	private List<TrackedPlayer> playersToRefresh;
 	private OsuTrackCommand trackManager;
 	private int updatingPlayers;
+	public static int trackedTotal = 0;
+	public static long totalTimeUsed = 0;
 	
 	public OsuTrackRunnable(OsuTrackCommand trackManager){
 		playersToRefresh = new ArrayList<>();
@@ -63,7 +65,7 @@ public class OsuTrackRunnable extends TimerTask{
 		
 		playersToRefresh.remove(player);
 		
-		if(player.isUpdating() || player.getTrackers().isEmpty()) return;
+		if(player.isUpdating() || (player.getTrackers().isEmpty() && player.getLeaderboardTrackers().isEmpty())) return;
 		
 		player.setUpdating(true);
 		updatingPlayers++;
@@ -73,9 +75,13 @@ public class OsuTrackRunnable extends TimerTask{
 		new Thread(new Runnable(){
 			public void run(){
 				try{
+					long time = System.currentTimeMillis();
 					List<TrackedPlay> plays = fPlayer.fetchLatestPlays();
 					
-					if(plays.size() > 0){
+					totalTimeUsed += System.currentTimeMillis() - time;
+					trackedTotal++;
+					
+					if(plays != null && plays.size() > 0 && fPlayer.getTrackers().size() > 0){
 						for(TrackingGuild guild : fPlayer.getTrackers()){
 							boolean onlyBest = guild.onlyTrackingBestPlays();
 							int minimumPP = guild.getMinimumPPAmount();
