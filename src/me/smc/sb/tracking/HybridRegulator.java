@@ -14,8 +14,8 @@ public class HybridRegulator{
 	public static LinkedList<OsuRequest> requests;
 	public static long timeExecutingRequests = 0;
 	public static int requestsSent = 0;
-	private static int apiPerMinute = 600;
-	private static int htmlPerMinute = 80;
+	private static int apiPerMinute = 250;
+	private static int htmlPerMinute = 50;
 	private static int apiRequestsCompleted = 0;
 	private static int htmlRequestsCompleted = 0;
 	private static int lastRefreshApiRequestsCount = 0;
@@ -75,7 +75,7 @@ public class HybridRegulator{
 					
 					new Thread(new Runnable(){
 						public void run(){
-							executeRequest(request, api, 0);
+							executeRequest(request, api, 0, false);
 							
 							if(api) apiRequestsCompleted++;
 							else htmlRequestsCompleted++;
@@ -95,10 +95,10 @@ public class HybridRegulator{
 			public void run(){
 				calculateLoads();
 			}
-		}, 100, 100);
+		}, 25, 25);
 	}
 	
-	private void executeRequest(OsuRequest request, boolean api, int attempt){
+	private void executeRequest(OsuRequest request, boolean api, int attempt, boolean staller){
 		try{
 			request.send(api);
 		}catch(Exception e){
@@ -106,13 +106,13 @@ public class HybridRegulator{
 			
 			boolean stalled = false;
 			
-			while((api && apiStalled) || (!api && htmlStalled)){
+			while(!staller && ((api && apiStalled) || (!api && htmlStalled))){
 				stalled = true;
 				Utils.sleep(1000);
 			}
 			
 			if(stalled){
-				executeRequest(request, api, attempt + 1);
+				executeRequest(request, api, attempt + 1, false);
 				
 				return;
 			}
@@ -125,7 +125,7 @@ public class HybridRegulator{
 										  "Request: " + request.getName() + " Ex: " + e.getMessage());
 			Utils.sleep(nextAttemptDelay * 1000);
 			
-			executeRequest(request, api, attempt + 1);
+			executeRequest(request, api, attempt + 1, true);
 			
 			if(api) apiStalled = false;
 			else htmlStalled = false;

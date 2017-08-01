@@ -86,6 +86,7 @@ public class TrackedPlayer{
 				rank = Utils.stringToInt(stats.split("&r=")[1].split("&cr=")[0]);
 				countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
 				country = jsonUser.getString("country");
+				username = jsonUser.getString("username");
 			}
 		}
 
