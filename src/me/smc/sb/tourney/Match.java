@@ -185,12 +185,6 @@ public class Match{
 		
 		scheduledDate = time;
 		
-		if(scheduledDate < Utils.getCurrentTimeUTC() && scheduledDate != 0){
-			removeMatch(tournament, matchNum);
-			
-			return;
-		}
-		
 		if(scheduledDate == 0) return;
 		
 		matchTimes.add(time);
@@ -216,7 +210,7 @@ public class Match{
 	public static Match getMatch(Tournament t, int matchNum){
 		if(!matches.isEmpty())
 			for(Match match : matches)
-				if(match.getMatchNum() == matchNum || match.getServerID() == String.valueOf(matchNum) && 
+				if((match.getMatchNum() == matchNum || match.getServerID() == String.valueOf(matchNum)) && 
 					match.getTournament().get("name").equalsIgnoreCase(t.get("name")))
 					return match;
 		

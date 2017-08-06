@@ -261,8 +261,7 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(matchesSQL)
-			.sql("SELECT id, team1, team2, mappool, `date`, bestof FROM schedule " +
-				 "WHERE tournaments_id=?")
+			.sql("SELECT id, team1, team2, mappool, `date`, bestof FROM schedule WHERE tournaments_id=? AND `date` > TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 hour))")
 			.set(fetchTournamentId(tournamentName))
 			.select(new Outcome<List<String>>(){
 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{

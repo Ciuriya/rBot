@@ -219,111 +219,113 @@ public class TrackScheduler extends AudioEventAdapter{
 	}
 	
 	public void loadScheduling(VoiceCommand voice, GuildMusicManager music, TextChannel channel, Configuration config){
-		String state = config.getValue("voice-state");
-		
-		loading = true;
-		
-		this.channel = channel;
-		
-		randomizePlaylist = config.getBoolean("voice-random");
-		
-		String currentInfo = config.getValue("voice-current");
-		long currentPosition = 0;
-		
-		if(currentInfo.length() > 0){
-			String[] splitInfo = currentInfo.split("\\|\\|[0-9]");
-			currentInfo = splitInfo[0];
+		try{
+			String state = config.getValue("voice-state");
 			
-			if(splitInfo.length > 1)
-				currentPosition = Long.parseLong(splitInfo[1]);
+			loading = true;
 			
-			if(!currentInfo.startsWith("|")){
-				final String cInfo = currentInfo;
+			this.channel = channel;
+			
+			randomizePlaylist = config.getBoolean("voice-random");
+			
+			String currentInfo = config.getValue("voice-current");
+			long currentPosition = 0;
+			
+			if(currentInfo.length() > 0){
+				String[] splitInfo = currentInfo.split("\\|\\|[0-9]");
+				currentInfo = splitInfo[0];
 				
+				if(splitInfo.length > 1)
+					currentPosition = Long.parseLong(splitInfo[1]);
+				
+				if(!currentInfo.startsWith("|")){
+					final String cInfo = currentInfo;
+					
+					try{
+						voice.playerManager.loadItemOrdered(music, currentInfo, new AudioLoadResultHandler(){
+							@Override
+							public void trackLoaded(AudioTrack track){
+								currentSong = new CustomAudioTrack(track, cInfo);
+							}
+							
+							@Override public void playlistLoaded(AudioPlaylist playlist){}
+							@Override public void loadFailed(FriendlyException exception){}
+							@Override public void noMatches(){}
+						}).get();
+					}catch(Exception e){
+						Log.logger.log(Level.SEVERE, e.getMessage(), e);
+					}
+				}
+			}
+			
+			ArrayList<String> trackQueue = config.getStringList("voice-queue");
+			
+			if(trackQueue.size() > 0)
+				for(String url : trackQueue)
+					try{
+						voice.playerManager.loadItemOrdered(music, url, 
+											new CustomAudioLoadResultHandler(channel, channel.getGuild(), url, randomizePlaylist, true, voice)).get();
+					}catch(Exception e){
+						Log.logger.log(Level.SEVERE, e.getMessage(), e);
+					}
+			
+			String playlistUrl = config.getValue("voice-playlist");
+			
+			if(playlistUrl.length() > 0)
 				try{
-					voice.playerManager.loadItemOrdered(music, currentInfo, new AudioLoadResultHandler(){
-						@Override
-						public void trackLoaded(AudioTrack track){
-							currentSong = new CustomAudioTrack(track, cInfo);
-						}
-						
-						@Override public void playlistLoaded(AudioPlaylist playlist){}
-						@Override public void loadFailed(FriendlyException exception){}
-						@Override public void noMatches(){}
-					}).get();
+					voice.playerManager.loadItemOrdered(music, playlistUrl, 
+										new CustomAudioLoadResultHandler(channel, channel.getGuild(), playlistUrl, randomizePlaylist, true, voice)).get();
 				}catch(Exception e){
 					Log.logger.log(Level.SEVERE, e.getMessage(), e);
 				}
-			}
-		}
-		
-		ArrayList<String> trackQueue = config.getStringList("voice-queue");
-		
-		if(trackQueue.size() > 0)
-			for(String url : trackQueue)
-				try{
-					voice.playerManager.loadItemOrdered(music, url, 
-										new CustomAudioLoadResultHandler(channel, channel.getGuild(), url, randomizePlaylist, true, voice)).get();
-				}catch(Exception e){
-					Log.logger.log(Level.SEVERE, e.getMessage(), e);
-				}
-		
-		String playlistUrl = config.getValue("voice-playlist");
-		
-		if(playlistUrl.length() > 0)
-			try{
-				voice.playerManager.loadItemOrdered(music, playlistUrl, 
-									new CustomAudioLoadResultHandler(channel, channel.getGuild(), playlistUrl, randomizePlaylist, true, voice)).get();
-			}catch(Exception e){
-				Log.logger.log(Level.SEVERE, e.getMessage(), e);
+				
+			if(currentInfo.length() > 0 && currentInfo.startsWith("|")){
+				for(AudioTrack track : currentPlaylist.getTracks())
+					if(track.getInfo().title.equalsIgnoreCase(currentInfo.substring(1))){
+						currentSong = new CustomAudioTrack(track, "");
+						break;
+					}
+				
+				if(currentSong != null)
+					currentPlaylist.getTracks().remove(currentSong.getTrack());
 			}
 			
-		if(currentInfo.length() > 0 && currentInfo.startsWith("|")){
-			for(AudioTrack track : currentPlaylist.getTracks())
-				if(track.getInfo().title.equalsIgnoreCase(currentInfo.substring(1))){
-					currentSong = new CustomAudioTrack(track, "");
-					break;
-				}
+			String nextPS = config.getValue("voice-next-ps");
 			
-			if(currentSong != null)
-				currentPlaylist.getTracks().remove(currentSong.getTrack());
-		}
-		
-		String nextPS = config.getValue("voice-next-ps");
-		
-		if(nextPS.length() > 0 && queue.size() == 0){
-			for(AudioTrack track : currentPlaylist.getTracks())
-				if(track.getInfo().title.equalsIgnoreCase(nextPS)){
-					nextPlaylistSong = new CustomAudioTrack(track, "");
-					break;
-				}
+			if(nextPS.length() > 0 && queue.size() == 0){
+				for(AudioTrack track : currentPlaylist.getTracks())
+					if(track.getInfo().title.equalsIgnoreCase(nextPS)){
+						nextPlaylistSong = new CustomAudioTrack(track, "");
+						break;
+					}
+				
+				if(nextPlaylistSong != null)
+					currentPlaylist.getTracks().remove(nextPlaylistSong.getTrack());
+			}
 			
-			if(nextPlaylistSong != null)
-				currentPlaylist.getTracks().remove(nextPlaylistSong.getTrack());
-		}
-		
-		loading = false;
+			loading = false;
 
-		if(state.length() == 0) return;
-		
-		String voiceChannel = config.getValue("voice-channel");
-		
-		if(voiceChannel.length() > 0)
-			voice.joinVoiceChannel(channel.getGuild(), channel, voiceChannel);
-		
-		if(currentSong != null){
-			player.startTrack(currentSong.getTrack(), false);
+			if(state.length() == 0) return;
 			
-			if(!currentSong.getURL().contains("www.twitch.tv/"))
-				player.getPlayingTrack().setPosition(currentPosition);
-		}
-		
-		if(state.equalsIgnoreCase("paused"))
-			player.setPaused(true);
-		else if(state.equalsIgnoreCase("stopped"))
-			player.stopTrack();
-		else if(state.equalsIgnoreCase("playing"))
-			updateChannel();
+			String voiceChannel = config.getValue("voice-channel");
+			
+			if(voiceChannel.length() > 0)
+				voice.joinVoiceChannel(channel.getGuild(), channel, voiceChannel);
+			
+			if(currentSong != null){
+				player.startTrack(currentSong.getTrack(), false);
+				
+				if(!currentSong.getURL().contains("www.twitch.tv/"))
+					player.getPlayingTrack().setPosition(currentPosition);
+			}
+			
+			if(state.equalsIgnoreCase("paused"))
+				player.setPaused(true);
+			else if(state.equalsIgnoreCase("stopped"))
+				player.stopTrack();
+			else if(state.equalsIgnoreCase("playing"))
+				updateChannel();
+		}catch(Exception e){}
 	}
 	
 	public void saveScheduling(Configuration config){

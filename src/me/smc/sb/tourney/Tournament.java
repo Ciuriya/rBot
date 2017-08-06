@@ -276,6 +276,7 @@ public class Tournament{
 		configValues.put("warmupCount", 1);
 		configValues.put("rematchCutoff", 30);
 		configValues.put("tournament-admins", new ArrayList<>());
+		configValues.put("strategy-limit", 1);
 	}
 	
 	public static void loadTournaments(){

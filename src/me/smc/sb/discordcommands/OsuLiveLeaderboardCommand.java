@@ -163,12 +163,46 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 						});
 						
 						int rank = 1;
+						TrackedPlayer longestPPRank = modeTracked.stream().max(new Comparator<TrackedPlayer>(){
+							@Override
+							public int compare(TrackedPlayer o1, TrackedPlayer o2){
+								return Integer.compare(String.valueOf(o1.getRank()).length() + String.valueOf(o1.getCountryRank()).length(), 
+													   String.valueOf(o2.getRank()).length() + String.valueOf(o2.getCountryRank()).length());
+							}
+						}).orElse(null);
+						TrackedPlayer longestUser = modeTracked.stream().max(new Comparator<TrackedPlayer>(){
+							@Override
+							public int compare(TrackedPlayer o1, TrackedPlayer o2){
+								return Integer.compare(o1.getUsername().length(), o2.getUsername().length());
+							}
+						}).orElse(null);
 						
 						for(TrackedPlayer player : modeTracked){
 							if(player.getRank() > 0){
-								content += "+ #" + rank + " | " + player.getUsername() + 
-											" | #" + player.getRank() + " (" + player.getCountry() + 
-											" #" + player.getCountryRank() + ")\n";
+								content += "+ #" + rank;
+								
+								int rankSpaces = String.valueOf(modeTracked.size()).length() - String.valueOf(rank).length();
+								int usernameSpaces = longestUser == null ? 0 : longestUser.getUsername().length() - player.getUsername().length();
+								int ppRankSpaces = longestPPRank == null ? 0 : (String.valueOf(longestPPRank.getRank()).length() + String.valueOf(longestPPRank.getCountryRank()).length()) -
+																			   (String.valueOf(player.getRank()).length() + String.valueOf(player.getCountryRank()).length());
+								
+								for(int o = 0; o < rankSpaces; o++) content += " ";
+								
+								content += " | ";
+								
+								int u = 0;
+								
+								for(u = 0; u < usernameSpaces / 2; u++) content += " ";
+								
+								content += player.getUsername();
+								
+								for(; u < usernameSpaces; u++) content += " ";
+								
+								content += " | #" + player.getRank() + " (" + player.getCountry() + " #" + player.getCountryRank() + ")";
+								
+								for(int o = 0; o < ppRankSpaces; o++) content += " ";
+								
+								content += " | " + Utils.df(player.getPP(), 2) + "pp\n";
 								
 								if(header.length() + content.length() > 1900){
 									if(postedMessages.size() > 0){

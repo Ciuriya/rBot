@@ -29,7 +29,7 @@ public class MapPool{
 		this.sheetUrl = "";
 		maps = new LinkedList<>();
 		
-		save(append);
+		if(append) save(append);
 		
 		pools.add(this);
 	}

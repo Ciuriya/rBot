@@ -1,6 +1,7 @@
 package me.smc.sb.pickstrategies;
 
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 
@@ -137,10 +138,10 @@ public class UniqueModPickStrategy implements PickStrategy{
 		if(selected != null && select){
 			final Map fSelected = selected;
 			
-			if(manager.getPicks().stream().anyMatch(p -> p.getTeam().getTeamName().equals(game.getNextTeam().getTeam().getTeamName()) && 
+			if(manager.getPicks().stream().filter(p -> p.getTeam().getTeamName().equals(game.getNextTeam().getTeam().getTeamName()) && 
 													  p.getMap().getCategory() > 0 && p.getMap().getCategory() == fSelected.getCategory() &&
-													  !p.isWarmup())) {
-				game.getBanchoHandle().sendMessage("You cannot select a map within a mod pool twice!", false);
+													  !p.isWarmup()).collect(Collectors.toList()).size() >= game.match.getTournament().getInt("strategy-limit")) {
+				game.getBanchoHandle().sendMessage("You cannot select a map within this mod pool anymore!", false);
 				
 				return;
 			}

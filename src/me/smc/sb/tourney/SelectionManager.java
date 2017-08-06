@@ -154,7 +154,7 @@ public class SelectionManager{
 	public boolean forceSelect(boolean revertScore, Map newMap){
 		String indicator = game.match.getTournament().getInt("type") == 0 ? "teams" : "players";
 		
-		if(game.firstTeam.getRoll() == -1 || game.secondTeam.getRoll() == -1){
+		if(game.state.eq(GameState.ROLLING) || game.state.eq(GameState.WAITING)){
 			game.banchoHandle.sendMessage("You cannot force select whilst " + indicator + " have not finished rolling!", false);
 			
 			return false;
@@ -403,7 +403,7 @@ public class SelectionManager{
 						return;
 					}
 					
-					if(map != null){
+					if(map != null && !game.state.eq(GameState.PRESTART) && !game.state.eq(GameState.PLAYING)){
 						game.banchoHandle.sendMessage("Attempting to force start...", false);
 						game.readyManager.playersReady();
 						
