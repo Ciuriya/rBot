@@ -102,17 +102,21 @@ public class Utils{
 	}
 	
 	public static void info(MessageChannel channel, String message){
-		if(channel instanceof TextChannel){
-			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
-				channel.sendMessage(message).queue();
+		try{
+			if(channel instanceof TextChannel){
+				if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
+					channel.sendMessage(message).queue();
+					Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
+				}else Log.logger.log(Level.INFO, "{Silent message sent in " + getGroupLogString(channel) + "} " + message);
+			}else{
+				channel.sendMessage(message).queue(); 
 				Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
-			}else Log.logger.log(Level.INFO, "{Silent message sent in " + getGroupLogString(channel) + "} " + message);
-		}else{
-			channel.sendMessage(message).queue(); 
-			Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
+			}
+			
+			Main.messagesSentThisSession++;
+		}catch(Exception ex){
+			Log.logger.log(Level.WARNING, ex.getMessage());
 		}
-		
-		Main.messagesSentThisSession++;
 	}
 	
 	public static void info(MessageChannel channel, MessageEmbed embed){
@@ -255,8 +259,8 @@ public class Utils{
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			connection.setRequestMethod("POST");	
-			connection.setConnectTimeout(30000);
-			connection.setReadTimeout(30000);
+			connection.setConnectTimeout(2500);
+			connection.setReadTimeout(2500);
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("charset", "utf-8");
@@ -284,8 +288,6 @@ public class Utils{
 			
 			answer = response.toString();
 		}catch(Exception e){
-			Log.logger.log(Level.INFO, "sendPost Exception: " + e.getMessage());
-			
 			throw e;
 		}
 		
@@ -303,8 +305,8 @@ public class Utils{
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Accept-Language", "en-US");
-			connection.setConnectTimeout(30000);
-			connection.setReadTimeout(30000);
+			connection.setConnectTimeout(5000);
+			connection.setReadTimeout(5000);
 			
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 			

@@ -240,9 +240,10 @@ public class TrackedPlayer{
 			}
 		}
 		
-		lastUpdate = new CustomDate();
-		
-		saveInfo();
+		if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray){
+			lastUpdate = new CustomDate();
+			saveInfo();
+		}
 		
 		return plays;
 	}

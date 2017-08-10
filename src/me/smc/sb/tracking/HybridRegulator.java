@@ -3,8 +3,11 @@ package me.smc.sb.tracking;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
+import me.smc.sb.main.Main;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -16,8 +19,8 @@ public class HybridRegulator{
 	public static int requestsSent = 0;
 	private static int apiPerMinute = 300;
 	private static int htmlPerMinute = 50;
-	private static int apiRequestsCompleted = 0;
-	private static int htmlRequestsCompleted = 0;
+	private static int apiRequestsSent = 0;
+	private static int htmlRequestsSent = 0;
 	private static int lastRefreshApiRequestsCount = 0;
 	private static int lastRefreshHtmlRequestsCount = 0;
 	private static long lastLoadRefresh = 0;
@@ -27,12 +30,17 @@ public class HybridRegulator{
 	private Timer loadTimer;
 	private boolean apiStalled;
 	private boolean htmlStalled;
+	private ExecutorService apiPool;
+	private ExecutorService htmlPool;
 	
 	public HybridRegulator(){
 		requests = new LinkedList<>();
 		lastLoadRefresh = System.currentTimeMillis();
 		apiStalled = false;
 		htmlStalled = false;
+		htmlPool = Executors.newCachedThreadPool();
+		apiPool = Executors.newFixedThreadPool(7);
+		
 		startLoadTimer();
 		startRequestTimer();
 	}
@@ -54,7 +62,7 @@ public class HybridRegulator{
 					if(request.getType().equals(RequestTypes.HYBRID)){
 						if(!apiStalled && apiLoad < 1)
 							useApi = true;
-						else if(apiStalled && !htmlStalled && htmlLoad < 1)
+						else if(!htmlStalled && htmlLoad < 1)
 							useApi = false;
 						else return;
 						
@@ -72,15 +80,13 @@ public class HybridRegulator{
 					
 					final OsuRequest request = toProcess;
 					final boolean api = useApi;
+					ExecutorService service = api ? apiPool : htmlPool;
 					
-					new Thread(new Runnable(){
+					service.execute(new Runnable(){
 						public void run(){
 							executeRequest(request, api, 0, false);
-							
-							if(api) apiRequestsCompleted++;
-							else htmlRequestsCompleted++;
 						}
-					}).start();
+					});
 				}
 			}
 		}, delay, delay);
@@ -95,11 +101,14 @@ public class HybridRegulator{
 			public void run(){
 				calculateLoads();
 			}
-		}, 25, 25);
+		}, 100, 100);
 	}
 	
 	private void executeRequest(OsuRequest request, boolean api, int attempt, boolean staller){
 		try{
+			if(api) apiRequestsSent++;
+			else htmlRequestsSent++;
+			
 			request.send(api);
 		}catch(Exception e){
 			if(attempt + 1 >= FIBONACCI.length) return;
@@ -108,7 +117,7 @@ public class HybridRegulator{
 			
 			while(!staller && ((api && apiStalled) || (!api && htmlStalled))){
 				stalled = true;
-				Utils.sleep(1000);
+				Utils.sleep(10);
 			}
 			
 			if(stalled){
@@ -151,6 +160,8 @@ public class HybridRegulator{
 		
 		while(!request.isDone()){
 			if(timeElapsed >= timeout && timeout > 0){
+				Main.failedRequests++;
+				
 				requests.remove(request);
 				
 				return "Request: " + request.getName() + " timed out.";
@@ -171,11 +182,11 @@ public class HybridRegulator{
 		
 		if(delay >= 60000){
 			lastLoadRefresh = System.currentTimeMillis();
-			lastRefreshApiRequestsCount = apiRequestsCompleted;
-			lastRefreshHtmlRequestsCount = htmlRequestsCompleted;
+			lastRefreshApiRequestsCount = apiRequestsSent;
+			lastRefreshHtmlRequestsCount = htmlRequestsSent;
 		}else{
-			int apiRequests = apiRequestsCompleted - lastRefreshApiRequestsCount;
-			int htmlRequests = htmlRequestsCompleted - lastRefreshHtmlRequestsCount;
+			int apiRequests = apiRequestsSent - lastRefreshApiRequestsCount;
+			int htmlRequests = htmlRequestsSent - lastRefreshHtmlRequestsCount;
 			double timeSliceMult = 60000.0 / (double) delay;
 			
 			apiLoad = ((double) apiRequests * timeSliceMult) / (double) apiPerMinute;

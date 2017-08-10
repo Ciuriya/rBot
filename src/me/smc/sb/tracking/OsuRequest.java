@@ -55,8 +55,6 @@ public abstract class OsuRequest{
 		
 		if(answer.equals("invalid")) return;
 		
-		if(answer.equals("failed")) Main.failedRequests++;
-		
 		if(api) Main.requestsSent++;
 		else Main.requestHtmlSent++;
 	}

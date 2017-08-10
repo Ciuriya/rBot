@@ -60,7 +60,7 @@ public class OsuUserRequest extends OsuRequest{
 			List<String> playCountLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<b>Play Count</b>");
 			List<String> playTimeLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<b>Play Time</b>");
 			List<String> levelLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<b>Current Level</b>");
-			List<String> levelPercentageLine = Utils.getNextLineCodeFromLink(pageGeneral, 1, "<b>Current Level</b>");
+			List<String> levelPercentageLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "levelPercent");
 			List<String> hitsLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<b>Total Hits</b>");
 			List<String> maxComboLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<b>Maximum Combo</b>");
 			List<String> kudosuLine = Utils.getNextLineCodeFromLink(pageGeneral, 0, "Kudosu</a> Earned</b>");
@@ -99,7 +99,7 @@ public class OsuUserRequest extends OsuRequest{
 			
 			if(levelLine.size() > 0 && levelPercentageLine.size() > 0){
 				String level = levelLine.get(0).split("Current Level<\\/b>: ")[1].split("<\\/div>")[0];
-				level += "." + levelPercentageLine.get(0).split("align=right>")[1].split("%")[0];
+				level += "." + levelPercentageLine.get(0).split("align=\"right\">")[1].split("%")[0];
 				user.put("level", level);
 			}
 			

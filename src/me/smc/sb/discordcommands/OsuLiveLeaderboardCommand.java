@@ -120,21 +120,25 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 		new Thread(new Runnable(){
 			public void run(){
 				TextChannel channel = guild.getLeaderboardChannel();
-				List<Message> messages = channel.getHistory().retrievePast(50).complete();
+				List<Message> messages = new ArrayList<>();
 				List<Message> standard = new ArrayList<>(), taiko = new ArrayList<>(), ctb = new ArrayList<>(), mania = new ArrayList<>();
 				
-				for(Message message : messages)
-					if(message.getAuthor().getId().equalsIgnoreCase(Main.api.getSelfUser().getId()))
-						if(message.getContent().contains("Ladder | ")){
-							if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(0)))
-								standard.add(message);
-							else if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(1)))
-								taiko.add(message);
-							else if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(2)))
-								ctb.add(message);
-							else if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(3)))
-								mania.add(message);
-						}
+				try{
+					messages = channel.getHistory().retrievePast(50).complete();
+					
+					for(Message message : messages)
+						if(message.getAuthor().getId().equalsIgnoreCase(Main.api.getSelfUser().getId()))
+							if(message.getContent().contains("Ladder | ")){
+								if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(0)))
+									standard.add(message);
+								else if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(1)))
+									taiko.add(message);
+								else if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(2)))
+									ctb.add(message);
+								else if(message.getContent().contains("Ladder | " + TrackingUtils.convertMode(3)))
+									mania.add(message);
+							}
+				}catch(Exception ex){}
 				
 				List<TrackedPlayer> tracked = TrackedPlayer.get(guild, true);
 				
