@@ -55,6 +55,7 @@ public class Game{
 		this.firstTeam = new PlayingTeam(match.getFirstTeam(), this);
 		this.secondTeam = new PlayingTeam(match.getSecondTeam(), this);
 		this.pausesLeft = match.getTournament().getInt("pausesAllowed");
+		this.pauseState = 0;
 		this.state = GameState.WAITING;
 		
 		banchoHandle.sendMessage("BanchoBot", "!mp make " + match.getLobbyName(), true);
@@ -265,8 +266,8 @@ public class Game{
 				case 2: if(fTeam) pauseState = 3; break;
 				default: return;
 			}
-			
-			if(pauseState == 3){
+
+			if(pauseState == 3){	
 				int length = match.getTournament().getInt("pauseLength") * 1000;
 				
 				pausesLeft--;

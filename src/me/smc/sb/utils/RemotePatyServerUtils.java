@@ -151,7 +151,7 @@ public class RemotePatyServerUtils{
 			new JdbcSession(mpSQL)
 			.sql("UPDATE `schedule` SET mp_link=?, winner=?, " +
 				 "team1_score=?, team2_score=? " +
-				 "WHERE id=? AND tournaments_id=?")
+				 "WHERE id_database=? AND tournaments_id=?")
 			.set(mpLink)
 			.set(winner.getServerTeamID())
 			.set(fTeamScore)
@@ -261,7 +261,7 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(matchesSQL)
-			.sql("SELECT id, team1, team2, mappool, `date`, bestof FROM schedule WHERE tournaments_id=? AND `date` > TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 hour))")
+			.sql("SELECT id_database, team1, team2, mappool, `date`, bestof FROM schedule WHERE tournaments_id=? AND `date` > TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 hour))")
 			.set(fetchTournamentId(tournamentName))
 			.select(new Outcome<List<String>>(){
 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -294,8 +294,8 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(matchSQL)
-			.sql("SELECT id, team1, team2, mappool, `date`, bestof FROM schedule " +
-				 "WHERE tournaments_id=? AND id=?")
+			.sql("SELECT id_database, team1, team2, mappool, `date`, bestof FROM schedule " +
+				 "WHERE tournaments_id=? AND id_database=?")
 			.set(fetchTournamentId(tournamentName))
 			.set(matchId)
 			.select(new Outcome<List<String>>(){
