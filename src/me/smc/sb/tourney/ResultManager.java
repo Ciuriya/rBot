@@ -1,18 +1,25 @@
 package me.smc.sb.tourney;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import me.smc.sb.irccommands.ContestCommand;
 import me.smc.sb.irccommands.SkipRematchCommand;
-import me.smc.sb.tourney.Team;
-import me.smc.sb.tourney.Game;
-import me.smc.sb.tourney.Player;
-import me.smc.sb.tourney.GameState;
+import me.smc.sb.main.Main;
+import me.smc.sb.scoringstrategies.DefaultScoringStrategy;
+import me.smc.sb.scoringstrategies.ScoringStrategy;
+import me.smc.sb.tracking.Mods;
+import me.smc.sb.tracking.OsuMultiRequest;
+import me.smc.sb.tracking.OsuRequest;
+import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.RemotePatyServerUtils;
 import me.smc.sb.utils.Utils;
@@ -21,6 +28,7 @@ public class ResultManager{
 
 	private Game game;
 	protected List<String> results;
+	protected ScoringStrategy strategy;
 	protected int skipRematchState; // 0 = no, 1 = first agree, 2 = second agree, 3 = ok
 	protected int contestState;     // ^
 	protected boolean lastRematch;  // true = first team initiated rematch
@@ -30,6 +38,7 @@ public class ResultManager{
 	public ResultManager(Game game){
 		this.game = game;
 		this.results = new ArrayList<>();
+		this.strategy = ScoringStrategy.findStrategy(game.match.getTournament().get("scoringStrategy"));
 		this.skipRematchState = 0;
 		this.contestState = 0;
 		this.rematching = false;
@@ -44,6 +53,9 @@ public class ResultManager{
 			public void run(){
 				if(rematching) return;
 				
+				OsuRequest multiRequest = null;
+				Object multiMatchObj = null;
+				JSONArray multiMatch = null;
 				List<Player> fTeamPlayers = new ArrayList<>();
 				List<Player> sTeamPlayers = new ArrayList<>();
 				float fTeamScore = 0, sTeamScore = 0;
@@ -52,7 +64,22 @@ public class ResultManager{
 				long totalSubmits = 0;
 				PlayingTeam rematchTeam = null;
 				boolean rematch = false;
-
+				java.util.Map<Integer, JSONObject> plays = new HashMap<>();
+				
+				long startTime = System.currentTimeMillis();
+				
+				while(plays.size() == 0){
+					multiRequest = new OsuMultiRequest(game.mpLink.split("mp\\/")[1]);
+					multiMatchObj = Main.hybridRegulator.sendRequest(multiRequest, 15000, true);
+					
+					if(multiMatchObj != null && multiMatchObj instanceof JSONArray){
+						multiMatch = (JSONArray) multiMatchObj;
+						plays = getPlays(multiMatch, game.selectionManager.getMap().getBeatmapID());
+					}
+					
+					if(System.currentTimeMillis() - startTime > 30000) break;
+				}
+				
 				for(String result : results){
 					String playerName = result.substring(0, result.indexOf(" finished"));
 					
@@ -68,10 +95,19 @@ public class ResultManager{
 							player.setSubmitted(true);
 							totalSubmits++;
 							
+							long score = Utils.stringToInt(result.split("Score: ")[1].split(",")[0]);
+							JSONObject play = null;
+							
+							if(plays.containsKey(player.getSlot() - 1)){
+								play = plays.get(player.getSlot() - 1);
+								play.put("enabled_mods", Mods.getMods(player.getMods()));
+							}
+							
+							if(play != null) score = strategy.calculateScore(player.getName(), new TrackedPlay(play, game.match.getTournament().getInt("mode")), 
+																							 game.match.getTournament().getBool("scoreV2"), game.banchoHandle);
+							
 							if(result.split(",")[1].substring(1).split("\\)")[0].equalsIgnoreCase("PASSED")){
-								int score = Utils.stringToInt(result.split("Score: ")[1].split(",")[0]);
-								
-								if(score > 1200000 * player.getModMultiplier() && game.match.getTournament().getBool("scoreV2")){
+								if(score > 1200000 * player.getModMultiplier() && game.match.getTournament().getBool("scoreV2") && strategy instanceof DefaultScoringStrategy){
 									rematch = game.selectionManager.warmupsLeft > 0 && team.canRematch();
 									rematchTeam = team;
 									game.banchoHandle.sendMessage(player.getName() + " is on fallback, please use stable!" + 
@@ -122,7 +158,7 @@ public class ResultManager{
 						boolean fTeamDC = sTeamPlayers.size() > fTeamPlayers.size();
 						
 						if((fTeamDC && fTeamScore < sTeamScore) || (!fTeamDC && sTeamScore < fTeamScore)){
-							if(game.match.getTournament().getBool("scoreV2")){
+							if(game.match.getTournament().getBool("scoreV2") && strategy instanceof DefaultScoringStrategy){
 								float fScore = fTeamScore + calculateMissingScores(true);
 								float sScore = sTeamScore + calculateMissingScores(false);
 								
@@ -382,5 +418,25 @@ public class ResultManager{
 	public boolean isWithinTargetBounds(int rank){
 		return rank >= game.match.getTournament().getInt("targetRankLowerBound") && 
 			   rank <= game.match.getTournament().getInt("targetRankUpperBound");
+	}
+	
+	private java.util.Map<Integer, JSONObject> getPlays(JSONArray multiMatch, int beatmapId){
+		java.util.Map<Integer, JSONObject> plays = new HashMap<>();
+		
+		JSONArray mapsPlayed = multiMatch.getJSONArray(1);
+		JSONObject played = mapsPlayed.getJSONObject(mapsPlayed.length() - 1);
+		
+		if(played.getInt("beatmap_id") == beatmapId){
+			JSONArray scores = played.getJSONArray("scores");
+			
+			for(int i = 0; i >= scores.length(); i++){	
+				JSONObject jsonPlay = scores.getJSONObject(i);
+				
+				jsonPlay.put("beatmap_id", beatmapId);
+				plays.put(i, jsonPlay);
+			}
+		}
+		
+		return plays;
 	}
 }

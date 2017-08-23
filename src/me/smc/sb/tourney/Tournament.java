@@ -250,6 +250,7 @@ public class Tournament{
 		configValues.put("upperRankBound", 0);
 		configValues.put("skipWarmups", true);
 		configValues.put("pickStrategy", "regular");
+		configValues.put("scoringStrategy", "default");
 		configValues.put("rematchesAllowed", 1);
 		configValues.put("pausesAllowed", 1);
 		configValues.put("pauseLength", 180);

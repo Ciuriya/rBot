@@ -1,5 +1,9 @@
 package me.smc.sb.tourney;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import me.smc.sb.tracking.Mods;
 import me.smc.sb.utils.Utils;
 
 public class Player{
@@ -9,6 +13,7 @@ public class Player{
 	private int slot;
 	private boolean hasMod;
 	private double modMultiplier;
+	private List<Mods> mods;
 	private boolean isPlaying;
 	private boolean verified;
 	private boolean submitted;
@@ -20,6 +25,7 @@ public class Player{
 		this.slot = -1;
 		this.hasMod = false;
 		this.modMultiplier = 1;
+		this.mods = new ArrayList<>();
 		this.isPlaying = false;
 		this.verified = false;
 		this.submitted = false;
@@ -66,6 +72,22 @@ public class Player{
 	
 	public int getRank(){
 		return rank;
+	}
+	
+	public List<Mods> getMods(){
+		return mods;
+	}
+	
+	public void addMod(Mods mod){
+		if(!mods.contains(mod)) mods.add(mod);
+	}
+	
+	public void clearMods(){
+		mods.clear();
+	}
+	
+	public void setMods(List<Mods> mods){
+		this.mods = mods;
 	}
 	
 	public void setName(String name){

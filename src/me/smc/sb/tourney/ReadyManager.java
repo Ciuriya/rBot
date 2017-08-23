@@ -14,6 +14,7 @@ import me.smc.sb.irccommands.SkipRematchCommand;
 import me.smc.sb.tourney.PickedMap;
 import me.smc.sb.tourney.GameState;
 import me.smc.sb.tourney.Player;
+import me.smc.sb.tracking.Mods;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
@@ -176,6 +177,7 @@ public class ReadyManager{
 			for(Player pl : tempList){
 				pl.setHasMod(false);
 				pl.setModMultiplier(1);
+				pl.clearMods();
 				pl.setPlaying(false);
 				pl.setVerified(false);
 				pl.setSubmitted(false);
@@ -199,6 +201,7 @@ public class ReadyManager{
 		int slot = Utils.stringToInt(message.split(" ")[1]);
 		boolean hasMod = false;
 		double modMultiplier = 1;
+		List<Mods> playerMods = new ArrayList<>();
 		Map map = game.selectionManager.map;
 		String[] sBracketSplit = message.split("\\[");
 		String fullEndSection = sBracketSplit[sBracketSplit.length - 1].split("\\]")[0];
@@ -225,7 +228,11 @@ public class ReadyManager{
 					break;
 				}
 				
-				modMultiplier *= getModMultiplier(mod);
+				modMultiplier *= getModMultiplier(mod, game.match.getTournament().getBool("scoreV2"));
+				
+				try{
+					playerMods.add(Mods.getMod(Mods.getMods(mod)));
+				}catch(Exception ex){}
 			}
 			
 			if(!validMod){					
@@ -278,10 +285,15 @@ public class ReadyManager{
 		}
 		
 		if(map.getCategory() > 1 && map.getCategory() != 5)
-			modMultiplier = getModMultiplier(game.selectionManager.getMod(map));
+			modMultiplier = getModMultiplier(game.selectionManager.getMod(map), game.match.getTournament().getBool("scoreV2"));
+		
+		if(map.getCategory() == 2) playerMods.add(Mods.Hidden);
+		else if(map.getCategory() == 3) playerMods.add(Mods.HardRock);
+		else if(map.getCategory() == 4) playerMods.add(Mods.DoubleTime);
 		
 		player.setHasMod(hasMod);
 		player.setModMultiplier(modMultiplier);
+		player.setMods(playerMods);
 		player.setSlot(slot);
 		player.setVerified(true);
 		
@@ -393,13 +405,11 @@ public class ReadyManager{
 			}
 	}
 	
-	public double getModMultiplier(String mod){
-		boolean v2 = game.match.getTournament().getBool("scoreV2");
-		
+	public static double getModMultiplier(String mod, boolean scorev2){
 		switch(mod.toLowerCase()){
 			case "hidden": case "hd": return 1.06;
-			case "hardrock": case "hr": return v2 ? 1.1 : 1.06;
-			case "doubletime": case "nightcore": case "dt": case "nc": return v2 ? 1.2 : 1.12;
+			case "hardrock": case "hr": return scorev2 ? 1.1 : 1.06;
+			case "doubletime": case "nightcore": case "dt": case "nc": return scorev2 ? 1.2 : 1.12;
 			case "flashlight": case "fl": return 1.12;
 			case "easy": case "ez": return 0.5;
 			case "halftime": case "ht": return 0.3;

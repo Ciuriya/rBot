@@ -86,6 +86,15 @@ public enum Mods{
 		return mods;
 	}
 	
+	public static int getMods(List<Mods> mods){
+		int modsUsed = 0;
+		
+		for(Mods mod : mods)
+			modsUsed += mod.getBit();
+		
+		return modsUsed;
+	}
+	
 	public static String getModDisplay(List<Mods> mods){
 		String display = "";
 		
