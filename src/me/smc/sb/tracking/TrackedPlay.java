@@ -142,6 +142,14 @@ public class TrackedPlay{
 	 * Play getters
 	 */
 	
+	public String playGet(String key){
+		return play.getString(key);
+	}
+	
+	public void playSet(String key, String value){
+		play.put(key, value);
+	}
+	
 	public long getRawScore(){
 		return play.getLong("score");
 	}

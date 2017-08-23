@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.scoringstrategies.ScoringStrategy;
+import me.smc.sb.tracking.CustomDate;
 import me.smc.sb.tracking.OsuRecentPlaysRequest;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.RequestTypes;
@@ -23,32 +24,33 @@ public class SMTScoreRecentCalculationCommand extends GlobalCommand{
 			  "{prefix}smtscore\nThis command calculates the player's latest score using custom scoring\n\n" +
 			  "----------\nUsage\n----------\n{prefix}smtscore {osu!player} - Calculates the player's latest score using custom scoring\n\n" + 
 		      "----------\nAliases\n----------\nThere are no aliases.",  
-			  false, 
+			  true, 
 			  "smtscore");
 	}
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		e.getMessage().delete().complete();
+		try{
+			e.getMessage().delete().complete();
+		}catch(Exception ex){}
+		
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
-		OsuRequest request = new OsuRecentPlaysRequest(RequestTypes.API, args[0], "0", "string", "1");
+		String userId = Utils.getOsuPlayerId(args[0], true);
+		OsuRequest request = new OsuRecentPlaysRequest(RequestTypes.API, userId, "0", "50");
 		Object response = Main.hybridRegulator.sendRequest(request, true);
 		
 		if(response != null && response instanceof JSONArray){
 			JSONArray recentPlays = (JSONArray) response;
 			TrackedPlay play = null;
-			String userId = Utils.getOsuPlayerId(args[0], true);
 			
 			for(int i = recentPlays.length() - 1; i >= 0; i--){	
 				JSONObject jsonObj = recentPlays.getJSONObject(i);
 				
 				if(jsonObj.getString("rank").equalsIgnoreCase("F")) continue;
 				
-				play = new TrackedPlay(jsonObj, 0);
-				play.loadMap();
-				
-				break;
+				if(play == null || new CustomDate(TrackingUtils.osuDateToCurrentDate(jsonObj.getString("date"))).after(play.getDate()))
+					play = new TrackedPlay(jsonObj, 0);
 			}
 			
 			if(play == null){
@@ -56,6 +58,8 @@ public class SMTScoreRecentCalculationCommand extends GlobalCommand{
 				
 				return;
 			}
+			
+			play.loadMap();
 			
 			long score = ScoringStrategy.findStrategy("smtscore").calculateScore(null, play, false, null);
 			
@@ -79,7 +83,9 @@ public class SMTScoreRecentCalculationCommand extends GlobalCommand{
 							 " [" + play.getDifficulty() + "] " + play.getModDisplay() + "\n"), 
 							 "http://osu.ppy.sh/b/" + play.getBeatmapId());
 			
-			builder.addField("Score", Utils.veryLongNumberDisplay(score), true);
+			builder.addField("Score", "Total: " + Utils.veryLongNumberDisplay(score) + "\n" +
+									  "Combo: " + Utils.veryLongNumberDisplay(Utils.df(Double.parseDouble(play.playGet("combo_score")))) + "\n" +
+									  "Accuracy: " + Utils.veryLongNumberDisplay(Utils.df(Double.parseDouble(play.playGet("acc_score")))), true);
 			
 			String rankText = play.getFormattedRank();
 			

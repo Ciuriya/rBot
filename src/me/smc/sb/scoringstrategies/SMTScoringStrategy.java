@@ -21,7 +21,7 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			play.loadMap();
 			
 			int mapCombo = play.getMaxCombo();
-			int maxCombo = play.getMaxCombo();
+			int maxCombo = play.getCombo();
 			double comboScore = 0;
 			double accScore = 0;
 			double fcPercentage = (double) maxCombo / (double) mapCombo;
@@ -55,8 +55,13 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			
 			accModifier *= accLengthModifier;
 			accScore = (Math.pow(acc >= 90 ? acc - 90 : 0, 2) * accModifier) / 1.5;
+			comboScore *= 50;
+			accScore *= 50;
 			
-			long score = Math.round(comboScore * 50 + accScore * 50);
+			play.playSet("acc_score", accScore + "");
+			play.playSet("combo_score", comboScore + "");
+			
+			long score = Math.round(comboScore + accScore);
 			
 			if(handle != null && player != null)
 				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + " (Combo: " + Utils.veryLongNumberDisplay(comboScore) + 
