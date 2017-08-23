@@ -120,6 +120,7 @@ public abstract class GlobalCommand{
 		commands.add(new SearchCommand());
 		commands.add(new SetPrefixCommand());
 		commands.add(new SilentCommand());
+		commands.add(new SMTScoreRecentCalculationCommand());
 		commands.add(new StatsCommand());
 		commands.add(new StopCommand());
 		commands.add(new SuggestCommand());

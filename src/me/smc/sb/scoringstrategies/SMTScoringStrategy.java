@@ -27,7 +27,8 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			double fcPercentage = (double) maxCombo / (double) mapCombo;
 			double closestCombo = 0;
 			double closestScore = 0;
-			double accLengthModifier = mapCombo >= 1000 ? (Math.pow(mapCombo / 150.0, 1.25) / 10 - 1) / 5 + 1 : 1; // 1k = 1.01424x 1.6k = 1.1855x 2k = 1.3095x 3k = 1.64589x 5k = ~2.4x
+			// 1k = 1.0047x 1.5k = 1.0518x 2k = 1.10318x 2.5k = 1.157835x 5k = 1.46729x
+			double accLengthModifier = mapCombo >= 1000 ? (Math.pow(mapCombo / 150.0, 1.25) / 10 - 1) / 15 + 1 : 1; 
 
 			List<Mods> mods = play.getMods();
 			WeightedObservedPoints obs = new WeightedObservedPoints();
@@ -53,13 +54,14 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			if(accModifier < 1) accModifier = 1;
 			
 			accModifier *= accLengthModifier;
-			accScore = (Math.pow(acc >= 90 ? acc - 90 : 0, 2) * accModifier) / 2;
+			accScore = (Math.pow(acc >= 90 ? acc - 90 : 0, 2) * accModifier) / 1.5;
 			
-			long score = Math.round(comboScore * 70 + accScore * 30);
+			long score = Math.round(comboScore * 50 + accScore * 50);
 			
-			handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + " (Combo: " + Utils.veryLongNumberDisplay(comboScore) + 
-																						  " Accuracy: " + Utils.veryLongNumberDisplay(accScore) + ")", 
-																						  false);
+			if(handle != null && player != null)
+				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + " (Combo: " + Utils.veryLongNumberDisplay(comboScore) + 
+																						  	  " Accuracy: " + Utils.veryLongNumberDisplay(accScore) + ")", 
+																						  	  false);
 			
 			return score;
 			
