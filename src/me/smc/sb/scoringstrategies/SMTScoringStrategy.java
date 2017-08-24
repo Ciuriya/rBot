@@ -33,17 +33,23 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			List<Mods> mods = play.getMods();
 			WeightedObservedPoints obs = new WeightedObservedPoints();
 			
-			long mainComboScore = estimateScore(osuFile, play, obs, mods, scorev2);
+			long mainComboScore = (long) (estimateScore(osuFile, play, obs, mods, scorev2) / 1.1);
 			long restOfScore = play.getRawScore() - mainComboScore;
 			
-			for(WeightedObservedPoint p : obs.toList())
-				if(p.getY() > closestScore && p.getY() <= restOfScore){
-					closestCombo = p.getX();
-					closestScore = p.getY();
-				}
+			if(mainComboScore < play.getRawScore()){
+				for(WeightedObservedPoint p : obs.toList())
+					if(p.getY() > closestScore && p.getY() <= restOfScore){
+						closestCombo = p.getX();
+						closestScore = p.getY();
+					}
+				
+				fcPercentage += (double) closestCombo / 2 / (double) mapCombo;
+			}
 			
-			fcPercentage += (double) closestCombo / 2 / (double) mapCombo;
-			fcPercentage -= Math.log(play.getMisses() + 1) / 15;
+			if(play.getMisses() > 0)
+				fcPercentage -= Math.log(play.getMisses() + 1) / 15;
+			
+			if(fcPercentage > 1) fcPercentage = 1;
 			
 			comboScore = fcPercentage * 100;
 			
@@ -54,9 +60,10 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			if(accModifier < 1) accModifier = 1;
 			
 			accModifier *= accLengthModifier;
-			accScore = (Math.pow(acc >= 90 ? acc - 90 : 0, 2) * accModifier) / 1.5;
+			if(acc >= 94) accScore = (Math.pow(acc - 90, 1.7) * 1.5 * accModifier) / 1.3 * 50;
+			else if(acc < 94) accScore = Math.pow(acc / 100 + 1, 10) / 2 * accModifier; // 80 = 178.5, 90 = 306.55, 92 = 340.39, 93 = 358.54 94 = 377.56
+			
 			comboScore *= 50;
-			accScore *= 50;
 			
 			play.playSet("acc_score", accScore + "");
 			play.playSet("combo_score", comboScore + "");
@@ -64,8 +71,8 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			long score = Math.round(comboScore + accScore);
 			
 			if(handle != null && player != null)
-				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + " (Combo: " + Utils.veryLongNumberDisplay(comboScore) + 
-																						  	  " Accuracy: " + Utils.veryLongNumberDisplay(accScore) + ")", 
+				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + " (Combo: " + Utils.veryLongNumberDisplay(Utils.df(comboScore)) + 
+																						  	  ", Accuracy: " + Utils.veryLongNumberDisplay(Utils.df(accScore)) + ")", 
 																						  	  false);
 			
 			return score;

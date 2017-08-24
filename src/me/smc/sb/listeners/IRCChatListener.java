@@ -15,6 +15,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
+import me.smc.sb.tourney.AlternativeScoringLobby;
 import me.smc.sb.tourney.BanchoHandler;
 import me.smc.sb.tourney.Match;
 import me.smc.sb.tourney.Tournament;
@@ -106,6 +107,18 @@ public class IRCChatListener extends ListenerAdapter{
 				gameName += trimSplit[i] + " ";
 			
 			gameName = gameName.substring(0, gameName.length() - 1);
+			
+			if(gamesListening.containsKey("ASL" + gameName) && gamesListening.get("ASL" + gameName) instanceof AlternativeScoringLobby){
+				AlternativeScoringLobby lobby = (AlternativeScoringLobby) gamesListening.get("ASL" + gameName);
+				
+				gamesListening.remove("ASL" + gameName);
+				gamesListening.put("#mp_" + mpLink.split("mp\\/")[1], lobby);
+				
+				lobby.setMultiChannel("#mp_" + mpLink.split("mp\\/")[1]);
+				lobby.lobbyCreated();
+				
+				return true;
+			}
 			
 			tournamentName = gameName.split(":")[0];
 

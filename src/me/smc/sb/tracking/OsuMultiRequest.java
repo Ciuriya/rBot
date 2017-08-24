@@ -1,6 +1,6 @@
 package me.smc.sb.tracking;
 
-import org.json.JSONArray;
+import org.json.JSONObject;
 
 import me.smc.sb.discordcommands.OsuStatsCommand;
 import me.smc.sb.utils.Utils;
@@ -28,8 +28,7 @@ public class OsuMultiRequest extends OsuRequest{
 			return;
 		}
 		
-		post = "[" + post + "]";
-		answer = new JSONArray(post);
+		answer = new JSONObject("{" + post + "}").getJSONArray("games");
 		setDone(true);
 	}
 }

@@ -53,8 +53,8 @@ public class ResultManager{
 			public void run(){
 				if(rematching) return;
 				
-				OsuRequest multiRequest = null;
-				Object multiMatchObj = null;
+				OsuRequest multiRequest = new OsuMultiRequest(game.mpLink.split("mp\\/")[1]);
+				Object multiMatchObj = Main.hybridRegulator.sendRequest(multiRequest, 15000, true);
 				JSONArray multiMatch = null;
 				List<Player> fTeamPlayers = new ArrayList<>();
 				List<Player> sTeamPlayers = new ArrayList<>();
@@ -65,19 +65,10 @@ public class ResultManager{
 				PlayingTeam rematchTeam = null;
 				boolean rematch = false;
 				java.util.Map<Integer, JSONObject> plays = new HashMap<>();
-				
-				long startTime = System.currentTimeMillis();
-				
-				while(plays.size() == 0){
-					multiRequest = new OsuMultiRequest(game.mpLink.split("mp\\/")[1]);
-					multiMatchObj = Main.hybridRegulator.sendRequest(multiRequest, 15000, true);
-					
-					if(multiMatchObj != null && multiMatchObj instanceof JSONArray){
-						multiMatch = (JSONArray) multiMatchObj;
-						plays = getPlays(multiMatch, game.selectionManager.getMap().getBeatmapID());
-					}
-					
-					if(System.currentTimeMillis() - startTime > 30000) break;
+
+				if(multiMatchObj != null && multiMatchObj instanceof JSONArray){
+					multiMatch = (JSONArray) multiMatchObj;
+					plays = getPlays(multiMatch, game.selectionManager.getMap().getBeatmapID());
 				}
 				
 				for(String result : results){
@@ -420,16 +411,14 @@ public class ResultManager{
 			   rank <= game.match.getTournament().getInt("targetRankUpperBound");
 	}
 	
-	private java.util.Map<Integer, JSONObject> getPlays(JSONArray multiMatch, int beatmapId){
+	public static java.util.Map<Integer, JSONObject> getPlays(JSONArray multiMatch, int beatmapId){
 		java.util.Map<Integer, JSONObject> plays = new HashMap<>();
-		
-		JSONArray mapsPlayed = multiMatch.getJSONArray(1);
-		JSONObject played = mapsPlayed.getJSONObject(mapsPlayed.length() - 1);
+		JSONObject played = multiMatch.getJSONObject(multiMatch.length() - 1);
 		
 		if(played.getInt("beatmap_id") == beatmapId){
 			JSONArray scores = played.getJSONArray("scores");
 			
-			for(int i = 0; i >= scores.length(); i++){	
+			for(int i = 0; i < scores.length(); i++){	
 				JSONObject jsonPlay = scores.getJSONObject(i);
 				
 				jsonPlay.put("beatmap_id", beatmapId);
