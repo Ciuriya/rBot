@@ -25,6 +25,9 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			double comboScore = 0;
 			double accScore = 0;
 			double fcPercentage = (double) maxCombo / (double) mapCombo;
+			double mainFCPercentage = fcPercentage;
+			double residualFCPercentage = 0;
+			double missPenalty = 0;
 			double closestCombo = 0;
 			double closestScore = 0;
 			// 1k = 1.0047x 1.5k = 1.0518x 2k = 1.10318x 2.5k = 1.157835x 5k = 1.46729x
@@ -43,13 +46,20 @@ public class SMTScoringStrategy implements ScoringStrategy{
 						closestScore = p.getY();
 					}
 				
-				fcPercentage += (double) closestCombo / 2 / (double) mapCombo;
+				residualFCPercentage = (double) closestCombo / 2 / (double) mapCombo;
+				fcPercentage += residualFCPercentage;
 			}
 			
-			if(play.getMisses() > 0)
-				fcPercentage -= Math.log(play.getMisses() + 1) / 15;
+			if(play.getMisses() > 0){
+				missPenalty = Math.log(play.getMisses() + 1) / 20;
+				
+				if(missPenalty > 0.2) missPenalty = 0.2;
+				
+				fcPercentage -= missPenalty;
+			}
 			
 			if(fcPercentage > 1) fcPercentage = 1;
+			if(fcPercentage < 0) fcPercentage = 0;
 			
 			comboScore = fcPercentage * 100;
 			
@@ -71,9 +81,13 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			long score = Math.round(comboScore + accScore);
 			
 			if(handle != null && player != null)
-				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + " (Combo: " + Utils.veryLongNumberDisplay(Utils.df(comboScore)) + 
-																						  	  ", Accuracy: " + Utils.veryLongNumberDisplay(Utils.df(accScore)) + ")", 
-																						  	  false);
+				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + 
+								   " | Combo: " + Utils.veryLongNumberDisplay(Utils.df(comboScore)) + 
+								   " (Main: " + Utils.veryLongNumberDisplay(Utils.df(mainFCPercentage * 5000)) + 
+								   ", Rest: " + Utils.veryLongNumberDisplay(Utils.df(residualFCPercentage * 5000)) + 
+								   ", Miss: -" + Utils.veryLongNumberDisplay(Utils.df(missPenalty * 5000)) +
+								   ") | Accuracy: " + Utils.df(accScore) + " (" + Utils.df(accModifier) + "x)", 
+								   false);
 			
 			return score;
 			
