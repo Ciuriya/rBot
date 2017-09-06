@@ -8,7 +8,7 @@ import net.dv8tion.jda.core.entities.Game;
 
 public class DiscordPlayStatusManager{
 
-	public static final int STATUS_ROTATION_INTERVAL = 60; // seconds
+	public static final int STATUS_ROTATION_INTERVAL = 300; // seconds
 	private int currentIndex;
 	private Timer rotationTimer;
 	

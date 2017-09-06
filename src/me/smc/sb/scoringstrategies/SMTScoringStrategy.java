@@ -39,7 +39,7 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			long mainComboScore = (long) (estimateScore(osuFile, play, obs, mods, scorev2) / 1.1);
 			long restOfScore = play.getRawScore() - mainComboScore;
 			
-			if(mainComboScore < play.getRawScore()){
+			if(mainComboScore <= play.getRawScore() && mapCombo - maxCombo > 10){
 				for(WeightedObservedPoint p : obs.toList())
 					if(p.getY() > closestScore && p.getY() <= restOfScore){
 						closestCombo = p.getX();

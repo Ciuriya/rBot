@@ -33,7 +33,7 @@ public class RPGHelpGuide{
 					   "Simply want to contact the developer? You can PM Smc or seek him out in this server: https://discord.gg/FCV3jS9\n\n" +
 					   "New sections will be added here as they are released, stay tuned! (there will be a changelog link here eventually)```");
 		
-		Utils.infoBypass(event.getAuthor().getPrivateChannel(), builder.toString());
+		//Utils.infoBypass(event.getAuthor().getPrivateChannel(), builder.toString());
 	}
 	
 }
