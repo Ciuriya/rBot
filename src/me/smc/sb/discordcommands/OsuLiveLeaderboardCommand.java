@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 import me.smc.sb.main.Main;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingGuild;
 import me.smc.sb.tracking.TrackingUtils;
@@ -19,10 +20,10 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class OsuLiveLeaderboardCommand extends GlobalCommand{
 
-	private static final int TIME_BETWEEN_UPDATES = 60; // seconds
+	private static final int TIME_BETWEEN_UPDATES = 150; // seconds
 	
 	public OsuLiveLeaderboardCommand(){
-		super(null,
+		super(Permissions.MANAGE_MESSAGES,
 			  " - Lets you keep track of osu! players' ranks in real-time (make sure the message is always visible)", 
 			  "{prefix}osuboard\nThis command lets you track osu! players' ranks in real-time\n\n" +
 		      "----------\nUsage\n----------\n{prefix}osuboard {player} ({mode={0/1/2/3}}) - Adds or removes the player from the leaderboard\n" + 

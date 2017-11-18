@@ -114,13 +114,18 @@ public class Listener implements EventListener{
 			loadGuilds(event.getJDA());
     }
     
-    public static void loadGuilds(JDA api){    	
+    public static void loadGuilds(JDA api){
     	for(Guild guild : api.getGuilds()){
-    		if(!Main.serverConfigs.containsKey(guild.getId())){
-        		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
-        		Command.loadCommands(guild.getId());
-        		VoiceCommand.loadRadio(guild, Main.serverConfigs.get(guild.getId()), false);
-        		Poll.loadPolls(guild);
+    		try{
+        		System.out.println("loading guild: " + guild.getName());
+        		if(!Main.serverConfigs.containsKey(guild.getId())){
+            		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
+            		Command.loadCommands(guild.getId());
+            		VoiceCommand.loadRadio(guild, Main.serverConfigs.get(guild.getId()), false);
+            		Poll.loadPolls(guild);
+        		}
+    		}catch(Exception e){
+    			Log.logger.log(Level.INFO, "rip guild loading: " + e.getMessage(), e);
     		}
     	}
     }

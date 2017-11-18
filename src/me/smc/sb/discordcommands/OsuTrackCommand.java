@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Timer;
 
 import me.smc.sb.main.Main;
+import me.smc.sb.perm.Permissions;
 import me.smc.sb.tracking.OsuTrackRunnable;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingGuild;
@@ -25,7 +26,7 @@ public class OsuTrackCommand extends GlobalCommand{
 	public static boolean trackingStarted = false;
 	
 	public OsuTrackCommand(){
-		super(null, 
+		super(Permissions.MANAGE_MESSAGES, 
 			  " - Lets you track osu! players", 
 			  "{prefix}osutrack\nThis command lets you track osu! players' recent performance\n\n" +
 		      "----------\nUsage\n----------\n{prefix}osutrack {player} ({mode={0/1/2/3}}) - Tracks or untracks the player's recent statistics for this mode\n" + 
