@@ -117,7 +117,6 @@ public class Listener implements EventListener{
     public static void loadGuilds(JDA api){
     	for(Guild guild : api.getGuilds()){
     		try{
-        		System.out.println("loading guild: " + guild.getName());
         		if(!Main.serverConfigs.containsKey(guild.getId())){
             		Main.serverConfigs.put(guild.getId(), new Configuration(new File("Guilds/" + guild.getId() + ".txt")));
             		Command.loadCommands(guild.getId());

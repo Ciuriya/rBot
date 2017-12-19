@@ -69,9 +69,8 @@ public class ConfirmTeamCommand extends IRCCommand{
 			String errorMessage = "";
 			
 			if(t.getInt("type") == 0)
-				errorMessage = teamConfirm(tourneyId, teamID, userID, tournamentName);
-			else errorMessage = soloConfirm(tourneyId, userID, tournamentName);
-			
+				errorMessage = teamConfirm(tourneyId, teamID, userID, t.get("name"));
+			//else errorMessage = soloConfirm(tourneyId, userID, tournamentName);
 			
 			if(errorMessage.length() > 0) return errorMessage;
 		}catch(Exception ex){
@@ -80,7 +79,7 @@ public class ConfirmTeamCommand extends IRCCommand{
 			return "Could not connect to database!";
 		}
 		
-		Utils.info(e, pe, discord, "Your participation is now confirmed! Thanks for registering in " + tournamentName.substring(0, tournamentName.length() - 1) + "!");
+		Utils.info(e, pe, discord, "Your participation is now confirmed! Thanks for registering in " + t.get("name") + "!");
 		
 		return "";
 	}
@@ -91,8 +90,8 @@ public class ConfirmTeamCommand extends IRCCommand{
 		final FinalInt teamValid = new FinalInt(1);
 		
 		new JdbcSession(teamSignupCheckSQL)
-		.sql("SELECT teamname FROM teams " +
-			 "WHERE tournaments_id=? AND id=?")
+		.sql("SELECT name FROM team " +
+			 "WHERE tournament_id=? AND id=?")
 		.set(tourneyId)
 		.set(teamID)
 		.select(new Outcome<List<String>>(){
@@ -110,9 +109,10 @@ public class ConfirmTeamCommand extends IRCCommand{
 		Connection upSQL = RemotePatyServerUtils.connect();
 		
 		int rowsChanged = new JdbcSession(upSQL)
-		.sql("UPDATE teammembers SET confirmed=1 " +
-			 "WHERE `player_data.user_id`=? AND " +
-			 "`teams.id`=?")
+		.sql("UPDATE registrant " +
+			 "JOIN `game_account` ga ON registrant.`game_account_id` = ga.`id` " +
+			 "SET confirm=1 " +
+			 "WHERE ga.`ingame_id`=? AND registrant.`team_id`=?")
 		.set(userID)
 		.set(teamID)
 		.update(Outcome.UPDATE_COUNT);
@@ -124,10 +124,11 @@ public class ConfirmTeamCommand extends IRCCommand{
 		Connection delSQL = RemotePatyServerUtils.connect();
 		
 		new JdbcSession(delSQL)
-		.sql("DELETE teammembers FROM teammembers " +
-			 "INNER JOIN teams " +
-			 "WHERE teammembers.`player_data.user_id`=? AND " +
-			 "teams.`tournaments_id`=? AND teammembers.`confirmed`=0")
+		.sql("DELETE registrant FROM registrant " +
+			 "JOIN `game_account` ga ON registrant.`game_account_id` = ga.`id` " +
+			 "JOIN `team` te ON registrant.`team_id` = te.`id` " +
+			 "WHERE ga.`ingame_id`=? AND " +
+			 "te.`tournament_id`=? AND registrant.`confirm`=0")
 		.set(userID)
 		.set(tourneyId)
 		.update(Outcome.VOID);
@@ -137,7 +138,7 @@ public class ConfirmTeamCommand extends IRCCommand{
 		return "";
 	}
 	
-	private String soloConfirm(int tourneyId, int userID, String tournamentName) throws Exception{
+	/*private String soloConfirm(int tourneyId, int userID, String tournamentName) throws Exception{
 		Connection teamSignupCheckSQL = RemotePatyServerUtils.connect();
 		
 		final FinalInt teamValid = new FinalInt(1);
@@ -174,6 +175,6 @@ public class ConfirmTeamCommand extends IRCCommand{
 		if(rowsChanged == 0) return "You have already confirmed your participation!";
 		
 		return "";
-	}
+	}*/
 	
 }

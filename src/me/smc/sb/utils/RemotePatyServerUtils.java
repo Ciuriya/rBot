@@ -38,8 +38,8 @@ public class RemotePatyServerUtils{
 		final FinalInt tourneyId = new FinalInt(0);
 		
 		new JdbcSession(tourneyCheckSQL)
-		.sql("SELECT id FROM tournaments " + 
-			 "WHERE tourney_name=?")
+		.sql("SELECT id FROM tournament " + 
+			 "WHERE name=?")
 		.set(tournamentName)
 		.select(new Outcome<List<String>>(){
 			@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -56,16 +56,16 @@ public class RemotePatyServerUtils{
 		return id;
 	}
 	
-	public static boolean isConfirmed(String userName, int tourneyId) throws Exception{
+	/*public static boolean isConfirmed(String userName, int tourneyId) throws Exception{
 		Connection confirmationSQL = connect();
 		
 		final FinalInt confirmed = new FinalInt(0);
 		
 		new JdbcSession(confirmationSQL)
-		.sql("SELECT tm.`confirmed` FROM `teammembers` tm " +
-			 "JOIN `teams` t ON tm.`teams.id` = t.`id` " +
-			 "JOIN `player_data` pd ON tm.`player_data.user_id` = pd.`user_id` " +
-			 "WHERE t.`tournaments_id`=? AND username=?")
+		.sql("SELECT r.`confirm` FROM `registrant` r " +
+			 "JOIN `team` t ON r.`team_id` = t.`id` " +
+			 "JOIN `game_account` ga ON r.`game_account_id` = ga.`id` " +
+			 "WHERE t.`tournament_id`=? AND ga.`username`=?")
 		.set(tourneyId)
 		.set(userName)
 		.select(new Outcome<List<String>>(){
@@ -79,7 +79,7 @@ public class RemotePatyServerUtils{
 		confirmationSQL.close();
 		
 		return confirmed.get() == 1;
-	}
+	}*/
 	
 	public static long fetchMapValue(int mapId, int mappoolId, int tournamentId, String value) throws Exception{
 		Connection fetchSQL = connect();
@@ -181,9 +181,9 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(teamSQL)
-			.sql("SELECT te.`id`, teamname FROM `teams` te " +
-				 "JOIN `tournaments` t ON t.`id` = te.`tournaments_id` " +
-				 "WHERE t.`tourney_name`=?")
+			.sql("SELECT te.`id`, `name` FROM `team` te " +
+				 "JOIN `tournament` t ON t.`id` = te.`tournament_id` " +
+				 "WHERE t.`name`=?")
 			.set(tournamentName)
 			.select(new Outcome<List<String>>(){
 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -218,10 +218,11 @@ public class RemotePatyServerUtils{
 			playersSQL = connect();
 			
 			new JdbcSession(playersSQL)
-			.sql("SELECT username FROM `teammembers` tm " +
-				 "JOIN `player_data` pd ON tm.`player_data.user_id` = pd.`user_id` " +
-				 "WHERE tm.`teams.id`=? " +
-				 "ORDER BY is_cpt DESC, confirmed DESC, username ASC")
+			.sql("SELECT name FROM `team` tm " +
+				 "JOIN `registrant` r ON tm.`id` = r.`team_id` " +
+				 "JOIN `game_account` ga ON r.`game_account_id` = ga.`id` " +
+				 "WHERE tm.`id`=? " +
+				 "ORDER BY r.`captain` DESC, r.`confirm` DESC, ga.`username` ASC")
 			.set(teamId)
 			.select(new Outcome<List<String>>(){
 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
