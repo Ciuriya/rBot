@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
+import me.smc.sb.main.Main;
 import me.smc.sb.tourney.BanchoHandler;
 import me.smc.sb.tourney.ReadyManager;
 import me.smc.sb.tracking.Mods;
@@ -80,14 +81,18 @@ public class SMTScoringStrategy implements ScoringStrategy{
 			
 			long score = Math.round(comboScore + accScore);
 			
-			if(handle != null && player != null)
-				handle.sendMessage(player + " scored " + Utils.veryLongNumberDisplay(score) + 
-								   " | Combo: " + Utils.veryLongNumberDisplay(Utils.df(comboScore)) + 
-								   " (Main: " + Utils.veryLongNumberDisplay(Utils.df(mainFCPercentage * 5000)) + 
-								   ", Rest: " + Utils.veryLongNumberDisplay(Utils.df(residualFCPercentage * 5000)) + 
-								   ", Miss: -" + Utils.veryLongNumberDisplay(Utils.df(missPenalty * 5000)) +
-								   ") | Accuracy: " + Utils.df(accScore) + " (" + Utils.df(accModifier) + "x)", 
-								   false);
+			if(handle != null && player != null){
+				String message = player + " scored " + Utils.veryLongNumberDisplay(score) + 
+								 " | Combo: " + Utils.veryLongNumberDisplay(Utils.df(comboScore)) + 
+								 " (Main: " + Utils.veryLongNumberDisplay(Utils.df(mainFCPercentage * 5000)) + 
+								 ", Rest: " + Utils.veryLongNumberDisplay(Utils.df(residualFCPercentage * 5000)) + 
+								 ", Miss: -" + Utils.veryLongNumberDisplay(Utils.df(missPenalty * 5000)) +
+								 ") | Accuracy: " + Utils.df(accScore) + " (" + Utils.df(accModifier) + "x)";
+				handle.sendMessage(message, false);
+				Utils.info(Main.api.getGuildById("118553122904735745").getTextChannelById("392791710461329419"), 
+						   "https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + "\n" + message);
+				
+			}
 			
 			return score;
 			

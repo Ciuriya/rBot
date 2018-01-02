@@ -181,7 +181,7 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(teamSQL)
-			.sql("SELECT te.`id`, `name` FROM `team` te " +
+			.sql("SELECT te.`id`, te.`name` FROM `team` te " +
 				 "JOIN `tournament` t ON t.`id` = te.`tournament_id` " +
 				 "WHERE t.`name`=?")
 			.set(tournamentName)
@@ -218,7 +218,7 @@ public class RemotePatyServerUtils{
 			playersSQL = connect();
 			
 			new JdbcSession(playersSQL)
-			.sql("SELECT name FROM `team` tm " +
+			.sql("SELECT ga.`username` FROM `team` tm " +
 				 "JOIN `registrant` r ON tm.`id` = r.`team_id` " +
 				 "JOIN `game_account` ga ON r.`game_account_id` = ga.`id` " +
 				 "WHERE tm.`id`=? " +

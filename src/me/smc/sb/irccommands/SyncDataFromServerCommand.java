@@ -47,7 +47,7 @@ public class SyncDataFromServerCommand extends IRCCommand{
 			new Thread(new Runnable(){
 				public void run(){
 					RemotePatyServerUtils.syncTeams(t.get("name"));
-					RemotePatyServerUtils.syncMatches(t.get("name"));
+					//RemotePatyServerUtils.syncMatches(t.get("name"));
 					
 					Utils.info(e, pe, discord, Team.getTeams(t).size() + " teams and " + Match.getMatches(t).size() + " matches synced!");
 				}

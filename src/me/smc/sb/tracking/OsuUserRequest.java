@@ -1,5 +1,6 @@
 package me.smc.sb.tracking;
 
+import java.net.URLEncoder;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -27,8 +28,9 @@ public class OsuUserRequest extends OsuRequest{
 			if(specifics.length >= 3)
 				type = specifics[2];
 			
+			@SuppressWarnings("deprecation")
 			String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_user?k=" + OsuStatsCommand.apiKey + 
-										 "&u=" + specifics[0] + "&m=" + specifics[1] + "&type=" + type + "&event_days=1");
+										 "&u=" + URLEncoder.encode(specifics[0]) + "&m=" + specifics[1] + "&type=" + type + "&event_days=1");
 			
 			if(post.equals("") || !post.contains("{")){
 				// if it's invalid, user is probably banned

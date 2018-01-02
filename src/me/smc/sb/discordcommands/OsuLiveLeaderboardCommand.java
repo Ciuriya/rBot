@@ -209,7 +209,7 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 								
 								content += " | " + Utils.df(player.getPP(), 2) + "pp\n";
 								
-								if(header.length() + content.length() > 1900){
+								if(header.length() + content.length() > 1800){
 									if(postedMessages.size() > 0){
 										postedMessages.get(0).editMessage(header + content + "```").complete();
 										postedMessages.remove(0);
