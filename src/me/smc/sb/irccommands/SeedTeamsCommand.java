@@ -29,7 +29,7 @@ public class SeedTeamsCommand extends IRCCommand{
 
 	public SeedTeamsCommand(){
 		super("Sorts out all teams from highest to lowest average rank.",
-			  "<tournament name> <top x per team> <country sort?>",
+			  "<tournament name> <top x per team> <country sort?> <sheet format?>",
 			  Permissions.TOURNEY_ADMIN,
 			  "seedteams");
 	}
@@ -41,7 +41,7 @@ public class SeedTeamsCommand extends IRCCommand{
 		
 		String tournamentName = "";
 		
-		for(int i = 0; i < args.length - 2; i++) tournamentName += args[i] + " ";
+		for(int i = 0; i < args.length - 3; i++) tournamentName += args[i] + " ";
 		Tournament t = Tournament.getTournament(tournamentName.substring(0, tournamentName.length() - 1));
 		
 		if(t == null) return "Invalid tournament!";
@@ -52,13 +52,16 @@ public class SeedTeamsCommand extends IRCCommand{
 		try{
 			if(t.isAdmin(user)){
 				boolean cs = false;
-				int topX = Utils.stringToInt(args[args.length - 2]);
+				boolean sf = false;
+				int topX = Utils.stringToInt(args[args.length - 3]);
 				
-				if(args[args.length - 1].equalsIgnoreCase("true")) cs = true;
-				if(Utils.stringToInt(args[args.length - 2]) == -1) return "Top X per team must be a number";
+				if(args[args.length - 1].equalsIgnoreCase("true")) sf = true;
+				if(args[args.length - 2].equalsIgnoreCase("true")) cs = true;
+				if(Utils.stringToInt(args[args.length - 3]) == -1) return "Top X per team must be a number";
 				
 				JSONObject countryList = new JSONObject(new String(Files.readAllBytes(Paths.get("countries.json")))).getJSONObject("countries");
 				final boolean countrySort = cs;
+				final boolean sheetFormat = sf;
 				
 				Thread thread = new Thread(new Runnable(){
 					public void run(){
@@ -146,18 +149,22 @@ public class SeedTeamsCommand extends IRCCommand{
 									}
 								}
 								
-								zoneInfo = "Median: " + medianZone + " | ";
-								
-								for(String zone : zonePopulation.keySet())
-									zoneInfo += zone + ": " + zonePopulation.get(zone) + " | ";
-								
-								zoneInfo = zoneInfo.substring(0, zoneInfo.length() - 3);
+								if(sheetFormat) zoneInfo = medianZone;
+								else{
+									zoneInfo = "Median: " + medianZone + " | ";
+									
+									for(String zone : zonePopulation.keySet())
+										zoneInfo += zone + ": " + zonePopulation.get(zone) + " | ";
+									
+									zoneInfo = zoneInfo.substring(0, zoneInfo.length() - 3);
+								}
+
 								teamZoneInfo.put(team, zoneInfo);
 								
 								if(!zoneSorting.containsKey(medianZone))
 									zoneSorting.put(medianZone, teams);
 								else{
-									teams = zoneSorting.get(medianZone);
+									teams = new HashMap<>(zoneSorting.get(medianZone));
 									teams.put(average, team);
 									zoneSorting.put(medianZone, teams);
 								}
@@ -172,15 +179,17 @@ public class SeedTeamsCommand extends IRCCommand{
 									if(zone.length() > 2){
 										System.out.println("sorting " + zone);
 										msg = "```diff\n!== [Team averages in " + t.get("name") + " for " + zone + "] ==!\n";
-										msg += sortTeams(zoneSorting.get(zone), teamZoneInfo);
+										msg += sortTeams(zoneSorting.get(zone), teamZoneInfo, sheetFormat);
+										postMessage(e, pe, discord, msg);
 									}
 								}
-							}else msg += sortTeams(teams, null);
+							}else{
+								msg += sortTeams(teams, null, sheetFormat);
+								postMessage(e, pe, discord, msg);
+							}
 						}catch(Exception ex){
 							ex.printStackTrace();
 						}
-						
-						postMessage(e, pe, discord, msg);
 						
 						if(failedPlayers.size() > 0){
 							msg = "```diff\n!== [Failed] ==!";
@@ -201,11 +210,12 @@ public class SeedTeamsCommand extends IRCCommand{
 		return "";
 	}
 	
-	private String sortTeams(Map<Float, Team> teams, Map<Team, String> teamZoneInfo){
+	private String sortTeams(Map<Float, Team> teams, Map<Team, String> teamZoneInfo, boolean sheetFormat){
 		String lastSign = "+";
 		String msg = "";
+		int length = teams.size();
 		
-		for(int i = 0; i < teams.size(); i++){
+		for(int i = 0; i < length; i++){
 			float avg = teams.keySet().stream().max(new Comparator<Float>(){
 				@Override
 				public int compare(Float o1, Float o2){
@@ -215,13 +225,25 @@ public class SeedTeamsCommand extends IRCCommand{
 			
 			String temp = "";
 			
-			try{
-				temp = "\n" + lastSign + " " + teams.get(avg).getTeamName() + " - #" + Utils.df(avg, 0);
-			}catch(Exception e){
-				temp = "\n" + lastSign + " | An error occured! | - #" + Utils.df(avg, 0);
-			}
+
 			
-			if(teamZoneInfo != null) temp += "\n" + lastSign + " " + teamZoneInfo.get(teams.get(avg));
+			if(sheetFormat){
+				try{
+					temp = "\n" + teams.get(avg).getTeamName() + "," + Utils.df(avg, 0);
+				}catch(Exception e){
+					temp = "\n" + lastSign + " | An error occured! | - #" + Utils.df(avg, 0);
+				}
+				
+				if(teamZoneInfo != null) temp += "," + teamZoneInfo.get(teams.get(avg));
+			}else{
+				try{
+					temp = "\n" + lastSign + " " + teams.get(avg).getTeamName() + " - #" + Utils.df(avg, 0);
+				}catch(Exception e){
+					temp = "\n" + lastSign + " | An error occured! | - #" + Utils.df(avg, 0);
+				}
+				
+				if(teamZoneInfo != null) temp += "\n" + lastSign + " " + teamZoneInfo.get(teams.get(avg));
+			}
 			
 			msg += temp;
 			
@@ -239,11 +261,11 @@ public class SeedTeamsCommand extends IRCCommand{
 		
 		while(msg.length() > 1800){
 			String part = msg.substring(0, 1800);
-			msg = msg.substring(1801);
+			msg = msg.substring(1800);
 			
 			Utils.info(e, pe, discord, part + "```");
 			
-			msg = "```" + msg;
+			msg = "```diff\n" + msg;
 		}
 		
 		Utils.info(e, pe, discord, msg + "```");
