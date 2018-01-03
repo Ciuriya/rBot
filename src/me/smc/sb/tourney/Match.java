@@ -183,7 +183,9 @@ public class Match{
 			return;
 		}
 		
-		scheduledDate = time;
+		if(time < Utils.getCurrentTimeUTC())
+			scheduledDate = 0;
+		else scheduledDate = time;
 		
 		if(scheduledDate == 0) return;
 		
@@ -217,11 +219,31 @@ public class Match{
 		return null;
 	}
 	
+	public static Match getMatch(Tournament t, String matchNum){
+		if(!matches.isEmpty())
+			for(Match match : matches)
+				if(match.getServerID().equalsIgnoreCase(matchNum) && 
+					match.getTournament().get("name").equalsIgnoreCase(t.get("name")))
+					return match;
+		
+		return null;
+	}
+	
 	public static List<Match> getMatches(Tournament t){
 		return matches.stream().filter(m -> m.getTournament().get("name").equalsIgnoreCase(t.get("name"))).collect(Collectors.toList());
 	}
 	
 	public static void removeMatch(Tournament t, int matchNum){
+		Match match = getMatch(t, matchNum);
+		
+		if(match.getTime() != 0)
+			matchTimes.remove(match.getTime());
+		
+		matches.remove(match);
+		match.delete();
+	}
+	
+	public static void removeMatch(Tournament t, String matchNum){
 		Match match = getMatch(t, matchNum);
 		
 		if(match.getTime() != 0)

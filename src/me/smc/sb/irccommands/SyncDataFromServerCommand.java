@@ -44,10 +44,12 @@ public class SyncDataFromServerCommand extends IRCCommand{
 				Team.removeTeam(t, team.getTeamName());
 			}
 			
+			t.set("last-match", 0);
+			
 			new Thread(new Runnable(){
 				public void run(){
 					RemotePatyServerUtils.syncTeams(t.get("name"));
-					//RemotePatyServerUtils.syncMatches(t.get("name"));
+					RemotePatyServerUtils.syncMatches(t.get("name"));
 					
 					Utils.info(e, pe, discord, Team.getTeams(t).size() + " teams and " + Match.getMatches(t).size() + " matches synced!");
 				}

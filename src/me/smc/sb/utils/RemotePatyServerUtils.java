@@ -149,9 +149,9 @@ public class RemotePatyServerUtils{
 			mpSQL = connect();
 			
 			new JdbcSession(mpSQL)
-			.sql("UPDATE `schedule` SET mp_link=?, winner=?, " +
-				 "team1_score=?, team2_score=? " +
-				 "WHERE id_database=? AND tournaments_id=?")
+			.sql("UPDATE `match_list` JOIN `round` r ON r.`id` = round_id " +
+				 "SET mp_link=?, winner=?, team1_score=?, team2_score=? " +
+				 "WHERE id=? AND tournament_id=?")
 			.set(mpLink)
 			.set(winner.getServerTeamID())
 			.set(fTeamScore)
@@ -262,7 +262,10 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(matchesSQL)
-			.sql("SELECT id_database, team1, team2, mappool, `date`, bestof FROM schedule WHERE tournaments_id=? AND `date` > TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 hour))")
+			.sql("SELECT match_list.`id`, team1, team1_pre_win, team1_pre_match, " +
+				 "team2, team2_pre_win, team2_pre_match, mappool_id, `match_date`, bestof " +
+				 "FROM match_list JOIN `round` r ON r.`id` = round_id " +
+				 "WHERE tournament_id=? AND (`match_date` > TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 hour)) OR `match_date` IS NULL)")
 			.set(fetchTournamentId(tournamentName))
 			.select(new Outcome<List<String>>(){
 				@Override public List<String> handle(ResultSet rset, Statement stmt) throws SQLException{
@@ -295,8 +298,10 @@ public class RemotePatyServerUtils{
 			Tournament t = Tournament.getTournament(tournamentName);
 			
 			new JdbcSession(matchSQL)
-			.sql("SELECT id_database, team1, team2, mappool, `date`, bestof FROM schedule " +
-				 "WHERE tournaments_id=? AND id_database=?")
+			.sql("SELECT match_list.`id`, team1, team1_pre_win, team1_pre_match, " +
+				 "team2, team2_pre_win, team2_pre_match, mappool_id, `match_date`, bestof " +
+				 "FROM match_list JOIN `round` r ON r.`id` = round_id " +
+				 "WHERE tournament_id=? AND match_list.`id`=?")
 			.set(fetchTournamentId(tournamentName))
 			.set(matchId)
 			.select(new Outcome<List<String>>(){
@@ -330,29 +335,51 @@ public class RemotePatyServerUtils{
 		}
 		
 		String fTeamString = rset.getString(2);
-		String sTeamString = rset.getString(3);
+		String sTeamString = rset.getString(5);
 		
 		Team fTeam = null;
 		Team sTeam = null;
 		
-		if(Utils.stringToInt(fTeamString) != -1){
+		if(fTeamString == null){
+			boolean winnerOf = rset.getBoolean(3);
+			int preMatch = rset.getInt(4);
+			String condString = (winnerOf ? "Winner " : "Loser ") + preMatch;
+			
+			t.conditionalTeams.put(condString + " 1", match);
+			t.getConfig().writeValue("match-" + match.getMatchNum() + "-team1", condString);
+			
+			Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + condString + " 1");
+		}
+		
+		if(sTeamString == null){
+			boolean winnerOf = rset.getBoolean(6);
+			int preMatch = rset.getInt(7);
+			String condString = (winnerOf ? "Winner " : "Loser ") + preMatch;
+			
+			t.conditionalTeams.put(condString + " 2", match);
+			t.getConfig().writeValue("match-" + match.getMatchNum() + "-team2", condString);
+			
+			Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + condString + " 2");
+		}
+		
+		if(fTeamString != null && Utils.stringToInt(fTeamString) != -1){
 			fTeam = Team.getTeam(t, Utils.stringToInt(fTeamString));
 		}
 		
-		if(Utils.stringToInt(sTeamString) != -1){
+		if(sTeamString != null && Utils.stringToInt(sTeamString) != -1){
 			sTeam = Team.getTeam(t, Utils.stringToInt(sTeamString));
 		}
 		
 		match.setTeams(fTeam, sTeam);
 		
-		match.setMapPool(MapPool.getPool(t, Utils.stringToInt(rset.getString(4))));
+		match.setMapPool(MapPool.getPool(t, Utils.stringToInt(rset.getString(8))));
 		
-		match.setBestOf(rset.getInt(6));
+		match.setBestOf(rset.getInt(10));
 		
 		boolean invalidTime = false;
 		
 		try{
-			Timestamp ts = rset.getTimestamp(5);
+			Timestamp ts = rset.getTimestamp(9);
 			
 			@SuppressWarnings("deprecation")
 			int timezoneOffset = ts.getTimezoneOffset();
@@ -369,22 +396,7 @@ public class RemotePatyServerUtils{
 			invalidTime = true;
 		}
 		
-		if(invalidTime)
-			return false;
-		
-		if(fTeamString != null && Match.isMatchConditional(fTeamString)){
-			t.conditionalTeams.put(fTeamString + " 1", match);
-			t.getConfig().writeValue("match-" + match.getMatchNum() + "-team1", fTeamString);
-			
-			Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + fTeamString + " 1");
-		}
-		
-		if(sTeamString != null && Match.isMatchConditional(sTeamString)){
-			t.conditionalTeams.put(sTeamString + " 2", match);
-			t.getConfig().writeValue("match-" + match.getMatchNum() + "-team2", sTeamString);
-			
-			Log.logger.log(Level.INFO, "Match #" + match.getMatchNum() + " loaded conditional " + sTeamString + " 2");
-		}
+		if(invalidTime && !match.getTournament().getBool("chainedMatches")) return false;
 
 		match.save(false);
 		

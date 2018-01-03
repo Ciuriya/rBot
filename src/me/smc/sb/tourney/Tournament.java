@@ -278,6 +278,9 @@ public class Tournament{
 		configValues.put("rematchCutoff", 30);
 		configValues.put("tournament-admins", new ArrayList<>());
 		configValues.put("strategy-limit", 1);
+		configValues.put("loserPicksMap", false);
+		configValues.put("chainedMatches", false);
+		configValues.put("conditionalChainStartDelay", 60);
 	}
 	
 	public static void loadTournaments(){

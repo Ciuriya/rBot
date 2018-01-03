@@ -112,7 +112,7 @@ public class Poll{
 		if(channelId.length() > 0)
 			return Main.api.getTextChannelById(channelId);
 		
-		return guild.getPublicChannel();
+		return guild.getDefaultChannel();
 	}
 	
 	public static void setResultChannel(TextChannel channel){
@@ -186,7 +186,9 @@ public class Poll{
 		
 		if(chartUrl.length() > 0) embed.setImage(chartUrl);
 		
-		Utils.infoBypass(resultChannel, embed.build());
+		try{
+			Utils.infoBypass(resultChannel, embed.build());
+		}catch(Exception ex){}
 	}
 	
 	public void startExpiryTimer(){

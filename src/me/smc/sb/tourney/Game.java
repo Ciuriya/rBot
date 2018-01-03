@@ -309,9 +309,13 @@ public class Game{
 	}
 	
 	public void switchNextTeam(){
-		if(nextTeam.getTeam().getTeamName().equalsIgnoreCase(firstTeam.getTeam().getTeamName()))
-			nextTeam = secondTeam;
-		else nextTeam = firstTeam;
+		if(match.getTournament().getBool("loserPicksMap") && selectionManager.bansLeft == 0){
+			nextTeam = resultManager.lastWinner ? secondTeam : firstTeam;
+		}else{
+			if(nextTeam.getTeam().getTeamName().equalsIgnoreCase(firstTeam.getTeam().getTeamName()))
+				nextTeam = secondTeam;
+			else nextTeam = firstTeam;
+		}
 	}
 	
 	public PlayingTeam getNextTeam(){
@@ -388,10 +392,9 @@ public class Game{
 			
 			if(match.getTournament().getConditionalTeams().size() > 0){
 				for(String conditional : new HashMap<String, Match>(match.getTournament().getConditionalTeams()).keySet()){
-					int conditionalNum = Utils.stringToInt(conditional.split(" ")[1]);
-					
 					Log.logger.log(Level.INFO, "Checking conditional match... (" + conditional + ")");
-					if(match.getMatchNum() != conditionalNum && !match.getServerID().equalsIgnoreCase(conditional.split(" ")[1])) continue;
+					
+					if(!match.getServerID().equalsIgnoreCase(conditional.split(" ")[1])) continue;
 					
 					Log.logger.log(Level.INFO, "Winning team: " + winningTeam.getTeamName() + " | Losing team: " + losingTeam.getTeamName());
 					
@@ -404,6 +407,19 @@ public class Game{
 					conditionalMatch.save(false);
 					
 					Log.logger.log(Level.INFO, "Set conditional team " + cTeam.getTeamName() + " to match #" + conditionalMatch.getMatchNum());
+					
+					if(match.getTournament().getBool("chainedMatches") && 
+					   conditionalMatch.getFirstTeam() != null && conditionalMatch.getSecondTeam() != null){
+						long delay = match.getTournament().getInt("conditionalChainStartDelay") * 1000;
+						Log.logger.log(Level.INFO, "Starting conditional match in " + delay + "ms: " + conditionalMatch.getLobbyName());
+						
+						new Timer().schedule(new TimerTask(){
+							public void run(){
+								conditionalMatch.start();
+								Log.logger.log(Level.INFO, "Started conditional match: " + conditionalMatch.getLobbyName());
+							}
+						}, delay);
+					}
 				}
 			}
 		}

@@ -121,9 +121,9 @@ public class SearchCommand extends GlobalCommand{
 								return;
 							}
 							
-							String image = uncensored.get(0).split("href=\"\\/\\/")[1].split("\" id=")[0];
+							String image = uncensored.get(0).split("href=\"")[1].split("\" id=")[0];
 							
-							Utils.infoBypass(e.getChannel(), "https://" + image);
+							Utils.infoBypass(e.getChannel(), image);
 						}
 					}
 				}

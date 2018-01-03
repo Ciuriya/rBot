@@ -13,7 +13,7 @@ public class ResyncMatchCommand extends IRCCommand{
 
 	public ResyncMatchCommand(){
 		super("Resyncs a match.",
-			  "<tournament name> <match num> ",
+			  "<tournament name> <server match num> ",
 			  Permissions.TOURNEY_ADMIN,
 			  "resync");
 	}
@@ -37,10 +37,10 @@ public class ResyncMatchCommand extends IRCCommand{
 		String user = Utils.toUser(e, pe);
 		
 		if(t.isAdmin(user)){
-			Match.removeMatch(t, Integer.parseInt(matchId));
+			Match.removeMatch(t, matchId);
 			RemotePatyServerUtils.syncMatch(t.get("name"), matchId);
 			
-			if(Match.getMatch(t, Integer.parseInt(matchId)) != null){
+			if(Match.getMatch(t, matchId) != null){
 				return "Match resynced successfully!";
 			}else return "Could not resync the match!";
 		}
