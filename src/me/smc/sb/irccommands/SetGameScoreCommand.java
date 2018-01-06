@@ -51,7 +51,7 @@ public class SetGameScoreCommand extends IRCCommand{
 				
 				match.getGame().getFirstTeam().setPoints(Utils.stringToInt(args[args.length - 2]));
 				match.getGame().getSecondTeam().setPoints(Utils.stringToInt(args[args.length - 1]));
-				match.getGame().getResultManager().updateScores(true);
+				match.getGame().getResultManager().updateScores(true, true);
 				
 				return "Scores switched: " + Utils.stringToInt(args[args.length - 2]) + " - " + Utils.stringToInt(args[args.length - 1]);
 			}
@@ -65,7 +65,7 @@ public class SetGameScoreCommand extends IRCCommand{
 					if(match.isMatchAdmin(user)){
 						match.getGame().getFirstTeam().setPoints(Utils.stringToInt(args[args.length - 2]));
 						match.getGame().getSecondTeam().setPoints(Utils.stringToInt(args[args.length - 1]));
-						match.getGame().getResultManager().updateScores(true);
+						match.getGame().getResultManager().updateScores(true, true);
 						
 						return "Scores switched: " + Utils.stringToInt(args[args.length - 2]) + " - " + Utils.stringToInt(args[args.length - 1]);
 					}

@@ -123,7 +123,7 @@ public class ResultManager{
 				results.clear();
 				
 				if(rematch && rematchTeam != null && game.selectionManager.warmupsLeft == 0){
-					game.feed.updateTwitch("A player was using fallback, there will be a rematch!");
+					game.feed.updateTwitch("Someone used fallback, there will be a rematch!");
 					rematch(rematchTeam);
 					
 					return;
@@ -192,19 +192,23 @@ public class ResultManager{
 					
 					boolean fTeamWon = fTeamScore > sTeamScore;
 					
+					if(fTeamWon) game.firstTeam.addPoint();
+					else game.secondTeam.addPoint();
+					
+					lastWinner = fTeamScore > sTeamScore;
+					
 					String updateMessage = (fTeamScore > sTeamScore ? game.firstTeam.getTeam().getTeamName() :
 						 					game.secondTeam.getTeam().getTeamName()) + " won by " + 
-						 					Utils.veryLongNumberDisplay((long) Math.abs(fTeamScore - sTeamScore)) + " points!";
+						 					Utils.veryLongNumberDisplay((long) Math.abs(fTeamScore - sTeamScore)) + " points! " +
+						 					game.firstTeam.getTeam().getTeamName() + " " + game.firstTeam.getPoints() + " | " +
+						 					game.secondTeam.getPoints() + " " + game.secondTeam.getTeam().getTeamName() +
+											" BO" + game.match.getBestOf();
 					
 					game.banchoHandle.sendMessage(updateMessage, false);
 					game.feed.updateTwitch(updateMessage, 20);
 					game.switchNextTeam();
 					
-					if(fTeamWon) game.firstTeam.addPoint();
-					else game.secondTeam.addPoint();
-					
-					lastWinner = fTeamScore > sTeamScore;
-					updateScores(false);
+					updateScores(false, false);
 				}
 				
 				game.readyManager.switchPlaying(false, true);
@@ -212,16 +216,19 @@ public class ResultManager{
 		}, 10000);
 	}
 	
-	public void updateScores(boolean onlyMessages){
+	public void updateScores(boolean onlyMessages, boolean showStatus){
 		PlayingTeam first = game.firstTeam;
 		PlayingTeam second = game.secondTeam;
 		
-		game.banchoHandle.sendMessage(first.getTeam().getTeamName() + " " + first.getPoints() + " | " +
-									  second.getPoints() + " " + second.getTeam().getTeamName() +
-									  "      Best of " + game.match.getBestOf(), false);
+		if(showStatus){
+			game.banchoHandle.sendMessage(first.getTeam().getTeamName() + " " + first.getPoints() + " | " +
+										  second.getPoints() + " " + second.getTeam().getTeamName() +
+										  "      Best of " + game.match.getBestOf(), false);
+			game.feed.updateTwitch(first.getTeam().getTeamName() + " " + first.getPoints() + " | " +
+								   second.getPoints() + " " + second.getTeam().getTeamName() + " BO" + game.match.getBestOf(), 20);
+		}
+		
 		game.feed.updateDiscord();
-		game.feed.updateTwitch(first.getTeam().getTeamName() + " " + first.getPoints() + " | " +
-					 		   second.getPoints() + " " + second.getTeam().getTeamName() + " BO" + game.match.getBestOf(), 20);
 	
 		if(first.getPoints() + second.getPoints() == game.match.getBestOf() - 1 && first.getPoints() == second.getPoints()){
 			game.selectionManager.changeMap(game.match.getMapPool().findTiebreaker());
@@ -268,8 +275,8 @@ public class ResultManager{
 		lastRematch = fTeam;
 		
 		team.useRematch();
-		game.banchoHandle.sendMessage("If you do not wish to rematch, both " + (game.match.getTournament().getInt("type") == 0 ? "teams" : "players") + 
-									  " need to use !skiprematch", false);
+		game.banchoHandle.sendMessage("Both " + (game.match.getTournament().getInt("type") == 0 ? "teams" : "players") + 
+									  ", you can use !skiprematch to skip the rematch", false);
 		
 		SkipRematchCommand.gamesAllowedToSkip.add(game);
 		skipRematchState = 0;
@@ -310,7 +317,7 @@ public class ResultManager{
 				else game.secondTeam.addPoint();
 				
 				game.switchNextTeam();
-				updateScores(false);
+				updateScores(false, true);
 			}
 		}
 	}
@@ -346,7 +353,7 @@ public class ResultManager{
 					lastWinner = true;
 				}
 				
-				updateScores(false);
+				updateScores(false, true);
 			}
 		}
 	}
@@ -354,7 +361,7 @@ public class ResultManager{
 	protected void contestMessage(){
 		ContestCommand.gamesAllowedToContest.add(game);
 		contestState = 0;
-		game.banchoHandle.sendMessage("If you wish to give the other team the point instead, both teams please use !contest", false);
+		game.banchoHandle.sendMessage("To give the point to the other team, use !contest", false);
 	}
 	
 	public void addResult(String result){

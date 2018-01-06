@@ -101,7 +101,7 @@ public class NoBackToBackPickStrategy implements PickStrategy{
 			final PlayingTeam banningTeam = game.getNextTeam();
 
 			JSONObject jsMap = Map.getMapInfo(fSelected.getBeatmapID(), game.match.getTournament().getInt("mode"), true);
-			String name = manager.getMod(fSelected).replace("None", "Nomod") + " pick: " + jsMap.getString("artist") + " - " + 
+			String name = manager.getMod(fSelected).replace("None", "Nomod") + ": " + jsMap.getString("artist") + " - " + 
 				    	  jsMap.getString("title") + " [" + jsMap.getString("version") + "]";
 			game.getBanchoHandle().sendMessage(name + " was removed!", false);
 			game.getGameFeed().addBan("{" + manager.getMod(fSelected).replace("None", "Nomod") + "} " + jsMap.getString("artist") + " - " + 

@@ -73,9 +73,8 @@ public class SelectionManager{
 		pickTimer(game.match.getTournament().getInt("pickWaitTime"));
 		game.messageUpdater(0, game.match.getTournament().getInt("pickWaitTime"), 
 							game.nextTeam.getTeam().getTeamName() + 
-							", please pick a warmup map using !select <map url> +MOD, the mod is optional and only takes DT/HT", 
-				  			"If the lobby order is not correct, do not worry about it, it will be fixed.",
-				  			"To skip this warmup, please use !warmupskip");
+							", pick a warmup map using !select <map url> +MOD, mod is optional and only takes DT/HT", 
+				  			"Use !warmupskip to skip this warmup.");
 	}
 	
 	public void selectBans(){
@@ -108,7 +107,7 @@ public class SelectionManager{
 		}catch(Exception e){}
 		
 		game.messageUpdater(0, game.match.getTournament().getInt("banWaitTime"), 
-						    game.nextTeam.getTeam().getTeamName() + ", please ban a map using !ban <map url> or !ban <map #>" + poolSheet);
+						    game.nextTeam.getTeam().getTeamName() + ", ban a map using !ban <map url> or !ban <map #>" + poolSheet);
 		
 		if(getBans().size() > 0) game.getGameFeed().updateDiscord();
 	}
@@ -119,6 +118,7 @@ public class SelectionManager{
 		clearPickTimer();
 		
 		game.state = GameState.SELECTING;
+		warmupsLeft = 0;
 		bansLeft = 0;
 		map = null;
 		
@@ -140,8 +140,7 @@ public class SelectionManager{
 		}catch(Exception e){}
 		
 		game.messageUpdater(0, game.match.getTournament().getInt("pickWaitTime"), 
-							game.nextTeam.getTeam().getTeamName() + ", please pick a map using " + selectUsage + poolSheet, 
-				   			"If the lobby order is not correct, do not worry about it, it will be fixed.");
+							game.nextTeam.getTeam().getTeamName() + ", pick a map using " + selectUsage + poolSheet);
 	}
 	
 	public void handleMapSelect(String map, boolean select, String mod){
@@ -185,7 +184,7 @@ public class SelectionManager{
 			else game.secondTeam.removePoint();
 			
 			game.switchNextTeam();
-			game.resultManager.updateScores(true);
+			game.resultManager.updateScores(true, true);
 			
 			int mapId = game.match.getMapPool().getMapId(map);
 			
@@ -245,7 +244,7 @@ public class SelectionManager{
 			String bloodcat = map.getBloodcatLink();
 			
 			if(bloodcat.length() > 0)
-				game.banchoHandle.sendMessage("[" + bloodcat + " A bloodcat download link is available for this map here.]", false);
+				game.banchoHandle.sendMessage("[" + bloodcat + " Bloodcat link for this map.]", false);
 		}catch(Exception e){}
 		
 		game.feed.updateDiscord();
@@ -417,14 +416,14 @@ public class SelectionManager{
 						ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(game);
 						SkipWarmupCommand.gamesAllowedToSkip.remove(game);
 						game.banchoHandle.sendMessage(game.nextTeam.getTeam().getTeamName() + 
-													  " has taken too long to pick a warmup, they will not get a warmup!", false);
+													  " took too long to pick a warmup, they will not get a warmup!", false);
 						game.switchNextTeam();
 						selectWarmups();
 						
 						return;
 					}
 					
-					game.banchoHandle.sendMessage(game.nextTeam.getTeam().getTeamName() + " has taken too long to select a map!", false);
+					game.banchoHandle.sendMessage(game.nextTeam.getTeam().getTeamName() + " took too long to select a map!", false);
 					SelectMapCommand.pickingTeams.remove(game.nextTeam);
 					game.switchNextTeam();
 					

@@ -32,14 +32,14 @@ public class ReadyManager{
 		
 		game.state = GameState.READYING;
 		game.selectionManager.clearPickTimer();
-		String message = "Waiting for all players to ready up...";
+		String message = "Waiting for players to ready up...";
 		
-		if(game.match.getTournament().getBool("scoreV2")) message = "Waiting for all players to ready up, stable (fallback) scores will not count!";
+		if(game.match.getTournament().getBool("scoreV2")) message = "Waiting for players to ready up, fallback scores will not count!";
 		
 		game.selectionManager.selectionStartTime = System.currentTimeMillis();
 		game.selectionManager.pickTimer(game.match.getTournament().getInt("readyWaitTime"));
 		game.messageUpdater(0, game.match.getTournament().getInt("readyWaitTime"), 
-							message, "The match will force start after the timer. You may change map if needed (not in case of disconnection)");
+							message, "Force starting after the timer. You may change map if needed.");
 	}
 	
 	public void playersReady(){
@@ -84,7 +84,7 @@ public class ReadyManager{
 				
 				if(fTeamModCount < countNeeded || sTeamModCount < countNeeded){
 					if(game.match.getTournament().getInt("type") == 0)
-						game.banchoHandle.sendMessage("You need to have at least " + countNeeded + " mod user" + 
+						game.banchoHandle.sendMessage("You need " + countNeeded + " mod user" + 
 													  (countNeeded <= 1 ? "" : "s") + " per team!", false);
 					else game.banchoHandle.sendMessage("You both need to have a mod!", false);
 					

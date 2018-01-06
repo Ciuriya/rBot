@@ -149,7 +149,7 @@ public class Game{
 			PassTurnCommand.passingTeams.add(nextTeam);
 			
 			banchoHandle.sendMessage(nextTeam.getTeam().getTeamName() + 
-									 ", you can use !pass within the next 20 seconds to let the other " + getTeamIndicator() + " start instead!",
+									 ", use !pass to let the other " + getTeamIndicator() + " start instead! (20s left)",
 									 false);
 	
 			if(messageUpdater != null) messageUpdater.cancel();
@@ -198,7 +198,7 @@ public class Game{
 						
 						String time = Utils.df(Math.ceil(((lastPickTime / 1000 + waitTime) - (System.currentTimeMillis() / 1000))) / 60, 0);
 						banchoHandle.sendMessage(time + " minute" + (Utils.stringToDouble(time) >= 2 ? "s" : "") + " left!" + 
-												(pausesLeft > 0 ? " (Both use !timeout if you need a " + 
+												(pausesLeft > 0 ? " (Use !timeout for a " + 
 												Utils.toDuration(match.getTournament().getInt("pauseLength") * 1000) + 
 												" break!)" : ""), false);
 					}
@@ -309,8 +309,14 @@ public class Game{
 	}
 	
 	public void switchNextTeam(){
-		if(match.getTournament().getBool("loserPicksMap") && selectionManager.bansLeft == 0){
+		System.out.println("loser:" + match.getTournament().getBool("loserPicksMap") + " bansLeft: " + selectionManager.bansLeft);
+		
+		if(match.getTournament().getBool("loserPicksMap") && selectionManager.bansLeft == 0 && 
+		   firstTeam.getPoints() + secondTeam.getPoints() > 0){
+			System.out.println("next team rn: " + nextTeam.getTeam().getTeamName());
+			System.out.println("last winner: " + resultManager.lastWinner);
 			nextTeam = resultManager.lastWinner ? secondTeam : firstTeam;
+			System.out.println("next team after: " + nextTeam.getTeam().getTeamName());
 		}else{
 			if(nextTeam.getTeam().getTeamName().equalsIgnoreCase(firstTeam.getTeam().getTeamName()))
 				nextTeam = secondTeam;

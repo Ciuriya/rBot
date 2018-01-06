@@ -133,10 +133,10 @@ public class LobbyManager{
 		boolean teamTourney = game.match.getTournament().getInt("type") == 0;
 		
 		if(teamTourney) 		
-			game.messageUpdater("Invite your teammates through osu! and use !random to settle which team goes first. ",
-						   	   (game.match.getTournament().get("alertDiscord").length() > 0 ? "If you need help, use !alert <message>" : ""));
-		else game.messageUpdater("Both players, use !random to settle who goes first. " + 
-						   		(game.match.getTournament().get("alertDiscord").length() > 0 ? "If you need help, use !alert <message>" : ""));
+			game.messageUpdater("Both teams, use !random to decide picking order. ",
+						   	   (game.match.getTournament().get("alertDiscord").length() > 0 ? "To alert an admin, use !alert <message>" : ""));
+		else game.messageUpdater("Both players, use !random to decide picking order. " + 
+						   		(game.match.getTournament().get("alertDiscord").length() > 0 ? "To alert an admin, use !alert <message>" : ""));
 		
 		RandomCommand.waitingForRolls.add(game.firstTeam);
 		RandomCommand.waitingForRolls.add(game.secondTeam);
