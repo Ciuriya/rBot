@@ -309,14 +309,9 @@ public class Game{
 	}
 	
 	public void switchNextTeam(){
-		System.out.println("loser:" + match.getTournament().getBool("loserPicksMap") + " bansLeft: " + selectionManager.bansLeft);
-		
 		if(match.getTournament().getBool("loserPicksMap") && selectionManager.bansLeft == 0 && 
 		   firstTeam.getPoints() + secondTeam.getPoints() > 0){
-			System.out.println("next team rn: " + nextTeam.getTeam().getTeamName());
-			System.out.println("last winner: " + resultManager.lastWinner);
 			nextTeam = resultManager.lastWinner ? secondTeam : firstTeam;
-			System.out.println("next team after: " + nextTeam.getTeam().getTeamName());
 		}else{
 			if(nextTeam.getTeam().getTeamName().equalsIgnoreCase(firstTeam.getTeam().getTeamName()))
 				nextTeam = secondTeam;
