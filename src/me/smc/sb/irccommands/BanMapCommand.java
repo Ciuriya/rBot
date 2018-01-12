@@ -7,6 +7,7 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.pickstrategies.ModPickStrategy;
+import me.smc.sb.tourney.GameState;
 import me.smc.sb.tourney.PlayingTeam;
 import me.smc.sb.utils.Utils;
 
@@ -34,7 +35,7 @@ public class BanMapCommand extends IRCCommand{
 		if(!banningTeams.isEmpty())
 			for(PlayingTeam team : banningTeams)
 				if(team.getGame().getLobbyManager().verify(userName) &&
-				   team.getTeam().has(userName)){
+				   team.getTeam().has(userName) && !team.getGame().getState().eq(GameState.ENDED)){
 					String url = Utils.takeOffExtrasInBeatmapURL(args[0]);
 					
 					if(team.getGame().getSelectionManager().getPickStrategy() instanceof ModPickStrategy)

@@ -5,7 +5,7 @@ import java.util.List;
 
 public enum Mods{
 	
-	None(0, "NoMod"), 
+	None(0, "NM"), 
 	NoFail(1, "NF"), 
 	Easy(2, "EZ"),
 	NoVideo(4, "NV"),

@@ -10,7 +10,7 @@ import me.smc.sb.utils.Utils;
 public class TrackedPlay{
 
 	private JSONObject play;
-	private JSONObject map;
+	private JSONObject map = null;
 	private PPInfo pp;
 	private int mode;
 	private int personalBestCount;
@@ -29,6 +29,10 @@ public class TrackedPlay{
 	
 	public void loadMap(){
 		map = Map.getMapInfo(play.getInt("beatmap_id"), mode, true);
+	}
+	
+	public boolean isMapLoaded(){
+		return map != null;
 	}
 	
 	/*

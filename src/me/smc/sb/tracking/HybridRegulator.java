@@ -38,7 +38,7 @@ public class HybridRegulator{
 		lastLoadRefresh = System.currentTimeMillis();
 		apiStalled = false;
 		htmlStalled = false;
-		htmlPool = Executors.newCachedThreadPool();
+		htmlPool = Executors.newSingleThreadExecutor(); //was cached thing
 		apiPool = Executors.newFixedThreadPool(7);
 		
 		startLoadTimer();
@@ -132,6 +132,7 @@ public class HybridRegulator{
 			int nextAttemptDelay = FIBONACCI[attempt + 1];
 			Log.logger.log(Level.WARNING, "Retrying osu!" + (api ? "api" : "html") + " request in " + nextAttemptDelay + " seconds!\n" +
 										  "Request: " + request.getName() + " Ex: " + e.getMessage());
+
 			Utils.sleep(nextAttemptDelay * 1000);
 			
 			executeRequest(request, api, attempt + 1, true);

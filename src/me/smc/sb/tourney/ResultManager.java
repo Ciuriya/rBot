@@ -294,7 +294,7 @@ public class ResultManager{
 			
 			switch(skipRematchState){
 				case 0: skipRematchState = fTeam ? 1 : 2;
-						game.banchoHandle.sendMessage(team.getTeam().getTeamName() + " has voted to skip the rematch!", false);
+						game.banchoHandle.sendMessage(team.getTeam().getTeamName() + " has voted to skip the rematch! Other team also needs to skip.", false);
 						break;
 				case 1: if(!fTeam) skipRematchState = 3; break;
 				case 2: if(fTeam) skipRematchState = 3; break;
@@ -331,7 +331,7 @@ public class ResultManager{
 			
 			switch(contestState){
 				case 0: contestState = fTeam ? 1 : 2;
-						game.banchoHandle.sendMessage(team.getTeam().getTeamName() + " has voted to contest the score!", false);
+						game.banchoHandle.sendMessage(team.getTeam().getTeamName() + " has voted to contest the score! Other team also needs to contest.", false);
 						break;
 				case 1: if(!fTeam) contestState = 3; break;
 				case 2: if(fTeam) contestState = 3; break;

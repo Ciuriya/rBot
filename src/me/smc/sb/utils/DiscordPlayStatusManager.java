@@ -29,7 +29,7 @@ public class DiscordPlayStatusManager{
 		rotationTimer.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
 				if(Main.debug)
-					Main.api.getPresence().setGame(Game.of("Temporary Maintenance"));
+					Main.api.getPresence().setGame(Game.playing("Temporary Maintenance"));
 				else{
 					if(currentIndex == DiscordStatuses.values().length)
 						currentIndex = 0;
@@ -43,7 +43,7 @@ public class DiscordPlayStatusManager{
 							incrementCurrentIndex();
 					}
 					
-					Main.api.getPresence().setGame(Game.of(DiscordStatuses.values()[currentIndex].getStatus()));
+					Main.api.getPresence().setGame(Game.playing(DiscordStatuses.values()[currentIndex].getStatus()));
 					
 					currentIndex++;
 				}

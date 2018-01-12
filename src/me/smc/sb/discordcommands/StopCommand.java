@@ -25,8 +25,8 @@ public class StopCommand extends GlobalCommand{
 		int retCode = 1;
 		
 		if(args.length > 0) retCode = Utils.stringToInt(args[0]);
-		else if(e.getMessage().getContent().contains("restart")) retCode = 2;
-		else if(e.getMessage().getContent().contains("update")) retCode = 3;
+		else if(e.getMessage().getContentDisplay().contains("restart")) retCode = 2;
+		else if(e.getMessage().getContentDisplay().contains("update")) retCode = 3;
 		
 		Utils.info(e.getChannel(), "You have" + getMessageBasedOnCode(retCode));
 		Main.stop(retCode);

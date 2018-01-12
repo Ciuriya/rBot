@@ -55,7 +55,7 @@ public class Listener implements EventListener{
 	    	}
 	    	
 	    	String cmdPrefix = Main.getCommandPrefix(serverId);
-	    	String msg = e.getMessage().getContent();
+	    	String msg = e.getMessage().getContentDisplay();
 	    	
 	    	String strippedMsg = msg;
 	    	

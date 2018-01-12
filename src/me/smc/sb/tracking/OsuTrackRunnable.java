@@ -14,29 +14,33 @@ public class OsuTrackRunnable extends TimerTask{
 	
 	private List<TrackedPlayer> playersToRefresh;
 	private OsuTrackCommand trackManager;
-	private int updatingPlayers;
 	public static int trackedTotal = 0;
 	public static long totalTimeUsed = 0;
+	private List<TrackedPlayer> updating;
+	private List<Thread> updateThreads;
+	private long stuckTime;
 	
 	public OsuTrackRunnable(OsuTrackCommand trackManager){
 		playersToRefresh = new ArrayList<>();
-		updatingPlayers = 0;
+		updating = new ArrayList<>();
+		updateThreads = new ArrayList<>();
+		stuckTime = 0;
 		this.trackManager = trackManager;
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
-	public void run(){	
+	public void run(){
 		// if list changed, restart to get updated timer period
 		if(TrackedPlayer.changeOccured){
-			updatingPlayers = 0;
 			TrackedPlayer.changeOccured = false;
 			trackManager.startTracker();
 			stop();
 			
 			return;
 		}
-		
-		if(playersToRefresh.isEmpty() && updatingPlayers == 0){
+
+		if(playersToRefresh.isEmpty() && updating.isEmpty()){
 			boolean change = TrackedPlayer.updateRegisteredPlayers();
 			
 			// again, if change, restart for updated timer period, although this one
@@ -51,6 +55,22 @@ public class OsuTrackRunnable extends TimerTask{
 			}
 			
 			playersToRefresh = new ArrayList<>(TrackedPlayer.registeredPlayers);
+		}else if(updating.size() > 0 && playersToRefresh.isEmpty()){
+			if(stuckTime == 0) stuckTime = System.currentTimeMillis();
+			else if(System.currentTimeMillis() - stuckTime > 10000){
+				if(!updateThreads.isEmpty())
+					for(Thread t : updateThreads) t.stop();
+				
+				for(TrackedPlayer updatePlayer : updating)
+					updatePlayer.setUpdating(false);
+				
+				updateThreads.clear();
+				updating.clear();
+				
+				stuckTime = 0;
+			}
+
+			return;
 		}
 		
 		TrackedPlayer player = null;
@@ -68,11 +88,11 @@ public class OsuTrackRunnable extends TimerTask{
 		if(player.isUpdating() || (player.getTrackers().isEmpty() && player.getLeaderboardTrackers().isEmpty())) return;
 		
 		player.setUpdating(true);
-		updatingPlayers++;
+		updating.add(player);
 		
 		final TrackedPlayer fPlayer = player;
 		
-		new Thread(new Runnable(){
+		Thread t = new Thread(new Runnable(){
 			public void run(){
 				try{
 					long time = System.currentTimeMillis();
@@ -99,9 +119,13 @@ public class OsuTrackRunnable extends TimerTask{
 				}
 				
 				fPlayer.setUpdating(false);
-				updatingPlayers--;
+				updating.remove(fPlayer);
+				updateThreads.remove(this);
 			}
-		}).start();
+		});
+		
+		updateThreads.add(t);
+		t.start();
 	}
 	
 	@SuppressWarnings("deprecation")

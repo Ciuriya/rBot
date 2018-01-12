@@ -71,18 +71,18 @@ public class Game{
 		
 		new Timer().schedule(new TimerTask(){
 			public void run(){
-				if(state.eq(GameState.WAITING)){
+				if(state.eq(GameState.WAITING) || state.eq(GameState.ROLLING)){
 					int fPlayers = firstTeam.getCurrentPlayers().size();
 					int sPlayers = secondTeam.getCurrentPlayers().size();
 					
-					if(fPlayers == 0) secondTeam.addPoint();
-					if(sPlayers == 0) firstTeam.addPoint();
-					if(fPlayers == 0 && sPlayers == 0){
+					if(fPlayers < sPlayers) secondTeam.addPoint();
+					if(sPlayers < fPlayers) firstTeam.addPoint();
+					if(fPlayers == sPlayers){
 						firstTeam.setPoints(0);
 						secondTeam.setPoints(0);
 					}
 					
-					if(fPlayers == 0 || sPlayers == 0) stop();
+					if(fPlayers + sPlayers < match.getMatchSize()) stop();
 				}
 			}
 		}, match.getTournament().getInt("gracePeriodTime") * 1000);
@@ -94,8 +94,8 @@ public class Game{
 		
 		if(match.getTournament().get("alertDiscord").length() > 0) AlertStaffCommand.gamesAllowedToAlert.add(this);
 		
-		firstTeam.inviteTeam(0, 60000);
-		secondTeam.inviteTeam(0, 60000);
+		firstTeam.inviteTeam(0, 30000);
+		secondTeam.inviteTeam(0, 30000);
 		
 		match.setGame(this);
 	}
@@ -161,7 +161,7 @@ public class Game{
 				public void run(){
 					PassTurnCommand.passingTeams.remove(rollWinTeam);
 					
-					if(!TimeoutCommand.gamesAllowedToTimeout.contains(Game.this) && pausesLeft > 0)
+					if(pausesLeft > 0)
 						TimeoutCommand.gamesAllowedToTimeout.add(Game.this);
 					
 					feed.updateDiscord();
@@ -260,7 +260,7 @@ public class Game{
 			
 			switch(pauseState){
 				case 0: pauseState = fTeam ? 1 : 2;
-						banchoHandle.sendMessage(team.getTeam().getTeamName() + " has asked for a temporary timeout!", false);
+						banchoHandle.sendMessage(team.getTeam().getTeamName() + " has asked for a temporary timeout! Other team also needs to timeout.", false);
 						break;
 				case 1: if(!fTeam) pauseState = 3; break;
 				case 2: if(fTeam) pauseState = 3; break;
@@ -371,25 +371,27 @@ public class Game{
 		if(multiChannel != null)
 			match.getTournament().getTwitchHandler().stopStreaming(this);
 		
-		RandomCommand.waitingForRolls.remove(match.getFirstTeam());
-		RandomCommand.waitingForRolls.remove(match.getSecondTeam());
-		SelectMapCommand.pickingTeams.remove(match.getFirstTeam());
-		SelectMapCommand.pickingTeams.remove(match.getSecondTeam());
-		PassTurnCommand.passingTeams.remove(match.getFirstTeam());
-		PassTurnCommand.passingTeams.remove(match.getSecondTeam());
+		RandomCommand.waitingForRolls.remove(firstTeam);
+		RandomCommand.waitingForRolls.remove(secondTeam);
+		SelectMapCommand.pickingTeams.remove(firstTeam);
+		SelectMapCommand.pickingTeams.remove(secondTeam);
+		PassTurnCommand.passingTeams.remove(firstTeam);
+		PassTurnCommand.passingTeams.remove(secondTeam);
 		ChangeWarmupModCommand.gamesAllowedToChangeMod.remove(this);
-		BanMapCommand.banningTeams.remove(match.getFirstTeam());
-		BanMapCommand.banningTeams.remove(match.getSecondTeam());
+		BanMapCommand.banningTeams.remove(firstTeam);
+		BanMapCommand.banningTeams.remove(secondTeam);
 		SkipRematchCommand.gamesAllowedToSkip.remove(this);
 		SkipWarmupCommand.gamesAllowedToSkip.remove(this);
 		ContestCommand.gamesAllowedToContest.remove(this);
 		AlertStaffCommand.gamesAllowedToAlert.remove(this);
 		IRCChatListener.gamesListening.remove(multiChannel);
+		TimeoutCommand.gamesAllowedToTimeout.remove(this);
 		
 		Team winningTeam = firstTeam.getPoints() > secondTeam.getPoints() ? match.getFirstTeam() : match.getSecondTeam();
 		
 		if(firstTeam.getPoints() != secondTeam.getPoints()){
 			Team losingTeam = winningTeam.getTeamName().equalsIgnoreCase(match.getFirstTeam().getTeamName()) ? match.getSecondTeam() : match.getFirstTeam();
+			int conditionalMatchStartCount = 0;
 			
 			if(match.getTournament().getConditionalTeams().size() > 0){
 				for(String conditional : new HashMap<String, Match>(match.getTournament().getConditionalTeams()).keySet()){
@@ -419,7 +421,9 @@ public class Game{
 								conditionalMatch.start();
 								Log.logger.log(Level.INFO, "Started conditional match: " + conditionalMatch.getLobbyName());
 							}
-						}, delay);
+						}, delay + (conditionalMatchStartCount * 10000));
+						
+						conditionalMatchStartCount++;
 					}
 				}
 			}

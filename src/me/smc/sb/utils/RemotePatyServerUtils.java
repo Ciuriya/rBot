@@ -151,7 +151,7 @@ public class RemotePatyServerUtils{
 			new JdbcSession(mpSQL)
 			.sql("UPDATE `match_list` JOIN `round` r ON r.`id` = round_id " +
 				 "SET mp_link=?, winner=?, team1_score=?, team2_score=? " +
-				 "WHERE id=? AND tournament_id=?")
+				 "WHERE match_list.`id`=? AND tournament_id=?")
 			.set(mpLink)
 			.set(winner.getServerTeamID())
 			.set(fTeamScore)

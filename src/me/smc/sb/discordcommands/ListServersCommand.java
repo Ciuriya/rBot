@@ -41,7 +41,7 @@ public class ListServersCommand extends GlobalCommand{
 		
 		for(Guild guild : e.getJDA().getGuilds()){
 			OffsetDateTime lastMessageDate = null;
-			TextChannel lastMessageChannel = guild.getPublicChannel();
+			TextChannel lastMessageChannel = guild.getDefaultChannel();
 			User poster = null;
 			
 			for(TextChannel channel : guild.getTextChannels()){

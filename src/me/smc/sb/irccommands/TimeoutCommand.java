@@ -7,6 +7,7 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 import me.smc.sb.tourney.Game;
+import me.smc.sb.tourney.GameState;
 import me.smc.sb.utils.Utils;
 
 public class TimeoutCommand extends IRCCommand{
@@ -29,12 +30,13 @@ public class TimeoutCommand extends IRCCommand{
 		String userName = Utils.toUser(e, pe);
 		
 		if(!gamesAllowedToTimeout.isEmpty())
-			for(Game game : gamesAllowedToTimeout)
-				if(game.getLobbyManager().verify(userName)){
+			for(Game game : gamesAllowedToTimeout){
+				if(!game.getState().eq(GameState.ENDED) && game.getLobbyManager().verify(userName)){
 					game.timeout(userName);
 					
 					return "";
 				}
+			}
 		
 		return "You cannot timeout right now.";
 	}

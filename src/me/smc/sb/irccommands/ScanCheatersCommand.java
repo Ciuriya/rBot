@@ -167,7 +167,7 @@ public class ScanCheatersCommand extends IRCCommand{
 		return "";
 	}
 	
-	private int[] calculateRankIncrease(String[] html){
+	public static int[] calculateRankIncrease(String[] html){
 		List<String> valueLine = Utils.getNextLineCodeFromLink(html, 4, "function data");
 		
 		if(valueLine.size() > 0){
@@ -176,12 +176,14 @@ public class ScanCheatersCommand extends IRCCommand{
 			int maxRank = 0;
 			int lastRank = 0;
 			int largestDiff = 0;
+			int firstRank = 0;
 			
 			for(String dailyStat : line.split("\\[")){
 				try{
 					int rank = Utils.stringToInt(dailyStat.split(",")[1].split("\\]")[0].substring(1));
 					if(rank == -1) throw new Exception();
 					
+					if(firstRank == 0) firstRank = rank;
 					if(minRank == 0 || rank < minRank) minRank = rank;
 					if(rank > maxRank) maxRank = rank;
 					
@@ -194,7 +196,7 @@ public class ScanCheatersCommand extends IRCCommand{
 				}catch(Exception ex){}
 			}
 			
-			return new int[]{minRank, maxRank, largestDiff};
+			return new int[]{minRank, maxRank, largestDiff, firstRank, lastRank};
 		}
 		
 		return new int[]{};

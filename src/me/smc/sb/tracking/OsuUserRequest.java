@@ -101,7 +101,7 @@ public class OsuUserRequest extends OsuRequest{
 			
 			if(levelLine.size() > 0 && levelPercentageLine.size() > 0){
 				String level = levelLine.get(0).split("Current Level<\\/b>: ")[1].split("<\\/div>")[0];
-				level += "." + levelPercentageLine.get(0).split("align=\"right\">")[1].split("%")[0];
+				level += "." + levelPercentageLine.get(0).split("align=right>")[1].split("%")[0];
 				user.put("level", level);
 			}
 			
@@ -125,6 +125,8 @@ public class OsuUserRequest extends OsuRequest{
 			
 			if(Aline.size() > 0)
 				user.put("count_rank_a", Aline.get(0).split("<td width='50'>")[1].split("<\\/td>")[0].replaceAll(",", ""));
+			
+			user.put("general_page", pageGeneral);
 			
 			answer = user;
 			setDone(true);

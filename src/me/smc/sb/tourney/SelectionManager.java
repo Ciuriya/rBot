@@ -97,7 +97,9 @@ public class SelectionManager{
 			return;
 		}
 		
-		BanMapCommand.banningTeams.add(game.nextTeam);
+		if(!BanMapCommand.banningTeams.contains(game.nextTeam))
+			BanMapCommand.banningTeams.add(game.nextTeam);
+		
 		pickTimer(game.match.getTournament().getInt("banWaitTime"));
 		
 		String poolSheet = "";

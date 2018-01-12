@@ -95,11 +95,11 @@ public class TrackingGuild{
 		if(specificUpdateChannels.containsKey(player.getUserId() + "&m=" + player.getMode()))
 			return specificUpdateChannels.get(player.getUserId() + "&m=" + player.getMode());
 		
-		return trackUpdateChannel == null ? Main.api.getGuildById(guildId).getPublicChannel() : trackUpdateChannel;
+		return trackUpdateChannel == null ? Main.api.getGuildById(guildId).getDefaultChannel() : trackUpdateChannel;
 	}
 	
 	public TextChannel getLeaderboardChannel(){
-		return leaderboardChannel == null ? Main.api.getGuildById(guildId).getPublicChannel() : leaderboardChannel;
+		return leaderboardChannel == null ? Main.api.getGuildById(guildId).getDefaultChannel() : leaderboardChannel;
 	}
 	
 	public boolean track(String username, int mode, boolean addToFile, boolean leaderboard){
@@ -169,11 +169,11 @@ public class TrackingGuild{
 		ArrayList<String> leaderboardTrackedList = config.getStringList("leaderboard-tracked-players");
 		
 		if(config.getValue("track-update-group").length() == 0)
-			trackUpdateChannel = Main.api.getGuildById(guildId).getPublicChannel();
+			trackUpdateChannel = Main.api.getGuildById(guildId).getDefaultChannel();
 		else trackUpdateChannel = Main.api.getTextChannelById(config.getValue("track-update-group"));
 		
 		if(config.getValue("leaderboard-group").length() == 0)
-			leaderboardChannel = Main.api.getGuildById(guildId).getPublicChannel();
+			leaderboardChannel = Main.api.getGuildById(guildId).getDefaultChannel();
 		else leaderboardChannel = Main.api.getTextChannelById(config.getValue("leaderboard-group"));
 		
 		playFormat = PlayFormat.get(config.getValue("track-play-format"));

@@ -56,7 +56,7 @@ public class Command{
 				String tempInstruction = instruction;
 				
 				if(delimiters > 0){
-					String message = e.getMessage().getContent();
+					String message = e.getMessage().getContentDisplay();
 					String[] dels = message.split(" ");
 					String path = "cmd-" + name;
 					
