@@ -62,6 +62,10 @@ public class CustomDate{
 		}
 	}
 	
+	public long getTime(){
+		return Utils.toTime(date, "yyyy-MM-dd HH:mm:ss");
+	}
+	
 	public void convertFromOsuDate(){
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		formatter.setTimeZone(TimeZone.getTimeZone("Asia/Singapore"));

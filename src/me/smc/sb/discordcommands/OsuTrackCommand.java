@@ -5,9 +5,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
+import me.smc.sb.tracking.OsuTrackInactiveRunnable;
 import me.smc.sb.tracking.OsuTrackRunnable;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingGuild;
@@ -21,7 +23,10 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 public class OsuTrackCommand extends GlobalCommand{
 
 	private static int REQUESTS_PER_MINUTE = 250;
+	private static int INACTIVE_DELAY = 1800; // seconds
+	private static int INACTIVE_REQUESTS_PER_MINUTE = 30;
 	private static Timer trackingTimer = null;
+	public static Timer inactiveTimer = null;
 	public static double currentRefreshRate = 0;
 	public static boolean trackingStarted = false;
 	
@@ -37,7 +42,6 @@ public class OsuTrackCommand extends GlobalCommand{
 		      "----------\nAliases\n----------\nThere are no aliases.", 
 			  false,
 			  "osutrack");
-		
 		load();
 	}
 	
@@ -197,14 +201,23 @@ public class OsuTrackCommand extends GlobalCommand{
 				
 				TrackedPlayer.changeOccured = false;
 				trackingStarted = true;
-				startTracker();
+				startTracker(false);
+				
+				new Timer().scheduleAtFixedRate(new TimerTask(){
+					public void run(){
+						startInactiveRefresh();
+					}
+				}, INACTIVE_DELAY * 1000, INACTIVE_DELAY * 1000);
 			}
 		}).start();
 	}
 	
-	public void startTracker(){
-		double refreshRate = calculateRefreshRate();
-		double delay = Math.abs(refreshRate / (double) TrackedPlayer.registeredPlayers.size());
+	public void startTracker(boolean subsequentRestart){
+		int size = TrackedPlayer.getActivePlayers().size();
+		double refreshRate = calculateRefreshRate(REQUESTS_PER_MINUTE, size);
+		double delay = Math.abs(refreshRate / (double) size);
+		
+		currentRefreshRate = refreshRate;
 		
 		if(trackingTimer != null){
 			trackingTimer.cancel();
@@ -212,22 +225,37 @@ public class OsuTrackCommand extends GlobalCommand{
 		}
 		
 		trackingTimer = new Timer();
-		trackingTimer.scheduleAtFixedRate(new OsuTrackRunnable(this), (long) 0, (long) (delay * 1000));
+		trackingTimer.scheduleAtFixedRate(new OsuTrackRunnable(this, subsequentRestart), (long) 0, (long) (delay * 1000));
 	}
 	
-	private double calculateRefreshRate(){
+	public void startInactiveRefresh(){
+		List<TrackedPlayer> inactives = TrackedPlayer.getInactivePlayers();
+		
+		if(inactives.isEmpty()) return;
+		
+		double refreshRate = calculateRefreshRate(INACTIVE_REQUESTS_PER_MINUTE, inactives.size());
+		double delay = Math.abs(refreshRate / (double) inactives.size());
+		
+		if(inactiveTimer != null){
+			inactiveTimer.cancel();
+			inactiveTimer = null;
+		}
+		
+		inactiveTimer = new Timer();
+		inactiveTimer.scheduleAtFixedRate(new OsuTrackInactiveRunnable(inactives), (long) 0, (long) (delay * 1000));
+		
+		Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), 
+						 "Starting an inactivity refresh for " + inactives.size() + " inactives with a " + refreshRate + "s refresh rate.");
+	}
+	
+	private double calculateRefreshRate(int requestsPerMinute, int users){
 		for(double i = 5; ; i += 0.25)
-			if(calculateRequestsPerMinute(i) <= REQUESTS_PER_MINUTE){
-				currentRefreshRate = i;
-				
+			if(calculateRequestsPerMinute(i, users) <= requestsPerMinute){
 				return i;
 			}
 	}
 	
-	private double calculateRequestsPerMinute(double refreshRate){
-		int users = TrackedPlayer.registeredPlayers.size();
-		
+	private double calculateRequestsPerMinute(double refreshRate, int users){
 		return 60.0 / refreshRate * (double) users;
 	}
-	
 }

@@ -56,7 +56,7 @@ public class TrackingUtils{
 		return toEscape.replaceAll("\\*", "\\*");
 	}
 	
-	public static boolean playerHasRecentPlays(JSONArray response, CustomDate lastUpdate){
+	public static boolean playerHasRecentPlays(TrackedPlayer player, JSONArray response, CustomDate lastUpdate){
 		boolean valid = false;
 		
 		for(int i = 0; i < response.length(); i++){
@@ -64,6 +64,9 @@ public class TrackingUtils{
 			CustomDate date = new CustomDate(play.getString("date"));
 			
 			if(play.has("count300")) date.convertFromOsuDate();
+			
+			if(date.after(player.getLastActive()))
+				player.setLastActive(date);
 			
 			if(date.after(lastUpdate) && !play.getString("rank").equalsIgnoreCase("F")){
 				valid = true;

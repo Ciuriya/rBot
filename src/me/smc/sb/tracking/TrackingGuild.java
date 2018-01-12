@@ -69,6 +69,7 @@ public class TrackingGuild{
 		String toSave = Utils.df(player.getPP()) + "&r=" + player.getRank() + "&cr=" + player.getCountryRank();
 		
 		toSave += "&u=" + player.getUsername();
+		toSave += "&a=" + player.getLastActive().getDate();
 		toSave += "&d=" + player.getLastUpdate().getDate();
 		
 		config.writeValue(player.getUserId() + "&m=" + player.getMode() + "-info", toSave);
@@ -241,11 +242,19 @@ public class TrackingGuild{
 		String stats = "";
 		String username = "";
 		String sDate = "";
+		String sActive = "";
 		
 		if(playerInfo.contains("&r=")){
-			sDate = playerInfo.split("&d=")[1];
-			username = playerInfo.split("&u=")[1].split("&d=")[0];
-			stats = playerInfo.replace("&u=" + username + "&d=" + sDate, "");
+			if(playerInfo.contains("&a=")){
+				sActive = playerInfo.split("&a=")[1].split("&d=")[0];
+				sDate = playerInfo.split("&d=")[1];
+				username = playerInfo.split("&u=")[1].split("&a=")[0];
+				stats = playerInfo.replace("&u=" + username + "&d=" + sDate, "");
+			}else{
+				sDate = playerInfo.split("&d=")[1];
+				username = playerInfo.split("&u=")[1].split("&d=")[0];
+				stats = playerInfo.replace("&u=" + username + "&d=" + sDate, "");
+			}
 		}
 		
 		if(registered == null)
@@ -256,6 +265,9 @@ public class TrackingGuild{
 		if(playerInfo.contains("&r=")){
 			registered.setStats(stats);
 			registered.setLastUpdate(new CustomDate(sDate));
+			
+			if(sActive.length() > 0) 
+				registered.setLastActive(new CustomDate(sActive));
 		}
 		
 		if(leaderboard) registered.setLeaderboardTrack(true);

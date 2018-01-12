@@ -10,8 +10,6 @@ import me.smc.sb.utils.Log;
 
 public class OsuTrackRunnable extends TimerTask{
 	
-	// use querying one day to check and speed this up
-	
 	private List<TrackedPlayer> playersToRefresh;
 	private OsuTrackCommand trackManager;
 	public static int trackedTotal = 0;
@@ -19,12 +17,14 @@ public class OsuTrackRunnable extends TimerTask{
 	private List<TrackedPlayer> updating;
 	private List<Thread> updateThreads;
 	private long stuckTime;
+	private boolean subsequentRestart;
 	
-	public OsuTrackRunnable(OsuTrackCommand trackManager){
+	public OsuTrackRunnable(OsuTrackCommand trackManager, boolean subsequentRestart){
 		playersToRefresh = new ArrayList<>();
 		updating = new ArrayList<>();
 		updateThreads = new ArrayList<>();
 		stuckTime = 0;
+		this.subsequentRestart = subsequentRestart;
 		this.trackManager = trackManager;
 	}
 	
@@ -34,27 +34,28 @@ public class OsuTrackRunnable extends TimerTask{
 		// if list changed, restart to get updated timer period
 		if(TrackedPlayer.changeOccured){
 			TrackedPlayer.changeOccured = false;
-			trackManager.startTracker();
+			trackManager.startTracker(false);
 			stop();
 			
 			return;
 		}
 
 		if(playersToRefresh.isEmpty() && updating.isEmpty()){
-			boolean change = TrackedPlayer.updateRegisteredPlayers();
+			boolean change = TrackedPlayer.updateRegisteredPlayers(subsequentRestart);
 			
 			// again, if change, restart for updated timer period, although this one
 			// doesn't really stop normal tracking, it's more for when someone untracks
 			// and that player isn't tracked anywhere else. a clean-up of sorts.
 			if(change){
 				TrackedPlayer.changeOccured = false;
-				trackManager.startTracker();
+				trackManager.startTracker(true);
 				stop();
 				
 				return;
 			}
 			
-			playersToRefresh = new ArrayList<>(TrackedPlayer.registeredPlayers);
+			subsequentRestart = false;
+			playersToRefresh = new ArrayList<>(TrackedPlayer.getActivePlayers());
 		}else if(updating.size() > 0 && playersToRefresh.isEmpty()){
 			if(stuckTime == 0) stuckTime = System.currentTimeMillis();
 			else if(System.currentTimeMillis() - stuckTime > 10000){

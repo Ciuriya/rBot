@@ -14,8 +14,16 @@ import me.smc.sb.utils.Utils;
 public class TrackedPlayer{
 
 	public static List<TrackedPlayer> registeredPlayers = new ArrayList<>();
+	public static List<TrackedPlayer> secondCyclePlayers = new ArrayList<>();
+	public static List<TrackedPlayer> inactivePlayers = new ArrayList<>();
 	public static boolean changeOccured = false;
+	public static boolean inactivityRefreshDone = false;
+	public static boolean secondCycleLoop = false;
+	public static int currentLoopCount = -1;
 	public static final int API_FETCH_PLAY_LIMIT = 10;
+	public static final int INACTIVITY_CUTOFF = 259200; // seconds
+	public static final int LOOP_SKIPS_FOR_SECOND_CYCLE = 10;
+	public static final int SECOND_CYCLE_CUTOFF = 3600; // seconds
 	
 	private String username;
 	private int userId;
@@ -25,8 +33,11 @@ public class TrackedPlayer{
 	private int countryRank;
 	private String country;
 	private boolean updatingPlayer;
+	private boolean active;
+	private boolean banned;
 	private String lastUpdateMessage;
 	private CustomDate lastUpdate;
+	private CustomDate lastActive;
 	private List<TrackingGuild> currentlyTracking;
 	private List<TrackingGuild> leaderboardTracking;
 	private boolean normalTrack;
@@ -42,6 +53,8 @@ public class TrackedPlayer{
 		this.mode = mode;
 		this.normalTrack = false;
 		this.leaderboardTrack = false;
+		this.active = true;
+		banned = false;
 		pp = 0;
 		rank = 0;
 		countryRank = 0;
@@ -50,22 +63,146 @@ public class TrackedPlayer{
 		currentlyTracking = new ArrayList<>();
 		leaderboardTracking = new ArrayList<>();
 		country = "A2";
+		lastActive = new CustomDate(Utils.toDate(0, "yyyy-MM-dd HH:mm:ss"));
 		
 		registeredPlayers.add(this);
 		changeOccured = true;
 	}
 	
-	public static boolean updateRegisteredPlayers(){
+	public static boolean updateRegisteredPlayers(boolean subsequentRestart){
 		boolean change = false;
+		
+		if(inactivityRefreshDone){
+			int preCount = inactivePlayers.size();
+			List<TrackedPlayer> scanned = new ArrayList<>();
+			
+			for(TrackedPlayer player : new ArrayList<>(inactivePlayers)){
+				if(!scanned.contains(player) && !player.isActive() && Utils.getCurrentTimeUTC() - player.getLastActive().getTime() < INACTIVITY_CUTOFF * 1000){
+					for(TrackedPlayer found : find(player.getUserId())){
+						found.setActive(true);
+						inactivePlayers.remove(found);
+						scanned.add(found);
+						
+						change = true;
+					}
+				}
+			}
+			
+			Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), 
+							 "Inactivity refresh done. " + preCount + " inactives to " + inactivePlayers.size() + " inactives.");
+			
+			inactivityRefreshDone = false;
+		}
 		
 		for(TrackedPlayer player : new ArrayList<>(registeredPlayers)){
 			if(player.getTrackers().size() == 0 && player.getLeaderboardTrackers().size() == 0){
 				registeredPlayers.remove(player);
 				change = true;
 			}
+			
+			// never active
+			if(player.getLastActive().getTime() <= 0 && !player.isBanned()){
+				List<TrackedPlayer> foundModes = TrackedPlayer.find(player.getUserId());
+				
+				for(TrackedPlayer found : foundModes){
+					if(found.getLastActive().getTime() > 0){
+						player.setLastActive(found.getLastActive());
+						
+						for(TrackingGuild tracker : found.getTrackers())
+							tracker.setPlayerInfo(found);
+						
+						break;
+					}
+				}
+				
+				if(player.getLastActive().getTime() <= 0){
+					boolean success = false;
+					int checksFailed = 0;
+					
+					while(!success){
+						OsuRequest lastActiveRequest = new OsuLastActiveRequest("" + player.getUserId());
+						String sRequest = (String) Main.hybridRegulator.sendRequest(lastActiveRequest);
+						CustomDate uncheckedLastActive = new CustomDate(sRequest);
+						
+						if(sRequest.equalsIgnoreCase("failed")){
+							checksFailed++;
+							
+							if(checksFailed > 3){
+								player.setBanned(true);
+								break;
+							}
+							
+							continue;
+						}
+						
+						if(uncheckedLastActive.getTime() > 0)
+							for(TrackedPlayer found : foundModes){
+								found.setLastActive(uncheckedLastActive);
+								
+								for(TrackingGuild tracker : found.getTrackers())
+									tracker.setPlayerInfo(found);
+							}
+						
+						success = true;
+					}
+				}
+			}
+			
+			if(player.isActive() && Utils.getCurrentTimeUTC() - player.getLastActive().getTime() >= INACTIVITY_CUTOFF * 1000){
+				player.setActive(false);
+				inactivePlayers.add(player);
+				
+				change = true;
+			}else if(player.isActive() && !secondCyclePlayers.contains(player) &&
+					 Utils.getCurrentTimeUTC() - player.getLastActive().getTime() >= SECOND_CYCLE_CUTOFF * 1000){
+				secondCyclePlayers.add(player);
+			}else if(player.isActive() && secondCyclePlayers.contains(player) &&
+					 Utils.getCurrentTimeUTC() - player.getLastActive().getTime() <= SECOND_CYCLE_CUTOFF * 1000){
+				secondCyclePlayers.remove(player);
+			}
+		}
+		
+		if(!subsequentRestart){
+			currentLoopCount++;
+			
+			if(secondCycleLoop){
+				secondCycleLoop = false;
+				currentLoopCount = 0;
+				change = true;
+			}
+			
+			if(currentLoopCount == LOOP_SKIPS_FOR_SECOND_CYCLE){
+				secondCycleLoop = true;
+				change = true;
+			}
 		}
 		
 		return change;
+	}
+	
+	public static List<TrackedPlayer> getActivePlayers(){
+		List<TrackedPlayer> list = new ArrayList<>();
+		List<TrackedPlayer> full = new ArrayList<>(registeredPlayers);
+		
+		if(!secondCycleLoop) full.removeAll(secondCyclePlayers);
+		
+		for(TrackedPlayer player : full)
+			if(player.isActive()) list.add(player);
+		
+		return list;
+	}
+	
+	public static List<TrackedPlayer> getInactivePlayers(){
+		List<TrackedPlayer> list = new ArrayList<>();
+		List<Integer> userIds = new ArrayList<>();
+		
+		for(TrackedPlayer inactive : inactivePlayers)
+			if(!inactive.isActive() && !userIds.contains(inactive.getUserId())){
+				userIds.add(inactive.getUserId());
+				list.add(inactive);
+			}
+		
+		return list;
 	}
 	
 	public List<TrackedPlay> fetchLatestPlays(){
@@ -102,7 +239,7 @@ public class TrackedPlayer{
 		OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
 		Object recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest);
 		
-		if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray && TrackingUtils.playerHasRecentPlays((JSONArray) recentPlaysObj, lastUpdate)){
+		if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray && TrackingUtils.playerHasRecentPlays(this, (JSONArray) recentPlaysObj, lastUpdate)){
 			JSONArray jsonResponse = (JSONArray) recentPlaysObj;
 			
 			if(recentPlaysRequest.getType().equals(RequestTypes.HTML)){
@@ -165,9 +302,12 @@ public class TrackedPlayer{
 			if(topPlaysObj != null && topPlaysObj instanceof JSONArray)
 				tpJsonResponse = (JSONArray) topPlaysObj;
 
-			for(int i = jsonResponse.length() - 1; i >= 0; i--){	
+			for(int i = jsonResponse.length() - 1; i >= 0; i--){
 				JSONObject jsonObj = jsonResponse.getJSONObject(i);
 				TrackedPlay play = new TrackedPlay(jsonObj, mode);
+				
+				if(play.getDate().after(lastActive))
+					setLastActive(play.getDate());
 				
 				if(play.getDate().after(lastUpdate)){
 					if(jsonObj.getString("rank").equalsIgnoreCase("F")) continue;
@@ -369,6 +509,30 @@ public class TrackedPlayer{
 		this.lastUpdate = lastUpdate;
 	}
 	
+	public CustomDate getLastActive(){
+		return lastActive;
+	}
+	
+	public void setLastActive(CustomDate lastActive){
+		this.lastActive = lastActive;
+	}
+	
+	public boolean isActive(){
+		return active;
+	}
+	
+	public void setActive(boolean active){
+		this.active = active;
+	}
+	
+	public boolean isBanned(){
+		return banned;
+	}
+	
+	public void setBanned(boolean banned){
+		this.banned = banned;
+	}
+	
 	public static TrackedPlayer get(int userId, int mode){
 		for(TrackedPlayer registered : new ArrayList<>(registeredPlayers)){
 			if(registered.getUserId() == userId &&
@@ -378,6 +542,16 @@ public class TrackedPlayer{
 		}
 		
 		return null;
+	}
+	
+	public static List<TrackedPlayer> find(int userId){
+		List<TrackedPlayer> found = new ArrayList<>();
+		
+		for(TrackedPlayer registered : new ArrayList<>(registeredPlayers))
+			if(registered.getUserId() == userId)
+				found.add(registered);
+		
+		return found;
 	}
 	
 	public static TrackedPlayer get(String username, int mode){
