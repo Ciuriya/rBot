@@ -80,7 +80,7 @@ public class StatsCommand extends GlobalCommand{
 			   .append("Queued osu!requests: " + HybridRegulator.requests.size() + " | Failed osu!requests: " + Main.failedRequests + "\n")
 			   .append("Current osu!track refresh rate: " + OsuTrackCommand.currentRefreshRate + " seconds (" + 
 					   (tracked + trackedPlayers.size()) + " tracked, " + TrackedPlayer.registeredPlayers.size() + " without duplicates)\n")
-			   .append("osu!track first cycle players: " + (TrackedPlayer.registeredPlayers.size() - TrackedPlayer.secondCyclePlayers.size()) + "\n")
+			   .append("osu!track first cycle players: " + (TrackedPlayer.getActivePlayers().size()) + "\n")
 			   .append("osu!track second cycle players: " + TrackedPlayer.secondCyclePlayers.size() + "\n")
 			   .append("Currently inactive tracked players: " + TrackedPlayer.inactivePlayers.size() + " players\n")
 			   .append("Actual osu!track refresh rate per player: " + Utils.df((double) OsuTrackRunnable.totalTimeUsed / (double) OsuTrackRunnable.trackedTotal) + "ms\n")
