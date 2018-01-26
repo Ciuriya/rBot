@@ -281,6 +281,7 @@ public class Tournament{
 		configValues.put("loserPicksMap", false);
 		configValues.put("chainedMatches", false);
 		configValues.put("conditionalChainStartDelay", 60);
+		configValues.put("adaptiveScoring", false);
 	}
 	
 	public static void loadTournaments(){

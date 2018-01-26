@@ -245,7 +245,7 @@ public class OsuTrackCommand extends GlobalCommand{
 		inactiveTimer.scheduleAtFixedRate(new OsuTrackInactiveRunnable(inactives), (long) 0, (long) (delay * 1000));
 		
 		Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), 
-						 "Starting an inactivity refresh for " + inactives.size() + " inactives with a " + refreshRate + "s refresh rate.");
+						 "Starting an inactivity refresh for " + inactives.size() + " inactives with a " + Utils.df(refreshRate / inactives.size()) + "s refresh rate.");
 	}
 	
 	private double calculateRefreshRate(int requestsPerMinute, int users){

@@ -68,6 +68,18 @@ public class ResultManager{
 
 				if(multiMatchObj != null && multiMatchObj instanceof JSONArray){
 					multiMatch = (JSONArray) multiMatchObj;
+					
+					int loops = 0;
+					
+					while(multiMatch.length() == 0){
+						multiMatchObj = Main.hybridRegulator.sendRequest(multiRequest, 15000, true);
+						multiMatch = (JSONArray) multiMatchObj;
+						
+						Utils.sleep(200);
+						loops++;
+						if(loops >= 5) break;
+					}
+					
 					plays = getPlays(multiMatch, game.selectionManager.getMap().getBeatmapID());
 				}
 				
@@ -229,12 +241,26 @@ public class ResultManager{
 		}
 		
 		game.feed.updateDiscord();
+		
+		boolean isTiebreaker = first.getPoints() + second.getPoints() == game.match.getBestOf() - 1 && first.getPoints() == second.getPoints();
+		boolean hasTeamWon = first.getPoints() > Math.floor(game.match.getBestOf() / 2) || second.getPoints() > Math.floor(game.match.getBestOf() / 2);
+		boolean adaptive = game.match.getTournament().getBool("adaptiveScoring");
+		boolean valid = !adaptive;
+		
+		if(adaptive){
+			if((first.getPoints() >= second.getPoints() + 2 || second.getPoints() > first.getPoints() + 2) && hasTeamWon){
+				valid = true;
+			}else if(first.getPoints() + second.getPoints() >= game.match.getMapPool().getMaps().size()){
+				isTiebreaker = true;
+				valid = true;
+			}
+		}
 	
-		if(first.getPoints() + second.getPoints() == game.match.getBestOf() - 1 && first.getPoints() == second.getPoints()){
+		if(isTiebreaker && valid){
 			game.selectionManager.changeMap(game.match.getMapPool().findTiebreaker());
 			contestMessage();
 			game.readyManager.startReadyWait();
-		}else if(first.getPoints() > Math.floor(game.match.getBestOf() / 2) || second.getPoints() > Math.floor(game.match.getBestOf() / 2)){
+		}else if(hasTeamWon && valid){
 			String winningTeam = (first.getPoints() > second.getPoints() ? first.getTeam().getTeamName() : second.getTeam().getTeamName());
 			
 			game.banchoHandle.sendMessage(winningTeam + " has won this game!", false);

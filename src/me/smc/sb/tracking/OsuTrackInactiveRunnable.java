@@ -51,8 +51,6 @@ public class OsuTrackInactiveRunnable extends TimerTask{
 					CustomDate uncheckedLastActive = new CustomDate((String) Main.hybridRegulator.sendRequest(lastActiveRequest));
 					
 					if(uncheckedLastActive.after(fPlayer.getLastActive())){
-						System.out.println(fPlayer.getUsername() + " has a new activity date!");
-						
 						for(TrackedPlayer player : TrackedPlayer.find(fPlayer.getUserId())){
 							player.setLastActive(uncheckedLastActive);
 							

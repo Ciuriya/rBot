@@ -66,6 +66,8 @@ public class ReadyManager{
 			SelectMapCommand.pickingTeams.remove(game.nextTeam);
 			
 			verify();
+		}else if(game.selectionManager.map != null){
+			// should check lobby and make sure it's up to date
 		}
 	}
 	

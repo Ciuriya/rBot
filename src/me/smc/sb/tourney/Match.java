@@ -236,6 +236,8 @@ public class Match{
 	public static void removeMatch(Tournament t, int matchNum){
 		Match match = getMatch(t, matchNum);
 		
+		if(match == null) return;
+		
 		if(match.getTime() != 0)
 			matchTimes.remove(match.getTime());
 		
@@ -245,6 +247,8 @@ public class Match{
 	
 	public static void removeMatch(Tournament t, String matchNum){
 		Match match = getMatch(t, matchNum);
+		
+		if(match == null) return;
 		
 		if(match.getTime() != 0)
 			matchTimes.remove(match.getTime());
