@@ -173,9 +173,8 @@ public class Command{
 			msg.append(e.getGuild().getMembers()
 			   .stream()
 			   .filter(x -> x != null && ((Member) x).getUser() != null &&
-			   				((Member) x).getUser().getName() != null && ((Member) x).getNickname() != null &&
+			   				((Member) x).getUser().getName() != null &&
 			   				(((Member) x).getUser().getName().contains(tag.replace("mention=", "")) ||
-					   		((Member) x).getNickname().contains(tag.replace("mention=", "")) || 
 					   		((Member) x).getUser().getId().equals(tag.replace("mention=", ""))))
 			   .findFirst().get().getAsMention());
 		}

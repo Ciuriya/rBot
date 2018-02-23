@@ -245,12 +245,14 @@ public class ResultManager{
 		boolean isTiebreaker = first.getPoints() + second.getPoints() == game.match.getBestOf() - 1 && first.getPoints() == second.getPoints();
 		boolean hasTeamWon = first.getPoints() > Math.floor(game.match.getBestOf() / 2) || second.getPoints() > Math.floor(game.match.getBestOf() / 2);
 		boolean adaptive = game.match.getTournament().getBool("adaptiveScoring");
+		int validPickCount = game.match.getMapPool().getMaps().size() - game.selectionManager.getBans().size() - 1;
 		boolean valid = !adaptive;
 		
 		if(adaptive){
-			if((first.getPoints() >= second.getPoints() + 2 || second.getPoints() > first.getPoints() + 2) && hasTeamWon){
+			if((first.getPoints() >= second.getPoints() + 2 || second.getPoints() >= first.getPoints() + 2 || 
+				first.getPoints() + second.getPoints() > validPickCount) && hasTeamWon){
 				valid = true;
-			}else if(first.getPoints() + second.getPoints() >= game.match.getMapPool().getMaps().size()){
+			}else if(first.getPoints() + second.getPoints() == validPickCount){
 				isTiebreaker = true;
 				valid = true;
 			}

@@ -73,9 +73,7 @@ public class TrackedPlayer{
 		boolean change = false;
 		
 		if(inactivityRefreshDone){
-			int preCount = inactivePlayers.size();
 			List<TrackedPlayer> scanned = new ArrayList<>();
-			String active = "";
 			
 			for(TrackedPlayer player : new ArrayList<>(inactivePlayers)){
 				if(!scanned.contains(player) && !player.isActive() && Utils.getCurrentTimeUTC() - player.getLastActive().getTime() < INACTIVITY_CUTOFF * 1000){
@@ -86,14 +84,9 @@ public class TrackedPlayer{
 						
 						change = true;
 					}
-					
-					active += "\n" + player.getUsername();
 				}
 			}
-			
-			Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), 
-							 "Inactivity refresh done. " + preCount + " inactives to " + inactivePlayers.size() + " inactives." + active);
-			
+
 			inactivityRefreshDone = false;
 		}
 		

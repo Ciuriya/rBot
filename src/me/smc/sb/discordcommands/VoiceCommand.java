@@ -174,30 +174,24 @@ public class VoiceCommand extends GlobalCommand{
 	public void joinVoiceChannel(Guild guild, TextChannel channel, String name){
 		VoiceChannel vChannel = null;
 		
-		for(VoiceChannel voice : guild.getVoiceChannels())
-			if(voice.getName().equalsIgnoreCase(name))
-				vChannel = voice;
+		vChannel = guild.getVoiceChannelsByName(name, true).stream().findFirst().orElse(null);
 		
 		if(vChannel == null){
 			Utils.info(channel, "This voice channel does not exist!"); 
 			return;
 		}
 		
+		
 		AudioManager audioManager = guild.getAudioManager();
+		GuildMusicManager music = getGuildAudioPlayer(channel, guild);
 		
 		if(audioManager.isConnected() && audioManager.getConnectedChannel().getId().equalsIgnoreCase(vChannel.getId())){
 			return;
 		}else if(audioManager.isConnected()){
-			GuildMusicManager music = getGuildAudioPlayer(channel, guild);
 			music.player.setPaused(true);
-			
 			audioManager.closeAudioConnection();
 			audioManager.openAudioConnection(vChannel);
-			
 			music.player.setPaused(false);
-		}else if(audioManager.isAttemptingToConnect()){
-			audioManager.closeAudioConnection();
-			audioManager.openAudioConnection(vChannel);
 		}else audioManager.openAudioConnection(vChannel);
 		
 		Main.serverConfigs.get(guild.getId()).writeValue("voice-channel", vChannel.getName());
