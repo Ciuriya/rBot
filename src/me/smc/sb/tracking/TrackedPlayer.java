@@ -1,6 +1,7 @@
 package me.smc.sb.tracking;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -40,6 +41,7 @@ public class TrackedPlayer{
 	private CustomDate lastActive;
 	private List<TrackingGuild> currentlyTracking;
 	private List<TrackingGuild> leaderboardTracking;
+	private LinkedList<TrackedPlay> lastPostedPlays;
 	private boolean normalTrack;
 	private boolean leaderboardTrack;
 	
@@ -62,6 +64,7 @@ public class TrackedPlayer{
 		updatingPlayer = false;
 		currentlyTracking = new ArrayList<>();
 		leaderboardTracking = new ArrayList<>();
+		lastPostedPlays = new LinkedList<>();
 		country = "A2";
 		lastActive = new CustomDate(Utils.toDate(0, "yyyy-MM-dd HH:mm:ss"));
 		
@@ -302,6 +305,8 @@ public class TrackedPlayer{
 				JSONObject jsonObj = jsonResponse.getJSONObject(i);
 				TrackedPlay play = new TrackedPlay(jsonObj, mode);
 				
+				if(hasPostedPlayRecently(play)) continue;
+				
 				if(play.getDate().after(lastActive))
 					setLastActive(play.getDate());
 				
@@ -381,7 +386,24 @@ public class TrackedPlayer{
 			saveInfo();
 		}
 		
+		if(!plays.isEmpty())
+			for(TrackedPlay play : plays)
+				addRecentPlayPost(play);
+		
 		return plays;
+	}
+	
+	private void addRecentPlayPost(TrackedPlay play){
+		lastPostedPlays.add(play);
+		
+		if(lastPostedPlays.size() > 15) lastPostedPlays.removeFirst();
+	}
+	
+	private boolean hasPostedPlayRecently(TrackedPlay play){
+		for(TrackedPlay recent : lastPostedPlays) 
+			if(recent.compare(play)) return true;
+		
+		return false;
 	}
 	
 	public boolean isUpdating(){

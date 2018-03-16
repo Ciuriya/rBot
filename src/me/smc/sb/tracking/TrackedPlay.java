@@ -356,4 +356,11 @@ public class TrackedPlay{
 		this.country = country;
 	}
 	
+	public boolean compare(TrackedPlay other){
+		return other.getBeatmapId() == getBeatmapId() &&
+			   other.getRawMods() == getRawMods() &&
+			   other.getRawScore() == getRawScore() &&
+			   other.getDate().getTime() == getDate().getTime();
+	}
+	
 }
