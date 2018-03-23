@@ -763,6 +763,45 @@ public class Utils{
 		}).start();
 	}
 	
+	public static int levenshteinDistance(String left, String right){
+		int n = left.length();
+		int m = right.length();
+		
+		if(n == 0) return m;
+		else if(m == 0) return n;
+		
+		if(n > m){
+			final String temp = left;
+			left = right;
+			right = temp;
+			n = m;
+			m = right.length();
+		}
+		
+		final int[] p = new int[n + 1];
+		int upperLeft;
+		int upper;
+		char rightJ;
+		int cost;
+		
+		for(int i = 0; i <= n; i++) p[i] = i;
+		
+		for(int j = 1; j <= m; j++){
+			upperLeft = p[0];
+			rightJ = right.charAt(j - 1);
+			p[0] = j;
+			
+			for(int i = 1; i <= n; i++){
+				upper = p[i];
+				cost = left.charAt(i - 1) == rightJ ? 0 : 1;
+				p[i] = Math.min(Math.min(p[i - 1] + 1, p[i] + 1), upperLeft + cost);
+				upperLeft = upper;
+			}
+		}
+		
+		return p[n];
+	}
+	
 	public static class Login{
 		private List<String> cookies;
 		private HttpsURLConnection conn;
