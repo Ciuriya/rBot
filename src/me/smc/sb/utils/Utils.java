@@ -293,7 +293,7 @@ public class Utils{
 		
 		return answer;
 	}
-
+	
 	public static String[] getHTMLCode(String link){
 		BufferedReader in = null;
 		String[] toReturn = new String[]{};
@@ -305,6 +305,7 @@ public class Utils{
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Accept-Language", "en-US");
+			connection.addRequestProperty("Cookie", "osu_site_v=old");
 			connection.setConnectTimeout(5000);
 			connection.setReadTimeout(5000);
 			

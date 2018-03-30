@@ -74,7 +74,7 @@ public class DeadpoolCommand extends GlobalCommand{
 		}
 		
 		List<DeadpoolUser> voters = report.getVoters();
-		DeadpoolUser prevVoter = voters.stream().filter(v -> Utils.levenshteinDistance(v.getCurrentVote(), player) <= player.length() / 2 + 1).findFirst().orElse(null);
+		DeadpoolUser prevVoter = voters.stream().filter(v -> Utils.levenshteinDistance(v.getVote(), player) <= player.length() / 2 + 1).findFirst().orElse(null);
 		
 		if(prevVoter != null && !prevVoter.getUser().getId().equalsIgnoreCase(e.getAuthor().getId())){
 			Utils.info(e.getChannel(), e.getAuthor().getAsMention() + " Someone else has already voted for **" + player + "**");
@@ -166,7 +166,7 @@ public class DeadpoolCommand extends GlobalCommand{
 						
 						report.setLastFightId(lastFight.getInt("id"));
 						
-						if(fightVoters.isEmpty() || !fightVoters.stream().anyMatch(v -> v.getCurrentVote().length() > 0)) continue;
+						if(fightVoters.isEmpty() || !fightVoters.stream().anyMatch(v -> v.getVote().length() > 0)) continue;
 						
 						String fightEndMessage = "```diff\n- Fight #" + lastFight.getInt("id") + " winners -";
 						
@@ -176,14 +176,9 @@ public class DeadpoolCommand extends GlobalCommand{
 							int closestDistance = 100;
 							
 							for(DeadpoolUser voter : fightVoters){
-								if(voter.getCurrentVote().length() <= 0) continue;
+								if(voter.getVote().length() <= 0) continue;
 								
-								String vote = voter.getCurrentVote();
-								
-								if(voter.votedAfterFightStart(endTime - startTime))
-									vote = voter.getPreviousVote();
-								
-								int distance = Utils.levenshteinDistance(vote, deathName);
+								int distance = Utils.levenshteinDistance(voter.getVote(), deathName);
 								
 								if(distance < closestDistance && distance >= 0 && distance <= deathName.length() / 2 + 1){
 									closestUser = voter;
@@ -202,7 +197,8 @@ public class DeadpoolCommand extends GlobalCommand{
 							}
 						}
 						
-						for(DeadpoolUser voter : report.getVoters()) voter.clearVote();
+						for(DeadpoolUser voter : report.getVoters()) 
+							voter.clearVote();
 						
 						Utils.info(report.getReportChannel(), fightEndMessage + "```");
 					}catch(Exception e){

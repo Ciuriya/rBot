@@ -200,6 +200,21 @@ public class Configuration{
 		}
 	}
 	
+	public void write(String text){
+		BufferedWriter bw = null;
+		
+		try{
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile.getPath()), "UTF-8"));
+			bw.write(text);
+		}catch(Exception e){}
+		finally{
+			try{
+				if(bw != null) bw.close(); 
+				configLines = readSmallTextFile(configFile);
+			}catch(IOException e){e.printStackTrace();}
+		}
+	}
+	
 	public static List<String> readSmallTextFile(final File configFile) throws IOException{
 		//BufferedReader bufferedReader = new BufferedReader(new FileReader(configFile));
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile.getPath()), "UTF-8"));
