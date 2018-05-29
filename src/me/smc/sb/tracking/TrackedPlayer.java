@@ -20,6 +20,7 @@ public class TrackedPlayer{
 	public static boolean changeOccured = false;
 	public static boolean inactivityRefreshDone = false;
 	public static boolean secondCycleLoop = false;
+	public static boolean refreshing = false;
 	public static int currentLoopCount = -1;
 	public static final int API_FETCH_PLAY_LIMIT = 10;
 	public static final int INACTIVITY_CUTOFF = 259200; // seconds
@@ -73,6 +74,8 @@ public class TrackedPlayer{
 	}
 	
 	public static boolean updateRegisteredPlayers(boolean subsequentRestart){
+		if(refreshing) return false;
+		
 		boolean change = false;
 		
 		if(inactivityRefreshDone){

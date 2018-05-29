@@ -35,6 +35,7 @@ public class OsuLastActiveRequest extends OsuRequest{
 		}
 		
 		answer = activeLine.get(0).split(" UTC")[0].split("Z'>")[1];
+		System.out.println("answer: " + answer);
 		setDone(true);
 	}
 }

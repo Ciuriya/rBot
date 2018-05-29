@@ -74,7 +74,7 @@ public class DeadpoolCommand extends GlobalCommand{
 		}
 		
 		List<DeadpoolUser> voters = report.getVoters();
-		DeadpoolUser prevVoter = voters.stream().filter(v -> Utils.levenshteinDistance(v.getVote(), player) <= player.length() / 2 + 1).findFirst().orElse(null);
+		DeadpoolUser prevVoter = voters.stream().filter(v -> Utils.levenshteinDistance(v.getVote(), player) <= player.length() / 2).findFirst().orElse(null);
 		
 		if(prevVoter != null && !prevVoter.getUser().getId().equalsIgnoreCase(e.getAuthor().getId())){
 			Utils.info(e.getChannel(), e.getAuthor().getAsMention() + " Someone else has already voted for **" + player + "**");
@@ -163,6 +163,7 @@ public class DeadpoolCommand extends GlobalCommand{
 						JSONArray deathsList = deathsJSON.getJSONArray("entries");
 						List<DeadpoolUser> fightVoters = report.getVoters();
 						int correctGuesses = 0;
+						List<String> winners = new ArrayList<>();
 						
 						report.setLastFightId(lastFight.getInt("id"));
 						
@@ -177,16 +178,18 @@ public class DeadpoolCommand extends GlobalCommand{
 							
 							for(DeadpoolUser voter : fightVoters){
 								if(voter.getVote().length() <= 0) continue;
+								if(winners.contains(voter.getUser().getId())) continue;
 								
 								int distance = Utils.levenshteinDistance(voter.getVote(), deathName);
 								
-								if(distance < closestDistance && distance >= 0 && distance <= deathName.length() / 2 + 1){
+								if(distance < closestDistance && distance >= 0 && distance <= deathName.length() / 2){
 									closestUser = voter;
 									closestDistance = distance;
 								}
 							}
 							
 							if(closestUser != null){
+								winners.add(closestUser.getUser().getId());
 								closestUser.addPoints(3 - correctGuesses);
 								correctGuesses++;
 								

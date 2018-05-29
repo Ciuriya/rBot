@@ -256,10 +256,21 @@ public class SearchCommand extends GlobalCommand{
 	private void danbooru(MessageReceivedEvent e, String query){
 		String url = "http://danbooru.donmai.us/posts/random";
 		
-		if(query.split(" ").length > 0) url += "?tags=" + query.replaceAll(" ", "%20");
+		if(query.split(" ").length > 0 && query.length() > 0) url += "?tags=" + query.replaceAll(" ", "%20");
+		
+		try{
+			url = Utils.getFinalURL(url);
+		}catch(Exception e1){
+			e1.printStackTrace();
+		}
+		
+		//System.out.println("url " + url);
 		
 		String[] post = Utils.getHTMLCode(url);
 		List<String> imageLine = Utils.getNextLineCodeFromLink(post, 0, "<meta property=\"og:image\" content=\"");
+		
+		for(String s : post)
+			System.out.println(s);
 		
 		if(imageLine.size() > 0) 
 			Utils.info(e.getChannel(), imageLine.get(0).split("content=\"")[1].split("\"")[0]);

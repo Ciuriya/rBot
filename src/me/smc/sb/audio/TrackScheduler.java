@@ -53,6 +53,10 @@ public class TrackScheduler extends AudioEventAdapter{
 	public void clear(){
 		queue.clear();
 		
+		currentPlaylist = null;
+		playlistUrl = null;
+		nextPlaylistSong = null;
+		
 		saveScheduling(Main.serverConfigs.get(channel.getGuild().getId()));
 	}
 	

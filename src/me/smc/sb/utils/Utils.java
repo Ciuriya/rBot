@@ -305,7 +305,9 @@ public class Utils{
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 			connection.setRequestProperty("Accept-Language", "en-US");
-			connection.addRequestProperty("Cookie", "osu_site_v=old");
+			
+			if(link.contains("ppy.sh")) connection.addRequestProperty("Cookie", "osu_site_v=old");
+			
 			connection.setConnectTimeout(5000);
 			connection.setReadTimeout(5000);
 			
@@ -632,7 +634,6 @@ public class Utils{
 	    HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
 	    con.setInstanceFollowRedirects(false);
 	    con.connect();
-	    con.getInputStream();
 
 	    if(con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || con.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP){
 	        String redirectUrl = con.getHeaderField("Location");
