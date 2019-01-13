@@ -22,9 +22,9 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
 
-	private static int REQUESTS_PER_MINUTE = 250;
+	private static int REQUESTS_PER_MINUTE = 100;
 	private static int INACTIVE_DELAY = 1800; // seconds
-	private static int INACTIVE_REQUESTS_PER_MINUTE = 30;
+	private static int INACTIVE_REQUESTS_PER_MINUTE = 50;
 	private static Timer trackingTimer = null;
 	public static Timer inactiveTimer = null;
 	public static double currentRefreshRate = 0;

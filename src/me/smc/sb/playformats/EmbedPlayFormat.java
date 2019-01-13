@@ -70,8 +70,11 @@ public class EmbedPlayFormat extends PlayFormat{
 			
 			ppText += Utils.df(play.getPP(), 2) + "pp**";
 			
-			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0)
+			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0){
+				ppText += "\n*" + play.getAimPP() + " aim* • *" + play.getSpeedPP() + " speed* • *" + play.getAccPP() + " acc*";
 				ppText += "\n" + Utils.df(play.getPPForFC(), 2) + "pp for FC";
+				
+			}
 			
 			if(play.isPersonalBest())
 				ppText += "\n**#" + play.getPersonalBestCount() + "** personal best";

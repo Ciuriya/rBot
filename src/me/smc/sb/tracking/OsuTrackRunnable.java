@@ -39,7 +39,7 @@ public class OsuTrackRunnable extends TimerTask{
 			
 			return;
 		}
-
+		
 		if(playersToRefresh.isEmpty() && updating.isEmpty()){
 			boolean change = TrackedPlayer.updateRegisteredPlayers(subsequentRestart);
 			
@@ -83,7 +83,7 @@ public class OsuTrackRunnable extends TimerTask{
 		}
 		
 		if(player == null) return;
-		
+
 		playersToRefresh.remove(player);
 		
 		if(player.isUpdating() || (player.getTrackers().isEmpty() && player.getLeaderboardTrackers().isEmpty())) return;

@@ -17,7 +17,7 @@ public abstract class GlobalCommand{
     private final String[] names;
     private final String description, extendedDescription;
     private final boolean allowsDm;
-    public static List<GlobalCommand> commands;
+    public static List<GlobalCommand> commands = new ArrayList<GlobalCommand>();
 	
 	public GlobalCommand(Permissions perm, String description, String extendedDescription, boolean allowsDm, String...names){
 		this.perm = perm;
@@ -91,7 +91,6 @@ public abstract class GlobalCommand{
 	}
 	
 	public static void registerCommands(){
-		commands = new ArrayList<GlobalCommand>();
 		commands.add(new AboutCommand());
 		commands.add(new BrainPowerCommand());
 		commands.add(new CleanCommand());

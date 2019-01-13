@@ -270,6 +270,18 @@ public class TrackedPlay{
 		return pp.getPPForFC();
 	}
 	
+	public double getAimPP(){
+		return pp.getAimPP();
+	}
+	
+	public double getSpeedPP(){
+		return pp.getSpeedPP();
+	}
+	
+	public double getAccPP(){
+		return pp.getAccPP();
+	}
+	
 	/*
 	 * Player-related getters/setters
 	 */

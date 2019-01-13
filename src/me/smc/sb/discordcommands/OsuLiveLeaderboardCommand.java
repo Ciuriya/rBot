@@ -123,23 +123,27 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 				TextChannel channel = guild.getLeaderboardChannel();
 				List<Message> messages = new ArrayList<>();
 				List<Message> standard = new ArrayList<>(), taiko = new ArrayList<>(), ctb = new ArrayList<>(), mania = new ArrayList<>();
+				boolean error = false;
 				
 				try{
 					messages = channel.getHistory().retrievePast(50).complete();
 					
-					for(Message message : messages)
-						if(message.getAuthor().getId().equalsIgnoreCase(Main.api.getSelfUser().getId()))
-							if(message.getContentDisplay().contains("Ladder | ")){
-								if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(0)))
-									standard.add(message);
-								else if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(1)))
-									taiko.add(message);
-								else if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(2)))
-									ctb.add(message);
-								else if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(3)))
-									mania.add(message);
-							}
-				}catch(Exception ex){}
+					if(messages.isEmpty()) error = true;
+					else for(Message message : messages)
+							if(message.getAuthor().getId().equalsIgnoreCase(Main.api.getSelfUser().getId()))
+								if(message.getContentDisplay().contains("Ladder | ")){
+									if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(0)))
+										standard.add(message);
+									else if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(1)))
+										taiko.add(message);
+									else if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(2)))
+										ctb.add(message);
+									else if(message.getContentDisplay().contains("Ladder | " + TrackingUtils.convertMode(3)))
+										mania.add(message);
+								}
+				}catch(Exception ex){ error = true; }
+				
+				if(error) return;
 				
 				List<TrackedPlayer> tracked = TrackedPlayer.get(guild, true);
 				

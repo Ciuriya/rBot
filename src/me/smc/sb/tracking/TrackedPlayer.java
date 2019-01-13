@@ -22,10 +22,10 @@ public class TrackedPlayer{
 	public static boolean secondCycleLoop = false;
 	public static boolean refreshing = false;
 	public static int currentLoopCount = -1;
-	public static final int API_FETCH_PLAY_LIMIT = 10;
-	public static final int INACTIVITY_CUTOFF = 259200; // seconds
+	public static final int API_FETCH_PLAY_LIMIT = 25;
+	public static final long INACTIVITY_CUTOFF = 1577880000; // seconds (was 259200)
 	public static final int LOOP_SKIPS_FOR_SECOND_CYCLE = 10;
-	public static final int SECOND_CYCLE_CUTOFF = 3600; // seconds
+	public static final long SECOND_CYCLE_CUTOFF = 1577870000; // seconds (was 3600)
 	
 	private String username;
 	private int userId;
@@ -237,7 +237,7 @@ public class TrackedPlayer{
 		}
 		
 		if(!normalTrack) return plays;
-		
+
 		OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest("" + userId, "" + mode);
 		Object recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest);
 		
@@ -271,7 +271,7 @@ public class TrackedPlayer{
 			
 			username = jsonUser.getString("username");
 			country = jsonUser.getString("country");
-			
+
 			// to compare fetched plays with these to find out if it the fetched play got a map leaderboard spot
 			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(jsonUser.getJSONArray("events"), lastUpdate);
 			
@@ -322,7 +322,7 @@ public class TrackedPlayer{
 					play.setCountryRankChange(countryDiff);
 					play.setCountry(country);
 					
-					PPInfo oppaiPP = new PPInfo(0, 0);
+					PPInfo oppaiPP = new PPInfo(0, 0, 0, 0, 0);
 					
 					if(mode == 0){
 						try{
@@ -370,7 +370,7 @@ public class TrackedPlayer{
 							   TrackingUtils.getAccuracy(topPlay, mode) == play.getAccuracy()){
 								personalBest = j + 1;
 								
-								oppaiPP = new PPInfo(topPlay.getDouble("pp"), oppaiPP.getPPForFC());
+								oppaiPP = new PPInfo(topPlay.getDouble("pp"), oppaiPP.getPPForFC(), oppaiPP.getAimPP(), oppaiPP.getSpeedPP(), oppaiPP.getAccPP());
 								play.setPersonalBestCount(personalBest);
 								
 								break;

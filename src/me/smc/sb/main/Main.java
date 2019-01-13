@@ -168,7 +168,7 @@ public class Main{
 	private void login(){
 		try{
 			Listener l = new Listener();
-			api = new JDABuilder(AccountType.BOT).setToken(discordToken).addEventListener(l).buildAsync();
+			api = new JDABuilder(AccountType.BOT).setToken(discordToken).addEventListener(l).build();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;

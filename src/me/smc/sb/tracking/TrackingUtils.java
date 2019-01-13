@@ -63,7 +63,7 @@ public class TrackingUtils{
 			JSONObject play = response.getJSONObject(i);
 			CustomDate date = new CustomDate(play.getString("date"));
 			
-			if(play.has("count300")) date.convertFromOsuDate();
+			//if(play.has("count300")) date.convertFromOsuDate();
 			
 			if(date.after(player.getLastActive()))
 				player.setLastActive(date);
@@ -110,7 +110,7 @@ public class TrackingUtils{
 	}
 	
 	public static String osuDateToCurrentDate(String sDate){
-		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		/*DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		formatter.setTimeZone(TimeZone.getTimeZone("Asia/Singapore"));
 		
 		Date date = null;
@@ -122,7 +122,8 @@ public class TrackingUtils{
 		}
 		
 		formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return formatter.format(date);
+		return formatter.format(date);*/
+		return sDate;
 	}
 	
 	public static double getAccuracy(JSONObject play, int mode){
@@ -168,41 +169,47 @@ public class TrackingUtils{
 		
 		File osuFile = fetchOsuFile(beatmapId, setId);
 		
-		if(osuFile == null) return new PPInfo(0, 0);
+		if(osuFile == null) return new PPInfo(0, 0, 0, 0, 0);
 		
 		osuFile.renameTo(new File(beatmapId + ".osu"));
 		osuFile = new File(beatmapId + ".osu");
 		
-		String actual = "./oppai " + osuFile.getName() + (accuracy == 100 ? "" : " " + accuracy + "%") +
+		String actual = "./oppai-ng " + osuFile.getName() + (accuracy == 100 ? "" : " " + accuracy + "%") +
 						 (mods.length() != 0 ? " " + mods : "") +
 						 (combo == 0 ? "" : " " + combo + "x") +
 						 (misses == 0 ? "" : " " + misses + "m");
 		
-		String forFC = "./oppai " + osuFile.getName() + " " + hundreds + "x100 " + fifties + "x50" +
+		String forFC = "./oppai-ng " + osuFile.getName() + " " + hundreds + "x100 " + fifties + "x50" +
 					   (mods.length() != 0 ? " " + mods : "");
 		
 		try{
 			Process p = Runtime.getRuntime().exec(actual);
-			double pp = fetchOppaiPP(p);
-			double fc = 0.0;
+			String ppString = fetchOppaiPPString(p);
+			String fcString = "";
 			
 			if(combo != 0){
 				Process p2 = Runtime.getRuntime().exec(forFC);
-				fc = fetchOppaiPP(p2);	
+				fcString = fetchOppaiPPString(p2);	
 			}
 			
 			osuFile.delete();
 			
-			return new PPInfo(pp, fc);
+			double pp = Utils.stringToDouble(ppString.split(" pp")[0]);
+			double fc = Utils.stringToDouble(fcString.split(" pp")[0]);
+			double aim = Utils.stringToDouble(ppString.split(" aim,")[0].split("\\(")[1]);
+			double speed = Utils.stringToDouble(ppString.split(" speed,")[0].split("aim, ")[1]);
+			double acc = Utils.stringToDouble(ppString.split(" acc")[0].split("speed, ")[1]);
+			
+			return new PPInfo(pp, fc, aim, speed, acc);
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 			osuFile.delete();
 			
-			return new PPInfo(0, 0);
+			return new PPInfo(0, 0, 0, 0, 0);
 		}
 	}
 	
-	private static double fetchOppaiPP(Process p){
+	private static String fetchOppaiPPString(Process p){
 		try{
 			BufferedReader pIn = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			
@@ -210,28 +217,26 @@ public class TrackingUtils{
 			String t = null;
 			
 			while((t = pIn.readLine()) != null)
-				if(t != null) s = t;
+				if(t != null && t.contains("pp")) s = t;
 			
 			if(s == null) throw new Exception("string is null");
 			
-			double pp = Utils.stringToDouble(s.split("pp")[0]);
-			
-			return pp;	
+			return s;
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 			
-			return 0.0;
+			return "";
 		}
 	}
 	
 	private static File fetchOsuFile(int beatmapId, int setId){
 		String[] html = Utils.getHTMLCode("https://osu.ppy.sh/b/" + beatmapId);
-
+		
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "beatmapTab active");
 		if(line.isEmpty()) return null;
 
 		String diffName = Jsoup.parse(line.get(0).split("<span>")[1].split("</span>")[0]).text();
-		String url = "https://osu.ppy.sh/d/" + setId + "n";
+		String url = "https://osu.ppy.sh/beatmapsets/" + setId + "/download";
 		
 		try{
 			url = Utils.getFinalURL(url);
