@@ -5,7 +5,7 @@ import java.util.List;
 
 public abstract class IncomingRequest{
 
-	private String syntax;
+	protected String syntax;
 	private String operation; //eq, cont, start, end
 	private static List<IncomingRequest> incomingRequests;
 	
@@ -41,6 +41,7 @@ public abstract class IncomingRequest{
 		incomingRequests.add(new DiscordOnlineUsersRequest());
 		incomingRequests.add(new ExecIRCRequest());
 		incomingRequests.add(new VerifyUserRequest());
+		incomingRequests.add(new JSONHighscoreUploadRequest());
 	}
 	
 	public abstract void onRequest(String request);

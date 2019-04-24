@@ -128,6 +128,11 @@
 	    <artifactId>commons-math3</artifactId>
 	    <version>3.6.1</version>
 	</dependency>
+	<dependency>
+      <groupId>com.github.francesco149</groupId>
+      <artifactId>koohii</artifactId>
+      <version>1.2.2</version>
+    </dependency>
   </dependencies>
   <repositories>
 	<repository>

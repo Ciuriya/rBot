@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -51,9 +52,12 @@ public class Server{
 					
 					for(int i = 0; i < rMsgByte.length; i++) rMsgByte[i] = socketInputStream.readByte();
 					
-					message = new String(rMsgByte);
+					message = new String(rMsgByte, StandardCharsets.UTF_8);
 					
 					Log.logger.log(Level.INFO, "Received message: " + message);
+					
+					if(message.length() > 0) sendMessage(workerSocket, "OK");
+					else sendMessage(workerSocket, "ERROR");
 				}catch(Exception e){
 					Log.logger.log(Level.SEVERE, e.getMessage(), e);
 				}finally{		
@@ -99,12 +103,30 @@ public class Server{
 	
 	public static void sendMessage(String ip, int portSend, String message){
 		Socket clientSocket = null;
+		
+		try{
+			clientSocket = new Socket(ip, portSend);
+			
+			sendMessage(clientSocket, message);
+		}catch(Exception e){
+			Log.logger.log(Level.SEVERE, "Could not send message: " + message + "\n" + e.getMessage(), e);
+		}finally{
+			try{
+				if(clientSocket != null && !clientSocket.isClosed())
+					clientSocket.close();
+			}catch(IOException e){
+				Log.logger.log(Level.SEVERE, e.getMessage(), e);
+			}
+		}
+		
+	}
+	
+	public static void sendMessage(Socket clientSocket, String message){
 		OutputStream os = null;
 		OutputStreamWriter osw = null;
 		BufferedWriter bw = null;
 		
 		try{
-			clientSocket = new Socket(ip, portSend);
 	        os = clientSocket.getOutputStream();
 	        osw = new OutputStreamWriter(os);
 	        bw = new BufferedWriter(osw);

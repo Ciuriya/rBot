@@ -25,17 +25,17 @@ public class DefaultPlayFormat extends PlayFormat{
 		text += TrackingUtils.escapeCharacters(play.getArtist() + " - " + play.getTitle() + 
 				" [" + play.getDifficulty() + "] " + modHighlight + play.getModDisplay() + modHighlight + "\n");
 		
-		// 99.6% • 9x100 
+		// 99.6% â€¢ 9x100 
 		String fullHitText = play.getFullHitText();
 		String accText = Utils.df(play.getAccuracy()) + "%";
 		
 		if(fullHitText.length() > 0)
-			accText += " • " + fullHitText;
+			accText += " â€¢ " + fullHitText;
 		
 		text += accText + "\n";
 		
-		// 94,441,230 • 2055/2056 • S rank • #9 on map
-		String playInfoText = play.getScore() + " • ";
+		// 94,441,230 ï¿½ 2055/2056 ï¿½ S rank ï¿½ #9 on map
+		String playInfoText = play.getScore() + " â€¢ ";
 		
 		if(play.isPerfect())
 			playInfoText += "FC (" + play.getCombo() + "x)";
@@ -47,10 +47,10 @@ public class DefaultPlayFormat extends PlayFormat{
 			else playInfoText += "x";
 		}
 		
-		playInfoText += " • " + play.getFormattedRank() + " rank";
+		playInfoText += " â€¢ " + play.getFormattedRank() + " rank";
 		
 		if(play.getMapRank() > 0)
-			playInfoText += " • **#" + play.getMapRank() + "** on map";
+			playInfoText += " â€¢ **#" + play.getMapRank() + "** on map";
 		
 		text += playInfoText;
 		        
@@ -68,27 +68,29 @@ public class DefaultPlayFormat extends PlayFormat{
 			ppText += Utils.df(play.getPP(), 2) + "pp" + pbUnderline + "**";
 			
 			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0){
-				ppText += " (" + Utils.df(play.getPPForFC(), 2) + "pp for FC)";
-				ppText += "\n*" + play.getAimPP() + " aim* • *" + play.getSpeedPP() + " speed* • *" + play.getAccPP() + " acc*";
+				if(!play.isPerfect() && play.getPP() != play.getPPForFC())
+					ppText += " (" + Utils.df(play.getPPForFC(), 2) + "pp for FC)";
+				
+				ppText += "\n*" + play.getAimPP() + " aim* â€¢ *" + play.getSpeedPP() + " speed* â€¢ *" + play.getAccPP() + " acc*";
 			}
 		}
 		
 		text += ppText;
 		        
-		// 6557.62pp (+0.28pp) • #30 personal best
-		// #1,834 (-1) • #77 CA (0)
+		// 6557.62pp (+0.28pp) ï¿½ #30 personal best
+		// #1,834 (-1) ï¿½ #77 CA (0)
 		String playerRankChangesText = "\n\n";
 		
 		if(Math.abs(play.getPPChange()) >= 0.01){
 			playerRankChangesText += player.getPP() + "pp (**" + play.getFormattedPPChange() + "**)";
 			
 			if(play.isPersonalBest())
-				playerRankChangesText += " • **#" + play.getPersonalBestCount() + "** personal best\n";
+				playerRankChangesText += " â€¢ **#" + play.getPersonalBestCount() + "** personal best\n";
 			else playerRankChangesText += "\n";
 		}
 		
 		if(Math.abs(play.getRankChange()) >= 1){
-			playerRankChangesText += "#" + Utils.veryLongNumberDisplay(player.getRank()) + " (**" + play.getFormattedRankChange() + "**) • #" +
+			playerRankChangesText += "#" + Utils.veryLongNumberDisplay(player.getRank()) + " (**" + play.getFormattedRankChange() + "**) â€¢ #" +
 									 Utils.veryLongNumberDisplay(player.getCountryRank()) + " " + play.getCountry() + 
 									 " (**" + play.getFormattedCountryRankChange() + "**)\n\n";
 		}else if(Math.abs(play.getPPChange()) >= 0.01 && play.getPP() > 0.0)
@@ -96,14 +98,14 @@ public class DefaultPlayFormat extends PlayFormat{
 		
 		text += playerRankChangesText;
 				
-		// Map • http://osu.ppy.sh/b/923985 • Ranked
-		text += "Map • <http://osu.ppy.sh/b/" + play.getBeatmapId() + "> • " + play.getRankedStatus() + "\n";
+		// Map ï¿½ http://osu.ppy.sh/b/923985 ï¿½ Ranked
+		text += "Map â€¢ <http://osu.ppy.sh/b/" + play.getBeatmapId() + "> â€¢ " + play.getRankedStatus() + "\n";
 		
-		// - Auto - • http://osu.ppy.sh/u/4891293
-		text += player.getUsername() + " • <http://osu.ppy.sh/u/" + player.getUserId() + ">\n";
+		// - Auto - ï¿½ http://osu.ppy.sh/u/4891293
+		text += player.getUsername() + " â€¢ <http://osu.ppy.sh/u/" + player.getUserId() + ">\n";
 		
-		// BG • http://b.ppy.sh/thumb/428052l.jpg
-		text += "BG • http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg";
+		// BG ï¿½ http://b.ppy.sh/thumb/428052l.jpg
+		text += "BG â€¢ http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg";
 		
 		Utils.info(guild.getChannel(player), text);
 	}

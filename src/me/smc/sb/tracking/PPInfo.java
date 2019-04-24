@@ -35,4 +35,8 @@ public class PPInfo{
 	public double getAccPP(){
 		return accPP;
 	}
+	
+	public void setPP(double pp) {
+		this.pp = pp;
+	}
 }

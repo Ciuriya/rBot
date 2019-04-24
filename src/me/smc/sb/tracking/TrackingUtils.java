@@ -9,13 +9,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -86,13 +81,11 @@ public class TrackingUtils{
 			
 			if(displayHtml.contains("achieved") && displayHtml.contains("rank #")){
 				CustomDate date = new CustomDate(jsonObj.getString("date"));
-				date.convertFromOsuDate();
+				//date.convertFromOsuDate();
 				
-				int rank = Utils.stringToInt(displayHtml.split("rank #")[1].split("<\\/b>")[0]);
+				int rank = Utils.stringToInt(displayHtml.replaceAll("<b>", "").replaceAll("<\\/b>", "").split("rank #")[1].split(" on <a href")[0]);
 				int beatmapId = jsonObj.getInt("beatmap_id");
-				
 				RecentPlay play = new RecentPlay(beatmapId, date, rank);
-				
 				boolean equal = false;
 				
 				if(recentPlays.size() > 0)
@@ -229,7 +222,7 @@ public class TrackingUtils{
 		}
 	}
 	
-	private static File fetchOsuFile(int beatmapId, int setId){
+	public static File fetchOsuFile(int beatmapId, int setId){
 		String[] html = Utils.getHTMLCode("https://osu.ppy.sh/b/" + beatmapId);
 		
 		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "beatmapTab active");

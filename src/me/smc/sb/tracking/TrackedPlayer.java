@@ -3,13 +3,11 @@ package me.smc.sb.tracking;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 
 public class TrackedPlayer{
@@ -322,32 +320,13 @@ public class TrackedPlayer{
 					play.setCountryRankChange(countryDiff);
 					play.setCountry(country);
 					
-					PPInfo oppaiPP = new PPInfo(0, 0, 0, 0, 0);
-					
-					if(mode == 0){
-						try{
-							int combo = 0;
-							
-							if(!play.isPerfect()) combo = play.getCombo();
-							
-							oppaiPP = TrackingUtils.fetchPPFromOppai(play.getBeatmapId(),
-																     play.getBeatmapSetId(), 
-																     play.getAccuracy(),
-																     combo, 
-																     play.getModDisplay(), 
-																     play.getMisses(),
-																     play.getFifties(),
-																     play.getHundreds());
-						}catch(Exception e){
-							Log.logger.log(Level.INFO, "Could not load peppers: " + e.getMessage());
-						}
-					}
+					if(mode == 0) play.loadPP();
 					
 					int mapRank = 0;
 					RecentPlay recent = null;
 					
 					for(RecentPlay rPlay : recentPlays)
-						if(rPlay.getBeatmapId() == play.getBeatmapId() && rPlay.isDateValid(play.getDate(), 5)){
+						if(rPlay.getBeatmapId() == play.getBeatmapId() && rPlay.isDateValid(play.getDate(), play.getTotalLength())){
 							mapRank = rPlay.getRank();
 							recent = rPlay;
 							
@@ -370,7 +349,7 @@ public class TrackedPlayer{
 							   TrackingUtils.getAccuracy(topPlay, mode) == play.getAccuracy()){
 								personalBest = j + 1;
 								
-								oppaiPP = new PPInfo(topPlay.getDouble("pp"), oppaiPP.getPPForFC(), oppaiPP.getAimPP(), oppaiPP.getSpeedPP(), oppaiPP.getAccPP());
+								play.getPPInfo().setPP(topPlay.getDouble("pp"));
 								play.setPersonalBestCount(personalBest);
 								
 								break;
@@ -378,7 +357,6 @@ public class TrackedPlayer{
 						}
 					}
 					
-					play.setPPInfo(oppaiPP);
 					plays.add(play);
 				}
 			}
