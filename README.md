@@ -1,4 +1,4 @@
 # rBot
-If you have any suggestion for this bot, either PM the bot and use "~/suggest {suggestion}" or make a pull request :D
 
-Bot made by Smc.
+Old discord bot that used to be somewhat relevant but is now pretty much only used as a personal helper bot.
+Code is somewhat disgusting, but we all get better with time don't we?
