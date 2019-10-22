@@ -42,6 +42,7 @@ public abstract class IncomingRequest{
 		incomingRequests.add(new ExecIRCRequest());
 		incomingRequests.add(new VerifyUserRequest());
 		incomingRequests.add(new JSONHighscoreUploadRequest());
+		incomingRequests.add(new JSONFallJamHighscoreUploadRequest());
 	}
 	
 	public abstract void onRequest(String request);

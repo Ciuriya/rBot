@@ -82,7 +82,7 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			String rankDisplay = "";
 			
 			if(player != null) {
-				rankDisplay = " â€¢ #" + Utils.veryLongNumberDisplay(player.getRank());
+				rankDisplay = " • #" + Utils.veryLongNumberDisplay(player.getRank());
 				
 				if(player.getCountryRank() > 0 && player.getCountry() != null)
 					rankDisplay += " (" + player.getCountry() + " #" + Utils.veryLongNumberDisplay(player.getCountryRank()) + ")";
@@ -96,7 +96,7 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			
 			builder.setColor(Utils.getPercentageColor(fcPercentage));
 			builder.setThumbnail("http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
-			builder.setAuthor(name + " â€¢ " + play.getMode() + rankDisplay, "https://osu.ppy.sh/u/" + osuProfile, "https://a.ppy.sh/" + osuProfile);
+			builder.setAuthor(name + " • " + play.getMode() + rankDisplay, "https://osu.ppy.sh/u/" + osuProfile, "https://a.ppy.sh/" + osuProfile);
 			
 			builder.setTitle(TrackingUtils.escapeCharacters(play.getArtist() + " - " + play.getTitle() + 
 					 " [" + play.getDifficulty() + "] " + play.getModDisplay()), 
@@ -148,7 +148,6 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			
 			if(recentPlays.size() > 0) {
 				for(RecentPlay rPlay : recentPlays) {
-					System.out.println("rPlay id " + rPlay.getBeatmapId() + " play id " + play.getBeatmapId() + " valid: " + rPlay.isDateValid(play.getDate(), play.getTotalLength()) + " rank " + rPlay.getRank());
 					if(rPlay.getBeatmapId() == play.getBeatmapId() && rPlay.isDateValid(play.getDate(), play.getTotalLength()) && rPlay.getRank() > 0){
 						mapRankText = "**#" + rPlay.getRank() + " on map**";
 						break;
@@ -156,22 +155,22 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 				}
 			}
 			
-			builder.appendDescription("â–¸ " + accText + " â€¢ " + comboText + (ppText.length() > 0 ? " â€¢ " + ppText : "") +
-										  			  "\nâ–¸ " + (hitText.length() > 0 ? hitText + " â€¢ " : "") + rankText + " â€¢ " + scoreText  + 
-										  			  (mapCompletionText.length() > 0 ? " â€¢ " + mapCompletionText : "") + (mapRankText.length() > 0 ? " â€¢ " + mapRankText : ""));
+			builder.appendDescription("\u25b8 " + accText + " • " + comboText + (ppText.length() > 0 ? " • " + ppText : "") +
+										  			  "\n\u25b8 " + (hitText.length() > 0 ? hitText + " • " : "") + rankText + " • " + scoreText  + 
+										  			  (mapCompletionText.length() > 0 ? " • " + mapCompletionText : "") + (mapRankText.length() > 0 ? " • " + mapRankText : ""));
 			
 			String beatmapInfoText = "\n\nCS **" + Utils.df(play.getCircleSize(), 2) + 
-					 "** â€¢ AR **" + Utils.df(play.getApproachRate(), 2) +
-					 "** â€¢ OD **" + Utils.df(play.getOverallDifficulty(), 2) +
-					 "** â€¢ HP **" + Utils.df(play.getHPDrain(), 2) +
-					 "** â€¢ **" + Utils.df(play.getStarRating(), 2) + "**\u2605";
+					 "** • AR **" + Utils.df(play.getApproachRate(), 2) +
+					 "** • OD **" + Utils.df(play.getOverallDifficulty(), 2) +
+					 "** • HP **" + Utils.df(play.getHPDrain(), 2) +
+					 "** • **" + Utils.df(play.getStarRating(), 2) + "**\u2605";
 
 			beatmapInfoText += "\n**" + play.getFormattedTotalLength() + "** (**" + play.getFormattedDrainLength() + "** drain)" + 
-											   " â€¢ **" + Utils.df(play.getBPM(), 2) + "**bpm";
+											   " • **" + Utils.df(play.getBPM(), 2) + "**bpm";
 			
 			builder.appendDescription(beatmapInfoText);
 			
-			builder.setFooter("Mapset by " + play.getCreator() + " â€¢ " + play.getRankedStatus() + " at " + play.getLastUpdateDate().getDate() + " UTC",
+			builder.setFooter("Mapset by " + play.getCreator() + " • " + play.getRankedStatus() + " at " + play.getLastUpdateDate().getDate() + " UTC",
 					  					"http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
 			
 			Utils.infoBypass(e.getChannel(), builder.build());

@@ -27,7 +27,7 @@ public class EmbedPlayFormat extends PlayFormat{
 		
 		builder.setThumbnail("http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
 		
-		builder.setAuthor(player.getUsername() + " â€¢ " + play.getMode() + " â€¢ " + play.getDate().getDate() + " UTC", 
+		builder.setAuthor(player.getUsername() + " • " + play.getMode() + " • " + play.getDate().getDate() + " UTC", 
 						  "https://osu.ppy.sh/u/" + player.getUserId(), 
 						  "https://a.ppy.sh/" + player.getUserId());
 		
@@ -71,7 +71,7 @@ public class EmbedPlayFormat extends PlayFormat{
 			ppText += Utils.df(play.getPP(), 2) + "pp**";
 			
 			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0){
-				ppText += "\n*" + play.getAimPP() + " aim* â€¢ *" + play.getSpeedPP() + " speed* â€¢ *" + play.getAccPP() + " acc*";
+				ppText += "\n*" + play.getAimPP() + " aim* • *" + play.getSpeedPP() + " speed* • *" + play.getAccPP() + " acc*";
 				
 				if(!play.isPerfect() && play.getPP() != play.getPPForFC())
 					ppText += "\n" + Utils.df(play.getPPForFC(), 2) + "pp for FC";
@@ -104,22 +104,22 @@ public class EmbedPlayFormat extends PlayFormat{
 		builder.addField("Player Stats", playerStatsText, true);
 		
 		String beatmapInfoText = "CS **" + Utils.df(play.getCircleSize(), 2) + 
-								 "** â€¢ AR **" + Utils.df(play.getApproachRate(), 2) +
-								 "** â€¢ OD **" + Utils.df(play.getOverallDifficulty(), 2) +
-								 "** â€¢ HP **" + Utils.df(play.getHPDrain(), 2) +
-								 "** â€¢ **" + Utils.df(play.getStarRating(), 2) + "**\u2605";
+								 "** • AR **" + Utils.df(play.getApproachRate(), 2) +
+								 "** • OD **" + Utils.df(play.getOverallDifficulty(), 2) +
+								 "** • HP **" + Utils.df(play.getHPDrain(), 2) +
+								 "** • **" + Utils.df(play.getStarRating(), 2) + "**\u2605";
 		
 		beatmapInfoText += "\n**" + play.getFormattedTotalLength() + "** (**" + play.getFormattedDrainLength() + "** drain)" +
-						   " â€¢ **" + Utils.df(play.getBPM(), 2) + "**bpm";
+						   " • **" + Utils.df(play.getBPM(), 2) + "**bpm";
 		
 		beatmapInfoText += "\nDownload from [osu](https://osu.ppy.sh/d/" + play.getBeatmapSetId() + ")" +
 						   " - [no video](https://osu.ppy.sh/d/" + play.getBeatmapSetId() + "n)" +
-						   " â€¢ [osu!direct](osu://b/" + play.getBeatmapId() + ")" +
-						   " â€¢ [bloodcat](https://bloodcat.com/osu/s/" + play.getBeatmapSetId() + ")";
+						   " • [osu!direct](osu://b/" + play.getBeatmapId() + ")" +
+						   " • [bloodcat](https://bloodcat.com/osu/s/" + play.getBeatmapSetId() + ")";
 		
 		builder.addField("Beatmap Information", beatmapInfoText, true);
 		
-		builder.setFooter("Mapset by " + play.getCreator() + " â€¢ " + play.getRankedStatus() + " at " + play.getLastUpdateDate().getDate() + " UTC",
+		builder.setFooter("Mapset by " + play.getCreator() + " • " + play.getRankedStatus() + " at " + play.getLastUpdateDate().getDate() + " UTC",
 						  "http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
 		
 		Utils.info(guild.getChannel(player), builder.build());

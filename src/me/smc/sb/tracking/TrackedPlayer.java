@@ -1,6 +1,7 @@
 package me.smc.sb.tracking;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -272,6 +273,7 @@ public class TrackedPlayer{
 
 			// to compare fetched plays with these to find out if it the fetched play got a map leaderboard spot
 			List<RecentPlay> recentPlays = TrackingUtils.fetchPlayerRecentPlays(jsonUser.getJSONArray("events"), lastUpdate);
+			if(recentPlays.size() > 0) Collections.reverse(recentPlays);
 			
 			String updatedStats = Utils.getOsuPlayerPPAndRank(jsonUser);
 			double updatedPP = Utils.df(Utils.stringToDouble(updatedStats.split("&r=")[0]));
