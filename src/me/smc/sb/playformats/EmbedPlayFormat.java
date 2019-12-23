@@ -73,7 +73,7 @@ public class EmbedPlayFormat extends PlayFormat{
 			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0){
 				ppText += "\n*" + play.getAimPP() + " aim* • *" + play.getSpeedPP() + " speed* • *" + play.getAccPP() + " acc*";
 				
-				if(!play.isPerfect() && play.getPP() != play.getPPForFC())
+				if(!play.isPerfect() && play.getPP() != play.getPPForFC() && play.getPP() < play.getPPForFC())
 					ppText += "\n" + Utils.df(play.getPPForFC(), 2) + "pp for FC";
 			}
 			

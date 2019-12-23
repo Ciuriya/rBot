@@ -182,7 +182,7 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 				
 				ppText += Utils.df(play.getPP(), 2) + "pp**";
 				
-				if(play.getRawMode() == 0 && play.getPPForFC() > 0.0 && !play.isPerfect() && play.getPP() != play.getPPForFC())
+				if(play.getRawMode() == 0 && play.getPPForFC() > 0.0 && !play.isPerfect() && play.getPP() != play.getPPForFC() && play.getPP() < play.getPPForFC())
 					ppText += " (" + Utils.df(play.getPPForFC(), 2) + "pp for FC)";
 			}
 			
@@ -215,10 +215,10 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 					if(play.getDate().after(player.getLastRankUpdate()) && Math.abs(player.getPP() - player.getOldPP()) > 0){
 						oldPP = player.getOldPP();
 						ppDiff = true;
-					}else if(Math.abs(player.getPP() - jsonUser.getInt("pp_raw")) > 0) ppDiff = true;
+					}else if(Math.abs(player.getPP() - jsonUser.getDouble("pp_raw")) > 0) ppDiff = true;
 					
 					if(ppDiff){
-						double diff = jsonUser.getInt("pp_raw") - oldPP;
+						double diff = jsonUser.getDouble("pp_raw") - oldPP;
 						pbText += " (" + (diff > 0 ? "+" : "-") + Math.abs(diff) + "pp)";
 					}
 				}

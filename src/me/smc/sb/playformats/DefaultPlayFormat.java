@@ -69,7 +69,7 @@ public class DefaultPlayFormat extends PlayFormat{
 			ppText += Utils.df(play.getPP(), 2) + "pp" + pbUnderline + "**";
 			
 			if(play.getRawMode() == 0 && play.getPPForFC() > 0.0){
-				if(!play.isPerfect() && play.getPP() != play.getPPForFC())
+				if(!play.isPerfect() && play.getPP() != play.getPPForFC() && play.getPP() < play.getPPForFC())
 					ppText += " (" + Utils.df(play.getPPForFC(), 2) + "pp for FC)";
 				
 				ppText += "\n*" + play.getAimPP() + " aim* • *" + play.getSpeedPP() + " speed* • *" + play.getAccPP() + " acc*";
