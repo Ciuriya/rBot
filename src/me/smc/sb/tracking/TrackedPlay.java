@@ -381,22 +381,32 @@ public class TrackedPlay{
 	}
 	
 	public double getPP(){
+		if(pp == null) return 0.0;
+		
 		return pp.getPP();
 	}
 	
 	public double getPPForFC(){
+		if(pp == null) return 0.0;
+		
 		return pp.getPPForFC();
 	}
 	
 	public double getAimPP(){
+		if(pp == null) return 0.0;
+		
 		return pp.getAimPP();
 	}
 	
 	public double getSpeedPP(){
+		if(pp == null) return 0.0;
+		
 		return pp.getSpeedPP();
 	}
 	
 	public double getAccPP(){
+		if(pp == null) return 0.0;
+		
 		return pp.getAccPP();
 	}
 	

@@ -1,5 +1,6 @@
 package me.smc.sb.playformats;
 
+import me.smc.sb.main.Main;
 import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.tracking.TrackedPlayer;
@@ -102,10 +103,13 @@ public class DefaultPlayFormat extends PlayFormat{
 		text += "Map • <http://osu.ppy.sh/b/" + play.getBeatmapId() + "> • " + play.getRankedStatus() + "\n";
 		
 		// - Auto - • http://osu.ppy.sh/u/4891293
-		text += player.getUsername() + " • <http://osu.ppy.sh/u/" + player.getUserId() + ">\n";
+		text += player.getUsername() + " • <http://osu.ppy.sh/users/" + player.getUserId() + ">\n";
 		
 		// BG ï¿½ http://b.ppy.sh/thumb/428052l.jpg
 		text += "BG • http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg";
+		
+		if(Math.random() >= 0.9)
+			text += "\nTry out our embedded play format! (**" + Main.getCommandPrefix(guild.getChannel(player).getGuild().getId()) + "playformat set embed**)";
 		
 		Utils.info(guild.getChannel(player), text);
 	}

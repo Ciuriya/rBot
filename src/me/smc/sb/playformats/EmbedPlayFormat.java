@@ -28,7 +28,7 @@ public class EmbedPlayFormat extends PlayFormat{
 		builder.setThumbnail("http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
 		
 		builder.setAuthor(player.getUsername() + " • " + play.getMode() + " • " + play.getDate().getDate() + " UTC", 
-						  "https://osu.ppy.sh/u/" + player.getUserId(), 
+						  "https://osu.ppy.sh/users/" + player.getUserId(), 
 						  "https://a.ppy.sh/" + player.getUserId());
 		
 		builder.setTitle(TrackingUtils.escapeCharacters(play.getArtist() + " - " + play.getTitle() + 

@@ -361,7 +361,9 @@ public class TrackedPlayer{
 							   TrackingUtils.getAccuracy(topPlay, mode) - play.getAccuracy() <= 0.01){
 								personalBest = j + 1;
 								
-								play.getPPInfo().setPP(topPlay.getDouble("pp"));
+								if(play.getPPInfo() != null && topPlay.has("pp"))
+									play.getPPInfo().setPP(topPlay.getDouble("pp"));
+								
 								play.setPersonalBestCount(personalBest);
 								
 								break;
