@@ -117,7 +117,9 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 				   topPlay.getLong("score") == play.getRawScore() &&
 				   TrackingUtils.getAccuracy(topPlay, 0) - play.getAccuracy() <= 0.01){
 					
-					play.getPPInfo().setPP(topPlay.getDouble("pp"));
+					if(play.getPPInfo() != null && topPlay.has("pp"))
+						play.getPPInfo().setPP(topPlay.getDouble("pp"));
+					
 					play.setPersonalBestCount(j + 1);
 					
 					break;
@@ -128,10 +130,11 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 				int rank = player.getRank();
 				boolean rankDiff = false;
 				
-				if((play.getDate().after(player.getLastRankUpdate()) && Math.abs(player.getRank() - player.getOldRank()) > 0)){
+				if((play.getDate().after(player.getLastRankUpdate()) && Math.abs(player.getRank() - player.getOldRank()) > 0 && player.getOldRank() > 0)){
 					rank = player.getOldRank();
 					rankDiff = true;
-				}else if(Math.abs(player.getRank() - jsonUser.getInt("pp_rank")) > 0) rankDiff = true;
+				}else if(Math.abs(player.getRank() - jsonUser.getInt("pp_rank")) > 0 && player.getRank() > 0) rankDiff = true;
+				else if(player.getRank() == 0) rank = jsonUser.getInt("pp_rank");
 				
 				rankDisplay = " • #" + Utils.veryLongNumberDisplay(rank) + rankDisplay;
 				
@@ -212,10 +215,10 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 					double oldPP = player.getPP();
 					boolean ppDiff = false;
 					
-					if(play.getDate().after(player.getLastRankUpdate()) && Math.abs(player.getPP() - player.getOldPP()) > 0){
+					if(play.getDate().after(player.getLastRankUpdate()) && Math.abs(player.getPP() - player.getOldPP()) > 0 && player.getOldPP() != 0){
 						oldPP = player.getOldPP();
 						ppDiff = true;
-					}else if(Math.abs(player.getPP() - jsonUser.getDouble("pp_raw")) > 0) ppDiff = true;
+					}else if(Math.abs(player.getPP() - jsonUser.getDouble("pp_raw")) > 0 && player.getPP() > 0) ppDiff = true;
 					
 					if(ppDiff){
 						double diff = jsonUser.getDouble("pp_raw") - oldPP;

@@ -354,13 +354,22 @@ public class TrackedPlay{
 			
 			params.combo = getMaxCombo();
 			
+			if(params.n300 - map.nsliders - map.nspinners < 0)
+				params.score_version = 2;
+			
 			Koohii.PPv2 ppv2 = new Koohii.PPv2(params);
 			ppForFC = ppv2.total;
+			
+			params.score_version = 1;
 			
 			if(!isPerfect()) params.combo = getCombo();
 			
 			params.n300 = getThreeHundreds();
 			params.nmiss = getMisses();
+			
+			if(params.n300 - map.nsliders - map.nspinners < 0)
+				params.score_version = 2;
+			
 			ppv2 = new Koohii.PPv2(params);
 			
 			currentPP = ppv2.total;
@@ -371,6 +380,7 @@ public class TrackedPlay{
 			pp = new PPInfo(currentPP, ppForFC, Utils.stringToDouble(Utils.df(aim, 2)), Utils.stringToDouble(Utils.df(speed, 2)), Utils.stringToDouble(Utils.df(acc, 2)));
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, "Could not load peppers: " + e.getMessage());
+			e.printStackTrace();
 		}finally{
 			osuFile.delete();
 		}

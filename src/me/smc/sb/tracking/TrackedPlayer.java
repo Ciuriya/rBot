@@ -516,12 +516,20 @@ public class TrackedPlayer{
 		return oldPP;
 	}
 	
+	public void setOldPP(double oldPP){
+		this.oldPP = oldPP;
+	}
+	
 	public double getPP(){
 		return pp;
 	}
 	
 	public int getOldRank(){
 		return oldRank;
+	}
+	
+	public void setOldRank(int oldRank){
+		this.oldRank = oldRank;
 	}
 	
 	public int getRank(){
