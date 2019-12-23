@@ -25,6 +25,7 @@ public class TrackedPlay{
 	private double playerPPChange;
 	private int playerRankChange;
 	private int playerCountryRankChange;
+	private int backupMapId;
 	private String country;
 	private MapStats updatedStats;
 	
@@ -34,10 +35,16 @@ public class TrackedPlay{
 		personalBestCount = 0;
 		mapRank = 0;
 		updatedStats = null;
+		backupMapId = 0;
 	}
 	
 	public void loadMap(){
 		map = Map.getMapInfo(play.getInt("beatmap_id"), mode, true);
+	}
+	
+	public void loadMap(int beatmapId){
+		map = Map.getMapInfo(beatmapId, mode, true);
+		backupMapId = beatmapId;
 	}
 	
 	public boolean isMapLoaded(){
@@ -49,7 +56,7 @@ public class TrackedPlay{
 	 */
 	
 	public int getBeatmapId(){
-		return play.getInt("beatmap_id");
+		return backupMapId != 0 ? backupMapId : play.getInt("beatmap_id");
 	}
 	
 	public int getBeatmapSetId(){
@@ -80,24 +87,48 @@ public class TrackedPlay{
 		return TrackingUtils.convertMode(mode);
 	}
 	
+	public double getBaseCircleSize(){
+		return map.getDouble("diff_size");
+	}
+	
 	public double getCircleSize(){
 		return updatedStats != null ? updatedStats.cs : map.getDouble("diff_size");
+	}
+	
+	public double getBaseOverallDifficulty(){
+		return map.getDouble("diff_overall");
 	}
 	
 	public double getOverallDifficulty(){
 		return updatedStats != null ? updatedStats.od : map.getDouble("diff_overall");
 	}
 	
+	public double getBaseApproachRate(){
+		return map.getDouble("diff_approach");
+	}
+	
 	public double getApproachRate(){
 		return updatedStats != null ? updatedStats.ar : map.getDouble("diff_approach");
+	}
+	
+	public double getBaseHPDrain(){
+		return map.getDouble("diff_drain");
 	}
 	
 	public double getHPDrain(){
 		return updatedStats != null ? updatedStats.hp : map.getDouble("diff_drain");
 	}
 	
+	public double getBaseStarRating(){
+		return map.getDouble("difficultyrating");
+	}
+	
 	public double getStarRating(){
 		return updatedStats != null ? updatedStats.stars : map.getDouble("difficultyrating");
+	}
+	
+	public double getBaseBPM(){
+		return map.getDouble("bpm");
 	}
 	
 	public double getBPM(){
@@ -123,6 +154,10 @@ public class TrackedPlay{
 		return date;
 	}
 	
+	public int getBaseTotalLength(){
+		return map.getInt("total_length");
+	}
+	
 	public int getTotalLength(){
 		return updatedStats != null ? (int) ((double) map.getInt("total_length") / updatedStats.speed) : map.getInt("total_length");
 	}
@@ -131,8 +166,20 @@ public class TrackedPlay{
 		return Utils.toDuration(getTotalLength() * 1000);
 	}
 	
+	public String getFormattedBaseTotalLength(){
+		return Utils.toDuration(getBaseTotalLength() * 1000);
+	}
+	
+	public int getBaseDrainLength(){
+		return map.getInt("hit_length");
+	}
+	
 	public int getDrainLength(){
 		return updatedStats != null ? (int) ((double) map.getInt("hit_length") / updatedStats.speed) : map.getInt("hit_length");
+	}
+	
+	public String getFormattedBaseDrainLength(){
+		return Utils.toDuration(getBaseDrainLength() * 1000);
 	}
 
 	public String getFormattedDrainLength(){

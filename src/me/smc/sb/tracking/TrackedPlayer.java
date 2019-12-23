@@ -29,8 +29,11 @@ public class TrackedPlayer{
 	private String username;
 	private int userId;
 	private int mode;
+	private CustomDate lastRankUpdate;
+	private double oldPP;
 	private double pp;
 	private int rank;
+	private int oldRank;
 	private int countryRank;
 	private String country;
 	private boolean updatingPlayer;
@@ -61,6 +64,7 @@ public class TrackedPlayer{
 		rank = 0;
 		countryRank = 0;
 		lastUpdate = new CustomDate();
+		lastRankUpdate = new CustomDate();
 		updatingPlayer = false;
 		currentlyTracking = new ArrayList<>();
 		leaderboardTracking = new ArrayList<>();
@@ -225,6 +229,8 @@ public class TrackedPlayer{
 				countryRank = Utils.stringToInt(stats.split("&cr=")[1]);
 				country = jsonUser.getString("country");
 				username = jsonUser.getString("username");
+				
+				lastRankUpdate = new CustomDate();
 			}
 		}
 
@@ -292,6 +298,12 @@ public class TrackedPlayer{
 			}
 			
 			if(pp != updatedPP || rank != updatedRank || countryRank != updatedCountryRank){
+				if(pp != updatedPP || rank != updatedRank) {
+					oldPP = pp;
+					oldRank = rank;
+					lastRankUpdate = new CustomDate();
+				}
+				
 				pp = updatedPP;
 				rank = updatedRank;
 				countryRank = updatedCountryRank;
@@ -328,11 +340,9 @@ public class TrackedPlayer{
 					RecentPlay recent = null;
 					
 					for(RecentPlay rPlay : recentPlays)
-						if(rPlay.getBeatmapId() == play.getBeatmapId() && rPlay.isDateValid(play.getDate(), play.getTotalLength())){
+						if(rPlay.getBeatmapId() == play.getBeatmapId() && (recent == null || rPlay.getDate().after(recent.getDate()))){
 							mapRank = rPlay.getRank();
 							recent = rPlay;
-							
-							break;
 						}
 					
 					if(recent != null) recentPlays.remove(recent);
@@ -348,7 +358,7 @@ public class TrackedPlayer{
 							if(topPlay.getInt("beatmap_id") == play.getBeatmapId() &&
 							   topPlay.getInt("enabled_mods") == play.getRawMods() &&
 							   topPlay.getLong("score") == play.getRawScore() &&
-							   TrackingUtils.getAccuracy(topPlay, mode) == play.getAccuracy()){
+							   TrackingUtils.getAccuracy(topPlay, mode) - play.getAccuracy() <= 0.01){
 								personalBest = j + 1;
 								
 								play.getPPInfo().setPP(topPlay.getDouble("pp"));
@@ -455,10 +465,28 @@ public class TrackedPlayer{
 	
 	public void setStats(String statString){
 		double temp = Utils.df(Utils.stringToDouble(statString.split("&r=")[0]));
-		if(temp != -1) pp = temp;
+		if(temp != -1){
+			if(temp != pp){
+				oldPP = pp;
+				lastRankUpdate = new CustomDate();
+				
+				if(oldPP == 0) oldPP = temp;
+			}
+			
+			pp = temp;
+		}
 		
 		temp = Utils.stringToInt(statString.split("&r=")[1].split("&cr=")[0]);
-		if(temp != -1) rank = (int) temp;
+		if(temp != -1){
+			if((int) temp != rank) {
+				oldRank = rank;
+				lastRankUpdate = new CustomDate();
+				
+				if(oldRank == 0) oldRank = (int) temp;
+			}
+			
+			rank = (int) temp;
+		}
 		
 		temp = Utils.stringToInt(statString.split("&cr=")[1]);
 		if(temp != -1) countryRank = (int) temp;
@@ -482,8 +510,16 @@ public class TrackedPlayer{
 		return mode;
 	}
 	
+	public double getOldPP(){
+		return oldPP;
+	}
+	
 	public double getPP(){
 		return pp;
+	}
+	
+	public int getOldRank(){
+		return oldRank;
 	}
 	
 	public int getRank(){
@@ -516,6 +552,14 @@ public class TrackedPlayer{
 	
 	public void setLastActive(CustomDate lastActive){
 		this.lastActive = lastActive;
+	}
+	
+	public CustomDate getLastRankUpdate(){
+		return lastRankUpdate;
+	}
+	
+	public void setLastRankUpdate(CustomDate lastRankUpdate){
+		this.lastRankUpdate = lastRankUpdate;
 	}
 	
 	public boolean isActive(){

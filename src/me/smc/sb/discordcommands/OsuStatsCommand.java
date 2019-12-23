@@ -44,22 +44,37 @@ public class OsuStatsCommand extends GlobalCommand{
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		
-		String user = "";
-		String mode = "0";
-		for(int i = 0; i < args.length; i++)
-			if(args[i].contains("{mode=")){
-				mode = args[i].split("\\{mode=")[1].split("}")[0];
-			}else user += " " + args[i];
+		String osuProfile = OsuSetProfileCommand.config.getValue(e.getAuthor().getId());
 		
-		final String finalUser = user.substring(1);
-		final String finalMode = mode;
+		if(args.length > 0) {
+			osuProfile = "";
+			
+			for(int i = 0; i < args.length; i++)
+				osuProfile += " " + args[i];
+			
+			osuProfile = osuProfile.substring(1);
+			osuProfile = Utils.getOsuPlayerIdFast(osuProfile);
+			
+			if(osuProfile.equals("-1") || osuProfile.length() == 0) {
+				Utils.info(e.getChannel(), "Could not find player!");
+				return;
+			}
+		}
+		
+		if(osuProfile.length() == 0) {
+			Utils.info(e.getChannel(), "Your osu! profile is not set! Use " + Main.getCommandPrefix(e.getGuild().getId()) + "osuset {player}");
+			return;
+		}
+		
+		final String finalUser = osuProfile;
+		final String finalMode = "0";
 		
 		Thread t = new Thread(new Runnable(){
 			public void run(){
 				EmbedBuilder builder = new EmbedBuilder();
-				OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + finalUser, "" + finalMode, "string");
-				OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + finalUser, "" + finalMode, "string", "100");
-				OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest(RequestTypes.API, "" + finalUser, "" + finalMode, "string", "50");
+				OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + finalUser, "" + finalMode);
+				OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + finalUser, "" + finalMode, "id", "100");
+				OsuRequest recentPlaysRequest = new OsuRecentPlaysRequest(RequestTypes.API, "" + finalUser, "" + finalMode, "id", "50");
 				Object userObj = Main.hybridRegulator.sendRequest(userRequest, true);
 				Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest, true);
 				Object recentPlaysObj = Main.hybridRegulator.sendRequest(recentPlaysRequest, true);
@@ -106,16 +121,16 @@ public class OsuStatsCommand extends GlobalCommand{
 					
 					builder.addField("Rank", "World #" + Utils.veryLongNumberDisplay(user.getInt("pp_rank")) + "\n" + 
 											 user.getString("country") + " #" + Utils.veryLongNumberDisplay(user.getInt("pp_country_rank")) + "\n" +
-											 Utils.df(growth) + "% growth",
+											 Utils.df(growth) + "% growth\n(#" + rankIncrease[3] + " -> #" + rankIncrease[4] + ")",
 											 true);
 					
 					int rankCount = user.getInt("count_rank_ss") + user.getInt("count_rank_ssh") + 
-									htmlUser.getInt("count_rank_s") + user.getInt("count_rank_a");
-					builder.addField("Performance Points", Utils.veryLongNumberDisplay(user.getDouble("pp_raw")) + "pp" + "\n" +
-											 			   Utils.df(findBonusPP(rankCount), 4) + " bonus pp", true);
+									user.getInt("count_rank_s") + user.getInt("count_rank_sh") + user.getInt("count_rank_a");
+					builder.addField("Performance Points", Utils.veryLongNumberDisplay(user.getDouble("pp_raw")) + "pp" + "\n~" +
+											 			   Utils.df(findBonusPP(rankCount), 2) + " bonus pp", true);
 					
-					builder.addField("Accuracy", "Weighted • " + Utils.df(user.getDouble("accuracy"), 4) + "%" +
-											 	 (finalMode.equals("2") ? "" : "\nTotal • " + Utils.df(totalAcc, 4) + "%") +
+					builder.addField("Accuracy", "Overall • " + Utils.df(user.getDouble("accuracy"), 3) + "%" +
+											 	 (finalMode.equals("2") ? "" : "\nTotal • " + Utils.df(totalAcc, 3) + "%") +
 											 	 (recentAcc > 0.0 ? "\nRecent • " + recentAcc + "%" : "") +
 											 	 "\n" + Utils.df((double) user.getInt("count300") / (double) totalHits * 100) + "% 300s" +
 											 	 "\n" + Utils.df((double) user.getInt("count100") / (double) totalHits * 100) + "% 100s" +
@@ -132,12 +147,12 @@ public class OsuStatsCommand extends GlobalCommand{
 											  "Total • " + Utils.veryLongNumberDisplay(user.getLong("total_score")), true);
 					
 					builder.addField("Other Stats", Utils.veryLongNumberDisplay(user.getInt("count_rank_ss")) + " SS • " + 
-											  		Utils.veryLongNumberDisplay(user.getInt("count_rank_s")) + " S • " + 
+											  		Utils.veryLongNumberDisplay(user.getInt("count_rank_ssh")) + " SSH\n" + 
+											  		Utils.veryLongNumberDisplay(user.getInt("count_rank_s")) + " S • " +
+											  		Utils.veryLongNumberDisplay(user.getInt("count_rank_sh")) + " SH\n" +
 											  		Utils.veryLongNumberDisplay(user.getInt("count_rank_a")) + " A\n" +
-											  		Utils.veryLongNumberDisplay(user.getInt("count_rank_ssh")) + " SSH • " +
-											  		Utils.veryLongNumberDisplay(htmlUser.getInt("count_rank_s") - user.getInt("count_rank_sh")) + " SH\n" +
-											  		"Replays Watched • " + Utils.veryLongNumberDisplay(htmlUser.getInt("replays_watched")) + " times\n" +
-											  		"Kudosu Earned • " + Utils.veryLongNumberDisplay(htmlUser.getInt("kudosu_earned")), 
+											  		Utils.veryLongNumberDisplay(htmlUser.getInt("replays_watched")) + " Replays Watched\n" +
+											  		Utils.veryLongNumberDisplay(htmlUser.getInt("kudosu_earned")) + " Kudosu Earned", 
 											  		true);
 					
 					builder.addField("Top Play", "[" + topPlay.getFormattedTitle() + "](https://osu.ppy.sh/b/" + topPlay.getBeatmapId() + ") " + 

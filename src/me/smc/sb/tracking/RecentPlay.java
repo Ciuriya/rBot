@@ -19,9 +19,13 @@ public class RecentPlay{
 		beforeDate.add(-secondsLeeway);
 		afterDate.add(secondsLeeway);
 		
-		if(otherDate.after(beforeDate) && afterDate.after(beforeDate)) return true;
+		if(otherDate.after(beforeDate) && afterDate.after(otherDate)) return true;
 		
 		return false;
+	}
+	
+	public CustomDate getDate(){
+		return date;
 	}
 	
 	public int getBeatmapId(){
