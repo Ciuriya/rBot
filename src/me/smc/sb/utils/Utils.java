@@ -231,6 +231,14 @@ public class Utils{
 		}
 	}
 	
+	public static long stringToLong(String str){
+		try{
+			return Long.parseLong(str);
+		}catch(Exception e){
+			return -1;
+		}
+	}
+	
 	public static String addPrefix(String prefix, String command){
 		return prefix + command;
 	}

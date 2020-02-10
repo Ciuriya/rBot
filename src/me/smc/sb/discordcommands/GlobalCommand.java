@@ -119,6 +119,7 @@ public abstract class GlobalCommand{
 		commands.add(new PollIRCCommand());
 		commands.add(new PollCommand());
 		commands.add(new ReceivePMCommand());
+		commands.add(new ReminderCommand());
 		commands.add(new RPGCommand());
 		commands.add(new SearchCommand());
 		commands.add(new SetPrefixCommand());
