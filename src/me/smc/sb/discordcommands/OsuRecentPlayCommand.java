@@ -222,9 +222,15 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 					
 					if(ppDiff){
 						double diff = jsonUser.getDouble("pp_raw") - oldPP;
-						pbText += " (" + (diff > 0 ? "+" : "-") + Math.abs(diff) + "pp)";
+						pbText += " (" + (diff > 0 ? "+" : "-") + Utils.df(Math.abs(diff), 2) + "pp)";
 					}
 				}
+			}
+			
+			if(player != null){
+				if((Math.abs(jsonUser.getDouble("pp_raw") - player.getPP()) > 0 && player.getPP() != 0) || 
+				   (Math.abs(jsonUser.getInt("pp_rank") - player.getRank()) > 0 && player.getRank() != 0))
+					player.setStats(jsonUser.getDouble("pp_raw") + "&r=" + jsonUser.getInt("pp_rank") + "&cr=" + jsonUser.getInt("pp_country_rank"));
 			}
 			
 			builder.appendDescription("\u25b8 " + accText + " • " + comboText + (ppText.length() > 0 ? " • " + ppText : "") +

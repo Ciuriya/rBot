@@ -297,18 +297,6 @@ public class TrackedPlayer{
 				rankDiff = 0;
 			}
 			
-			if(pp != updatedPP || rank != updatedRank || countryRank != updatedCountryRank){
-				if(pp != updatedPP || rank != updatedRank) {
-					oldPP = pp;
-					oldRank = rank;
-					lastRankUpdate = new CustomDate();
-				}
-				
-				pp = updatedPP;
-				rank = updatedRank;
-				countryRank = updatedCountryRank;
-			}
-			
 			OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + userId, "" + mode);
 			Object topPlaysObj = Main.hybridRegulator.sendRequest(topPlaysRequest);
 			JSONArray tpJsonResponse = null;
@@ -327,6 +315,11 @@ public class TrackedPlayer{
 				
 				if(play.getDate().after(lastUpdate)){
 					if(jsonObj.getString("rank").equalsIgnoreCase("F")) continue;
+					
+					if(lastRankUpdate.after(play.getDate())){
+						ppDiff = updatedPP - oldPP;
+						rankDiff = updatedRank - oldRank;
+					}
 					
 					play.loadMap();
 					play.setPPChange(ppDiff);
@@ -351,7 +344,7 @@ public class TrackedPlayer{
 					
 					int personalBest = 0;
 
-					if(Math.abs(ppDiff) > 0 && tpJsonResponse != null){
+					if((Math.abs(ppDiff) > 0 || lastRankUpdate.after(play.getDate())) && tpJsonResponse != null){
 						for(int j = 0; j < tpJsonResponse.length(); j++){
 							JSONObject topPlay = tpJsonResponse.getJSONObject(j);
 							
@@ -374,6 +367,8 @@ public class TrackedPlayer{
 					plays.add(play);
 				}
 			}
+			
+			if(updatedPP > 0) setStats(updatedStats);
 		}
 		
 		if(recentPlaysObj != null && recentPlaysObj instanceof JSONArray){
