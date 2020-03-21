@@ -223,6 +223,7 @@ public class Entity{
 	}
 	
 	private void insert(){
+		/*
 		try{
 			Long id = new JdbcSession(Main.rpgSQL)
 			.sql("INSERT INTO Entity (name, experience, class, specialization, race, gender, " +
@@ -254,9 +255,11 @@ public class Entity{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+		*/
 	}
 	
 	public void save(){
+		/*
 		if(id == -1){
 			insert();
 			return;
@@ -292,9 +295,11 @@ public class Entity{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+		*/
 	}
 	
 	public void delete(){
+		/*
 		try{
 			new JdbcSession(Main.rpgSQL)
 			.sql("DELETE FROM Entity WHERE id_entity='?'")
@@ -303,6 +308,7 @@ public class Entity{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+		*/
 		
 		unload();
 	}
@@ -335,6 +341,7 @@ public class Entity{
 	}
 	
 	private void load(int id){
+		/*
 		try{
 			new JdbcSession(Main.rpgSQL)
 			.sql("SELECT id_entity, name, experience, class, specialization, race, gender, strength, endurance, " +
@@ -354,6 +361,7 @@ public class Entity{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+		*/
 	}
 	
 	private static void load(ResultSet rset){
@@ -436,6 +444,7 @@ public class Entity{
 		Thread t = new Thread(new Runnable(){
 			@SuppressWarnings("deprecation")
 			public void run(){
+				/*
 				try{
 					new JdbcSession(Main.rpgSQL)
 					.sql(query)
@@ -445,6 +454,7 @@ public class Entity{
 				}finally{
 					Thread.currentThread().stop();
 				}
+				*/
 			}
 		});
 		

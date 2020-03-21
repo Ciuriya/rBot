@@ -54,7 +54,7 @@ public class Main{
 	public static boolean discordConnected = false;
 	public static long bootTime = 0;
 	public static List<Server> servers;
-	public static Connection tourneySQL, rpgSQL;
+	//public static Connection tourneySQL, rpgSQL;
 	public static TwitchRegulator twitchRegulator;
 	public static BanchoRegulator banchoRegulator;
 	public static HybridRegulator hybridRegulator;
@@ -79,7 +79,7 @@ public class Main{
 			}
 		}, 0, 5000);
 		
-		setupSQL();
+		//setupSQL();
 	
 		serverConfigs = new HashMap<String, Configuration>();
 		
@@ -201,6 +201,7 @@ public class Main{
 }
 	
 	private void setupSQL(){
+		/*
 		String tUrl = "jdbc:mysql://localhost/Tournament_DB";
 		String rUrl = "jdbc:mysql://localhost/DRPG";
 		String pass = new Configuration(new File("login.txt")).getValue("rootPass");
@@ -212,6 +213,7 @@ public class Main{
 		}catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+		*/
 	}
 	
 	public static void stop(int code){

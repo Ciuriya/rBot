@@ -8,7 +8,7 @@ public enum Mods{
 	None(0, "NM"), 
 	NoFail(1, "NF"), 
 	Easy(2, "EZ"),
-	NoVideo(4, "NV"),
+	TouchDevice(4, "TD"),
 	Hidden(8, "HD"), 
 	HardRock(16, "HR"), 
 	SuddenDeath(32, "SD"), 
@@ -28,14 +28,17 @@ public enum Mods{
 	Key8(524288, "8K"),
 	FadeIn(1048576, "FI"),
 	Random(2097152, "RA"),
-	LastMod(4194304, "LM"),
+	Cinema(4194304, "CN"),
+	Target(8388608, "TP"),
 	Key9(16777216, "9K"),
 	Key10(33554432, "10K"),
 	Key1(67108864, "1K"),
 	Key3(134217728, "3K"),
-	Key2(268435456, "2K");
+	Key2(268435456, "2K"),
+	ScoreV2(536870912, "V2"),
+	Mirror(1073741824, "MR");
 	
-	int bit;
+	long bit;
 	String shortName;
 	
 	Mods(int bit, String shortName){
@@ -43,7 +46,7 @@ public enum Mods{
 		this.shortName = shortName;
 	}
 	
-	public int getBit(){
+	public long getBit(){
 		return bit;
 	}
 	
@@ -51,8 +54,8 @@ public enum Mods{
 		return shortName;
 	}
 
-	public static int getMods(String sMods){
-		int bits = 0;
+	public static long getMods(String sMods){
+		long bits = 0;
 		
 		for(String sMod : sMods.split(","))
 			for(Mods mod : Mods.values())
@@ -66,11 +69,11 @@ public enum Mods{
 	
 	public static List<Mods> getMods(int modsUsed){
 		List<Mods> mods = new ArrayList<>();
-		int used = modsUsed;
+		long used = modsUsed;
 		
 		if(used == 0) return mods;
 		
-		for(int i = 16384; i >= 1; i /= 2){
+		for(long i = 1073741824; i >= 1; i /= 2){
 			Mods mod = Mods.getMod(i);
 			
 			if(used >= i){
@@ -86,8 +89,8 @@ public enum Mods{
 		return mods;
 	}
 	
-	public static int getMods(List<Mods> mods){
-		int modsUsed = 0;
+	public static long getMods(List<Mods> mods){
+		long modsUsed = 0;
 		
 		for(Mods mod : mods)
 			modsUsed += mod.getBit();
@@ -104,7 +107,7 @@ public enum Mods{
 		return display.length() == 0 ? "" : "+" + display;
 	}
 	
-	public static Mods getMod(int bit){
+	public static Mods getMod(long bit){
 		for(Mods mod : Mods.values())
 			if(mod.getBit() == bit) return mod;
 		
