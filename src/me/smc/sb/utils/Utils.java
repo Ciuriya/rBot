@@ -50,7 +50,6 @@ import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuUserRequest;
 import me.smc.sb.tracking.RequestTypes;
 import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -611,12 +610,8 @@ public class Utils{
 		t.schedule(new TimerTask(){	
 			@Override public void run(){
 				try{
-					if(channel instanceof TextChannel){
-						Member member = ((TextChannel) channel).getMembers().stream().filter(m -> m.getUser().getId().equals(msg.getAuthor().getId())).findFirst().orElse(null);
-						
-						if(member != null)
-							msg.delete().queue();
-					}
+					if(channel instanceof TextChannel)
+						msg.delete().queue();
 				}catch(Exception e){}
 			}
 		}, 1000);
