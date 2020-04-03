@@ -13,8 +13,8 @@ import me.smc.sb.tracking.RequestTypes;
 import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuScoresCommand extends GlobalCommand{
 

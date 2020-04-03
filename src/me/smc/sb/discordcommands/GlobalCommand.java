@@ -5,11 +5,11 @@ import java.util.List;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
-import net.dv8tion.jda.core.entities.ChannelType;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public abstract class GlobalCommand{
 
@@ -109,6 +109,7 @@ public abstract class GlobalCommand{
 		commands.add(new MsgUserCommand());
 		commands.add(new OsuLastTopPlays());
 		commands.add(new OsuLiveLeaderboardCommand());
+		commands.add(new OsuMapRankTrackCommand());
 		commands.add(new OsuRecentPlayCommand());
 		commands.add(new OsuScoresCommand());
 		commands.add(new OsuSetProfileCommand());

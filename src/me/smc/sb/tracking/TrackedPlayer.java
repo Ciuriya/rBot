@@ -295,6 +295,7 @@ public class TrackedPlayer{
 			if(updatedPP <= 0){
 				ppDiff = 0;
 				rankDiff = 0;
+				countryDiff = 0;
 			}
 			
 			OsuRequest topPlaysRequest = new OsuTopPlaysRequest("" + userId, "" + mode);
@@ -324,7 +325,7 @@ public class TrackedPlayer{
 					play.loadMap();
 					play.setPPChange(ppDiff);
 					play.setRankChange(rankDiff);
-					play.setCountryRankChange(countryDiff);
+					play.setCountryRankChange(countryRank > 0 ? countryDiff : 0);
 					play.setCountry(country);
 					
 					if(mode == 0) play.loadPP();
@@ -468,8 +469,8 @@ public class TrackedPlayer{
 				lastRankUpdate = new CustomDate();
 				
 				if(oldPP == 0) oldPP = temp;
-			}
-			
+			}else if(pp != oldPP) oldPP = pp;
+
 			pp = temp;
 		}
 		
@@ -480,7 +481,7 @@ public class TrackedPlayer{
 				lastRankUpdate = new CustomDate();
 				
 				if(oldRank == 0) oldRank = (int) temp;
-			}
+			}else if(rank != oldRank) oldRank = rank;
 			
 			rank = (int) temp;
 		}

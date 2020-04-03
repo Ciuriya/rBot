@@ -148,8 +148,8 @@ public class TrackedPlay{
 	}
 	
 	public CustomDate getLastUpdateDate(){
-		CustomDate date = new CustomDate(map.getString("last_update"));
-		date.convertFromOsuDate();
+		CustomDate date = new CustomDate(map.getString("approved_date"));
+		//date.convertFromOsuDate();
 		
 		return date;
 	}

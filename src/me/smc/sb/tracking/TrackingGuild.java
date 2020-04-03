@@ -9,7 +9,7 @@ import java.util.Map;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 public class TrackingGuild{
 

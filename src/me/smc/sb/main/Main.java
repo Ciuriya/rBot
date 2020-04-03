@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,10 +34,9 @@ import me.smc.sb.utils.DiscordPlayStatusManager;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.TwitchRegulator;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.OnlineStatus;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.OnlineStatus;
 
 public class Main{
 	
@@ -167,8 +164,7 @@ public class Main{
 	
 	private void login(){
 		try{
-			Listener l = new Listener();
-			api = new JDABuilder(AccountType.BOT).setToken(discordToken).addEventListener(l).build();
+			api = JDABuilder.createDefault(discordToken).addEventListeners(new Listener()).build();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;
@@ -200,6 +196,7 @@ public class Main{
 		}
 }
 	
+	@SuppressWarnings("unused")
 	private void setupSQL(){
 		/*
 		String tUrl = "jdbc:mysql://localhost/Tournament_DB";

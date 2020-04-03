@@ -6,7 +6,7 @@ import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingGuild;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.api.EmbedBuilder;
 
 public class EmbedPlayFormat extends PlayFormat{
 
@@ -114,7 +114,6 @@ public class EmbedPlayFormat extends PlayFormat{
 		
 		beatmapInfoText += "\nDownload from [osu](https://osu.ppy.sh/d/" + play.getBeatmapSetId() + ")" +
 						   " - [no video](https://osu.ppy.sh/d/" + play.getBeatmapSetId() + "n)" +
-						   " • [osu!direct](osu://b/" + play.getBeatmapId() + ")" +
 						   " • [bloodcat](https://bloodcat.com/osu/s/" + play.getBeatmapSetId() + ")";
 		
 		builder.addField("Beatmap Information", beatmapInfoText, true);

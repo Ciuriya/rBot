@@ -49,15 +49,15 @@ import me.smc.sb.tourney.Tournament;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuUserRequest;
 import me.smc.sb.tracking.RequestTypes;
-import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.MessageEmbed;
-import net.dv8tion.jda.core.entities.PrivateChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.PrivateChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class Utils{
 
@@ -248,6 +248,12 @@ public class Utils{
 		return String.format("[%s-%s-%s | %s:%s:%s]", parse(c.get(Calendar.YEAR)), parse(c.get(Calendar.MONTH) + 1),
 				                                      parse(c.get(Calendar.DAY_OF_MONTH)), parse(c.get(Calendar.HOUR_OF_DAY)),
 				                                      parse(c.get(Calendar.MINUTE)), parse(c.get(Calendar.SECOND)));
+	}
+	
+	public static String getMySQLDate(Calendar c){
+		return String.format("%s-%s-%s %s:%s:%s", parse(c.get(Calendar.YEAR)), parse(c.get(Calendar.MONTH) + 1),
+				                                  parse(c.get(Calendar.DAY_OF_MONTH)), parse(c.get(Calendar.HOUR_OF_DAY)),
+				                                  parse(c.get(Calendar.MINUTE)), parse(c.get(Calendar.SECOND)));
 	}
 	
 	private static String parse(int num){

@@ -1,18 +1,22 @@
 package me.smc.sb.perm;
 
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 public enum Permissions{
 
 	INSTANT_INVITE(0),
 	KICK_MEMBER(1),
 	BAN_MEMBER(2),
-	MANAGE_ROLES(3),
+	DISCORD_ADMIN(3),
 	MANAGE_CHANNELS(4),
 	MANAGE_SERVER(5),
+	ADD_REACTION(6),
+	VIEW_AUDIT_LOGS(7),
+	PRIORITY_SPEAKER(8),
+	VIEW_CHANNEL(10),
 	READ_MESSAGES(10),
 	SEND_MESSAGES(11),
 	SEND_TTS_MESSAGES(12),
@@ -21,12 +25,20 @@ public enum Permissions{
 	ATTACH_FILES(15),
 	READ_MESSAGE_HISTORY(16),
 	MENTION_EVERYONE(17),
+	USE_EXTERNAL_EMOJIS(18),
+	VOICE_STREAM(9),
 	VOICE_CONNECT(20),
 	VOICE_SPEAK(21),
 	VOICE_MUTE_MEMBERS(22),
 	VOICE_DEAFEN_MEMBERS(23),
 	VOICE_MOVE_MEMBERS(24),
 	VOICE_USE_VAD(25),
+	NICKNAME_CHANGE(26),
+	NICKNAME_MANAGE(27),
+	MANAGE_ROLES(28),
+	MANAGE_PERMISSIONS(28),
+	MANAGE_WEBHOOKS(29),
+	MANAGE_EMOTES(30),
 	TOURNEY_ADMIN(999),
 	BOT_ADMIN(1000),
 	IRC_BOT_ADMIN(1001);

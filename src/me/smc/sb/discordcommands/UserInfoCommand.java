@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class UserInfoCommand extends GlobalCommand{
 
@@ -56,7 +56,6 @@ public class UserInfoCommand extends GlobalCommand{
 		StringBuilder builder = new StringBuilder();
 		builder.append("```User info for " + user.getName() + "\n")
 			   .append("User status: " + member.getOnlineStatus().name().toLowerCase() + "\n")
-			   .append("Playing (" + member.getGame() + ")\n")
 		       .append("User id: " + user.getId() + "\n")
 		       .append("Discriminator: " + user.getDiscriminator() + "\n")
 		       .append("Roles: " + roles + "\n")

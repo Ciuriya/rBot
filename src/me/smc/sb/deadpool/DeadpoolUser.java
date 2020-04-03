@@ -1,6 +1,6 @@
 package me.smc.sb.deadpool;
 
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.entities.User;
 
 public class DeadpoolUser{
 

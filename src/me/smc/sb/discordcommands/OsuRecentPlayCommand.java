@@ -23,8 +23,8 @@ import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuRecentPlayCommand extends GlobalCommand{
 	
@@ -234,9 +234,9 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			}
 			
 			builder.appendDescription("\u25b8 " + accText + " • " + comboText + (ppText.length() > 0 ? " • " + ppText : "") +
-										  			  "\n\u25b8 " + (hitText.length() > 0 ? hitText + " • " : "") + rankText + " • " + scoreText + 
-										  			  (mapCompletionText.length() > 0 ? " • " + mapCompletionText : "") + (mapRankText.length() > 0 ? " • " + mapRankText : "") +
-										  			  "\n\u25b8 " + (pbText.length() > 0 ? pbText + " • " : "") + tryText);
+						  			  "\n\u25b8 " + (hitText.length() > 0 ? hitText + " • " : "") + rankText + " • " + scoreText + 
+						  			  (mapCompletionText.length() > 0 ? " • " + mapCompletionText : "") + (mapRankText.length() > 0 ? " • " + mapRankText : "") +
+						  			  "\n\u25b8 " + (pbText.length() > 0 ? pbText + " • " : "") + tryText);
 			
 			String beatmapInfoText = "\n\nCS **" + Utils.df(play.getCircleSize(), 2) + 
 					 "** • AR **" + Utils.df(play.getApproachRate(), 2) +

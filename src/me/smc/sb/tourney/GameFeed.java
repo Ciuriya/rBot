@@ -9,10 +9,9 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import me.smc.sb.main.Main;
-import me.smc.sb.tourney.Player;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
 
 public class GameFeed{
 

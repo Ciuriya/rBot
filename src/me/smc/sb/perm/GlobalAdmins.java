@@ -1,10 +1,10 @@
 package me.smc.sb.perm;
 
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.entities.User;
 
 public enum GlobalAdmins{
 
-	SMC("91302128328392704", false, "Smc"),
+	SMC("91302128328392704", false, "-Skye"),
 	AUTO("91184384442384384", false, "-_Auto_-"),
 	ST("77631618088435712", true, "_Tyler"),
 	PATY("120978498956296194", true, "");

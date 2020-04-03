@@ -13,10 +13,10 @@ import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.tracking.TrackingGuild;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuLiveLeaderboardCommand extends GlobalCommand{
 

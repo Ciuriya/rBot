@@ -7,13 +7,13 @@ import java.util.List;
 
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ListServersCommand extends GlobalCommand{
 
@@ -61,9 +61,10 @@ public class ListServersCommand extends GlobalCommand{
 				
 				if(messages != null && messages.size() > 0){
 					Message msg = messages.get(0);
+					OffsetDateTime creationTime = msg.getTimeCreated();
 					
-					if(lastMessageDate == null || msg.getCreationTime().isAfter(lastMessageDate)){
-						lastMessageDate = msg.getCreationTime();
+					if(lastMessageDate == null || creationTime.isAfter(lastMessageDate)){
+						lastMessageDate = creationTime;
 						lastMessageChannel = channel;
 						poster = msg.getAuthor();
 					}

@@ -5,9 +5,9 @@ import java.io.File;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 
 public class DiscordIDRequest extends IncomingRequest{
 	

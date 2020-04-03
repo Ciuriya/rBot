@@ -11,10 +11,10 @@ import me.smc.sb.tracking.OsuTrackRunnable;
 import me.smc.sb.tracking.TrackedPlayer;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.OnlineStatus;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class StatsCommand extends GlobalCommand{
 

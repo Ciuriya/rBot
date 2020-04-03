@@ -19,8 +19,15 @@ public class OsuBeatmapsRequest extends OsuRequest{
 			return;
 		}
 		
-		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + 
-				  					 "&b=" + specifics[0] + "&m=" + specifics[1] + "&a=" + specifics[2] + "&limit=" + specifics[3]);
+		String postFilters = "";
+		
+		if(specifics[0] != "-1") postFilters += "&b=" + specifics[0];
+		if(specifics[1] != "-1") postFilters += "&m=" + specifics[1];
+		if(specifics[2] != "-1") postFilters += "&a=" + specifics[2];
+		if(specifics[3] != "-1") postFilters += "&limit=" + specifics[3];
+		if(specifics[4] != "-1") postFilters += "&since=" + specifics[4];
+		
+		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + postFilters);
 
 		if(post == "" || !post.contains("{")){
 			answer = "failed";

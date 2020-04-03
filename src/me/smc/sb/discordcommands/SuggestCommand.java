@@ -4,7 +4,7 @@ import java.io.File;
 
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class SuggestCommand extends GlobalCommand{
 
@@ -34,7 +34,7 @@ public class SuggestCommand extends GlobalCommand{
 		
 		cfg.appendToStringList("suggestions", suggestionStr, true);
 		Utils.info(e.getChannel(), "Your suggestion has been sent!");
-		Utils.infoBypass(e.getJDA().getUserById("91302128328392704").openPrivateChannel().complete(), suggestionStr);
+		Utils.infoBypass(e.getJDA().retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), suggestionStr);
 	}
 
 }

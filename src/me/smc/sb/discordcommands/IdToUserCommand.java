@@ -1,8 +1,8 @@
 package me.smc.sb.discordcommands;
 
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class IdToUserCommand extends GlobalCommand{
 
@@ -22,7 +22,7 @@ public class IdToUserCommand extends GlobalCommand{
 		
 		if(args.length == 0) return;
 		
-		User user = e.getJDA().getUserById(args[0]);
+		User user = e.getJDA().retrieveUserById(args[0]).complete();
 		
 		if(user == null){
 			Utils.infoBypass(e.getChannel(), "User not found");

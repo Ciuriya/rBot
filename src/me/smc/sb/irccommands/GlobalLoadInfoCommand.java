@@ -13,7 +13,7 @@ import me.smc.sb.perm.Permissions;
 import me.smc.sb.tourney.Match;
 import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.api.EmbedBuilder;
 
 public class GlobalLoadInfoCommand extends IRCCommand{
 	

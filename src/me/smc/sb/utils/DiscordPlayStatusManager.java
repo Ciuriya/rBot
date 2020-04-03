@@ -4,7 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import me.smc.sb.main.Main;
-import net.dv8tion.jda.core.entities.Game;
+import net.dv8tion.jda.api.entities.Activity;
 
 public class DiscordPlayStatusManager{
 
@@ -29,7 +29,7 @@ public class DiscordPlayStatusManager{
 		rotationTimer.scheduleAtFixedRate(new TimerTask(){
 			public void run(){
 				if(Main.debug)
-					Main.api.getPresence().setGame(Game.playing("Temporary Maintenance"));
+					Main.api.getPresence().setActivity(Activity.playing("Temporary Maintenance"));
 				else{
 					if(currentIndex == DiscordStatuses.values().length)
 						currentIndex = 0;
@@ -43,7 +43,7 @@ public class DiscordPlayStatusManager{
 							incrementCurrentIndex();
 					}
 					
-					Main.api.getPresence().setGame(Game.playing(DiscordStatuses.values()[currentIndex].getStatus()));
+					Main.api.getPresence().setActivity(Activity.playing(DiscordStatuses.values()[currentIndex].getStatus()));
 					
 					currentIndex++;
 				}

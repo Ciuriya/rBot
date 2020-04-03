@@ -13,8 +13,8 @@ import java.util.TimerTask;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ReminderCommand extends GlobalCommand{
 	
@@ -153,7 +153,7 @@ public class ReminderCommand extends GlobalCommand{
 		List<String> users = config.getStringList("users");
 		
 		for(String strUser : users){
-			User user = Main.api.getUserById(strUser);
+			User user = Main.api.retrieveUserById(strUser).complete();
 			
 			if(user == null) continue;
 			

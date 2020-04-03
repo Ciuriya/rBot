@@ -28,9 +28,18 @@ public class TrackingUtils{
 		switch(mode){
 			case 0: return "Standard";
 			case 1: return "Taiko";
-			case 2: return "CtB";
+			case 2: return "CTB";
 			case 3: return "Mania";
 			default: return "Unknown";
+		}
+	}
+	
+	public static String convertModeToURLPart(int mode){
+		switch(mode){
+			case 1: return "taiko";
+			case 2: return "fruits";
+			case 3: return "mania";
+			default: return "osu";
 		}
 	}
 	

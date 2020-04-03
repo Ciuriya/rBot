@@ -32,11 +32,11 @@ import me.smc.sb.tourney.Map;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageHistory;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageHistory;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class LegacyOsuTrackCommand extends GlobalCommand{
 
@@ -425,7 +425,7 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 					fixedUser = userLine.get(0).split("&find=")[1].split("&")[0];
 				}
 				
-				builder.append("—————————————————\nMost recent plays for **" + fixedUser + "** in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
+				builder.append("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\nMost recent plays for **" + fixedUser + "** in the " + convertMode(Utils.stringToInt(mode)) + " mode!");
 				
 				if(Utils.getNextLineCodeFromLink(pageGeneral, 0, "This user hasn't done anything notable recently!").size() == 0){
 					List<String> list = Utils.getNextLineCodeFromLink(pageGeneral, 0, "<div class='profileStatHeader'>Recent Activity</div>");
@@ -582,17 +582,17 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 								play += "\n\n__**" + osuDate + " UTC**__\n\n";
 								play += escapeStar(map.getString("artist")) + " - " + escapeStar(map.getString("title")) + " [" +
 										escapeStar(map.getString("version")) + "] " + Mods.getMods(obj.getInt("enabled_mods")) +
-								        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " • " + hits : "") + "\n" + 
-								        Utils.veryLongNumberDisplay(obj.getInt("score")) + " • " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
+								        "\n" + Utils.df(getAccuracy(obj, Utils.stringToInt(mode))) + "%" + (hits.length() > 0 ? " ï¿½ " + hits : "") + "\n" + 
+								        Utils.veryLongNumberDisplay(obj.getInt("score")) + " ï¿½ " + (obj.getInt("perfect") == 0 ? obj.getInt("maxcombo") +
 								        (map.isNull("max_combo") ? "x" : "/" + map.get("max_combo").toString()) : "FC (" + map.get("max_combo").toString() + "x)") +
-								        " • " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " • **#" + mapRank + "** on map" : "") + 
+								        " ï¿½ " + obj.getString("rank").replace("X", "SS") + " rank" + (mapRank > 0 ? " ï¿½ **#" + mapRank + "** on map" : "") + 
 								        (!pp.equals("") ? "\n" + pp : "") + "\n\n" + 
-								        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " • **#" + personalBest + "** personal best\n" : "\n") : "") + 
-								        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) • #" + 
+								        (Math.abs(ppDiff) >= 0.01 ? ppp + "pp (**" + ppDifference + "**)" + (personalBest != 0 ? " ï¿½ **#" + personalBest + "** personal best\n" : "\n") : "") + 
+								        (Math.abs(rankDiff) >= 1 ? "#" + Utils.veryLongNumberDisplay(rank) + " (**" + rankDifference + "**) ï¿½ #" + 
 								        Utils.veryLongNumberDisplay(countryRank) + " " + country + " (**" + countryDifference + "**)\n\n" : 
 								        (Math.abs(ppDiff) >= 0.01 ? "\n" : "")) +
-								        "Map • <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> • " + analyzeMapStatus(map.getInt("approved")) + 
-								        "\n" + fixedUser + " • <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG • http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
+								        "Map ï¿½ <http://osu.ppy.sh/b/" + obj.getInt("beatmap_id") + "> ï¿½ " + analyzeMapStatus(map.getInt("approved")) + 
+								        "\n" + fixedUser + " ï¿½ <http://osu.ppy.sh/u/" + obj.getInt("user_id") + ">\nBG ï¿½ http://b.ppy.sh/thumb/" + map.getInt("beatmapset_id") + "l.jpg";
 								
 								completeMessage = true;
 								builder.append(play + "~~~&pb=" + isPB + "&pp=" + ppAmount + "|||");
@@ -1138,5 +1138,4 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 			return Mods.None;
 		}
 	}
-	
 }

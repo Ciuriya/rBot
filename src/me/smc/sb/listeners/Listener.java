@@ -12,17 +12,17 @@ import me.smc.sb.polls.Poll;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.OnlineStatus;
-import net.dv8tion.jda.core.entities.ChannelType;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.events.Event;
-import net.dv8tion.jda.core.events.ReadyEvent;
-import net.dv8tion.jda.core.events.ReconnectedEvent;
-import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
-import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.hooks.EventListener;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.ReconnectedEvent;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.EventListener;
 
 public class Listener implements EventListener{
 
@@ -35,7 +35,7 @@ public class Listener implements EventListener{
 	}
 	
 	@Override
-    public void onEvent(Event event){
+    public void onEvent(GenericEvent event){
 		if(event instanceof MessageReceivedEvent){
 			MessageReceivedEvent e = (MessageReceivedEvent) event;
 			
@@ -105,7 +105,7 @@ public class Listener implements EventListener{
 			
 			loadGuilds(api);
 			
-			Utils.infoBypass(api.getUserById("91302128328392704").openPrivateChannel().complete(), "I am now logged in!"); //Sends the developer a message on login
+			Utils.infoBypass(api.retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), "I am now logged in!"); //Sends the developer a message on login
 			Main.discordConnected = true;
 			api.getPresence().setStatus(OnlineStatus.ONLINE);
 			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");

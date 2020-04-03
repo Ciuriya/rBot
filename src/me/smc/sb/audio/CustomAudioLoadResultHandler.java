@@ -7,8 +7,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import me.smc.sb.discordcommands.VoiceCommand;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.MessageChannel;
 
 public class CustomAudioLoadResultHandler implements AudioLoadResultHandler{
 

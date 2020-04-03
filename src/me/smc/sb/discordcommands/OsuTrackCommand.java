@@ -16,9 +16,9 @@ import me.smc.sb.tracking.TrackingGuild;
 import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
 
@@ -191,9 +191,11 @@ public class OsuTrackCommand extends GlobalCommand{
 					new TrackingGuild(guild.getId());
 				
 				if(!Main.discordConnected)
-					Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), "Tracking now waiting for discord to connect...");
+					Utils.infoBypass(Main.api.retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), 
+									 "Tracking now waiting for discord to connect...");
 				else
-					Utils.infoBypass(Main.api.getUserById("91302128328392704").openPrivateChannel().complete(), "Tracking started!");
+					Utils.infoBypass(Main.api.retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), 
+									 "Tracking started!");
 				
 				while(!Main.discordConnected){
 					Utils.sleep(100);
