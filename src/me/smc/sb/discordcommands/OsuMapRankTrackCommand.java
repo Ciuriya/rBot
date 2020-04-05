@@ -136,12 +136,12 @@ public class OsuMapRankTrackCommand extends GlobalCommand{
 		Calendar firstCheckTime = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 		int currentMinute = firstCheckTime.get(Calendar.MINUTE);
 		
-		if(currentMinute < 5 || currentMinute >= 45){
-			firstCheckTime.set(Calendar.MINUTE, 5);
+		if(currentMinute < 8 || currentMinute >= 48){
+			firstCheckTime.set(Calendar.MINUTE, 8);
 			
-			if(currentMinute >= 45) firstCheckTime.add(Calendar.HOUR, 1);
-		}else if(currentMinute < 25) firstCheckTime.set(Calendar.MINUTE, 25);
-		else if(currentMinute < 45) firstCheckTime.set(Calendar.MINUTE, 45);
+			if(currentMinute >= 48) firstCheckTime.add(Calendar.HOUR, 1);
+		}else if(currentMinute < 28) firstCheckTime.set(Calendar.MINUTE, 28);
+		else if(currentMinute < 48) firstCheckTime.set(Calendar.MINUTE, 48);
 		
 		firstCheckTime.set(Calendar.SECOND, 0);
 		firstCheckTime.set(Calendar.MILLISECOND, 0);
