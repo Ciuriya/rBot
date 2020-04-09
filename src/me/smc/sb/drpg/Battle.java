@@ -1,9 +1,8 @@
 package me.smc.sb.drpg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import javafx.util.Pair;
 
 public class Battle{
 
@@ -31,10 +30,12 @@ public class Battle{
 		if(attackedPartyId != -1) this.attackedParty = Party.getParty(attackedPartyId);
 		
 		entitiesFighting = new ArrayList<>();
-		Pair<Object, Object> sides = getValidSides();
+		HashMap<Object, Object> sides = getValidSides();
 		
-		addToFightingEntities(sides.getKey());
-		addToFightingEntities(sides.getValue());
+		Object key = sides.keySet().stream().findFirst().orElse(null);
+		
+		addToFightingEntities(key);
+		addToFightingEntities(key != null ? sides.get(key) : null);
 		
 		if(id == -1) //-1 for adding
 			insert();
@@ -62,7 +63,7 @@ public class Battle{
 		return attackedParty;
 	}
 	
-	public Pair<Object, Object> getValidSides(){
+	public HashMap<Object, Object> getValidSides(){
 		Object first = null, second = null;
 		int left = 2;
 		
@@ -92,7 +93,11 @@ public class Battle{
 			left--;
 		}
 		
-		return new Pair<>(first, second);
+		HashMap<Object, Object> map = new HashMap<>();
+		
+		map.put(first, second);
+		
+		return map;
 	}
 	
 	public List<Integer> getFightingEntities(){

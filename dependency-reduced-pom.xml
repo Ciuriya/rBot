@@ -9,15 +9,14 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>3.8.0</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>13</release>
         </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.2</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -26,7 +25,9 @@
             </goals>
             <configuration>
               <transformers>
-                <transformer />
+                <transformer>
+                  <mainClass>org.sonatype.haven.HavenCli</mainClass>
+                </transformer>
               </transformers>
             </configuration>
           </execution>
@@ -93,4 +94,3 @@
     </dependency>
   </dependencies>
 </project>
-

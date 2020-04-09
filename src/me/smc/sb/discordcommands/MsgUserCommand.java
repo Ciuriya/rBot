@@ -24,7 +24,7 @@ public class MsgUserCommand extends GlobalCommand{
 
 		String userId = args[0];
 		String message = "";
-		User user = e.getJDA().getUserById(userId);
+		User user = e.getJDA().retrieveUserById(userId).complete();
 		
 		if(user == null){
 			Utils.info(e.getChannel(), "Invalid user!");

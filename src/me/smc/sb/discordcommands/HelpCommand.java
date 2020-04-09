@@ -3,6 +3,7 @@ package me.smc.sb.discordcommands;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class HelpCommand extends GlobalCommand{
@@ -61,16 +62,16 @@ public class HelpCommand extends GlobalCommand{
     	
     	String rest = msg.toString();
     	
-    	e.getAuthor().openPrivateChannel().complete();
+    	PrivateChannel channel = e.getAuthor().openPrivateChannel().complete();
     	
-    	while(rest.length() > 1992){
-    		String toSend = rest.substring(0, 1992);
-    		rest = rest.substring(1992);
+    	while(rest.length() > 1960){
+    		String toSend = rest.substring(0, 1960);
+    		rest = rest.substring(1960);
     		
-    		Utils.info(e.getAuthor().openPrivateChannel().complete(), "```" + toSend + "```");
+    		Utils.info(channel, "```\n" + toSend + "```");
     	}
     	
-		Utils.info(e.getAuthor().openPrivateChannel().complete(), "```" + rest + "```");
+		Utils.info(channel, "```\n" + rest + "```" + (args.length == 0 ? "\nHelp Server: http://discord.gg/0phGqtqLYwSzCdwn" : ""));
 	}
 	
 }

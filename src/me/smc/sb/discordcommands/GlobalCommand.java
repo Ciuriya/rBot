@@ -121,6 +121,7 @@ public abstract class GlobalCommand{
 		commands.add(new PollCommand());
 		commands.add(new ReceivePMCommand());
 		commands.add(new ReminderCommand());
+		commands.add(new ReportCommand());
 		commands.add(new RPGCommand());
 		commands.add(new SearchCommand());
 		commands.add(new SetPrefixCommand());
@@ -128,7 +129,6 @@ public abstract class GlobalCommand{
 		commands.add(new SMTScoreRecentCalculationCommand());
 		commands.add(new StatsCommand());
 		commands.add(new StopCommand());
-		commands.add(new SuggestCommand());
 		commands.add(new UserInfoCommand());
 		commands.add(new VoiceCommand());
 		commands.add(new YoutubeDownloadCommand());
