@@ -3,7 +3,8 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>rBot</groupId>
   <artifactId>rBot</artifactId>
-  <version>1.0.0</version>
+  <name>rBot</name>
+  <version>2.0.0</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
@@ -35,18 +36,11 @@
       </plugin>
     </plugins>
   </build>
-  <repositories>
-    <repository>
-      <id>central</id>
-      <name>bintray</name>
-      <url>https://jcenter.bintray.com</url>
-    </repository>
-  </repositories>
   <dependencies>
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.1</version>
+      <groupId>com.neovisionaries</groupId>
+      <artifactId>nv-websocket-client</artifactId>
+      <version>2.9</version>
       <type>pom</type>
       <scope>compile</scope>
     </dependency>
@@ -58,23 +52,16 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.neovisionaries</groupId>
-      <artifactId>nv-websocket-client</artifactId>
-      <version>2.9</version>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.1</version>
       <type>pom</type>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
-      <version>4.4.0</version>
-      <type>pom</type>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>club.minnced</groupId>
-      <artifactId>opus-java</artifactId>
-      <version>1.0.4</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.10.1</version>
       <type>pom</type>
       <scope>compile</scope>
     </dependency>
@@ -86,9 +73,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.10.1</version>
+      <groupId>club.minnced</groupId>
+      <artifactId>opus-java</artifactId>
+      <version>1.0.4</version>
       <type>pom</type>
       <scope>compile</scope>
     </dependency>
