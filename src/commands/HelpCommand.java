@@ -49,8 +49,8 @@ public class HelpCommand extends Command {
 				for(int i = 0; i < usages.length; i++) {
 					String[] usage = usages[i];
 					
+					description += "```\n" + prefix + usage[0] + "```\n";
 					description += usage[1] + "\n";
-					description += "```\n" + prefix + usage[0] + "```";
 					
 					if(i + 1 < usages.length) description += "\n";
 				}

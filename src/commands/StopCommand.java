@@ -26,8 +26,8 @@ public class StopCommand extends Command {
 		String alias = p_event.getMessage().getContentRaw().toLowerCase();
 		int code = 1;
 		
-		if(alias.startsWith("restart")) code = 2;
-		else if(alias.startsWith("update")) code = 3;
+		if(alias.contains("restart")) code = 2;
+		else if(alias.contains("update")) code = 3;
 		
 		DiscordChatUtils.message(p_event.getChannel(), getCodeMessage(code));
 		Main.stop(code);

@@ -45,8 +45,9 @@ public class DiscordChatUtils {
 		p_channel.sendMessage(p_embed).queue(
 				(message) -> Log.log(Level.INFO, "{Embed sent in " + 
 												 getChannelLogString(p_channel) + "} " + 
-												 p_embed.getAuthor().getName() + "\n" + 
-												 p_embed.getTitle()),
+												 p_embed.getAuthor().getName() + 
+												 (p_embed.getTitle() != null ? "\n" + 
+												 p_embed.getTitle() : "")),
 				(error) -> Log.log(Level.WARNING, "Could not send embed", error));
 
 		ApplicationStats.getInstance().addMessageSent();
