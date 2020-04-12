@@ -72,12 +72,5 @@
       <type>pom</type>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>club.minnced</groupId>
-      <artifactId>opus-java</artifactId>
-      <version>1.0.4</version>
-      <type>pom</type>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
 </project>
