@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import commands.Command;
 import data.Log;
+import listeners.GuildJoinListener;
 import listeners.MessageListener;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
@@ -53,7 +54,8 @@ public class Main {
 		// log into discord
 		try {
 			discordApi = JDABuilder.createDefault(loginInfo.getString("discordToken"))
-						 .addEventListeners(new MessageListener()).build();
+						 .addEventListeners(new MessageListener(), new GuildJoinListener())
+						 .build();
 			
 			discordApi.awaitReady();
 			

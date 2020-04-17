@@ -1,6 +1,10 @@
 package listeners;
 
+import java.util.logging.Level;
+
 import commands.Command;
+import commands.CustomCommand;
+import data.Log;
 import managers.ApplicationStats;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -33,9 +37,15 @@ public class MessageListener extends ListenerAdapter {
 			else return;
 		}
 		
+		Log.log(Level.INFO, "{Command received in " + DiscordChatUtils.getChannelLogString(p_event.getChannel()) + 
+							" sent by " + p_event.getAuthor().getName() + " (" + p_event.getAuthor().getId() + ")\n" +
+							message);
+		
 		// find and run global command, if we couldn't find/run it, we look for a custom command
 		if(!Command.handleCommand(p_event, message)) {
+			CustomCommand cmd = CustomCommand.getCommand(p_event.getGuild().getId(), message.split(" ")[0]);
 			
+			if(cmd != null) cmd.execute(p_event);
 		}
 	}
 }

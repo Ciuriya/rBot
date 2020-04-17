@@ -1,8 +1,8 @@
 package utils;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.logging.Level;
 
 import data.Log;
@@ -17,9 +17,12 @@ public class SQLUtils {
 	
 	public static void setupGuildSQL(String p_guildId) {
 		try(Connection conn = DatabaseManager.getInstance().get("discord").getConnection()) {
-			Statement st = conn.createStatement();
+			PreparedStatement st = conn.prepareStatement(
+								   "INSERT IGNORE INTO `discord-guild` SET `id`=?");
 			
-			st.executeUpdate("INSERT IGNORE INTO `discord-guild` SET `id`=\"" + p_guildId + "\"");
+			st.setString(1, p_guildId);
+			
+			st.executeUpdate();
 			st.close();
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Could not setup guild (" + p_guildId + ") SQL", e);
@@ -30,14 +33,17 @@ public class SQLUtils {
 		String setting = "";
 		
 		try(Connection conn = DatabaseManager.getInstance().get("discord").getConnection()) {
-			Statement st = conn.createStatement();
-			ResultSet rs = st.executeQuery(
-							"SELECT field FROM `guild-settings` " + 
-							"WHERE `guild-id`=\"" + p_guildId + 
-							"\" AND `key`=\"" + p_key + "\" AND " + 
-							"(`channel-id` IS NULL OR `channel-id`=\"" + 
-							p_channelId + "\") ORDER BY CASE WHEN " + // this should make it so nulls are last
-							"`channel-id` IS NULL THEN 1 ELSE 0 END, `channel-id`");
+			PreparedStatement st = conn.prepareStatement(
+								   "SELECT field FROM `guild-settings` WHERE `guild-id`=? " +
+								   "AND `key`=? AND (`channel-id` IS NULL OR `channel-id`=?) " +
+								   " ORDER BY CASE WHEN `channel-id` IS NULL THEN 1 ELSE 0 END, " +
+								   "`channel-id`"); // this should make it so nulls are last
+			
+			st.setString(1, p_guildId);
+			st.setString(2, p_key);
+			st.setString(3, p_channelId);
+			
+			ResultSet rs = st.executeQuery();
 	
 			if(rs.next()) setting = rs.getString(1);
 			

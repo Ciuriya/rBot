@@ -1,10 +1,13 @@
 package utils;
 
+import java.util.List;
 import java.util.logging.Level;
 
 import data.Log;
 import managers.ApplicationStats;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.PrivateChannel;
@@ -63,12 +66,43 @@ public class DiscordChatUtils {
 		}
 	}
 	
-	private static String getChannelLogString(MessageChannel p_channel) {
+	public static String getChannelLogString(MessageChannel p_channel) {
 		if(p_channel.getType() == ChannelType.PRIVATE)
 			return "Private/" + ((PrivateChannel) p_channel).getUser().getId();
 		
 		TextChannel text = (TextChannel) p_channel;
 		
 		return text.getGuild().getName() + "#" + text.getName();
+	}
+	
+	public static String fillInEmotes(JDA p_jda, MessageChannel p_channel, String p_text) {
+		String filledText = "";
+		boolean skipNext = false;
+		
+		if(p_text.contains(":")) {
+			for(String split : p_text.split(":")) {
+				boolean added = false;
+				
+				// skip next is necessary to not get false positives from the last :
+				// after the emote (emotes are like :thinking:, so the last one could trigger
+				// an emote when we know that's not possible
+				if(!skipNext) {
+					List<Emote> emotes = p_jda.getEmotesByName(split, true);
+					
+					if(!emotes.isEmpty())
+						if(emotes.get(0).canInteract(p_jda.getSelfUser(), p_channel)) {
+							filledText += emotes.get(0).getAsMention();
+							added = true;
+							skipNext = true;
+						}
+				}
+				
+				skipNext = false;
+				
+				if(!added) filledText += ":" + split;
+			}
+		} else return p_text;
+		
+		return filledText;
 	}
 }

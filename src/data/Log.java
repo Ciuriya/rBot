@@ -90,8 +90,7 @@ class LogFormat extends Formatter {
 		
 		String message = format.format(new Date(p_record.getMillis()));
 		
-		message += " [" + p_record.getLevel().getName() + "] ";
-		message += "(" + p_record.getSourceClassName() + ":" + p_record.getSourceMethodName() + ")\n";
+		message += " [" + p_record.getLevel().getName() + "]\n";
 		message += formatMessage(p_record) + "\n";
 		
 		// if an exception is associated with this, we want to print it as well

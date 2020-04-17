@@ -126,6 +126,7 @@ public abstract class Command {
 	public abstract void onCommand(MessageReceivedEvent p_event, String[] args);
 	
 	public static void registerCommands() {
+		new EditCustomCommand();
 		new HelpCommand();
 		new StopCommand();
 	}
