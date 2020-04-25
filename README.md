@@ -1,6 +1,7 @@
 # rBot
 
 Old discord bot that used to be somewhat relevant but is now pretty much only used as a personal helper bot.
+
 Currently undergoing a complete rewrite!
 
 Features:
