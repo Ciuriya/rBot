@@ -33,7 +33,8 @@ public class MessageListener extends ListenerAdapter {
 		else if(p_event.isFromGuild()) {
 			String prefix = DiscordChatUtils.getPrefix(p_event.getChannel());
 			
-			if(message.startsWith(prefix)) message = message.substring(prefix.length());
+			if(message.toLowerCase().startsWith(prefix.toLowerCase()))
+				message = message.substring(prefix.length());
 			else return;
 		}
 		
@@ -42,7 +43,7 @@ public class MessageListener extends ListenerAdapter {
 							message);
 		
 		// find and run global command, if we couldn't find/run it, we look for a custom command
-		if(!Command.handleCommand(p_event, message)) {
+		if(!Command.handleCommand(p_event, message) && p_event.isFromGuild()) {
 			CustomCommand cmd = CustomCommand.getCommand(p_event.getGuild().getId(), message.split(" ")[0]);
 			
 			if(cmd != null) cmd.execute(p_event);

@@ -77,7 +77,8 @@ public class HelpCommand extends Command {
 							  p_event.getJDA().getSelfUser().getAvatarUrl());
 			
 			String description = "**__Use `" + DiscordChatUtils.getPrefix(p_event.getChannel()) + 
-								 "help <command>` for details about specific commands.__**\n\n";
+								 "help <command>` for details about specific commands.__**\n"
+								 + (p_event.isFromGuild() ? "**__Only commands you can use in this channel are listed.__**\n" : "\n");
 			
 			for(CommandCategory category : CommandCategory.values()) {
 				List<Command> commands = Command.findCommandsInCategory(category);
@@ -86,7 +87,8 @@ public class HelpCommand extends Command {
 					String categoryText = "";
 					
 					for(Command cmd : commands)
-						categoryText += " `" + cmd.getTriggers()[0] + "`";
+						if(cmd.canUse(p_event.getAuthor(), p_event.getChannel()))
+							categoryText += " `" + cmd.getTriggers()[0] + "`";
 					
 					categoryText = categoryText.substring(1);
 					

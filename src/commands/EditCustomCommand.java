@@ -13,7 +13,7 @@ import utils.DiscordChatUtils;
 public class EditCustomCommand extends Command {
 
 	public EditCustomCommand() {
-		super(Permission.MESSAGE_MANAGE, false, false, CommandCategory.GENERAL, 
+		super(Permission.MESSAGE_MANAGE, false, false, CommandCategory.ADMIN, 
 			  new String[]{"editcom", "editcmd"}, 
 			  "Create, edit or delete custom commands.", 
 			  "Allows creation, editing or deletion of custom commands in the server this " +
@@ -27,10 +27,7 @@ public class EditCustomCommand extends Command {
 	@Override
 	public void onCommand(MessageReceivedEvent p_event, String[] args) {
 		if(args.length == 0) {
-			DiscordChatUtils.message(p_event.getChannel(), "Invalid arguments! Use **__" + 
-									 DiscordChatUtils.getPrefix(p_event.getChannel()) + 
-									 "help editcom__** for info on this command!");
-			
+			sendInvalidArgumentsError(p_event.getChannel());
 			return;
 		}
 		
@@ -49,7 +46,8 @@ public class EditCustomCommand extends Command {
 			if(new CustomCommand(commandName, p_event.getGuild().getId(), 
 								 instructions.substring(1)).save())
 				DiscordChatUtils.message(p_event.getChannel(), "Command saved!");
-			else DiscordChatUtils.message(p_event.getChannel(), "There was an error saving the command!");
+			else DiscordChatUtils.message(p_event.getChannel(), "There was an error saving the command!\n" +
+																"Please try again later or contact the developer using the **__report__** command!");
 		}
 	}
 }

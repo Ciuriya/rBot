@@ -84,7 +84,7 @@ class LogFormat extends Formatter {
 
 	@Override
 	public String format(LogRecord p_record) {
-		DateFormat format = new SimpleDateFormat("[yyyy/MM/dd HH:mm:ss.SSS");
+		DateFormat format = new SimpleDateFormat("[yyyy/MM/dd HH:mm:ss.SSS]");
 		
 		format.setTimeZone(TimeZone.getDefault());
 		

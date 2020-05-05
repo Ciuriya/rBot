@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import utils.DiscordChatUtils;
 
 /**
  * This class represents a command that can be called from discord.
@@ -90,6 +91,12 @@ public abstract class Command {
 		return false;
 	}
 	
+	protected void sendInvalidArgumentsError(MessageChannel p_channel) {
+		DiscordChatUtils.message(p_channel, "Invalid arguments! Use **__" + 
+								 DiscordChatUtils.getPrefix(p_channel) + 
+								 "help " + m_triggers[0] + "__** for info on this command!");
+	}
+	
 	public static Command findCommand(String p_trigger) {
 		return commands.stream().filter(c -> Arrays.asList(c.m_triggers).stream()
 											 .anyMatch(t -> t.equalsIgnoreCase(p_trigger)))
@@ -128,6 +135,7 @@ public abstract class Command {
 	public static void registerCommands() {
 		new EditCustomCommand();
 		new HelpCommand();
+		new SetPrefixCommand();
 		new StopCommand();
 	}
 }

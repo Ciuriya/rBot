@@ -3,7 +3,9 @@ package commands;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.logging.Level;
 
+import data.Log;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
 import managers.ThreadingManager;
@@ -72,6 +74,8 @@ public class CustomCommand {
 			
 			return true;
 		} catch(Exception e) {
+			Log.log(Level.SEVERE, "Could not save custom command " + m_trigger.toLowerCase() + " for guild " + m_guildId +
+								  "\nInstruction: " + m_instruction, e);
 			return false;
 		}
 	}

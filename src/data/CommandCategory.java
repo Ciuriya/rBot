@@ -12,7 +12,8 @@ import utils.Constants;
  */
 public enum CommandCategory {
 	
-	GENERAL("General", Constants.DEFAULT_EMBED_COLOR);
+	GENERAL("General", Constants.DEFAULT_EMBED_COLOR),
+	ADMIN("Admin", Color.GRAY);
 	
 	private String m_displayName;
 	private Color m_color;
