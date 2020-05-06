@@ -10,6 +10,7 @@ public class ApplicationStats {
 	private static ApplicationStats instance;
 	private long m_bootTime;
 	private long m_timerStart;
+	private int m_serverCount;
 	private int m_messagesReceived;
 	private int m_messagesSent;
 	private int m_commandsUsed;
@@ -28,6 +29,10 @@ public class ApplicationStats {
 		return System.currentTimeMillis() - m_bootTime;
 	}
 	
+	public int getServerCount() {
+		return m_serverCount;
+	}
+	
 	public int getMessagesReceived() {
 		return m_messagesReceived;
 	}
@@ -38,6 +43,10 @@ public class ApplicationStats {
 	
 	public int getCommandsUsed() {
 		return m_commandsUsed;
+	}
+	
+	public void addServerCount(int p_servers) {
+		m_serverCount += p_servers;
 	}
 	
 	public void addMessageReceived() {

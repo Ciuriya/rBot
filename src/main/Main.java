@@ -10,9 +10,11 @@ import org.json.JSONObject;
 import commands.Command;
 import data.Log;
 import listeners.GuildJoinListener;
+import listeners.GuildLeaveListener;
 import listeners.MessageListener;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
+import managers.DiscordActivityManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -27,7 +29,7 @@ import utils.TimeUtils;
  */
 public class Main {
 	
-	private static JDA discordApi;
+	public static JDA discordApi; // PLEASE avoid using this if you can
 
 	public static void main(String[] p_args) {
 		new Main();
@@ -54,7 +56,7 @@ public class Main {
 		// log into discord
 		try {
 			discordApi = JDABuilder.createDefault(loginInfo.getString("discordToken"))
-						 .addEventListeners(new MessageListener(), new GuildJoinListener())
+						 .addEventListeners(new MessageListener(), new GuildJoinListener(), new GuildLeaveListener())
 						 .build();
 			
 			discordApi.awaitReady();
@@ -70,6 +72,8 @@ public class Main {
 			SQLUtils.setupGuildSQL(guild.getId());
 		
 		Command.registerCommands();
+		ApplicationStats.getInstance().addServerCount((int) discordApi.getGuildCache().size());
+		DiscordActivityManager.getInstance(); // start the activity cycling
 		
 		Log.log(Level.INFO, "Startup complete! Startup time: " + 
 							 TimeUtils.toDuration(ApplicationStats.getInstance().getUptime(), true));

@@ -3,6 +3,8 @@ package commands;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 import data.Log;
@@ -119,5 +121,25 @@ public class CustomCommand {
 		if(instruction.length() == 0) return null;
 		
 		return new CustomCommand(p_trigger, p_guildId, instruction);
+	}
+	
+	public static List<String> getAllCommandTriggers(String p_guildId) {
+		List<String> commands = new ArrayList<>();
+		
+		try(Connection conn = DatabaseManager.getInstance().get("discord").getConnection()) {
+			PreparedStatement st = conn.prepareStatement(
+								   "SELECT `trigger` FROM `commands` WHERE `guild-id`=?");
+			
+			st.setString(1, p_guildId);
+			
+			ResultSet rs = st.executeQuery();
+	
+			while(rs.next()) commands.add(rs.getString(1));
+			
+			rs.close();
+			st.close();
+		} catch(Exception e) { }
+		
+		return commands;
 	}
 }

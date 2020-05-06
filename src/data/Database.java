@@ -20,6 +20,7 @@ public class Database {
 		try {
 			m_connectionPool.setDriverClass("com.mysql.cj.jdbc.Driver");
 			m_connectionPool.setJdbcUrl(p_jdbcUrl + "?serverTimezone=UTC");
+			m_connectionPool.setTestConnectionOnCheckout(true);
 			m_connectionPool.setUser(p_user);
 			m_connectionPool.setPassword(p_pass);
 			m_connectionPool.setMinPoolSize(5);

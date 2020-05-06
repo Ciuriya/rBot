@@ -3,6 +3,7 @@ package commands;
 import data.CommandCategory;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import utils.Constants;
 import utils.DiscordChatUtils;
 
 /**
@@ -47,7 +48,8 @@ public class EditCustomCommand extends Command {
 								 instructions.substring(1)).save())
 				DiscordChatUtils.message(p_event.getChannel(), "Command saved!");
 			else DiscordChatUtils.message(p_event.getChannel(), "There was an error saving the command!\n" +
-																"Please try again later or contact the developer using the **__report__** command!");
+																"Please try again later or contact the developer via the **__report__** command or the support server!\n<" +
+																Constants.SUPPORT_SERVER_LINK + ">");
 		}
 	}
 }

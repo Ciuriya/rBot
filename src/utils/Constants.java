@@ -23,5 +23,8 @@ public class Constants {
 	
 	// the link to the official support server
 	public static String SUPPORT_SERVER_LINK = "http://discord.gg/0phGqtqLYwSzCdwn";
+	
+	// the time between activity switches on discord, in seconds
+	public static int ACTIVITY_ROTATION_INTERVAL = 600;
 
 }

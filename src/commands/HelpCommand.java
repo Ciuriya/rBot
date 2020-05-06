@@ -96,7 +96,17 @@ public class HelpCommand extends Command {
 				}
 			}
 			
-			// custom commands here
+			if(p_event.isFromGuild()) {
+				String customCommandText = "";
+				List<String> customCommands = CustomCommand.getAllCommandTriggers(p_event.getGuild().getId());
+				
+				if(customCommands.size() > 0) {
+					for(String trigger : customCommands)
+						customCommandText += " `" + trigger + "`";
+					
+					builder.addField("Custom", customCommandText.substring(1), true);
+				}
+			}
 			
 			builder.setDescription(description);
 		}
