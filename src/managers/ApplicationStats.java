@@ -14,6 +14,10 @@ public class ApplicationStats {
 	private int m_messagesReceived;
 	private int m_messagesSent;
 	private int m_commandsUsed;
+	private int m_osuApiRequestsSent;
+	private int m_osuApiRequestsFailed;
+	private int m_osuHtmlRequestsSent;
+	private int m_osuHtmlRequestsFailed;
 	
 	public static ApplicationStats getInstance() {
 		if(instance == null) instance = new ApplicationStats();
@@ -45,6 +49,22 @@ public class ApplicationStats {
 		return m_commandsUsed;
 	}
 	
+	public int getOsuApiRequestsSent() {
+		return m_osuApiRequestsSent;
+	}
+	
+	public int getOsuApiRequestsFailed() {
+		return m_osuApiRequestsFailed;
+	}
+	
+	public int getOsuHtmlRequestsSent() {
+		return m_osuHtmlRequestsSent;
+	}
+	
+	public int getOsuHtmlRequestsFailed() {
+		return m_osuHtmlRequestsFailed;
+	}
+	
 	public void addServerCount(int p_servers) {
 		m_serverCount += p_servers;
 	}
@@ -59,6 +79,22 @@ public class ApplicationStats {
 	
 	public void addCommandUsed() {
 		m_commandsUsed++;
+	}
+	
+	public void addOsuApiRequestSent() {
+		m_osuApiRequestsSent++;
+	}
+	
+	public void addOsuApiRequestFailed() {
+		m_osuApiRequestsFailed++;
+	}
+	
+	public void addOsuHtmlRequestSent() {
+		m_osuHtmlRequestsSent++;
+	}
+	
+	public void addOsuHtmlRequestFailed() {
+		m_osuHtmlRequestsFailed++;
 	}
 	
 	// a timer to count the time something takes in code

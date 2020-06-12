@@ -72,6 +72,7 @@ public class Main {
 			SQLUtils.setupGuildSQL(guild.getId());
 		
 		Command.registerCommands();
+		// OsuRequestRegulator.getInstance();
 		ApplicationStats.getInstance().addServerCount((int) discordApi.getGuildCache().size());
 		DiscordActivityManager.getInstance(); // start the activity cycling
 		

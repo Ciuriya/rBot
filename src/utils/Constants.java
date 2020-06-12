@@ -26,5 +26,14 @@ public class Constants {
 	
 	// the time between activity switches on discord, in seconds
 	public static int ACTIVITY_ROTATION_INTERVAL = 600;
+	
+	// how many osu! api requests can we attempt to send per minute
+	public static int OSU_API_REQUESTS_PER_MINUTE = 150;
+	
+	// how many osu! html scrapes can we attempt per minute
+	public static int OSU_HTML_REQUESTS_PER_MINUTE = 50;
 
+	// the fibonacci sequence up to 21
+	public static int[] FIBONACCI = new int[] { 1, 1, 2, 3, 5, 8, 13, 21 };
+	
 }
