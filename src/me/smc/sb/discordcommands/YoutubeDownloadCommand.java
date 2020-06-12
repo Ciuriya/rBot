@@ -36,9 +36,9 @@ public class YoutubeDownloadCommand extends GlobalCommand{
 		File downloadedSong = null;
 		
 		try{
-			Process proc = Runtime.getRuntime().exec("youtube-dl --max-filesize 1000m " +
+			Process proc = Runtime.getRuntime().exec("youtube-dl " +
 	 			     "-o /home/discordbot/Songs/%(title)s~" + args[0].replaceAll("/", "|") + ".%(ext)s "
-	 			     + args[0]);
+	 			     + "-x --audio-format mp3 " + args[0]);
 			proc.waitFor();	
 			
 			

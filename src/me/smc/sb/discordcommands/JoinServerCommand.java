@@ -17,7 +17,7 @@ public class JoinServerCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.infoBypass(e.getChannel(), "https://discordapp.com/oauth2/authorize?&client_id=168498858937024512&scope=bot&permissions=0");
+		Utils.infoBypass(e.getChannel(), "https://discord.com/oauth2/authorize?&client_id=168498858937024512&scope=bot&permissions=3222528");
 	}
 
 }

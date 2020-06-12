@@ -114,7 +114,7 @@ public class TrackScheduler extends AudioEventAdapter{
 	}
 
 	public void nextTrack(){
-		if(queue.isEmpty() && !currentPlaylist.getTracks().isEmpty()){
+		if(queue.isEmpty() && currentPlaylist != null && !currentPlaylist.getTracks().isEmpty()){
 			player.stopTrack();
 			
 			queueNextPlaylistSong();

@@ -95,7 +95,7 @@ public class Listener implements EventListener{
 	    	
 	    	if(dm)
 	    		Utils.infoBypass(e.getChannel(), "It seems you are having a problem... use ~/help to get a list of commands!" +
-	    									     "\nIf you have any issues, feel free to contact Smc!" +
+	    									     "\nIf you have any issues, feel free to contact Smc#2222!" +
 	    									     "\nContact: PM, server: https://discord.gg/0phGqtqLYwSzCdwn");
 		}else if(event instanceof ReadyEvent){
 			GlobalCommand.registerCommands();
