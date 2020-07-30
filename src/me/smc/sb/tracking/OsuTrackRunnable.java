@@ -121,7 +121,7 @@ public class OsuTrackRunnable extends TimerTask{
 				
 				fPlayer.setUpdating(false);
 				updating.remove(fPlayer);
-				updateThreads.remove(this);
+				updateThreads.remove(Thread.currentThread());
 			}
 		});
 		
