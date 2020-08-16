@@ -1,5 +1,8 @@
 package me.smc.sb.perm;
 
+import java.util.logging.Level;
+
+import me.smc.sb.utils.Log;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -64,10 +67,14 @@ public enum Permissions{
 	public static boolean hasPerm(User user, TextChannel channel, Permissions perm){
 		if(check(user, perm)) return true;
 		else if(!(perm.equals(BOT_ADMIN) || perm.equals(IRC_BOT_ADMIN))){
-			Member member = channel.getMembers().stream().filter(m -> m.getUser().getId().equals(user.getId())).findFirst().orElse(null);
-			
-			if(member != null)
-				return member.hasPermission(channel, Permission.getFromOffset(perm.getOffset()));
+			Member member = channel.getGuild().retrieveMemberById(user.getId()).complete();
+
+			if(member != null){
+				boolean hasActualPerm = member.hasPermission(channel, Permission.getFromOffset(perm.getOffset()));
+				boolean hasAdminPerm = member.hasPermission(channel, Permission.getFromOffset(DISCORD_ADMIN.offset));
+
+				return hasActualPerm || hasAdminPerm;
+			}
 		}
 		
 		return false;
