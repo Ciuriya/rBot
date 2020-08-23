@@ -1,5 +1,6 @@
 package me.smc.sb.playformats;
 
+import me.smc.sb.tracking.CustomDate;
 import me.smc.sb.tracking.PlayFormat;
 import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.tracking.TrackedPlayer;
@@ -118,7 +119,8 @@ public class EmbedPlayFormat extends PlayFormat{
 		
 		builder.addField("Beatmap Information", beatmapInfoText, true);
 		
-		builder.setFooter("Mapset by " + play.getCreator() + " • " + play.getRankedStatus() + " at " + play.getLastUpdateDate().getDate() + " UTC",
+		CustomDate lastUpdateDate = play.getLastUpdateDate();
+		builder.setFooter("Mapset by " + play.getCreator() + " • " + play.getRankedStatus() + (lastUpdateDate != null ? " at " + lastUpdateDate.getDate() + " UTC" : ""),
 						  "http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
 		
 		Utils.info(guild.getChannel(player), builder.build());

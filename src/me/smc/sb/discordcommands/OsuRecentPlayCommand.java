@@ -249,8 +249,9 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			
 			builder.appendDescription(beatmapInfoText);
 			
-			builder.setFooter("Mapset by " + play.getCreator() + " • " + play.getRankedStatus() + " at " + play.getLastUpdateDate().getDate() + " UTC",
-					  					"http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
+			CustomDate lastUpdateDate = play.getLastUpdateDate();
+			builder.setFooter("Mapset by " + play.getCreator() + " • " + play.getRankedStatus() + (lastUpdateDate != null ? " at " + lastUpdateDate.getDate() + " UTC" : ""),
+							  "http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg");
 			
 			latestRecents.put(e.getChannel().getId(), play.getBeatmapId() + "-" + play.getBeatmapSetId());
 			
