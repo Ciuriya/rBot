@@ -238,25 +238,19 @@ public class TrackingUtils{
 		if(line.isEmpty()) return null;
 
 		String diffName = Jsoup.parse(line.get(0).split("<span>")[1].split("</span>")[0]).text();
-		String url = "https://osu.ppy.sh/beatmapsets/" + setId + "/download";
+		String url = "https://beatconnect.io/b/" + setId;
 		
 		try{
 			url = Utils.getFinalURL(url);
 		}catch(Exception e){}
 		
 		URLConnection connection = establishConnection(url);
-		boolean bloodcat = false;
-		
-		if(connection.getContentLength() <= 100){
-			connection = establishConnection("http://bloodcat.com/osu/b/" + beatmapId);
-			bloodcat = true;
-		}
-		
 		File file = null;
 		
         try{
+        	String fileName = setId + ".zip";
 			InputStream in = connection.getInputStream();
-			FileOutputStream out = new FileOutputStream((bloodcat ? beatmapId + ".osu" : setId + ".zip"));
+			FileOutputStream out = new FileOutputStream(fileName);
 			
 	        byte[] b = new byte[1024];
 	        int count;
@@ -267,10 +261,7 @@ public class TrackingUtils{
 			in.close();
 			out.close();
 			
-			file = new File((bloodcat ? beatmapId + ".osu" : setId + ".zip"));
-			
-			if(bloodcat && file != null) return file;
-			if(file == null) return null;
+			file = new File(fileName);
 			
 			ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
 			ZipEntry entry = zis.getNextEntry();

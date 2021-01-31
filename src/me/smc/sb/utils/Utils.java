@@ -643,9 +643,10 @@ public class Utils{
 	    HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
 	    con.setInstanceFollowRedirects(false);
 	    con.connect();
+	    con.getInputStream();
 
 	    if(con.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || con.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP){
-	        String redirectUrl = con.getHeaderField("Location");
+	    	String redirectUrl = con.getHeaderField("Location");
 	        return getFinalURL(redirectUrl);
 	    }
 	    
