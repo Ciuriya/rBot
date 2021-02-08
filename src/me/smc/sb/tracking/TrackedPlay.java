@@ -322,8 +322,7 @@ public class TrackedPlay{
 	public void loadPP(){
 		pp = new PPInfo(0, 0, 0, 0, 0);
 		
-		Utils.Login.osu();
-		File osuFile = TrackingUtils.fetchOsuFile(getBeatmapId(), getBeatmapSetId());
+		File osuFile = TrackingUtils.fetchOsuFile(getBeatmapId());
 		
 		if(osuFile == null) return;
 		

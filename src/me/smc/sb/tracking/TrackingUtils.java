@@ -1,9 +1,7 @@
 package me.smc.sb.tracking;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,12 +10,9 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
 
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
@@ -167,14 +162,9 @@ public class TrackingUtils{
 	}
 	
 	public static PPInfo fetchPPFromOppai(int beatmapId, int setId, double accuracy, int combo, String mods, int misses, int fifties, int hundreds){
-		Utils.Login.osu();
-		
-		File osuFile = fetchOsuFile(beatmapId, setId);
+		File osuFile = fetchOsuFile(beatmapId);
 		
 		if(osuFile == null) return new PPInfo(0, 0, 0, 0, 0);
-		
-		osuFile.renameTo(new File(beatmapId + ".osu"));
-		osuFile = new File(beatmapId + ".osu");
 		
 		String actual = "./oppai-ng " + osuFile.getName() + (accuracy == 100 ? "" : " " + accuracy + "%") +
 						 (mods.length() != 0 ? " " + mods : "") +
@@ -231,24 +221,12 @@ public class TrackingUtils{
 		}
 	}
 	
-	public static File fetchOsuFile(int beatmapId, int setId){
-		String[] html = Utils.getHTMLCode("https://osu.ppy.sh/b/" + beatmapId);
-		
-		ArrayList<String> line = Utils.getNextLineCodeFromLink(html, 0, "beatmapTab active");
-		if(line.isEmpty()) return null;
-
-		String diffName = Jsoup.parse(line.get(0).split("<span>")[1].split("</span>")[0]).text();
-		String url = "https://beatconnect.io/b/" + setId;
-		
-		try{
-			url = Utils.getFinalURL(url);
-		}catch(Exception e){}
-		
-		URLConnection connection = establishConnection(url);
+	public static File fetchOsuFile(int beatmapId){
+		URLConnection connection = establishConnection("https://osu.ppy.sh/osu/" + beatmapId);
 		File file = null;
 		
         try{
-        	String fileName = setId + ".zip";
+        	String fileName = beatmapId + ".zip";
 			InputStream in = connection.getInputStream();
 			FileOutputStream out = new FileOutputStream(fileName);
 			
@@ -263,57 +241,7 @@ public class TrackingUtils{
 			
 			file = new File(fileName);
 			
-			ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
-			ZipEntry entry = zis.getNextEntry();
-			File finalFile = null;
-			
-			while(entry != null){
-				if(entry.getName().endsWith(".osu")){
-					BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(entry.getName()));
-					
-					byte[] buffer = new byte[4096];
-					int read = 0;
-					
-					while((read = zis.read(buffer)) >= 0)
-						bos.write(buffer, 0, read);
-					
-					bos.close();  
-					
-					BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(entry.getName()), "UTF-8"));
-					
-					String l = br.readLine();
-					boolean found = false;
-					
-					while(l != null){
-						if(l.startsWith("Version:") && l.replaceFirst("Version:", "").equalsIgnoreCase(diffName)){
-							found = true;
-							break;
-						}
-						
-						l = br.readLine();
-					}
-					
-					br.close();
-					
-					if(found){
-						zis.closeEntry();
-						zis.close();
-						
-						finalFile = new File(entry.getName());
-						break;
-					}
-					
-					new File(entry.getName()).delete();
-				}
-				
-				zis.closeEntry();
-				entry = zis.getNextEntry();
-			}
-			
-			zis.close();
-			file.delete();
-			
-			return finalFile;
+			return file;
         }catch(Exception e){
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 			if(file != null && file.exists()) file.delete();
@@ -331,6 +259,8 @@ public class TrackingUtils{
 			Log.logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 		
+		connection.setConnectTimeout(5000);
+		connection.setReadTimeout(5000);
         connection.setDoOutput(true);
         connection.setDoInput(true);
         connection.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
