@@ -418,6 +418,9 @@ public class Utils{
 	public static String toDuration(long time){
 		long millis = time;
 		
+		long years = millis / 31557600000L;
+		millis -= years * 31557600000L;
+		
         long days = TimeUnit.MILLISECONDS.toDays(millis);
         millis -= TimeUnit.DAYS.toMillis(days);
         
@@ -431,6 +434,7 @@ public class Utils{
         
         String display = "";
         
+        if(years > 0) display += years + "y";
         if(days > 0) display += days + "d";
         if(hours > 0) display += hours + "h";
         if(minutes > 0) display += minutes + "m";

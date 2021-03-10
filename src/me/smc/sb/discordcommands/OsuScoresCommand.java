@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
+import me.smc.sb.tracking.CustomDate;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuScoresRequest;
 import me.smc.sb.tracking.OsuUserRequest;
@@ -26,7 +27,7 @@ public class OsuScoresCommand extends GlobalCommand{
 				"{prefix}osuscore - Shows your plays on the map in relation to the last posted map\n\n" +
 			    "----------\nAliases\n----------\n{prefix}scores", 
 			    true, 
-				"osuscores", "scores", "compare");
+				"osuscores", "scores", "compare", "c");
 	}
 
 	@Override
@@ -158,7 +159,7 @@ public class OsuScoresCommand extends GlobalCommand{
 				
 				if(modText.length() == 0) modText = "No Mod";
 				
-				modText = "**" + modText + "** • " + Utils.df(play.getStarRating(), 2) + "\u2605";
+				modText = "**" + modText + "** • " + Utils.df(play.getStarRating(), 2) + "\u2605 • **" + Utils.toDuration(Utils.getCurrentTimeUTC() - play.getDate().getTime()) + "**";
 				
 				if(i > 0) modText = "\n" + modText;
 				
