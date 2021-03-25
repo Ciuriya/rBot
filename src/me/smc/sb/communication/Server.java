@@ -84,7 +84,7 @@ public class Server{
 			}
 		});
 		
-		timer.scheduleAtFixedRate(new TimerTask(){
+		/*timer.scheduleAtFixedRate(new TimerTask(){
 			@SuppressWarnings("deprecation")
 			public void run(){
 				if(stop){
@@ -92,9 +92,9 @@ public class Server{
 					timer.cancel();
 				}
 			}
-		}, 100, 100);
+		}, 100, 100);*/
 		
-		t.start();
+		//t.start();
 	}
 	
 	public void sendMessage(String message){

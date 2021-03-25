@@ -296,8 +296,8 @@ public class Utils{
 			
 			inputStream.close();
 			
-			response.deleteCharAt(0);
-			response.deleteCharAt(response.length() - 1);
+			response = response.deleteCharAt(0);
+			response = response.deleteCharAt(response.length() - 1);
 			
 			answer = response.toString();
 		}catch(Exception e){

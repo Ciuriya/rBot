@@ -37,7 +37,7 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 				"----------\nUsage\n----------\n{prefix}osurecent (player) - Shows your (or the player's) latest play\n\n" + 
 			    "----------\nAliases\n----------\n{prefix}recent", 
 			    true, 
-				"osurecent", "recent");
+				"osurecent", "recent", "rs");
 	}
 
 	@Override

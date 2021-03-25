@@ -25,7 +25,7 @@ public class OsuBeatmapsRequest extends OsuRequest{
 		if(specifics[1] != "-1") postFilters += "&m=" + specifics[1];
 		if(specifics[2] != "-1") postFilters += "&a=" + specifics[2];
 		if(specifics[3] != "-1") postFilters += "&limit=" + specifics[3];
-		if(specifics[4] != "-1") postFilters += "&since=" + specifics[4];
+		if(specifics.length >= 5 && specifics[4] != "-1") postFilters += "&since=" + specifics[4];
 		
 		String post = Utils.sendPost("https://osu.ppy.sh/api/", "get_beatmaps?k=" + OsuStatsCommand.apiKey + postFilters);
 
