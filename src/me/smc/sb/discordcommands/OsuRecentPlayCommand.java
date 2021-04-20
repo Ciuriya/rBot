@@ -41,9 +41,7 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent e, String[] args) {
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
+	public void onCommand(MessageReceivedEvent e, String[] args){
 		String osuProfile = OsuSetProfileCommand.config.getValue(e.getAuthor().getId());
 		
 		if(args.length > 0) {

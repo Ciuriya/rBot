@@ -26,7 +26,6 @@ public class DownloadOsuMapCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		try{

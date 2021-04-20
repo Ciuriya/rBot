@@ -42,8 +42,6 @@ public class OsuStatsCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		String osuProfile = OsuSetProfileCommand.config.getValue(e.getAuthor().getId());
 		
 		if(args.length > 0) {

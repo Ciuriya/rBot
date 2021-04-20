@@ -25,7 +25,6 @@ public class CleanCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		e.getMessage().delete().complete();
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		int amount = Integer.valueOf(args[0]);

@@ -23,8 +23,6 @@ public class UserInfoCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		User user = e.getMessage().getMentionedUsers().get(0);
 		
 		if(user == null){

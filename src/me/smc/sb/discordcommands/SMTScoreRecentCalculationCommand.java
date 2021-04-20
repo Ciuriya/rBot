@@ -30,10 +30,6 @@ public class SMTScoreRecentCalculationCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		try{
-			e.getMessage().delete().complete();
-		}catch(Exception ex){}
-		
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		String userId = Utils.getOsuPlayerId(args[0], true);

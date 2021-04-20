@@ -43,7 +43,6 @@ public class DeadpoolCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		for(int i = 0; i < args.length; i++)

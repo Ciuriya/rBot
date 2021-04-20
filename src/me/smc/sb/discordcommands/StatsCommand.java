@@ -30,8 +30,6 @@ public class StatsCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		int servers = Main.api.getGuilds().size();
 		int users = 0, connected = 0;
 		

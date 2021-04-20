@@ -22,8 +22,6 @@ public class PollIRCCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		String msg = "IRC\n";
 		
 		msg += scanBot(Main.ircBot) + "\n\nTwitch\n";

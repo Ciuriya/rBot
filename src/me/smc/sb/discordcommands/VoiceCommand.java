@@ -52,8 +52,6 @@ public class VoiceCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		String permLock = Main.serverConfigs.get(e.getGuild().getId()).getValue("voice-perm-lock");
 		
 		if(permLock.length() > 0 && !Permissions.check(e.getAuthor(), Permissions.BOT_ADMIN)){

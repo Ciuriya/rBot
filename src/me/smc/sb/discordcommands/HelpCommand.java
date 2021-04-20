@@ -21,7 +21,6 @@ public class HelpCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		StringBuilder msg = new StringBuilder();
 		
     	String serverId = "-1";

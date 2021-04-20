@@ -29,8 +29,6 @@ public class ListServersCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		StringBuilder builder = new StringBuilder();
 		
 		builder.append("```" + e.getJDA().getGuilds().size() + " servers\n\n");

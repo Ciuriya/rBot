@@ -26,8 +26,6 @@ public class HaltCommand extends GlobalCommand{
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		ArrayList<Thread> threads = Command.threads.get(e.getGuild().getId());
 		if(threads != null && !threads.isEmpty()){
 			for(Thread t : threads)

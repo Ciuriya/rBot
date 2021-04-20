@@ -21,7 +21,6 @@ public class MessageIRCCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
 		if(!Utils.checkArguments(e, args, 3)) return;
 		
 		boolean twitch = args[0].equalsIgnoreCase("t") ? true : false;

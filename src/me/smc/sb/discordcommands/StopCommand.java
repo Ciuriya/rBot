@@ -20,8 +20,6 @@ public class StopCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		int retCode = 1;
 		
 		if(args.length > 0) retCode = Utils.stringToInt(args[0]);

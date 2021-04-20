@@ -18,8 +18,6 @@ public class IdToUserCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		Utils.deleteMessage(e.getChannel(), e.getMessage());
-		
 		if(args.length == 0) return;
 		
 		User user = e.getJDA().retrieveUserById(args[0]).complete();
