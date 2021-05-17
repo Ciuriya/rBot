@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageHistory;
 import net.dv8tion.jda.api.entities.PrivateChannel;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class CleanCommand extends GlobalCommand{
@@ -19,7 +20,7 @@ public class CleanCommand extends GlobalCommand{
 			  "{prefix}clean\nThis command cleans n amount of messages in the channel\n\n" +
 			  "----------\nUsage\n----------\n{prefix}clean {amount} (@user) - Removes n amount of messages sent by everyone (or by user on mention)\n\n" + 
 		      "----------\nAliases\n----------\nThere are no aliases.",  
-			  false, 
+			  true, 
 			  "clean");
 	}
 
@@ -28,13 +29,11 @@ public class CleanCommand extends GlobalCommand{
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		int amount = Integer.valueOf(args[0]);
-		Member cleanUser = null;
+		User cleanUser = null;
 		
-		if(args.length >= 2 && args[1].contains("@") && e.getTextChannel() != null)
-			for(Member m : e.getTextChannel().getMembers())
-				if(m.getUser().getName().equalsIgnoreCase(args[1].substring(1))){
-					cleanUser = m;
-				}
+		if(args.length >= 2) {
+			cleanUser = e.getJDA().retrieveUserById(e.getMessage().getContentRaw().split(" ")[2].replace("<", "").replace("@", "").replace(">", "").replace("!", "")).complete();
+		}
 		
 		if(amount > 100) amount = 100;
 		else if(amount < 1) amount = 1;
@@ -58,7 +57,7 @@ public class CleanCommand extends GlobalCommand{
 			
 			messageList.remove(0);
 			
-			if((cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getUser().getId())) || cleanUser == null){
+			if((cleanUser != null && message.getAuthor().getId().equalsIgnoreCase(cleanUser.getId())) || cleanUser == null){
 				cleared++;
 				
 				if(e.getChannel() instanceof PrivateChannel){

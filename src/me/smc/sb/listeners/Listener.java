@@ -39,7 +39,8 @@ public class Listener implements EventListener{
 		if(event instanceof MessageReceivedEvent){
 			MessageReceivedEvent e = (MessageReceivedEvent) event;
 			
-	    	if(e.getAuthor().getId().equalsIgnoreCase("120923487467470848")) return; //if user is bot, no msg
+	    	if(e.getAuthor().isBot()) return;
+	    	
 	    	Main.messagesReceivedThisSession++;
 	    	
 	    	boolean dm = e.isFromType(ChannelType.PRIVATE);
