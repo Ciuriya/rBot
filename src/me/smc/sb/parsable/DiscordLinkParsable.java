@@ -8,7 +8,7 @@ public class DiscordLinkParsable extends ParsableValue{
 
 	@Override
 	public String parse(String text) {
-		return text.replaceAll(value.replace("{", "\\{"), "http://discord.gg/0phGqtqLYwSzCdwn");
+		return text.replaceAll(value.replace("{", "\\{"), "https://discord.gg/V4Z4VqV2Yw");
 	}
 	
 }
