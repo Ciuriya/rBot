@@ -70,7 +70,7 @@ public class HelpCommand extends GlobalCommand{
     		Utils.info(channel, "```\n" + toSend + "```");
     	}
     	
-		Utils.info(channel, "```\n" + rest + "```" + (args.length == 0 ? "\nHelp Server: http://discord.gg/0phGqtqLYwSzCdwn" : ""));
+		Utils.info(channel, "```\n" + rest + "```" + (args.length == 0 ? "\nHelp Server: https://discord.gg/V4Z4VqV2Yw" : ""));
 	}
 	
 }
