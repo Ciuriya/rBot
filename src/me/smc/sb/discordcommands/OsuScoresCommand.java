@@ -1,6 +1,7 @@
 package me.smc.sb.discordcommands;
 
 import java.awt.Color;
+import java.util.logging.Level;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,6 +14,7 @@ import me.smc.sb.tracking.OsuUserRequest;
 import me.smc.sb.tracking.RequestTypes;
 import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.tracking.TrackingUtils;
+import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -60,11 +62,21 @@ public class OsuScoresCommand extends GlobalCommand{
 				if(args[0].contains("/#"))
 					setId = split[split.length - 3];
 				else setId = split[split.length - 2].replace("#osu", "").replace("#taiko", "").replace("#fruits", "").replace("#mania", "");
+			}else if(hasRecent){
+				osuProfile = "";
+				
+				for(int i = 0; i < args.length; i++)
+					osuProfile += " " + args[i];
+				
+				osuProfile = osuProfile.substring(1);
+				osuProfile = Utils.getOsuPlayerIdFast(osuProfile);
 			}else{
 				Utils.info(e.getChannel(), "Please use the new site's links!");
 				return;
 			}
-		}else{
+		}
+		
+		if(hasRecent) {
 			String recent = OsuRecentPlayCommand.latestRecents.get(e.getChannel().getId());
 			
 			beatmapId = recent.split("-")[0];
