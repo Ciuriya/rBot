@@ -29,7 +29,7 @@ public class OsuScoresCommand extends GlobalCommand{
 				"{prefix}osuscore - Shows your plays on the map in relation to the last posted map\n\n" +
 			    "----------\nAliases\n----------\n{prefix}scores", 
 			    true, 
-				"osuscores", "scores", "compare", "c");
+				"osuscores", "scores", "compare", "c", "sc");
 	}
 
 	@Override
@@ -62,6 +62,8 @@ public class OsuScoresCommand extends GlobalCommand{
 				if(args[0].contains("/#"))
 					setId = split[split.length - 3];
 				else setId = split[split.length - 2].replace("#osu", "").replace("#taiko", "").replace("#fruits", "").replace("#mania", "");
+				
+				hasRecent = false;
 			}else if(hasRecent){
 				osuProfile = "";
 				
