@@ -299,6 +299,10 @@ public class TrackedPlay{
 		return Mods.getModDisplay(getMods());
 	}
 	
+	public List<Mods> getGameplayAffectingMods(){
+		return Mods.getGameplayAffectingMods(play.getInt("enabled_mods"));
+	}
+	
 	public CustomDate getDate(){
 		return new CustomDate(TrackingUtils.osuDateToCurrentDate(play.getString("date")));
 	}

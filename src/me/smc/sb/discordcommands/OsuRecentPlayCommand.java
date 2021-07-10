@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.tracking.CustomDate;
+import me.smc.sb.tracking.Mods;
 import me.smc.sb.tracking.OsuRecentPlaysRequest;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuTopPlaysRequest;
@@ -82,11 +83,18 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			play.loadMap();
 			play.loadPP();
 			
-			for(int i = jsonResponse.length() - 1; i >= 0; i--){
+			List<Mods> gameplayModsUsed = play.getGameplayAffectingMods();
+			tryChecker: for(int i = jsonResponse.length() - 1; i >= 0; i--){
 				JSONObject recentPlay = jsonResponse.getJSONObject(i);
+				List<Mods> recentMods = Mods.getGameplayAffectingMods(recentPlay.getInt("enabled_mods"));
 				
-				if(recentPlay.getInt("beatmap_id") == play.getBeatmapId())
+				if(recentPlay.getInt("beatmap_id") == play.getBeatmapId() && recentMods.size() == gameplayModsUsed.size()){
+					for(Mods mod : recentMods)
+						if(!gameplayModsUsed.contains(mod))
+							break tryChecker;
+					
 					tryCount++;
+				}
 			}
 			
 			JSONObject jsonUser = null;
@@ -164,7 +172,7 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 			String pbText = "";
 			String tryText = "";
 			
-			tryText = "**" + tryCount + getOrdinalString(tryCount) + "** tr" + (tryCount >= 50 ? "ies" : "y");
+			tryText = "**" + tryCount + getOrdinalString(tryCount) + "** tr" + (tryCount >= 50 ? "ies" : "y") + " (in last 24h)";
 			
 			if(play.isPerfect())
 				comboText += "FC (" + Utils.veryLongNumberDisplay(play.getCombo()) + "x)";

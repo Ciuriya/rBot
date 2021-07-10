@@ -5,45 +5,47 @@ import java.util.List;
 
 public enum Mods{
 	
-	None(0, "NM"), 
-	NoFail(1, "NF"), 
-	Easy(2, "EZ"),
-	TouchDevice(4, "TD"),
-	Hidden(8, "HD"), 
-	HardRock(16, "HR"), 
-	SuddenDeath(32, "SD"), 
-	DoubleTime(64, "DT"),
-	Relax(128, "RL"), 
-	HalfTime(256, "HT"), 
-	Nightcore(512, "NC"), 
-	Flashlight(1024, "FL"), 
-	Autoplay(2048, "AU"),
-	SpunOut(4096, "SO"), 
-	Autopilot(8192, "AP"),
-	Perfect(16384, "PF"),
-	Key4(32768, "4K"),
-	Key5(65536, "5K"),
-	Key6(131072, "6K"),
-	Key7(262144, "7K"),
-	Key8(524288, "8K"),
-	FadeIn(1048576, "FI"),
-	Random(2097152, "RA"),
-	Cinema(4194304, "CN"),
-	Target(8388608, "TP"),
-	Key9(16777216, "9K"),
-	Key10(33554432, "10K"),
-	Key1(67108864, "1K"),
-	Key3(134217728, "3K"),
-	Key2(268435456, "2K"),
-	ScoreV2(536870912, "V2"),
-	Mirror(1073741824, "MR");
+	None(0, "NM", true), 
+	NoFail(1, "NF", false), 
+	Easy(2, "EZ", true),
+	TouchDevice(4, "TD", false),
+	Hidden(8, "HD", true), 
+	HardRock(16, "HR", true), 
+	SuddenDeath(32, "SD", true), 
+	DoubleTime(64, "DT", true),
+	Relax(128, "RL", true), 
+	HalfTime(256, "HT", true), 
+	Nightcore(512, "NC", true), 
+	Flashlight(1024, "FL", true), 
+	Autoplay(2048, "AU", true),
+	SpunOut(4096, "SO", true), 
+	Autopilot(8192, "AP", true),
+	Perfect(16384, "PF", false),
+	Key4(32768, "4K", true),
+	Key5(65536, "5K", true),
+	Key6(131072, "6K", true),
+	Key7(262144, "7K", true),
+	Key8(524288, "8K", true),
+	FadeIn(1048576, "FI", true),
+	Random(2097152, "RA", true),
+	Cinema(4194304, "CN", true),
+	Target(8388608, "TP", true),
+	Key9(16777216, "9K", true),
+	Key10(33554432, "10K", true),
+	Key1(67108864, "1K", true),
+	Key3(134217728, "3K", true),
+	Key2(268435456, "2K", true),
+	ScoreV2(536870912, "V2", true),
+	Mirror(1073741824, "MR", true);
 	
 	long bit;
 	String shortName;
+	boolean affectsGameplay;
 	
-	Mods(int bit, String shortName){
+	Mods(int bit, String shortName, boolean affectsGameplay){
 		this.bit = bit;
 		this.shortName = shortName;
+		this.affectsGameplay = affectsGameplay;
 	}
 	
 	public long getBit(){
@@ -52,6 +54,10 @@ public enum Mods{
 	
 	public String getShortName(){
 		return shortName;
+	}
+	
+	public boolean affectsGameplay(){
+		return affectsGameplay;
 	}
 
 	public static long getMods(String sMods){
@@ -87,6 +93,20 @@ public enum Mods{
 		if(mods.contains(Mods.Perfect)) mods.remove(Mods.SuddenDeath);
 		
 		return mods;
+	}
+	
+	public static List<Mods> getGameplayAffectingMods(int modsUsed){
+		List<Mods> mods = getMods(modsUsed);
+		List<Mods> gameplayAffectingMods = new ArrayList<>();
+		
+		for(int i = 0; i < mods.size(); i++){
+			Mods mod = mods.get(i);
+			
+			if(mod.affectsGameplay())
+				gameplayAffectingMods.add(mod);
+		}
+		
+		return gameplayAffectingMods;
 	}
 	
 	public static long getMods(List<Mods> mods){
