@@ -11,7 +11,7 @@ public enum Mods{
 	TouchDevice(4, "TD", false),
 	Hidden(8, "HD", true), 
 	HardRock(16, "HR", true), 
-	SuddenDeath(32, "SD", true), 
+	SuddenDeath(32, "SD", false), 
 	DoubleTime(64, "DT", true),
 	Relax(128, "RL", true), 
 	HalfTime(256, "HT", true), 
