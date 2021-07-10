@@ -91,11 +91,13 @@ public class OsuRecentPlayCommand extends GlobalCommand{
 				if(recentPlay.getInt("beatmap_id") == play.getBeatmapId() && recentMods.size() == gameplayModsUsed.size()){
 					for(Mods mod : recentMods)
 						if(!gameplayModsUsed.contains(mod))
-							break tryChecker;
+							continue tryChecker;
 					
 					tryCount++;
 				}
 			}
+			
+			if(tryCount == 0) tryCount = 1;
 			
 			JSONObject jsonUser = null;
 			OsuRequest userRequest = new OsuUserRequest(RequestTypes.API, "" + osuProfile, "0");
