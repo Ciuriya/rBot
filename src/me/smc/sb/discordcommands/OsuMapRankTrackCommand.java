@@ -168,7 +168,8 @@ public class OsuMapRankTrackCommand extends GlobalCommand{
 				for(int i = 0; i < beatmapsArray.length(); i++){
 					JSONObject jsonObj = beatmapsArray.getJSONObject(i);
 					
-					if(jsonObj.getInt("approved") == 1){
+					int approvedStatus = jsonObj.getInt("approved");
+					if(approvedStatus == 1 || approvedStatus == 2){
 						int setId = jsonObj.getInt("beatmapset_id");
 						List<JSONObject> set = new ArrayList<>();
 						
