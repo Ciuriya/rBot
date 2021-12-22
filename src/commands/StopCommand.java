@@ -1,8 +1,13 @@
 package commands;
 
+import java.util.List;
+
 import data.CommandCategory;
 import main.Main;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import utils.DiscordChatUtils;
 
 /**
@@ -13,23 +18,47 @@ import utils.DiscordChatUtils;
 public class StopCommand extends Command {
 
 	public StopCommand() {
-		super(null, true, true, CommandCategory.GENERAL, new String[]{"stop", "restart", "update"}, 
-			  "Stops, restarts or updates the bot depending on alias used.", 
-			  "Stops, restarts or updates the bot depending on alias used.", 
-			  new String[]{"stop", "Stops the bot."},
-			  new String[]{"restart", "Restarts the bot."},
-			  new String[]{"update", "Updates the bot."});
+		super(buildCommandInfo());
+	}
+	
+	private static CommandInfo buildCommandInfo() {
+		CommandInfo info = new CommandInfo();
+		
+		info.permission = null;
+		info.adminOnly = true;
+		info.allowsDm = true;
+		info.bypassMessageSendPermissions = true;
+		info.category = CommandCategory.ADMIN;
+		info.trigger = "stop";
+		info.description = "Stops, restarts or updates the bot. Limited to bot owner only.";
+		info.usages = new String[][] { new String[]{"stop", "Stops the bot."},
+			  						   new String[]{"stop restart", "Restarts the bot."},
+			  						   new String[]{"stop update", "Updates the bot."} };
+		
+		return info;
+	}
+	
+	@Override
+	public CommandData generateCommandData() {
+		CommandData data = new CommandData(getTrigger(), getDescription());
+		
+		data.addOption(OptionType.STRING, "operation", "The operation for the bot to execute. Valid operations: stop, restart, update.");
+		
+		return data;
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent p_event, String[] args) {
-		String alias = p_event.getMessage().getContentRaw().toLowerCase();
+	public void onCommand(SlashCommandEvent p_event, List<OptionMapping> p_options) {
 		int code = 1;
 		
-		if(alias.contains("restart")) code = 2;
-		else if(alias.contains("update")) code = 3;
+		if(p_options.size() > 0) {
+			String operation = p_options.get(0).getAsString();
+			
+			if(operation.equalsIgnoreCase("restart")) code = 2;
+			else if(operation.equalsIgnoreCase("update")) code = 3;
+		}
 		
-		DiscordChatUtils.message(p_event.getChannel(), getCodeMessage(code));
+		DiscordChatUtils.message(p_event, getCodeMessage(code), true);
 		Main.stop(code);
 	}
 	

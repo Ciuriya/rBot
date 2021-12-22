@@ -22,7 +22,7 @@ public enum DiscordActivities {
 	}),
 	SERVERS(new Callable<String>() {
 		public String call() {
-			return "in " + ApplicationStats.getInstance().getServerCount() + " servers | " + Constants.DEFAULT_PREFIX + "help";
+			return "in " + ApplicationStats.getInstance().getServerCount() + " servers | /help";
 		}
 	}),
 	SUPPORT(new Callable<String>() {

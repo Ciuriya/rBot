@@ -2,20 +2,28 @@ package commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import data.BotAdmins;
 import data.CommandCategory;
+import main.Main;
 import managers.ApplicationStats;
 import managers.ThreadingManager;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildChannel;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.ThreadChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import utils.DiscordChatUtils;
 
 /**
@@ -27,102 +35,91 @@ import utils.DiscordChatUtils;
 public abstract class Command {
 	
 	public static List<Command> commands = new ArrayList<>();
-	private String[] m_triggers;
-	private Permission m_permission;
-	private boolean m_adminOnly;
-	private boolean m_allowsDm;
-	private CommandCategory m_category;
-	private String m_shortDescription;
-	private String m_description;
-	private String[][] m_usages; // contains the usage first and the description of it in second
+	
+	private CommandInfo m_commandInfo;
 
-	public Command(Permission p_perm, boolean p_adminOnly, boolean p_allowsDm, CommandCategory p_category,
-				   String[] p_triggers, String p_shortDesc, String p_desc, String[]... p_usages) {
-		m_triggers = p_triggers;
-		m_permission = p_perm;
-		m_adminOnly = p_adminOnly;
-		m_allowsDm = p_allowsDm;
-		m_category = p_category;
-		m_shortDescription = p_shortDesc;
-		m_description = p_desc;
-		m_usages = p_usages;
+	public Command(CommandInfo p_commandInfo) {
+		m_commandInfo = p_commandInfo;
 		
 		commands.add(this);
 	}
 	
-	public String[] getTriggers() {
-		return m_triggers;
+	public String getTrigger() {
+		return m_commandInfo.trigger;
 	}
 	
 	public boolean allowsDm() {
-		return m_allowsDm;
+		return m_commandInfo.allowsDm;
 	}
 	
 	public CommandCategory getCategory() {
-		return m_category;
-	}
-	
-	public String getShortDescription() {
-		return m_shortDescription;
+		return m_commandInfo.category;
 	}
 	
 	public String getDescription() {
-		return m_description;
+		return m_commandInfo.description;
 	}
 	
 	public String[][] getUsages() {
-		return m_usages;
+		return m_commandInfo.usages;
 	}
 	
 	public boolean canUse(User p_user, MessageChannel p_channel) {
-		if(m_permission == null) return true;
 		if(BotAdmins.isAdmin(p_user)) return true;
-		if(m_adminOnly) return false;
+		if(m_commandInfo.adminOnly) return false;
+		if(m_commandInfo.permission == null) return true;
 		
 		if(p_channel.getType() == ChannelType.PRIVATE) return true;
 		else {
-			TextChannel text = ((TextChannel) p_channel);
-			Member member = text.getGuild().retrieveMember(p_user).complete();
+			Guild guild;
+			
+			if(p_channel instanceof TextChannel)
+				guild = ((TextChannel) p_channel).getGuild();
+			else if(p_channel instanceof ThreadChannel)
+				guild = ((ThreadChannel) p_channel).getGuild();
+			else return false;
+			
+			Member member = guild.retrieveMember(p_user).complete();
 			
 			if(member != null)
-				return member.hasPermission(text, m_permission);
+				return member.hasPermission((GuildChannel) p_channel, m_commandInfo.permission);
 		}
 		
 		return false;
 	}
 	
-	protected void sendInvalidArgumentsError(MessageChannel p_channel) {
-		DiscordChatUtils.message(p_channel, "Invalid arguments! Use **__" + 
-								 DiscordChatUtils.getPrefix(p_channel) + 
-								 "help " + m_triggers[0] + "__** for info on this command!");
+	protected void sendInvalidArgumentsError(SlashCommandEvent p_event) {
+		DiscordChatUtils.message(p_event, "Invalid arguments! Use **__/help " + m_commandInfo.trigger + "__** for info on this command!", false);
 	}
 	
 	public static Command findCommand(String p_trigger) {
-		return commands.stream().filter(c -> Arrays.asList(c.m_triggers).stream()
+		return commands.stream().filter(c -> Arrays.asList(c.getTrigger()).stream()
 											 .anyMatch(t -> t.equalsIgnoreCase(p_trigger)))
 							 	.findFirst().orElse(null);
 	}
 	
 	public static List<Command> findCommandsInCategory(CommandCategory p_category) {
-		return commands.stream().filter(c -> c.m_category == p_category).collect(Collectors.toList());
+		return commands.stream().filter(c -> c.getCategory() == p_category).collect(Collectors.toList());
 	}
 	
-	public static boolean handleCommand(MessageReceivedEvent p_event, String p_message) {
-		String trigger = p_message.split(" ")[0];
-		String[] args = p_message.replace(trigger + " ", "").split(" ");
-		Command cmd = findCommand(trigger);
+	public static boolean handleCommand(SlashCommandEvent p_event, String p_trigger, List<OptionMapping> p_options) {
+		Command cmd = findCommand(p_trigger);
 		
 		if(cmd != null) {
-			if(!cmd.m_allowsDm && !p_event.isFromGuild()) return false;
+			if(!cmd.allowsDm() && !p_event.isFromGuild()) return false;
 			
 			ApplicationStats.getInstance().addCommandUsed();
 			
-			ThreadingManager.getInstance().executeAsync(new Runnable() {
-				public void run() {
-					if(p_message.contains(" ")) cmd.onCommand(p_event, args);
-					else cmd.onCommand(p_event, new String[]{});
-				}
-			}, 30000, true);
+			boolean canMessageChannel = cmd.m_commandInfo.bypassMessageSendPermissions || 
+										DiscordChatUtils.checkMessagePermissionForChannel(p_event.getMessageChannel());
+			
+			if(canMessageChannel && cmd.canUse(p_event.getUser(), p_event.getChannel())) {
+				ThreadingManager.getInstance().executeAsync(new Runnable() {
+					public void run() {
+						cmd.onCommand(p_event, p_options);
+					}
+				}, 30000, true);
+			} else DiscordChatUtils.sendMessagePermissionCheckFailedMessage(p_event);
 			
 			return true;
 		}
@@ -130,12 +127,35 @@ public abstract class Command {
 		return false;
 	}
 	
-	public abstract void onCommand(MessageReceivedEvent p_event, String[] args);
+	public abstract CommandData generateCommandData();
+	
+	public abstract void onCommand(SlashCommandEvent p_event, List<OptionMapping> p_options);
 	
 	public static void registerCommands() {
-		new EditCustomCommand();
 		new HelpCommand();
-		new SetPrefixCommand();
+		new EditCustomCommand();
 		new StopCommand();
+		
+		CommandListUpdateAction slashCommands = Main.discordApi.updateCommands();
+		
+		List<CommandData> commandDataList = new LinkedList<>();
+		
+		for(Command command : commands) {
+			commandDataList.add(command.generateCommandData());
+		}
+		
+		slashCommands.addCommands(commandDataList);
+		slashCommands.complete();
 	}
+}
+
+class CommandInfo {
+	public String trigger;
+	public Permission permission;
+	public boolean adminOnly;
+	public boolean allowsDm;
+	public boolean bypassMessageSendPermissions;
+	public CommandCategory category;
+	public String description;
+	public String[][] usages; // contains the usage first and the description of it in second
 }

@@ -11,7 +11,7 @@ import data.Log;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
 import managers.ThreadingManager;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import utils.DiscordChatUtils;
 
 /**
@@ -44,18 +44,15 @@ public class CustomCommand {
 		return m_guildId;
 	}
 	
-	public void execute(MessageReceivedEvent p_event) {
+	public void execute(SlashCommandEvent p_event) {
 		ThreadingManager.getInstance().executeAsync(new Runnable() {
 			public void run() {
 				ApplicationStats.getInstance().addCommandUsed();
 				
-				// this implementation of custom commands is obviously very basic
+				// TODO: this implementation of custom commands is obviously very basic
 				// it would be nice to match rBot's actual custom commands in the future
 				
-				DiscordChatUtils.message(p_event.getChannel(), 
-										 DiscordChatUtils.fillInEmotes(p_event.getJDA(), 
-												 					   p_event.getChannel(), 
-												 					   m_instruction));
+				DiscordChatUtils.message(p_event.getChannel(), m_instruction);
 			}
 		}, 30000, true);
 	}
@@ -99,6 +96,7 @@ public class CustomCommand {
 		}
 	}
 	
+	// TODO: PLEASE cache these
 	public static CustomCommand getCommand(String p_guildId, String p_trigger) {
 		String instruction = "";
 		

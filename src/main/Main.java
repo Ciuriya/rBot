@@ -11,7 +11,7 @@ import commands.Command;
 import data.Log;
 import listeners.GuildJoinListener;
 import listeners.GuildLeaveListener;
-import listeners.MessageListener;
+import listeners.SlashCommandListener;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
 import managers.DiscordActivityManager;
@@ -56,7 +56,7 @@ public class Main {
 		// log into discord
 		try {
 			discordApi = JDABuilder.createDefault(loginInfo.getString("discordToken"))
-						 .addEventListeners(new MessageListener(), new GuildJoinListener(), new GuildLeaveListener())
+						 .addEventListeners(new GuildJoinListener(), new GuildLeaveListener(), new SlashCommandListener())
 						 .build();
 			
 			discordApi.awaitReady();
