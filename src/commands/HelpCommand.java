@@ -10,6 +10,8 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Button;
 import utils.Constants;
 import utils.DiscordChatUtils;
 
@@ -54,7 +56,6 @@ public class HelpCommand extends Command {
 		EmbedBuilder builder = new EmbedBuilder();
 		
 		builder.setColor(Constants.DEFAULT_EMBED_COLOR);
-		builder.setFooter("Official rBot server: " + Constants.SUPPORT_SERVER_LINK);
 		
 		MessageChannel channel = p_event.getChannel();
 		User user = p_event.getUser();
@@ -84,7 +85,7 @@ public class HelpCommand extends Command {
 				
 				builder.setDescription(description);
 			} else {
-				DiscordChatUtils.message(p_event, "Command not found!\nUse **__`/help`__** to get the full command list!", false);
+				DiscordChatUtils.message(p_event, "Command not found!\nUse **__`/help`__** to get the full command list!", false, false);
 				
 				return;
 			}
@@ -127,6 +128,7 @@ public class HelpCommand extends Command {
 			builder.setDescription(description);
 		}
 		
-		DiscordChatUtils.embed(p_event, builder.build(), false);
+		DiscordChatUtils.embed(p_event, builder.build(), false, false,
+							   ActionRow.of(Button.link(Constants.SUPPORT_SERVER_LINK, "rBot Discord Server")));
 	}
 }

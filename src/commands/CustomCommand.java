@@ -45,14 +45,21 @@ public class CustomCommand {
 	}
 	
 	public void execute(SlashCommandEvent p_event) {
+		if(!DiscordChatUtils.checkMessagePermissionForChannel(p_event.getMessageChannel())) {
+			DiscordChatUtils.sendMessagePermissionCheckFailedMessage(p_event);
+			return;
+		}
+		
+		p_event.deferReply().queue();
+		
 		ThreadingManager.getInstance().executeAsync(new Runnable() {
 			public void run() {
 				ApplicationStats.getInstance().addCommandUsed();
-				
+
 				// TODO: this implementation of custom commands is obviously very basic
 				// it would be nice to match rBot's actual custom commands in the future
 				
-				DiscordChatUtils.message(p_event.getChannel(), m_instruction);
+				p_event.getHook().sendMessage(m_instruction).queue();
 			}
 		}, 30000, true);
 	}

@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import commands.Command;
 import data.Log;
+import listeners.ButtonClickListener;
 import listeners.GuildJoinListener;
 import listeners.GuildLeaveListener;
 import listeners.SlashCommandListener;
@@ -56,7 +57,8 @@ public class Main {
 		// log into discord
 		try {
 			discordApi = JDABuilder.createDefault(loginInfo.getString("discordToken"))
-						 .addEventListeners(new GuildJoinListener(), new GuildLeaveListener(), new SlashCommandListener())
+						 .addEventListeners(new GuildJoinListener(), new GuildLeaveListener(),
+								 			new SlashCommandListener(), new ButtonClickListener())
 						 .build();
 			
 			discordApi.awaitReady();

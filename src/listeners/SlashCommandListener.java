@@ -5,7 +5,6 @@ import java.util.logging.Level;
 import commands.Command;
 import commands.CustomCommand;
 import data.Log;
-import managers.ApplicationStats;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -21,8 +20,6 @@ public class SlashCommandListener extends ListenerAdapter {
 	@Override
 	public void onSlashCommand(SlashCommandEvent p_event) {
 		if(p_event.getUser().isBot()) return;
-
-		ApplicationStats.getInstance().addMessageReceived();
 		
 		User author = p_event.getUser();
 		String commandString = p_event.getCommandString();
@@ -40,11 +37,9 @@ public class SlashCommandListener extends ListenerAdapter {
 			CustomCommand cmd = CustomCommand.getCommand(p_event.getGuild().getId(), trigger);
 			
 			if(cmd != null) cmd.execute(p_event);
-			else DiscordChatUtils.message(p_event, "No custom commands matching this trigger were found!", false);
-		} else if(!p_event.isFromGuild()){
-			DiscordChatUtils.message(p_event, "The command you are trying to use cannot be used in the current channel!", false);
-		} else {
-			DiscordChatUtils.message(p_event, "Command not found!\nUse **__`/help`__** to get the full command list!", false);
+			else DiscordChatUtils.message(p_event, "No custom commands matching this trigger were found!", false, false);
+		} else if(!commandSuccess && !p_event.isFromGuild()){
+			DiscordChatUtils.message(p_event, "The command you are trying to use cannot be used in the current channel!", false, false);
 		}
 	}
 }

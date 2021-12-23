@@ -11,13 +11,13 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import utils.DiscordChatUtils;
 
 /**
- * A command allowing a bot admin to stop, restart or update the bot.
+ * A command allowing a bot admin to execute specific operations that should be locked to bot admins.
  * 
  * @author Smc
  */
-public class StopCommand extends Command {
+public class BotOwnerCommand extends Command {
 
-	public StopCommand() {
+	public BotOwnerCommand() {
 		super(buildCommandInfo());
 	}
 	
@@ -29,11 +29,11 @@ public class StopCommand extends Command {
 		info.allowsDm = true;
 		info.bypassMessageSendPermissions = true;
 		info.category = CommandCategory.ADMIN;
-		info.trigger = "stop";
-		info.description = "Stops, restarts or updates the bot. Limited to bot owner only.";
-		info.usages = new String[][] { new String[]{"stop", "Stops the bot."},
-			  						   new String[]{"stop restart", "Restarts the bot."},
-			  						   new String[]{"stop update", "Updates the bot."} };
+		info.trigger = "botowner";
+		info.description = "Command restricted to the bot owner.";
+		info.usages = new String[][] { new String[]{"botowner stop", "Stops the bot."},
+			  						   new String[]{"botowner restart", "Restarts the bot."},
+			  						   new String[]{"botowner update", "Updates the bot."} };
 		
 		return info;
 	}
@@ -42,24 +42,32 @@ public class StopCommand extends Command {
 	public CommandData generateCommandData() {
 		CommandData data = new CommandData(getTrigger(), getDescription());
 		
-		data.addOption(OptionType.STRING, "operation", "The operation for the bot to execute. Valid operations: stop, restart, update.");
+		data.addOption(OptionType.STRING, "operation", "The operation for the bot to execute.", true);
 		
 		return data;
 	}
 
 	@Override
 	public void onCommand(SlashCommandEvent p_event, List<OptionMapping> p_options) {
-		int code = 1;
-		
-		if(p_options.size() > 0) {
-			String operation = p_options.get(0).getAsString();
-			
-			if(operation.equalsIgnoreCase("restart")) code = 2;
-			else if(operation.equalsIgnoreCase("update")) code = 3;
+		switch(p_options.get(0).getAsString().toLowerCase()) {
+			case "stop": 
+				stopCommand(p_event, 1); 
+				break;
+			case "restart": 
+				stopCommand(p_event, 2); 
+				break;
+			case "update": 
+				stopCommand(p_event, 3); 
+				break;
+			default: 
+				DiscordChatUtils.message(p_event, "Invalid operation! Check **__`/help botowner`__** for more info", true, false);
 		}
-		
-		DiscordChatUtils.message(p_event, getCodeMessage(code), true);
-		Main.stop(code);
+
+	}
+	
+	private void stopCommand(SlashCommandEvent p_event, int p_code) {	
+		DiscordChatUtils.message(p_event, getCodeMessage(p_code), true, false);
+		Main.stop(p_code);
 	}
 	
 	private String getCodeMessage(int p_code) {

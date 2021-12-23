@@ -4,10 +4,14 @@ import java.util.List;
 
 import data.CommandCategory;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Button;
 import utils.Constants;
 import utils.DiscordChatUtils;
 
@@ -50,6 +54,7 @@ public class EditCustomCommand extends Command {
 		return data;
 	}
 
+	// TODO: set desc?
 	@Override
 	public void onCommand(SlashCommandEvent p_event, List<OptionMapping> p_options) {
 		if(p_options.size() == 0) {
@@ -60,9 +65,17 @@ public class EditCustomCommand extends Command {
 		String commandName = p_options.get(0).getAsString();
 		
 		if(p_options.size() == 1) { // delete
-			if(new CustomCommand(commandName, p_event.getGuild().getId(), "").delete() > 0)
-				DiscordChatUtils.message(p_event, "Command deleted!", false);
-			else DiscordChatUtils.message(p_event, "This command already doesn't exist!", false);
+			CustomCommand command = CustomCommand.getCommand(p_event.getGuild().getId(), commandName);
+			
+			if(command != null) {
+				String buttonIdPrefix = getTrigger() + "|||" + commandName + "|||";
+				
+				p_event.reply("Are you sure you wish to delete **`/" + commandName + "`**?")
+					   .addActionRow(Button.danger(buttonIdPrefix + "yes", "Yes"),
+							   		 Button.primary(buttonIdPrefix + "no", "No"))
+					   .setEphemeral(true)
+					   .queue();
+			} else DiscordChatUtils.message(p_event, "This command doesn't exist!", false, false);
 		} else { // add/edit
 			String instructions = "";
 			
@@ -70,11 +83,45 @@ public class EditCustomCommand extends Command {
 				instructions += " " + p_options.get(i).getAsString();
 			
 			if(new CustomCommand(commandName, p_event.getGuild().getId(), 
-								 instructions.substring(1)).save())
-				DiscordChatUtils.message(p_event, "Command saved!", false);
-			else DiscordChatUtils.message(p_event, "There was an error saving the command!\n" +
-												   "Please try again later or contact the developer via the **__report__** command or the support server!\n<" +
-												   Constants.SUPPORT_SERVER_LINK + ">", false);
+								 instructions.substring(1)).save()) {
+				p_event.getGuild().upsertCommand(commandName, " ").queue();
+				DiscordChatUtils.message(p_event, "Command saved!", false, false);
+			} else {
+				DiscordChatUtils.message(p_event, "There was an error saving the command!\n" +
+												  "Please try again later or contact the developer via the support server!", false, false,
+												  ActionRow.of(Button.link(Constants.SUPPORT_SERVER_LINK, "Support Server")));
+			}
+		}
+	}
+	
+	@Override
+	public void onButtonClick(ButtonClickEvent p_event, String[] p_args) {
+		if(p_args.length != 2) {
+			p_event.reply("An error occured while executing this command!\nPlease try again later or contact the developer via the support server!")
+				   .addActionRow(Button.link(Constants.SUPPORT_SERVER_LINK, "Support Server"))
+				   .queue();
+			return;
+		}
+
+		p_event.editComponents().queue();
+		
+		if(p_args[1].equalsIgnoreCase("yes")) {
+			CustomCommand command = CustomCommand.getCommand(p_event.getGuild().getId(), p_args[0]);
+			
+			if(command != null) {
+				command.delete();
+				
+				Guild guild = p_event.getGuild();
+				net.dv8tion.jda.api.interactions.commands.Command discordCommand = guild.retrieveCommands().complete().stream()
+																													  .filter(c -> c.getName().equalsIgnoreCase(p_args[0]))
+																													  .findFirst().orElse(null);
+				if(discordCommand != null)
+					guild.deleteCommandById(discordCommand.getId()).queue();
+				
+				p_event.getHook().editOriginal("Command deleted!").queue();
+			} else p_event.getHook().editOriginal("This command was already deleted!").queue();
+		} else {
+			p_event.getHook().editOriginal("This command was not deleted.").queue();
 		}
 	}
 }

@@ -11,8 +11,6 @@ public class ApplicationStats {
 	private long m_bootTime;
 	private long m_timerStart;
 	private int m_serverCount;
-	private int m_messagesReceived;
-	private int m_messagesSent;
 	private int m_commandsUsed;
 	private int m_osuApiRequestsSent;
 	private int m_osuApiRequestsFailed;
@@ -36,15 +34,6 @@ public class ApplicationStats {
 	public int getServerCount() {
 		return m_serverCount;
 	}
-	
-	public int getMessagesReceived() {
-		return m_messagesReceived;
-	}
-	
-	public int getMessagesSent() {
-		return m_messagesSent;
-	}
-	
 	public int getCommandsUsed() {
 		return m_commandsUsed;
 	}
@@ -67,14 +56,6 @@ public class ApplicationStats {
 	
 	public void addServerCount(int p_servers) {
 		m_serverCount += p_servers;
-	}
-	
-	public void addMessageReceived() {
-		m_messagesReceived++;
-	}
-	
-	public void addMessageSent() {
-		m_messagesSent++;
 	}
 	
 	public void addCommandUsed() {

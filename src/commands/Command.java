@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.ThreadChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
@@ -89,7 +90,7 @@ public abstract class Command {
 	}
 	
 	protected void sendInvalidArgumentsError(SlashCommandEvent p_event) {
-		DiscordChatUtils.message(p_event, "Invalid arguments! Use **__/help " + m_commandInfo.trigger + "__** for info on this command!", false);
+		DiscordChatUtils.message(p_event, "Invalid arguments! Use **__/help " + m_commandInfo.trigger + "__** for info on this command!", false, false);
 	}
 	
 	public static Command findCommand(String p_trigger) {
@@ -109,7 +110,7 @@ public abstract class Command {
 			if(!cmd.allowsDm() && !p_event.isFromGuild()) return false;
 			
 			ApplicationStats.getInstance().addCommandUsed();
-			
+
 			boolean canMessageChannel = cmd.m_commandInfo.bypassMessageSendPermissions || 
 										DiscordChatUtils.checkMessagePermissionForChannel(p_event.getMessageChannel());
 			
@@ -131,21 +132,42 @@ public abstract class Command {
 	
 	public abstract void onCommand(SlashCommandEvent p_event, List<OptionMapping> p_options);
 	
+	public void onButtonClick(ButtonClickEvent p_event, String[] p_args) { }
+	
 	public static void registerCommands() {
+		registerGlobalCommands();
+		registerGuildCommands();
+	}
+	
+	private static void registerGlobalCommands() {
 		new HelpCommand();
 		new EditCustomCommand();
-		new StopCommand();
+		new BotOwnerCommand();
 		
 		CommandListUpdateAction slashCommands = Main.discordApi.updateCommands();
 		
 		List<CommandData> commandDataList = new LinkedList<>();
 		
-		for(Command command : commands) {
+		for(Command command : commands)
 			commandDataList.add(command.generateCommandData());
-		}
-		
+
 		slashCommands.addCommands(commandDataList);
 		slashCommands.complete();
+	}
+	
+	private static void registerGuildCommands() {
+		for(Guild guild : Main.discordApi.getGuilds()) {
+			List<String> guildCommandTriggers = CustomCommand.getAllCommandTriggers(guild.getId());
+			List<CommandData> commandDataList = new LinkedList<>();
+			
+			for(String command : guildCommandTriggers)
+				commandDataList.add(new CommandData(command, " "));
+			
+			CommandListUpdateAction guildCommands = guild.updateCommands();
+			
+			guildCommands.addCommands(commandDataList);
+			guildCommands.queue();
+		}
 	}
 }
 

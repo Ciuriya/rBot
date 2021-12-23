@@ -3,7 +3,6 @@ package utils;
 import java.util.logging.Level;
 
 import data.Log;
-import managers.ApplicationStats;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.MessageChannel;
@@ -12,6 +11,7 @@ import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.ThreadChannel;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 
 /**
  * This class contains utility functions to handle discord messaging.
@@ -40,26 +40,22 @@ public class DiscordChatUtils {
 					(message) -> 
 						{
 							Log.log(Level.INFO, "{Message sent in " + getChannelLogString(p_channel) + "} " + part);
-							ApplicationStats.getInstance().addMessageSent();
 						},
 					(error) -> Log.log(Level.WARNING, "Could not send message", error));
-	
-			ApplicationStats.getInstance().addMessageSent();
 		}
 	}
 	
-	public static void message(SlashCommandEvent p_event, String p_message, boolean p_bypassPermissionCheck) {
+	public static void message(SlashCommandEvent p_event, String p_message, boolean p_bypassPermissionCheck, boolean p_isEphemeral, ActionRow... p_actionRows) {
 		if(!p_bypassPermissionCheck && !checkMessagePermissionForChannel(p_event.getMessageChannel())) {
 			sendMessagePermissionCheckFailedMessage(p_event);
 			return;
 		}
 		
-		p_event.reply(p_message).queue(
+		p_event.reply(p_message).addActionRows(p_actionRows).setEphemeral(p_isEphemeral).queue(
 				(message) -> 
 					{
 						// TODO: sanitize for customs
 						Log.log(Level.INFO, "{Reply sent in " + getChannelLogString(p_event.getChannel()) + "} " + p_message);
-						ApplicationStats.getInstance().addMessageSent();
 					},
 				(error) -> Log.log(Level.WARNING, "Could not send reply", error));
 	}
@@ -74,18 +70,17 @@ public class DiscordChatUtils {
 																p_embed.getAuthor().getName() + 
 																(p_embed.getTitle() != null ? "\n" + 
 																p_embed.getTitle() : ""));
-						ApplicationStats.getInstance().addMessageSent();
 					},
 				(error) -> Log.log(Level.WARNING, "Could not send embed", error));
 	}
 	
-	public static void embed(SlashCommandEvent p_event, MessageEmbed p_embed, boolean p_bypassPermissionCheck) {
+	public static void embed(SlashCommandEvent p_event, MessageEmbed p_embed, boolean p_bypassPermissionCheck, boolean p_isEphemeral, ActionRow... p_actionRows) {
 		if(!p_bypassPermissionCheck && !checkMessagePermissionForChannel(p_event.getMessageChannel())) {
 			sendMessagePermissionCheckFailedMessage(p_event);
 			return;
 		}
 		
-		p_event.replyEmbeds(p_embed).queue(
+		p_event.replyEmbeds(p_embed).addActionRows(p_actionRows).setEphemeral(p_isEphemeral).queue(
 				(message) -> 
 					{
 						// TODO: sanitize for customs
@@ -93,14 +88,12 @@ public class DiscordChatUtils {
 											 p_embed.getAuthor().getName() + 
 											 (p_embed.getTitle() != null ? "\n" + 
 											 p_embed.getTitle() : ""));
-						ApplicationStats.getInstance().addMessageSent();
 					},
 				(error) -> Log.log(Level.WARNING, "Could not send reply", error));
 	}
 	
 	public static void sendMessagePermissionCheckFailedMessage(SlashCommandEvent p_event) {
 		p_event.reply("This bot is not allowed to interact with this channel. Contact a server moderator if you believe this to be an error!").setEphemeral(true).queue();
-		ApplicationStats.getInstance().addMessageSent();
 	}
 	
 	public static String getChannelLogString(MessageChannel p_channel) {
