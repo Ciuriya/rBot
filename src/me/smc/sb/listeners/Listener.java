@@ -14,14 +14,13 @@ import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
-import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.GenericEvent;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.ReconnectedEvent;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 
 public class Listener implements EventListener{
@@ -66,7 +65,7 @@ public class Listener implements EventListener{
 	    		strippedMsg = strippedMsg.substring(Main.defaultPrefix.length());
 	    	
 	    	if(!strippedMsg.equals(msg)){
-	    		if(!dm && Main.serverConfigs.get(serverId).getStringList("rpg-enabled-channels").contains(e.getTextChannel().getId()))
+	    		if(!dm && Main.serverConfigs.get(serverId).getStringList("rpg-enabled-channels").contains(e.getChannel().getId()))
 	    			strippedMsg = "rpg " + strippedMsg;
 	    		
 	        	Log.logger.log(Level.INFO, "{Command in " + Utils.getGroupLogString(e.getChannel())
@@ -106,12 +105,11 @@ public class Listener implements EventListener{
 			
 			loadGuilds(api);
 			
-			Utils.infoBypass(api.retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), "I am now logged in!"); //Sends the developer a message on login
+			Utils.sendDM(api.retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), "I am now logged in!"); //Sends the developer a message on login
 			Main.discordConnected = true;
 			api.getPresence().setStatus(OnlineStatus.ONLINE);
 			IRCChatListener.pmList = new Configuration(new File("login.txt")).getStringList("yield-pms");
-		}else if(event instanceof ReconnectedEvent)
-			Utils.infoBypass(api.getUserById("91302128328392704").openPrivateChannel().complete(), "I have reconnected!");
+		}
 		else if(event instanceof GuildJoinEvent || event instanceof GuildLeaveEvent)
 			loadGuilds(event.getJDA());
     }

@@ -21,13 +21,13 @@ import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class TrackScheduler extends AudioEventAdapter{
 
 	private final AudioPlayer player;
 	private final BlockingQueue<CustomAudioTrack> queue;
-	private TextChannel channel;
+	private MessageChannelUnion channel;
 	private CustomAudioTrack currentSong;
 	private AudioPlaylist currentPlaylist;
 	private String playlistUrl;
@@ -41,9 +41,9 @@ public class TrackScheduler extends AudioEventAdapter{
 		loading = false;
 	}
 	
-	public void setMessageChannel(TextChannel channel){
+	public void setMessageChannel(MessageChannelUnion channel){
 		this.channel = channel;
-		Main.serverConfigs.get(channel.getGuild().getId()).writeValue("voice-text-channel", channel == null ? "" : channel.getId());
+		Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId()).writeValue("voice-text-channel", channel == null ? "" : channel.getId());
 	}
 	
 	public int size(){
@@ -57,7 +57,7 @@ public class TrackScheduler extends AudioEventAdapter{
 		playlistUrl = null;
 		nextPlaylistSong = null;
 		
-		saveScheduling(Main.serverConfigs.get(channel.getGuild().getId()));
+		saveScheduling(Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId()));
 	}
 	
 	public void queue(AudioPlaylist playlist, String url, boolean random){
@@ -127,14 +127,14 @@ public class TrackScheduler extends AudioEventAdapter{
 		nextPlaylistSong = null;
 		
 		if(queue.isEmpty() && channel != null){
-			Main.serverConfigs.get(channel.getGuild().getId()).writeValue("voice-state", "stopped");
+			Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId()).writeValue("voice-state", "stopped");
 			return;
 		}
 		
 		CustomAudioTrack track = queue.poll();
 
 		if(track != null && player.startTrack(track.getTrack(), false)){
-			Main.serverConfigs.get(channel.getGuild().getId()).writeValue("voice-state", "playing");
+			Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId()).writeValue("voice-state", "playing");
 			
 			currentSong = track;
 			updateChannel();
@@ -164,7 +164,7 @@ public class TrackScheduler extends AudioEventAdapter{
 	public void updateNP(AudioTrack track){
 		if(channel == null) return;
 		
-		String npIp = Main.serverConfigs.get(channel.getGuild().getId()).getValue("voice-np-ip");
+		String npIp = Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId()).getValue("voice-np-ip");
 		
 		String info = track == null ? "No Song" : track.getInfo().title;
 		
@@ -172,7 +172,7 @@ public class TrackScheduler extends AudioEventAdapter{
 			new Thread(new Runnable(){
 				public void run(){
 					try{
-						Server.sendMessage(npIp, 13245, info + " --" + channel.getGuild().getName().substring(0, 3));
+						Server.sendMessage(npIp, 13245, info + " --" + channel.asGuildMessageChannel().getGuild().getName().substring(0, 3));
 					}catch(Exception e){}
 				}
 			}).start();
@@ -184,7 +184,7 @@ public class TrackScheduler extends AudioEventAdapter{
 		String currentUrl = currentSong.getURL();
 		
 		if(channel != null){
-			Configuration config = Main.serverConfigs.get(channel.getGuild().getId());
+			Configuration config = Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId());
 			
 			updateNP(track);
 			
@@ -222,7 +222,7 @@ public class TrackScheduler extends AudioEventAdapter{
 		}
 	}
 	
-	public void loadScheduling(VoiceCommand voice, GuildMusicManager music, TextChannel channel, Configuration config){
+	public void loadScheduling(VoiceCommand voice, GuildMusicManager music, MessageChannelUnion channel, Configuration config){
 		try{
 			String state = config.getValue("voice-state");
 			
@@ -268,7 +268,7 @@ public class TrackScheduler extends AudioEventAdapter{
 				for(String url : trackQueue)
 					try{
 						voice.playerManager.loadItemOrdered(music, url, 
-											new CustomAudioLoadResultHandler(channel, channel.getGuild(), url, randomizePlaylist, true, voice)).get();
+											new CustomAudioLoadResultHandler(channel, channel.asGuildMessageChannel().getGuild(), url, randomizePlaylist, true, voice)).get();
 					}catch(Exception e){
 						Log.logger.log(Level.SEVERE, e.getMessage(), e);
 					}
@@ -278,7 +278,7 @@ public class TrackScheduler extends AudioEventAdapter{
 			if(playlistUrl.length() > 0)
 				try{
 					voice.playerManager.loadItemOrdered(music, playlistUrl, 
-										new CustomAudioLoadResultHandler(channel, channel.getGuild(), playlistUrl, randomizePlaylist, true, voice)).get();
+										new CustomAudioLoadResultHandler(channel, channel.asGuildMessageChannel().getGuild(), playlistUrl, randomizePlaylist, true, voice)).get();
 				}catch(Exception e){
 					Log.logger.log(Level.SEVERE, e.getMessage(), e);
 				}
@@ -314,7 +314,7 @@ public class TrackScheduler extends AudioEventAdapter{
 			String voiceChannel = config.getValue("voice-channel");
 			
 			if(voiceChannel.length() > 0)
-				voice.joinVoiceChannel(channel.getGuild(), channel, voiceChannel);
+				voice.joinVoiceChannel(channel.asGuildMessageChannel().getGuild(), channel, voiceChannel);
 			
 			if(currentSong != null){
 				player.startTrack(currentSong.getTrack(), false);

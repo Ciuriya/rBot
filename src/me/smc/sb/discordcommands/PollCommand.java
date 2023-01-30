@@ -7,7 +7,6 @@ import me.smc.sb.perm.Permissions;
 import me.smc.sb.polls.Option;
 import me.smc.sb.polls.Poll;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class PollCommand extends GlobalCommand{
@@ -46,7 +45,7 @@ public class PollCommand extends GlobalCommand{
 	}
 	
 	public void startPoll(MessageReceivedEvent e, String[] args){
-		if(!Permissions.hasPerm(e.getAuthor(), (TextChannel) e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
+		if(!Permissions.hasPerm(e.getAuthor(), e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
 		if(args.length < 3){Utils.info(e.getChannel(), "Invalid Arguments"); return;}
 		if(Poll.findPolls(e.getGuild()).size() > 3){Utils.info(e.getChannel(), "You can only have 3 polls running at once!"); return;}
 		
@@ -78,7 +77,7 @@ public class PollCommand extends GlobalCommand{
 	}
 	
 	public void endPoll(MessageReceivedEvent e, String[] args){
-		if(!Permissions.hasPerm(e.getAuthor(), (TextChannel) e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
+		if(!Permissions.hasPerm(e.getAuthor(), e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
 		if(args.length < 2){Utils.info(e.getChannel(), "Invalid Arguments"); return;}
 		
 		String name = "";
@@ -91,7 +90,7 @@ public class PollCommand extends GlobalCommand{
 		Poll poll = Poll.findPoll(name, e.getGuild());
 		if(poll == null){Utils.info(e.getChannel(), "Poll not found!"); return;}
 		
-		poll.end(e.getTextChannel());
+		poll.end(e.getChannel());
 	}
 	
 	public void listPolls(MessageReceivedEvent e){
@@ -108,8 +107,8 @@ public class PollCommand extends GlobalCommand{
 	}
 	
 	public void setResultChannel(MessageReceivedEvent e){
-		if(!Permissions.hasPerm(e.getAuthor(), (TextChannel) e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
-		Poll.setResultChannel(e.getTextChannel());
+		if(!Permissions.hasPerm(e.getAuthor(), e.getChannel(), Permissions.MANAGE_MESSAGES)){return;}
+		Poll.setResultChannel(e.getChannel());
 		
 		Utils.info(e.getChannel(), "Poll results will be posted in this channel!");
 	}
@@ -127,7 +126,7 @@ public class PollCommand extends GlobalCommand{
 		Poll poll = Poll.findPoll(name, e.getGuild());
 		if(poll == null){Utils.info(e.getChannel(), "Poll not found!"); return;}
 		
-		poll.postResults(e.getTextChannel());
+		poll.postResults(e.getChannel());
 	}
 	
 	public void votePoll(MessageReceivedEvent e, String[] args){

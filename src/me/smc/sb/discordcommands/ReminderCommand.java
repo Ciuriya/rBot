@@ -200,7 +200,7 @@ class Reminder{
 		
 		timer.schedule(new TimerTask(){
 			public void run(){
-				Utils.infoBypass(user.openPrivateChannel().complete(), "**Reminder**\n" + message.replaceAll("\\|\\|\\|", "\n"));
+				Utils.sendDM(user.openPrivateChannel().complete(), "**Reminder**\n" + message.replaceAll("\\|\\|\\|", "\n"));
 				delete();
 			}
 		}, epochTimestamp - Utils.getCurrentTimeUTC());

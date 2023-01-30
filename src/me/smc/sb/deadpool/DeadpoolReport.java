@@ -3,17 +3,17 @@ package me.smc.sb.deadpool;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class DeadpoolReport{
 	
 	private String id;
-	private TextChannel reportChannel;
+	private MessageChannelUnion reportChannel;
 	private int lastFightId;
 	private long lastActivity;
 	private List<DeadpoolUser> voters;
 	
-	public DeadpoolReport(String id, TextChannel reportChannel){
+	public DeadpoolReport(String id, MessageChannelUnion reportChannel){
 		this.id = id;
 		this.reportChannel = reportChannel;
 		lastFightId = 0;
@@ -25,7 +25,7 @@ public class DeadpoolReport{
 		return id;
 	}
 	
-	public TextChannel getReportChannel(){
+	public MessageChannelUnion getReportChannel(){
 		return reportChannel;
 	}
 	

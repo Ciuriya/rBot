@@ -23,12 +23,12 @@ import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuMapRankTrackCommand extends GlobalCommand{
 	
-	private static Map<Integer, List<TextChannel>> channels = new HashMap<>();
+	private static Map<Integer, List<MessageChannelUnion>> channels = new HashMap<>();
 	private Timer mapRankTrackingTimer;
 	private static boolean doneProcessing;
 	
@@ -59,20 +59,20 @@ public class OsuMapRankTrackCommand extends GlobalCommand{
 			return;
 		}
 		
-		List<TextChannel> trackChannels = new ArrayList<>();
+		List<MessageChannelUnion> trackChannels = new ArrayList<>();
 		ArrayList<String> strTrackChannels = Main.serverConfigs.get(e.getGuild().getId()).getStringList("map-rank-track-channels");
 
 		if(channels.containsKey(mode)) trackChannels = channels.get(mode);
 		
-		if(trackChannels.contains(e.getTextChannel())){
-			trackChannels.remove(e.getTextChannel());
+		if(trackChannels.contains(e.getChannel())){
+			trackChannels.remove(e.getChannel());
 			
-			strTrackChannels.remove(e.getTextChannel().getId() + "--" + mode);
+			strTrackChannels.remove(e.getChannel().getId() + "--" + mode);
 
 			Utils.info(e.getChannel(), "No longer tracking new maps for " + TrackingUtils.convertMode(mode) + " in this channel!");
 		}else{
-			trackChannels.add(e.getTextChannel());
-			strTrackChannels.add(e.getTextChannel().getId() + "--" + mode);
+			trackChannels.add(e.getChannel());
+			strTrackChannels.add(e.getChannel().getId() + "--" + mode);
 			
 			Utils.info(e.getChannel(), "Now tracking new maps for " + TrackingUtils.convertMode(mode) + " in this channel!");
 		}
@@ -88,10 +88,10 @@ public class OsuMapRankTrackCommand extends GlobalCommand{
 			public void run(){
 				while(!Main.discordConnected) Utils.sleep(100);
 				
-				List<TextChannel> std = new ArrayList<>();
-				List<TextChannel> taiko = new ArrayList<>();
-				List<TextChannel> ctb = new ArrayList<>();
-				List<TextChannel> mania = new ArrayList<>();
+				List<MessageChannelUnion> std = new ArrayList<>();
+				List<MessageChannelUnion> taiko = new ArrayList<>();
+				List<MessageChannelUnion> ctb = new ArrayList<>();
+				List<MessageChannelUnion> mania = new ArrayList<>();
 				
 				for(Guild guild : Main.api.getGuilds()){
 					List<String> trackChannels = Main.serverConfigs.get(guild.getId()).getStringList("map-rank-track-channels");
@@ -102,7 +102,7 @@ public class OsuMapRankTrackCommand extends GlobalCommand{
 							String strChannel = c.split("--")[0];
 							
 							if(strChannel.length() > 0 && mode >= 0 && mode <= 3){
-								TextChannel channel = Main.api.getTextChannelById(strChannel);
+								MessageChannelUnion channel = Main.api.getChannelById(MessageChannelUnion.class, strChannel);
 								
 								if(channel != null) 
 									switch(mode){
@@ -242,21 +242,21 @@ public class OsuMapRankTrackCommand extends GlobalCommand{
 					
 					builder.setDescription(currentText);
 					
-					List<TextChannel> channelsToSendTo = new ArrayList<>();
+					List<MessageChannelUnion> channelsToSendTo = new ArrayList<>();
 					
 					for(int mode : modes){
-						List<TextChannel> trackers = new ArrayList<>();
+						List<MessageChannelUnion> trackers = new ArrayList<>();
 						
 						if(channels.containsKey(mode)) trackers = channels.get(mode);
 						
-						for(TextChannel tracker : trackers)
+						for(MessageChannelUnion tracker : trackers)
 							if(!channelsToSendTo.contains(tracker))
 								channelsToSendTo.add(tracker);
 					}
 					
 					MessageEmbed embed = builder.build();
 					
-					for(TextChannel channel : channelsToSendTo)
+					for(MessageChannelUnion channel : channelsToSendTo)
 						Utils.info(channel, embed);
 				}
 			}

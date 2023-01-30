@@ -10,7 +10,7 @@ import me.smc.sb.main.Main;
 import me.smc.sb.tourney.Game;
 import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class AlertStaffCommand extends IRCCommand{
 
@@ -45,8 +45,8 @@ public class AlertStaffCommand extends IRCCommand{
 				if(game.getLobbyManager().verify(userName)){
 					Tournament t = game.match.getTournament();
 					
-					TextChannel channel = Main.api.getTextChannelById(t.get("alertDiscord"));
-					String mention = channel.getGuild().getRolesByName(t.get("alertMessage"), true).get(0).getAsMention();
+					MessageChannelUnion channel = Main.api.getChannelById(MessageChannelUnion.class, t.get("alertDiscord"));
+					String mention = channel.asGuildMessageChannel().getGuild().getRolesByName(t.get("alertMessage"), true).get(0).getAsMention();
 					
 					if(Main.api.getTextChannelById(t.get("alertDiscord")) != null)
 						Utils.infoBypass(channel, mention + 

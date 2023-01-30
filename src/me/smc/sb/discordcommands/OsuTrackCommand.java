@@ -1,30 +1,19 @@
 package me.smc.sb.discordcommands;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
-import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.tracking.OsuTrackInactiveRunnable;
 import me.smc.sb.tracking.OsuTrackRunnable;
 import me.smc.sb.tracking.TrackedPlayer;
-import me.smc.sb.tracking.TrackingGuild;
-import me.smc.sb.tracking.TrackingUtils;
-import me.smc.sb.utils.Configuration;
-import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuTrackCommand extends GlobalCommand{
 
-	private static int REQUESTS_PER_MINUTE = 100;
+	private static int REQUESTS_PER_MINUTE = 3;
 	private static int INACTIVE_DELAY = 1800; // seconds
-	private static int INACTIVE_REQUESTS_PER_MINUTE = 50;
+	private static int INACTIVE_REQUESTS_PER_MINUTE = 1;
 	private static Timer trackingTimer = null;
 	public static Timer inactiveTimer = null;
 	public static double currentRefreshRate = 0;
@@ -47,6 +36,7 @@ public class OsuTrackCommand extends GlobalCommand{
 	
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
+		/*
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		String user = "";
@@ -181,9 +171,11 @@ public class OsuTrackCommand extends GlobalCommand{
 		if(tracked)
 			Utils.info(e.getChannel(), "Started tracking " + user + " in the " + TrackingUtils.convertMode(mode) + " mode!" +
 									   "\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
+		*/
 	}
 	
 	public void load(){
+		/*
 		new Thread(new Runnable(){
 			public void run(){
 				for(Guild guild : Main.api.getGuilds())
@@ -211,6 +203,7 @@ public class OsuTrackCommand extends GlobalCommand{
 				}, INACTIVE_DELAY * 1000, INACTIVE_DELAY * 1000);
 			}
 		}).start();
+		*/
 	}
 	
 	public void startTracker(boolean subsequentRestart){

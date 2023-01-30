@@ -23,7 +23,7 @@ public class UserInfoCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		User user = e.getMessage().getMentionedUsers().get(0);
+		User user = e.getMessage().getMentions().getUsers().get(0);
 		
 		if(user == null){
 			Utils.error(e.getChannel(), e.getAuthor(), "Invalid user!");

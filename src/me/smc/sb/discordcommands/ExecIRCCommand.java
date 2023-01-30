@@ -4,7 +4,7 @@ import me.smc.sb.irccommands.IRCCommand;
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ExecIRCCommand extends GlobalCommand{
@@ -28,7 +28,7 @@ public class ExecIRCCommand extends GlobalCommand{
 			message += " " + args[i];
 		message = message.substring(1);
 		
-		String id = e.isFromType(ChannelType.PRIVATE) ? e.getPrivateChannel().getId() : e.getTextChannel().getId();
+		String id = e.isFromType(ChannelType.PRIVATE) ? e.getChannel().asPrivateChannel().getId() : e.getChannel().asGuildMessageChannel().getId();
 		
 		if(Main.ircBot == null) Utils.info(e.getChannel(), "The IRC bot object is null! Make sure to tell Smc!");
 		else Utils.info(null, null, id, IRCCommand.handleCommand(null, null, id, message));

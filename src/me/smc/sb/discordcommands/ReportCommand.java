@@ -33,7 +33,7 @@ public class ReportCommand extends GlobalCommand{
 		
 		cfg.appendToStringList("reports", reportStr, true);
 		Utils.info(e.getChannel(), "Your message has been sent to the developer!");
-		Utils.infoBypass(e.getJDA().retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), reportStr);
+		Utils.sendDM(e.getJDA().retrieveUserById("91302128328392704").complete().openPrivateChannel().complete(), reportStr);
 	}
 
 }

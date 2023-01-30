@@ -49,14 +49,17 @@ import me.smc.sb.tourney.Tournament;
 import me.smc.sb.tracking.OsuRequest;
 import me.smc.sb.tracking.OsuUserRequest;
 import me.smc.sb.tracking.RequestTypes;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.PrivateChannel;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 public class Utils{
 
@@ -77,22 +80,22 @@ public class Utils{
 		return "";
     }
 	
-	public static void error(MessageChannel channel, User user, String message){
-		channel.sendMessage(new MessageBuilder().append(message).build());
+	public static void error(MessageChannelUnion channel, User user, String message){
+		channel.sendMessage(toMessage(message)).queue();
 		
 		Log.logger.log(Level.INFO, "{Error sent in " + getGroupLogString(channel) + " to " + user.getName() + " } " + message);
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void infoBypass(MessageChannel channel, String message){
+	public static void infoBypass(MessageChannelUnion channel, String message){
 		channel.sendMessage(message).queue();
 		
 		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void infoBypass(MessageChannel channel, MessageEmbed embed){
-		channel.sendMessage(embed).queue();
+	public static void infoBypass(MessageChannelUnion channel, MessageEmbed embed){
+		channel.sendMessageEmbeds(embed).queue();
 		
 		if(embed.getAuthor() != null && embed.getTitle() != null)
 			Log.logger.log(Level.INFO, "{Embed sent in " + getGroupLogString(channel) + "} " +
@@ -100,7 +103,14 @@ public class Utils{
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void info(MessageChannel channel, String message){
+	public static void sendDM(PrivateChannel channel, String message){
+		channel.sendMessage(message).queue();
+		
+		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString((MessageChannelUnion) channel) + "} " + message);
+		Main.messagesSentThisSession++;
+	}
+	
+	public static void info(MessageChannelUnion channel, String message){
 		try{
 			if(channel instanceof TextChannel){
 				if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
@@ -118,17 +128,17 @@ public class Utils{
 		}
 	}
 	
-	public static void info(MessageChannel channel, MessageEmbed embed){
-		if(channel instanceof TextChannel){
+	public static void info(MessageChannelUnion channel, MessageEmbed embed){
+		if(channel.getType().isGuild()){
 			if(!Main.serverConfigs.get(((TextChannel) channel).getGuild().getId()).getBoolean("silent")){
-				channel.sendMessage(embed).queue();
+				channel.sendMessageEmbeds(embed).queue();
 				
 				if(embed.getAuthor() != null && embed.getTitle() != null)
 					Log.logger.log(Level.INFO, "{Embed sent in " + getGroupLogString(channel) + "} " +
 												embed.getAuthor().getName() + "\n" + embed.getTitle());
 			}
 		}else{
-			channel.sendMessage(embed).queue(); 
+			channel.sendMessageEmbeds(embed).queue(); 
 			
 			if(embed.getAuthor() != null && embed.getTitle() != null)
 				Log.logger.log(Level.INFO, "{Silent Embed sent in " + getGroupLogString(channel) + "} " +
@@ -138,7 +148,7 @@ public class Utils{
 		Main.messagesSentThisSession++;
 	}
 	
-	public static void fakeInfo(MessageChannel channel, String message){
+	public static void fakeInfo(MessageChannelUnion channel, String message){
 		Log.logger.log(Level.INFO, "{Message sent in " + getGroupLogString(channel) + "} " + message);
 		Main.messagesSentThisSession++;
 	}
@@ -157,10 +167,12 @@ public class Utils{
 		}else if(pe != null){
 			Main.ircBot.sendIRC().message(toUser(e, pe), message);
 			Log.logger.log(Level.INFO, "{IRC PM sent to user " + toUser(e, pe) + "} " + message);
-		}else if(discord != null)
+		}/*else if(discord != null)
+			
 			if(Main.api.getPrivateChannelById(discord) != null)
 				infoBypass(Main.api.getPrivateChannelById(discord), message);
 			else infoBypass(Main.api.getTextChannelById(discord), message);
+			*/
 		else{
 			for(Server server : Main.servers)
 				server.sendMessage(message.replaceAll("\n", "|"));
@@ -195,16 +207,16 @@ public class Utils{
 		else return null;
 	}
 	
-	public static Message toMessage(String str){
-		return new MessageBuilder().append(str).build();
+	public static MessageCreateData toMessage(String str){
+		return new MessageCreateBuilder().addContent(str).build();
 	}
 	
-	public static String getGroupLogString(MessageChannel channel){
-		if(channel instanceof PrivateChannel)
-			return "Private/" + ((PrivateChannel) channel).getUser().getName();
-		
-		String serverName = ((TextChannel) channel).getGuild().getName() + "|||";
-		return serverName + ((TextChannel) channel).getName();
+	public static String getGroupLogString(MessageChannelUnion p_channel) {
+		if(p_channel.getType() == ChannelType.PRIVATE)
+			return "Private/" + ((PrivateChannel) p_channel).getUser().getId();
+		else if(p_channel.getType().isGuild())
+			return p_channel.asGuildMessageChannel().getGuild().getName() + "#" + p_channel.getName();
+		else return "";
 	}
 	
 	public static String removeStartSpaces(String str){

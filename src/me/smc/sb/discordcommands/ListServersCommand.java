@@ -11,8 +11,8 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ListServersCommand extends GlobalCommand{
@@ -39,7 +39,7 @@ public class ListServersCommand extends GlobalCommand{
 		
 		for(Guild guild : e.getJDA().getGuilds()){
 			OffsetDateTime lastMessageDate = null;
-			TextChannel lastMessageChannel = guild.getDefaultChannel();
+			TextChannel lastMessageChannel = guild.getDefaultChannel().asTextChannel();
 			User poster = null;
 			
 			for(TextChannel channel : guild.getTextChannels()){

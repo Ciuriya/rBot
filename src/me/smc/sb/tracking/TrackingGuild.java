@@ -9,14 +9,14 @@ import java.util.Map;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class TrackingGuild{
 
 	private String guildId;
-	private TextChannel trackUpdateChannel;
-	private TextChannel leaderboardChannel;
-	private Map<String, TextChannel> specificUpdateChannels;
+	private MessageChannelUnion trackUpdateChannel;
+	private MessageChannelUnion leaderboardChannel;
+	private Map<String, MessageChannelUnion> specificUpdateChannels;
 	private PlayFormat playFormat;
 	public static List<TrackingGuild> registeredGuilds = new ArrayList<>();
 	
@@ -51,17 +51,17 @@ public class TrackingGuild{
 	
 	public void setChannel(String channelId){
 		getConfig().writeValue("track-update-group", channelId);
-		trackUpdateChannel = Main.api.getTextChannelById(channelId);
+		trackUpdateChannel = Main.api.getChannelById(MessageChannelUnion.class, channelId);
 	}
 	
 	public void setLeaderboardChannel(String channelId){
 		getConfig().writeValue("leaderboard-group", channelId);
-		leaderboardChannel = Main.api.getTextChannelById(channelId);
+		leaderboardChannel = Main.api.getChannelById(MessageChannelUnion.class, channelId);
 	}
 	
 	public void setPlayerChannel(int userId, int mode, String channelId){
 		getConfig().writeValue(userId + "&m=" + mode + "-update-group", channelId);
-		specificUpdateChannels.put(userId + "&m=" + mode, Main.api.getTextChannelById(channelId));
+		specificUpdateChannels.put(userId + "&m=" + mode, Main.api.getChannelById(MessageChannelUnion.class, channelId));
 	}
 	
 	public void setPlayerInfo(TrackedPlayer player){
@@ -92,15 +92,15 @@ public class TrackingGuild{
 		playFormat = PlayFormat.get(name);
 	}
 	
-	public TextChannel getChannel(TrackedPlayer player){
+	public MessageChannelUnion getChannel(TrackedPlayer player){
 		if(specificUpdateChannels.containsKey(player.getUserId() + "&m=" + player.getMode()))
 			return specificUpdateChannels.get(player.getUserId() + "&m=" + player.getMode());
 		
-		return trackUpdateChannel == null ? Main.api.getGuildById(guildId).getDefaultChannel() : trackUpdateChannel;
+		return trackUpdateChannel == null ? (MessageChannelUnion) Main.api.getGuildById(guildId).getDefaultChannel().asTextChannel() : trackUpdateChannel;
 	}
 	
-	public TextChannel getLeaderboardChannel(){
-		return leaderboardChannel == null ? Main.api.getGuildById(guildId).getDefaultChannel() : leaderboardChannel;
+	public MessageChannelUnion getLeaderboardChannel(){
+		return leaderboardChannel == null ? (MessageChannelUnion) Main.api.getGuildById(guildId).getDefaultChannel().asTextChannel() : leaderboardChannel;
 	}
 	
 	public boolean track(String username, int mode, boolean addToFile, boolean leaderboard){
@@ -170,12 +170,12 @@ public class TrackingGuild{
 		ArrayList<String> leaderboardTrackedList = config.getStringList("leaderboard-tracked-players");
 		
 		if(config.getValue("track-update-group").length() == 0)
-			trackUpdateChannel = Main.api.getGuildById(guildId).getDefaultChannel();
-		else trackUpdateChannel = Main.api.getTextChannelById(config.getValue("track-update-group"));
+			trackUpdateChannel = (MessageChannelUnion) Main.api.getGuildById(guildId).getDefaultChannel().asTextChannel();
+		else trackUpdateChannel = Main.api.getChannelById(MessageChannelUnion.class, config.getValue("track-update-group"));
 		
 		if(config.getValue("leaderboard-group").length() == 0)
-			leaderboardChannel = Main.api.getGuildById(guildId).getDefaultChannel();
-		else leaderboardChannel = Main.api.getTextChannelById(config.getValue("leaderboard-group"));
+			leaderboardChannel = (MessageChannelUnion) Main.api.getGuildById(guildId).getDefaultChannel().asTextChannel();
+		else leaderboardChannel = Main.api.getChannelById(MessageChannelUnion.class, config.getValue("leaderboard-group"));
 		
 		playFormat = PlayFormat.get(config.getValue("track-play-format"));
 		
@@ -195,7 +195,7 @@ public class TrackingGuild{
 			String customChannel = config.getValue(userId + "&m=" + mode + "-update-group");
 			
 			if(customChannel.length() > 0) 
-				specificUpdateChannels.put(userId + "&m=" + mode, Main.api.getTextChannelById(customChannel));
+				specificUpdateChannels.put(userId + "&m=" + mode, Main.api.getChannelById(MessageChannelUnion.class, customChannel));
 			
 			loadPlayer(tracked, userId, mode, false, config);
 		}

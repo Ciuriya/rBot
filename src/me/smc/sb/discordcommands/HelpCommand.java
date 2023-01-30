@@ -2,8 +2,8 @@ package me.smc.sb.discordcommands;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.ChannelType;
-import net.dv8tion.jda.api.entities.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class HelpCommand extends GlobalCommand{
@@ -67,10 +67,10 @@ public class HelpCommand extends GlobalCommand{
     		String toSend = rest.substring(0, 1960);
     		rest = rest.substring(1960);
     		
-    		Utils.info(channel, "```\n" + toSend + "```");
+    		Utils.sendDM(channel, "```\n" + toSend + "```");
     	}
     	
-		Utils.info(channel, "```\n" + rest + "```" + (args.length == 0 ? "\nHelp Server: https://discord.gg/V4Z4VqV2Yw" : ""));
+		Utils.sendDM(channel, "```\n" + rest + "```" + (args.length == 0 ? "\nHelp Server: https://discord.gg/V4Z4VqV2Yw" : ""));
 	}
 	
 }

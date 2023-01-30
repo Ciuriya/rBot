@@ -17,8 +17,8 @@ public class HybridRegulator{
 	public static LinkedList<OsuRequest> requests;
 	public static long timeExecutingRequests = 0;
 	public static int requestsSent = 0;
-	private static int apiPerMinute = 100;
-	private static int htmlPerMinute = 25;
+	private static int apiPerMinute = 3;
+	private static int htmlPerMinute = 3;
 	private static int apiRequestsSent = 0;
 	private static int htmlRequestsSent = 0;
 	private static int lastRefreshApiRequestsCount = 0;

@@ -1,12 +1,6 @@
 package me.smc.sb.discordcommands;
 
-import me.smc.sb.drpg.RPGHelpGuide;
-import me.smc.sb.drpg.RPGTutorial;
-import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
-import me.smc.sb.utils.Configuration;
-import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class RPGCommand extends GlobalCommand{
@@ -26,6 +20,7 @@ public class RPGCommand extends GlobalCommand{
 	
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
+		/*
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		switch(args[0].toLowerCase()){
@@ -73,6 +68,7 @@ public class RPGCommand extends GlobalCommand{
 			default: 
 				break;
 		}
+		*/
 	}
 	
 }

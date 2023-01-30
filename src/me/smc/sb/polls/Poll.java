@@ -13,8 +13,8 @@ import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class Poll{
 
@@ -104,19 +104,19 @@ public class Poll{
 		return votes;
 	}
 	
-	public static TextChannel getResultChannel(Guild guild){
+	public static MessageChannelUnion getResultChannel(Guild guild){
 		Configuration config = Main.serverConfigs.get(guild.getId());
 		
 		String channelId = config.getValue("poll-result-channel");
 		
 		if(channelId.length() > 0)
-			return Main.api.getTextChannelById(channelId);
+			return Main.api.getChannelById(MessageChannelUnion.class, channelId);
 		
-		return guild.getDefaultChannel();
+		return (MessageChannelUnion) guild.getDefaultChannel().asTextChannel();
 	}
 	
-	public static void setResultChannel(TextChannel channel){
-		Configuration config = Main.serverConfigs.get(channel.getGuild().getId());
+	public static void setResultChannel(MessageChannelUnion channel){
+		Configuration config = Main.serverConfigs.get(channel.asGuildMessageChannel().getGuild().getId());
 		
 		config.writeValue("poll-result-channel", channel.getId());
 	}
@@ -140,10 +140,10 @@ public class Poll{
 		return polls;
 	}
 	
-	public void postResults(TextChannel channel){
+	public void postResults(MessageChannelUnion channel){
 		EmbedBuilder embed = new EmbedBuilder();
 		
-		TextChannel resultChannel = channel;
+		MessageChannelUnion resultChannel = channel;
 		if(resultChannel == null) resultChannel = getResultChannel(guild);
 		
 		User author = Main.api.getUserById(this.author);
@@ -208,7 +208,7 @@ public class Poll{
 		}, delay);
 	}
 	
-	public void end(TextChannel channel){
+	public void end(MessageChannelUnion channel){
 		expirationTime = 0;
 		postResults(channel);
 		polls.remove(this);

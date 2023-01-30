@@ -5,10 +5,10 @@ import java.util.List;
 
 import me.smc.sb.main.Main;
 import me.smc.sb.perm.Permissions;
-import net.dv8tion.jda.api.entities.ChannelType;
-import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public abstract class GlobalCommand{
@@ -27,9 +27,9 @@ public abstract class GlobalCommand{
 		this.names = names;
 	}
 	
-	public boolean canUse(User user, MessageChannel channel){
-		if(channel instanceof TextChannel)
-			return Permissions.hasPerm(user, (TextChannel) channel, perm);
+	public boolean canUse(User user, MessageChannelUnion channel){
+		if(channel.getType().isGuild())
+			return Permissions.hasPerm(user, channel, perm);
 		else return Permissions.check(user, perm);
 	}
 	

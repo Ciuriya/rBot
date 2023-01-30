@@ -15,7 +15,7 @@ import me.smc.sb.tracking.TrackingUtils;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class OsuLiveLeaderboardCommand extends GlobalCommand{
@@ -66,7 +66,7 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 		if(player != null && player.isTracked(guild, true)){
 			boolean untracked = guild.untrack(player.getUsername(), mode, true);
 			
-			guild.setLeaderboardChannel(e.getTextChannel().getId());
+			guild.setLeaderboardChannel(e.getChannel().getId());
 			
 			if(untracked){
 				Utils.info(e.getChannel(), "Removed " + player.getUsername() + " from the " + TrackingUtils.convertMode(mode) + " leaderboard!" +
@@ -82,7 +82,7 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 		
 		player = TrackedPlayer.get(user, mode);
 		
-		guild.setLeaderboardChannel(e.getTextChannel().getId());
+		guild.setLeaderboardChannel(e.getChannel().getId());
 		
 		if(tracked){
 			Utils.info(e.getChannel(), "Added " + user + " to the " + TrackingUtils.convertMode(mode) + " leaderboard!" +
@@ -119,7 +119,7 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 		
 		new Thread(new Runnable(){
 			public void run(){
-				TextChannel channel = guild.getLeaderboardChannel();
+				MessageChannelUnion channel = guild.getLeaderboardChannel();
 				List<Message> messages = new ArrayList<>();
 				List<Message> standard = new ArrayList<>(), taiko = new ArrayList<>(), ctb = new ArrayList<>(), mania = new ArrayList<>();
 				boolean error = false;
@@ -160,7 +160,7 @@ public class OsuLiveLeaderboardCommand extends GlobalCommand{
 							default: postedMessages = standard;
 						}
 
-						String header = "```diff\n---[ " + channel.getGuild().getName() + " Ladder | " + TrackingUtils.convertMode(i) + " ]---\n\n";
+						String header = "```diff\n---[ " + channel.asGuildMessageChannel().getGuild().getName() + " Ladder | " + TrackingUtils.convertMode(i) + " ]---\n\n";
 						String content = "";
 						
 						modeTracked.sort(new Comparator<TrackedPlayer>(){

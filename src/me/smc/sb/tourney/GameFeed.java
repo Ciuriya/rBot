@@ -11,13 +11,14 @@ import java.util.function.Consumer;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class GameFeed{
 
 	private Game game;
 	private Message discordFeed;
-	private MessageChannel resultDiscord;
+	private MessageChannelUnion resultDiscord;
 	private List<String> bans;
 	
 	public GameFeed(Game game){
@@ -33,9 +34,7 @@ public class GameFeed{
 		String gameMessage = buildFeed() + "```";
 		
 		if(discord != null){
-			if(Main.api.getTextChannelById(discord) != null){
-				resultDiscord = Main.api.getTextChannelById(discord);
-			}else resultDiscord = Main.api.getPrivateChannelById(discord);
+			resultDiscord = Main.api.getChannelById(MessageChannelUnion.class, discord);
 			
 			if(resultDiscord != null){
 				Utils.fakeInfo(resultDiscord, gameMessage);

@@ -14,6 +14,7 @@ import me.smc.sb.tourney.Match;
 import me.smc.sb.tourney.Tournament;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class GlobalLoadInfoCommand extends IRCCommand{
 	
@@ -76,9 +77,7 @@ public class GlobalLoadInfoCommand extends IRCCommand{
 		builder.addField("Most Matches Per Hour", perHourDate + " UTC\n" + perHourCount + " matches", true);
 		builder.addField("Upcoming Matches", nextMatches, true);
 		
-		if(Main.api.getPrivateChannelById(discord) != null)
-			Utils.infoBypass(Main.api.getPrivateChannelById(discord), builder.build());
-		else Utils.infoBypass(Main.api.getTextChannelById(discord), builder.build());
+		Utils.infoBypass(Main.api.getChannelById(MessageChannelUnion.class, discord), builder.build());
 		
 		return "";
 	}

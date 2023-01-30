@@ -15,10 +15,9 @@ import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.entities.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.managers.AudioManager;
 
@@ -131,7 +130,7 @@ public class VoiceCommand extends GlobalCommand{
 			case "perm-lock":			
 				String roles = "";
 				
-				for(Role role : e.getMessage().getMentionedRoles())
+				for(Role role : e.getMessage().getMentions().getRoles())
 					roles += "," + role.getName();
 				
 				if(roles == "") roles = "a";
@@ -143,7 +142,7 @@ public class VoiceCommand extends GlobalCommand{
 		}
 	}
 	
-	public synchronized GuildMusicManager getGuildAudioPlayer(MessageChannel channel, Guild guild){
+	public synchronized GuildMusicManager getGuildAudioPlayer(MessageChannelUnion channel, Guild guild){
 		GuildMusicManager musicManager = players.get(guild.getId());
 
 		if(musicManager == null){
@@ -152,7 +151,7 @@ public class VoiceCommand extends GlobalCommand{
 			players.put(guild.getId(), musicManager);
 		}
 
-		musicManager.scheduler.setMessageChannel(channel instanceof TextChannel ? (TextChannel) channel : null);
+		musicManager.scheduler.setMessageChannel(channel.getType().isGuild() ? channel : null);
 		guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
 
 		return musicManager;
@@ -166,10 +165,10 @@ public class VoiceCommand extends GlobalCommand{
 		for(int i = 1; i < args.length; i++)
 			cName += args[i] + " ";
 		
-		joinVoiceChannel(e.getGuild(), e.getTextChannel(), cName.substring(0, cName.length() - 1));
+		joinVoiceChannel(e.getGuild(), e.getChannel(), cName.substring(0, cName.length() - 1));
 	}
 	
-	public void joinVoiceChannel(Guild guild, TextChannel channel, String name){
+	public void joinVoiceChannel(Guild guild, MessageChannelUnion channel, String name){
 		VoiceChannel vChannel = null;
 		
 		vChannel = guild.getVoiceChannelsByName(name, true).stream().findFirst().orElse(null);
@@ -260,12 +259,12 @@ public class VoiceCommand extends GlobalCommand{
 				
 				if(textChannel.length() == 0) return;
 
-				GuildMusicManager music = voice.getGuildAudioPlayer(guild.getTextChannelById(textChannel), guild);
+				GuildMusicManager music = voice.getGuildAudioPlayer(guild.getChannelById(MessageChannelUnion.class, textChannel), guild);
 				int volume = Utils.stringToInt(config.getValue("voice-volume"));
 				
 				if(volume == -1) volume = 35;
 				music.player.setVolume(volume);
-				music.scheduler.loadScheduling(voice, music, guild.getTextChannelById(textChannel), config);
+				music.scheduler.loadScheduling(voice, music, guild.getChannelById(MessageChannelUnion.class, textChannel), config);
 			}else if(!retry){
 				new Timer().schedule(new TimerTask(){
 					public void run(){

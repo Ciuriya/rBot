@@ -8,18 +8,18 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import me.smc.sb.discordcommands.VoiceCommand;
 import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class CustomAudioLoadResultHandler implements AudioLoadResultHandler{
 
-	private MessageChannel channel;
+	private MessageChannelUnion channel;
 	private Guild guild;
 	private String url;
 	private boolean random;
 	private VoiceCommand voice;
 	private boolean loading;
 	
-	public CustomAudioLoadResultHandler(MessageChannel channel, Guild guild, String url,
+	public CustomAudioLoadResultHandler(MessageChannelUnion channel, Guild guild, String url,
 										boolean random, boolean loading, VoiceCommand vc){
 		this.channel = channel;
 		this.guild = guild;

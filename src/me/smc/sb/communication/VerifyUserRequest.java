@@ -21,7 +21,7 @@ public class VerifyUserRequest extends IncomingRequest{
 		switch(medium.toLowerCase()){
 			case "discord":
 				if(Main.api.getUserById(split[2]) != null)
-					Utils.infoBypass(Main.api.getUserById(split[2]).openPrivateChannel().complete(), "Your verification code is " + split[2]); 	
+					Utils.sendDM(Main.api.getUserById(split[2]).openPrivateChannel().complete(), "Your verification code is " + split[2]); 	
 				break;
 			case "osu": 
 				String user = split[2].replaceAll(" ", "_");

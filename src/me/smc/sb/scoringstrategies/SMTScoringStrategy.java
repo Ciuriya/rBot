@@ -11,6 +11,7 @@ import me.smc.sb.tourney.ReadyManager;
 import me.smc.sb.tracking.Mods;
 import me.smc.sb.tracking.TrackedPlay;
 import me.smc.sb.utils.Utils;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class SMTScoringStrategy implements ScoringStrategy{
 
@@ -89,7 +90,7 @@ public class SMTScoringStrategy implements ScoringStrategy{
 								 ", Miss: -" + Utils.veryLongNumberDisplay(Utils.df(missPenalty * 5000)) +
 								 ") | Accuracy: " + Utils.df(accScore) + " (" + Utils.df(accModifier) + "x)";
 				handle.sendMessage(message, false);
-				Utils.info(Main.api.getGuildById("118553122904735745").getTextChannelById("392791710461329419"), 
+				Utils.info((MessageChannelUnion) Main.api.getGuildById("118553122904735745").getTextChannelById("392791710461329419"), 
 						   "https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + "\n" + message);
 				
 			}

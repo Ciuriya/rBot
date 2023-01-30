@@ -6,7 +6,8 @@ import me.smc.sb.listeners.IRCChatListener;
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ReceivePMCommand extends GlobalCommand{
@@ -23,7 +24,7 @@ public class ReceivePMCommand extends GlobalCommand{
 
 	@Override
 	public void onCommand(MessageReceivedEvent e, String[] args){
-		if(!e.isFromType(ChannelType.PRIVATE)) return;
+		if(e.getChannel().getType() != ChannelType.PRIVATE) return;
 		Configuration cfg = new Configuration(new File("login.txt"));
 		
 		boolean toggled = true;
@@ -41,7 +42,7 @@ public class ReceivePMCommand extends GlobalCommand{
 		message = toggled ? "You are now listening to osu! private messages!" :
 							"You are no longer listening to osu! private messages!";
 		
-		Utils.infoBypass(e.getAuthor().openPrivateChannel().complete(), message);
+		Utils.infoBypass((MessageChannelUnion) e.getAuthor().openPrivateChannel().complete(), message);
 	}
 	
 }

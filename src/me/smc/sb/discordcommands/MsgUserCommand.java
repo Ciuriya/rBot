@@ -36,7 +36,7 @@ public class MsgUserCommand extends GlobalCommand{
 		
 		message = message.substring(1);
 		
-		Utils.infoBypass(user.openPrivateChannel().complete(), message);
+		Utils.sendDM(user.openPrivateChannel().complete(), message);
 	}
 	
 }

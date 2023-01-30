@@ -59,7 +59,7 @@ public class IRCChatListener extends ListenerAdapter{
 					if(!pmsToSend.isEmpty()){
 						String basePM = pmsToSend.getLast();
 						pmsToSend.removeLast();
-						Utils.infoBypass(Main.api.retrieveUserById(basePM.split("\\|\\|")[0]).complete().openPrivateChannel().complete(), 
+						Utils.sendDM(Main.api.retrieveUserById(basePM.split("\\|\\|")[0]).complete().openPrivateChannel().complete(), 
 										 basePM.split("\\|\\|")[1]);
 					}
 				}

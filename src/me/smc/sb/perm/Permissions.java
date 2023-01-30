@@ -1,12 +1,10 @@
 package me.smc.sb.perm;
 
-import java.util.logging.Level;
-
-import me.smc.sb.utils.Log;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public enum Permissions{
 
@@ -64,14 +62,15 @@ public enum Permissions{
 		return false;
 	}
 	
-	public static boolean hasPerm(User user, TextChannel channel, Permissions perm){
+	public static boolean hasPerm(User user, MessageChannelUnion channel, Permissions perm){
 		if(check(user, perm)) return true;
+		if(channel.getType() == ChannelType.PRIVATE) return true;
 		else if(!(perm.equals(BOT_ADMIN) || perm.equals(IRC_BOT_ADMIN))){
-			Member member = channel.getGuild().retrieveMemberById(user.getId()).complete();
+			Member member = channel.asGuildMessageChannel().getGuild().retrieveMemberById(user.getId()).complete();
 
 			if(member != null){
-				boolean hasActualPerm = member.hasPermission(channel, Permission.getFromOffset(perm.getOffset()));
-				boolean hasAdminPerm = member.hasPermission(channel, Permission.getFromOffset(DISCORD_ADMIN.offset));
+				boolean hasActualPerm = member.hasPermission(channel.asGuildMessageChannel(), Permission.getFromOffset(perm.getOffset()));
+				boolean hasAdminPerm = member.hasPermission(channel.asGuildMessageChannel(), Permission.getFromOffset(DISCORD_ADMIN.offset));
 
 				return hasActualPerm || hasAdminPerm;
 			}

@@ -8,8 +8,8 @@ import java.util.Random;
 import me.smc.sb.main.Main;
 import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class Command{
@@ -185,12 +185,12 @@ public class Command{
 		
 		for(String split : msg.split(" ")){
 			if(split.startsWith(":") && split.endsWith(":")){
-				List<Emote> emotes = e.getJDA().getEmotesByName(split.replaceAll(":", ""), true);
+				List<RichCustomEmoji> emotes = e.getJDA().getEmojisByName(split.replaceAll(":", ""), true);
 				
 				boolean added = false;
 				
 				if(!emotes.isEmpty()){
-					for(Emote emote : emotes)
+					for(RichCustomEmoji emote : emotes)
 						if(emote.canInteract(e.getJDA().getSelfUser(), e.getChannel())){
 							fixedMsg += " " + emotes.get(0).getAsMention();
 							added = true;

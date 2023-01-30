@@ -109,7 +109,7 @@ public class DefaultPlayFormat extends PlayFormat{
 		text += "BG • http://b.ppy.sh/thumb/" + play.getBeatmapSetId() + "l.jpg";
 		
 		if(Math.random() >= 0.9)
-			text += "\nTry out our embedded play format! (**" + Main.getCommandPrefix(guild.getChannel(player).getGuild().getId()) + "playformat set embed**)";
+			text += "\nTry out our embedded play format! (**" + Main.getCommandPrefix(guild.getChannel(player).asGuildMessageChannel().getGuild().getId()) + "playformat set embed**)";
 		
 		Utils.info(guild.getChannel(player), text);
 	}

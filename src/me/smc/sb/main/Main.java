@@ -37,6 +37,7 @@ import me.smc.sb.utils.Utils;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 
 public class Main{
 	
@@ -164,7 +165,7 @@ public class Main{
 	
 	private void login(){
 		try{
-			api = JDABuilder.createDefault(discordToken).addEventListeners(new Listener()).build();
+			api = JDABuilder.createDefault(discordToken).enableIntents(GatewayIntent.MESSAGE_CONTENT).addEventListeners(new Listener()).build();
 		}catch(Exception e){
 			Log.logger.log(Level.INFO, e.getMessage(), e);
 			return;

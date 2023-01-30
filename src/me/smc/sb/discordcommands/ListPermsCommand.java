@@ -2,8 +2,8 @@ package me.smc.sb.discordcommands;
 
 import me.smc.sb.perm.Permissions;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ListPermsCommand extends GlobalCommand{
@@ -22,7 +22,7 @@ public class ListPermsCommand extends GlobalCommand{
 	public void onCommand(MessageReceivedEvent e, String[] args){
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
-		User user = e.getMessage().getMentionedUsers().get(0);
+		User user = e.getMessage().getMentions().getUsers().get(0);
 		
 		if(user == null){
 			Utils.error(e.getChannel(), e.getAuthor(), " Invalid user!");
@@ -34,7 +34,7 @@ public class ListPermsCommand extends GlobalCommand{
 		builder.append("```Permissions for " + user.getName() + "\n");
 		
 		for(Permissions perm : Permissions.values()){
-			boolean allowed = e.isFromType(ChannelType.PRIVATE) ? Permissions.check(user, perm) : Permissions.hasPerm(user, e.getTextChannel(), perm);
+			boolean allowed = e.isFromType(ChannelType.PRIVATE) ? Permissions.check(user, perm) : Permissions.hasPerm(user, e.getChannel(), perm);
 			builder.append(perm.name() + " (" + allowed + ")\n");
 		}
 		

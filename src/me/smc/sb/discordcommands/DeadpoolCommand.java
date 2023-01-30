@@ -56,7 +56,7 @@ public class DeadpoolCommand extends GlobalCommand{
 		
 		if(reportCode.contains("#")) reportCode = reportCode.split("#")[0];
 		
-		DeadpoolReport report = new DeadpoolReport(reportCode, e.getTextChannel());
+		DeadpoolReport report = new DeadpoolReport(reportCode, e.getChannel());
 		reports.add(report);
 		
 		Utils.info(e.getChannel(), "Deadpool started by " + e.getAuthor().getAsMention() + "" +
@@ -119,8 +119,8 @@ public class DeadpoolCommand extends GlobalCommand{
 	
 	private DeadpoolReport getReport(MessageReceivedEvent e){
 		for(DeadpoolReport listedReport : reports){
-			if(listedReport.getReportChannel().getGuild().getId().equalsIgnoreCase(e.getGuild().getId()) &&
-			   listedReport.getReportChannel().getId().equalsIgnoreCase(e.getTextChannel().getId())){
+			if(listedReport.getReportChannel().getType().isGuild() && listedReport.getReportChannel().asGuildMessageChannel().getGuild().getId().equalsIgnoreCase(e.getGuild().getId()) &&
+			   listedReport.getReportChannel().getId().equalsIgnoreCase(e.getChannel().getId())){
 				return listedReport;
 			}
 		}

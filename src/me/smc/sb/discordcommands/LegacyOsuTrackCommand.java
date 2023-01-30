@@ -1,41 +1,19 @@
 package me.smc.sb.discordcommands;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
 
-import me.smc.sb.main.Main;
-import me.smc.sb.tourney.Map;
-import me.smc.sb.utils.Configuration;
 import me.smc.sb.utils.Log;
 import me.smc.sb.utils.Utils;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageHistory;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class LegacyOsuTrackCommand extends GlobalCommand{
@@ -76,12 +54,12 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 		lastPlayerPosted = new HashMap<>();
 		debugServers = new ArrayList<>();
 		
-		loadTrackedPlayers();
-		calculateRefreshRate();
+		//loadTrackedPlayers();
+		//calculateRefreshRate();
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent e, String[] args){
+	public void onCommand(MessageReceivedEvent e, String[] args){/*
 		if(!Utils.checkArguments(e, args, 1)) return;
 		
 		String user = "", mUser = "";
@@ -177,7 +155,9 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 		else Main.serverConfigs.get(e.getGuild().getId()).writeValue(mUser + "-update-group", e.getTextChannel().getId());
 		
 		Utils.info(e.getChannel(), "Started tracking " + user + " in the " + convertMode(Utils.stringToInt(mode)) + " mode!\nA full refresh cycle now takes " + currentRefreshRate + " seconds!");
+		*/
 	}
+	/*
 	
 	private void loadTrackedPlayers(){
     	for(Guild guild : Main.api.getGuilds()){
@@ -1136,5 +1116,114 @@ public class LegacyOsuTrackCommand extends GlobalCommand{
 				if(mod.getBit() == bit) return mod;
 			return Mods.None;
 		}
+	}
+	*/
+	
+	public static double getAccuracy(JSONObject play, int mode){
+		int totalHits = 0;
+		int points = 0;
+		
+		switch(mode){
+			case 0:
+				totalHits = play.getInt("count300") + play.getInt("count100") + play.getInt("count50") + play.getInt("countmiss");
+				points = play.getInt("count300") * 300 + play.getInt("count100") * 100 + play.getInt("count50") * 50;
+				
+				totalHits *= 300;
+				return ((double) points / (double) totalHits) * 100;
+			case 1:
+				totalHits = play.getInt("countmiss") + play.getInt("count100") + play.getInt("count300");
+				double dPoints = play.getInt("count100") * 0.5 + play.getInt("count300");
+				
+				dPoints *= 300;
+				totalHits *= 300;
+				
+				return (dPoints / (double) totalHits) * 100;
+			case 2:
+				int caught = play.getInt("count50") + play.getInt("count100") + play.getInt("count300");
+				int fruits = play.getInt("countmiss") + caught + play.getInt("countkatu");
+				
+				return ((double) caught / (double) fruits) * 100;
+			case 3:
+				totalHits = play.getInt("countmiss") + play.getInt("count50") + play.getInt("count100") + 
+						    play.getInt("count300") + play.getInt("countgeki") + play.getInt("countkatu");
+				points = play.getInt("count50") * 50 + play.getInt("count100") * 100 + play.getInt("countkatu") * 200 +
+						 play.getInt("count300") * 300 + play.getInt("countgeki") * 300;
+				
+				totalHits *= 300;
+				return ((double) points / (double) totalHits) * 100;
+			default: return 0.0;
+		}
+	}
+	
+	public static String fetchHitText(int mode, JSONObject obj){
+		switch(mode){
+			case 0:
+				return (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
+		        	   (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "") + 
+		        	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			case 1:
+				return (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") +
+	        	   	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			case 2:
+				return (obj.getInt("countkatu") > 0 ? obj.getInt("countkatu") + "x droplets " : "") +
+        	   	   	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			case 3:
+				return (obj.getInt("countgeki") > 0 ? obj.getInt("countgeki") + "xMAX " : "") +
+					   (obj.getInt("count300") > 0 ? obj.getInt("count300") + "x300 " : "") +
+					   (obj.getInt("countkatu") > 0 ? obj.getInt("countkatu") + "x200 " : "") +
+	        	   	   (obj.getInt("count100") > 0 ? obj.getInt("count100") + "x100 " : "") + 
+	        	   	   (obj.getInt("count50") > 0 ? obj.getInt("count50") + "x50 " : "") + 
+	        	   	   (obj.getInt("countmiss") > 0 ? obj.getInt("countmiss") + "x miss " : "");
+			default: return "";
+		}
+	}
+	
+	public static String osuDateToCurrentDate(String sDate){
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		formatter.setTimeZone(TimeZone.getTimeZone("Asia/Singapore"));
+		
+		Date date = null;
+		
+		try{
+			date = formatter.parse(sDate);
+		}catch(ParseException e){
+			Log.logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+		
+		formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return formatter.format(date);
+	}
+	
+	public static boolean dateGreaterThanDate(String date, String date1){
+		int year = Utils.stringToInt(date.split("-")[0]), year1 = Utils.stringToInt(date1.split("-")[0]);
+		
+		if(year > year1) return true;
+		else if(year == year1){
+			int month =  Utils.stringToInt(date.split("-")[1]), month1 = Utils.stringToInt(date1.split("-")[1]);
+			
+			if(month > month1) return true;
+			else if(month == month1){
+				int day =  Utils.stringToInt(date.split("-")[2].split(" ")[0]), day1 = Utils.stringToInt(date1.split("-")[2].split(" ")[0]);
+				
+				if(day > day1) return true;
+				else if(day == day1){
+					int hour =  Utils.stringToInt(date.split(":")[0].split(" ")[1]), hour1 = Utils.stringToInt(date1.split(":")[0].split(" ")[1]);
+					
+					if(hour > hour1) return true;
+					else if(hour == hour1){
+						int minute =  Utils.stringToInt(date.split(":")[1]), minute1 = Utils.stringToInt(date1.split(":")[1]);
+						
+						if(minute > minute1) return true;
+						else if(minute == minute1){
+							int second =  Utils.stringToInt(date.split(":")[2]), second1 = Utils.stringToInt(date1.split(":")[2]);
+							
+							if(second > second1 || second == second1) return true;
+						}
+					}
+				}
+			}
+		}
+		
+		return false;
 	}
 }
